@@ -44,7 +44,7 @@ class ChatManager(
             onCurrentUser: CurrentUserListener,
             onError: ErrorListener
     ){
-        val path = "/users"
+        val path = "users"
         this.userSubscription = UserSubscription(
                 instance = instance,
                 path = path,
