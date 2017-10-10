@@ -53,8 +53,6 @@ class ChatManager(
                 onCurrentUser = CurrentUserListener { user -> onCurrentUser.onCurrentUser(user) },
                 onError = ErrorListener { error -> onError.onError(error) }
         )
-
-        logger.debug("JEBOTE")
     }
 }
 
