@@ -49,6 +49,9 @@ class ChatManager(
                 instance = instance,
                 path = path,
                 userStore = userStore,
+                tokenProvider = tokenProvider,
+                tokenParams = null,
+//                tokenParams = ChatkitTokenParams(),
                 logger = logger,
                 onCurrentUser = CurrentUserListener { user -> onCurrentUser.onCurrentUser(user) },
                 onError = ErrorListener { error -> onError.onError(error) }
@@ -56,17 +59,17 @@ class ChatManager(
     }
 }
 
-
-enum class EventType(type: String){
-    INITIAL_STATE("initial_state"),
-    ADDED_TO_ROOM("added_to_room"),
-    REMOVED_FROM_ROOM("removed_from_room"),
-    NEW_MESSAGE("new_message"),
-    ROOM_UPDATED("room_updated"),
-    ROOM_DELETED("room_deleted"),
-    USER_JOINED("user_joined"),
-    USER_LEFT("user_left")
-}
+//
+//enum class EventType(type: String){
+//    INITIAL_STATE("initial_state"),
+//    ADDED_TO_ROOM("added_to_room"),
+//    REMOVED_FROM_ROOM("removed_from_room"),
+//    NEW_MESSAGE("new_message"),
+//    ROOM_UPDATED("room_updated"),
+//    ROOM_DELETED("room_deleted"),
+//    USER_JOINED("user_joined"),
+//    USER_LEFT("user_left")
+//}
 
 data class InitialState(
         val rooms: List<Room>, //TODO: might need to use a different subsctructure for this
@@ -109,7 +112,7 @@ data class UserLeft(
 )
 
 
-data class ChatEvent(val eventName: EventType, val userId: String? = null, val timestamp: String, val data: JsonElement)
+data class ChatEvent(val eventName: String, val userId: String? = null, val timestamp: String, val data: JsonElement)
 
 class GlobalUserStore(instance: Instance) {
 
@@ -123,7 +126,7 @@ class UserStore {
 
 }
 
-typealias CustomData = MutableMap<String, Any>
+typealias CustomData = MutableMap<String, String>
 
 data class Room(
         val id: Int,

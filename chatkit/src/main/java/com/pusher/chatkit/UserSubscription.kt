@@ -3,6 +3,7 @@ package com.pusher.chatkit
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.tokenProvider.TokenProvider
 import elements.EOSEvent
 import elements.Subscription
 import elements.SubscriptionEvent
@@ -11,6 +12,8 @@ class UserSubscription(
         instance: Instance,
         path: String,
         val userStore: GlobalUserStore,
+        tokenProvider: TokenProvider?,
+        tokenParams: ChatkitTokenParams?,
         val logger: Logger,
         onCurrentUser: CurrentUserListener,
         onError: ErrorListener
@@ -44,7 +47,9 @@ class UserSubscription(
                             logger.warn("onEnd $error")
 
                         }
-                )
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams
         )
 
         logger.warn("User subscription JEBOTELED")
@@ -56,12 +61,35 @@ class UserSubscription(
 
         val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
         when(chatEvent.eventName){
-            EventType.INITIAL_STATE -> {
+            "initial_state" -> {
                 val body = ChatManager.GSON.fromJson<InitialState>(chatEvent.data, InitialState::class.java)
                 handleInitialState(body)
             }
+            "added_to_room" -> {
+                val body = ChatManager.GSON.fromJson<AddedToRoom>(chatEvent.data, AddedToRoom::class.java)
+//                body.handle()
+//                handleAddedToRoom(body)
+            }
+            "removed_from_room" -> {
 
-            else -> { }
+            }
+            "new_message" -> {
+
+            }
+            "room_updated" -> {
+
+            }
+            "room_deleted" -> {
+
+            }
+            "user_joined" -> {
+
+            }
+            "user_left" -> {
+
+            }
+
+            else -> { throw Error("Invalid event name: ${chatEvent.eventName}") }
         }
     }
 
