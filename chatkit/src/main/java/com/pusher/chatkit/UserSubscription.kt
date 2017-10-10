@@ -93,9 +93,46 @@ class UserSubscription(
         }
     }
 
-    private fun handleInitialState(initialState: InitialState) {
-        logger.warn("Initial state received $initialState")
+    private var currentUser: CurrentUser? = null
 
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    private fun handleInitialState(initialState: InitialState) {
+        logger.verbose("Initial state received $initialState")
+
+        var wasExistingCurrentUser = currentUser != null
+
+        if(currentUser != null){
+            currentUser?.updateWithPropertiesOf(initialState.currentUser)
+        }
+        else{
+            currentUser = initialState.currentUser
+        }
+
+        currentUser?.presenceSubscription?.unsubscribe()
+        currentUser?.presenceSubscription = null
+
+        val combinedRoomUserIds = mutableSetOf<String>()
+        val roomsForConnection = mutableListOf<Room>()
+
+        initialState.rooms.forEach { room ->
+            combinedRoomUserIds.addAll(room.memberUserIds)
+            roomsForConnection.add(room)
+
+
+
+            currentUser!!.roomStore.addOrMerge(room)
+        }
+
+
+
+
+
+
+
+
+
+
+
+        if currentUser = initialState.currentUser
+
     }
 }

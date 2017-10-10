@@ -1,20 +1,30 @@
 package com.pusher.chatkit
 
 import com.pusher.platform.Instance
+import elements.Subscription
 
 class CurrentUser(
         val id: String,
         val createdAt: String,
-        val updatedAt: String,
+        var updatedAt: String,
 
-        val name: String?,
-        val avatarURL: String?,
-        val customData: CustomData?,
+        var name: String?,
+        var avatarURL: String?,
+        var customData: CustomData?,
 
         val rooms: MutableList<Room> = ArrayList<Room>(),
         val instance: Instance,
         val userStore: UserStore
 ) {
+
+    fun updateWithPropertiesOf(newUser: CurrentUser){
+        updatedAt = newUser.updatedAt
+        name = newUser.name
+        customData = newUser.customData
+    }
+
+    var presenceSubscription: Subscription? = null
+
     val roomStore = RoomStore(instance = instance, rooms = rooms)
 
     init {

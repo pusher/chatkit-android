@@ -4,11 +4,11 @@ import android.content.Context
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
-import com.pusher.platform.Cancelable
 import com.pusher.platform.Instance
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.tokenProvider.TokenProvider
+import java.util.concurrent.ConcurrentMap
 
 class ChatManager(
         instanceId: String,
@@ -118,7 +118,21 @@ class GlobalUserStore(instance: Instance) {
 
 }
 
-class RoomStore(instance: Instance, rooms: MutableList<Room>) {
+class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
+
+
+    fun addOrMerge(room: Room) {
+
+        if (rooms[room.id] != null){
+            rooms[room.id]!!.updateWithPropertiesOfRoom(room)
+        }
+        else{
+            rooms.put(room.id, room)
+        }
+
+
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
 }
 
@@ -131,9 +145,19 @@ typealias CustomData = MutableMap<String, String>
 data class Room(
         val id: Int,
         val createdById: String,
-        val name: String,
+        var name: String,
+        var isPrivate: Boolean,
         val createdAt: String,
-        val updatedAta: String,
-        val memberUserIds: List<String>
+        var updatedAt: String,
+        var deletedAt: String,
+        var memberUserIds: List<String>
 
-)
+){
+    fun updateWithPropertiesOfRoom(updatedRoom: Room){
+        name = updatedRoom.name
+        isPrivate = updatedRoom.isPrivate
+        updatedAt = updatedRoom.updatedAt
+        deletedAt = updatedRoom.deletedAt
+        memberUserIds = updatedRoom.memberUserIds
+    }
+}
