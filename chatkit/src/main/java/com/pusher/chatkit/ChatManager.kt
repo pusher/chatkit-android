@@ -32,7 +32,8 @@ class ChatManager(
             instanceId = instanceId,
             serviceName = serviceName,
             serviceVersion = serviceVersion,
-            context = context
+            context = context,
+            logger = logger
     )
 
     val userStore = GlobalUserStore(instance)
