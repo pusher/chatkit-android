@@ -115,18 +115,6 @@ class GlobalUserStore(instance: Instance) {
 
 }
 
-
-class ChatkitTokenProvider: TokenProvider {
-    override fun clearToken(token: String?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun fetchToken(tokenParams: Any?, onSuccess: (String) -> Unit, onFailure: (elements.Error) -> Unit): Cancelable {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-}
-
 class RoomStore(instance: Instance, rooms: MutableList<Room>) {
 
 }
