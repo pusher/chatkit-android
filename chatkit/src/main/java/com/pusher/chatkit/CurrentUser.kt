@@ -2,6 +2,8 @@ package com.pusher.chatkit
 
 import com.pusher.platform.Instance
 import elements.Subscription
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 class CurrentUser(
         val id: String,
@@ -12,7 +14,7 @@ class CurrentUser(
         var avatarURL: String?,
         var customData: CustomData?,
 
-        val rooms: MutableList<Room> = ArrayList<Room>(),
+        val rooms: ConcurrentMap<Int, Room> = ConcurrentHashMap<Int, Room>(),
         val instance: Instance,
         val userStore: UserStore
 ) {

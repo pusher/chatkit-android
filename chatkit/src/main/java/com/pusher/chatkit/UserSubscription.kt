@@ -4,7 +4,6 @@ import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import elements.EOSEvent
 import elements.Subscription
 import elements.SubscriptionEvent
 
@@ -117,22 +116,75 @@ class UserSubscription(
             combinedRoomUserIds.addAll(room.memberUserIds)
             roomsForConnection.add(room)
 
-
-
             currentUser!!.roomStore.addOrMerge(room)
+        }
+
+        fetchDetailsForUsers(combinedRoomUserIds)
+
+        if(wasExistingCurrentUser){
+
+            reconcileExistingRoomStoreWithRoomsReceivedOnConnection(roomsForConnection)
         }
 
 
 
 
 
+//        if currentUser = initialState.currentUser
+
+    }
+
+    private fun fetchDetailsForUsers(userIds: Set<String>) {
+
+        userStore.fetchUsersWithIds(
+                userIds = userIds,
+                onComplete = UsersListener { users ->
+
+                    currentUser!!.roomStore.rooms.values.forEach { room ->
+                        room.memberUserIds.forEach { userId ->
+                            val user = users.find { it.id == userId }
+                            if(user != null){
+                                room.userStore.addOrMerge(user)
+                            }
+                        }
+                    }
+                },
+                onFailure = ErrorListener {
+                    error ->
+
+                }
+        )
+
+
+//        currentUser!!.roomStore!!.rooms.forEach { t, u ->  }
+
+        TODO("Do this")
+        //PCUserStore.swift // fetchInitialUserInformationForUserIds(_ userIds: Set<String>, currentUser: PCCurrentUser) {
+
+//        userStore.fetchUsersWithIds()
+
+    }
+
+    private val listener: UserSubscriptionListener = UserSubscriptionListener()
+
+    class UserSubscriptionListener {
+
+        fun removedFromRoom(room: Room){
+            TODO()
+        }
+    }
+
+    private fun reconcileExistingRoomStoreWithRoomsReceivedOnConnection(roomsForConnection: MutableList<Room>) {
+        val roomsUserIsNoLongerAMemberOf = currentUser!!.rooms.values.toSet().subtract(roomsForConnection)
 
 
 
+        roomsUserIsNoLongerAMemberOf.forEach { room ->
+            listener.removedFromRoom(room)
+        }
 
 
 
-        if currentUser = initialState.currentUser
 
     }
 }

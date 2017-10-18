@@ -5,9 +5,13 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.pusher.platform.Instance
+import com.pusher.platform.RequestOptions
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
+import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 class ChatManager(
@@ -36,7 +40,10 @@ class ChatManager(
             logger = logger
     )
 
-    val userStore = GlobalUserStore(instance)
+    val userStore = GlobalUserStore(
+            instance = instance,
+            logger = logger
+    )
 
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
@@ -114,29 +121,86 @@ data class UserLeft(
 
 data class ChatEvent(val eventName: String, val userId: String? = null, val timestamp: String, val data: JsonElement)
 
-class GlobalUserStore(instance: Instance) {
+class GlobalUserStore(val instance: Instance, val logger: Logger) {
+
+    fun fetchUsersWithIds(userIds: Set<String>, onComplete: UsersListener, onFailure: ErrorListener){
+
+        var path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
+
+        instance.request(
+                options = RequestOptions(
+                        method = "GET",
+                        path = "/users_by_ids"
+                ),
+                onSuccess = { response ->
+                    val users = ChatManager.GSON.fromJson<List<User>>(response.body()!!.charStream(), List::class.java)
+                    onComplete.onUsers(users)
+                },
+                onFailure = { error ->  logger.debug("Failed getting list of users")}
+
+                )
+    }
 
 }
 
+class User(
+        val id: String,
+        val createdAt: String,
+        var updatedAt: String,
+
+        var name: String?,
+        var avatarURL: String?,
+        var customData: CustomData?
+) {
+    fun updateWithPropertiesOfUser(user: User) {
+        updatedAt = user.updatedAt
+        name = user.name
+        avatarURL = user.avatarURL
+        customData = user.customData
+    }
+}
+
+
 class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
 
-
     fun addOrMerge(room: Room) {
-
         if (rooms[room.id] != null){
             rooms[room.id]!!.updateWithPropertiesOfRoom(room)
         }
         else{
             rooms.put(room.id, room)
         }
-
-
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
+    fun updateRoomsWithUsers(users: List<User>) {
+        rooms.values.forEach {
+            room ->
+            room.memberUserIds.forEach { userId ->
+
+//
+
+
+            }
+        }
+//        users[0]
+    }
 }
 
 class UserStore {
+    private val members: ConcurrentMap<String, User>
+    init {
+        members = ConcurrentHashMap()
+    }
+
+    fun addOrMerge(user: User){
+        if(members[user.id] != null){
+            members[user.id]!!.updateWithPropertiesOfUser(user)
+        }
+        else{
+            members.put(user.id, user)
+        }
+    }
+
 
 }
 
@@ -150,7 +214,8 @@ data class Room(
         val createdAt: String,
         var updatedAt: String,
         var deletedAt: String,
-        var memberUserIds: List<String>
+        var memberUserIds: List<String>,
+        val userStore: UserStore = UserStore()
 
 ){
     fun updateWithPropertiesOfRoom(updatedRoom: Room){
