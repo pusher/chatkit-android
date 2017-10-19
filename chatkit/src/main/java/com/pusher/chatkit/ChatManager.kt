@@ -11,6 +11,7 @@ import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
+import elements.Error
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -137,6 +138,8 @@ class GlobalUserStore(
         val tokenProvider: TokenProvider?,
         val tokenParams: ChatkitTokenParams?) {
 
+    val users = ConcurrentHashMap<String, User>()
+
     fun fetchUsersWithIds(userIds: Set<String>, onComplete: UsersListener, onFailure: ErrorListener){
 
         var path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
@@ -151,6 +154,9 @@ class GlobalUserStore(
                 tokenParams = tokenParams,
                 onSuccess = { response ->
                     val users = ChatManager.GSON.fromJson<List<User>>(response.body()!!.charStream(), listOfUsersType)
+                    users.forEach { user ->
+                        this.users.put(user.id, user)
+                    }
                     onComplete.onUsers(users)
                 },
                 onFailure = {
@@ -158,6 +164,24 @@ class GlobalUserStore(
                     onFailure.onError(error)
                 }
         )
+    }
+
+    fun findOrGetUser(id: String, userListener: UserListener, errorListener: ErrorListener){
+
+        if(users.contains(id)) userListener.onUser(users.getValue(id))
+
+        else{
+            fetchUsersWithIds(
+                    userIds = setOf(id),
+                    onComplete = UsersListener { users ->
+                        if(users.isNotEmpty()) userListener.onUser(users[0])
+                        else errorListener.onError(elements.NetworkError("User not found!"))
+                    },
+                    onFailure = errorListener
+            )
+        }
+
+
     }
 
 }

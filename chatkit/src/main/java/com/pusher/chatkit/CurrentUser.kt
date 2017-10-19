@@ -67,16 +67,29 @@ class CurrentUser(
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 onSuccess = { response ->
+                    val room = GSON.fromJson<Room>(response.body()!!.charStream(), Room::class.java)
 
-                    Log.d("FOO", "response")
+                    roomStore.addOrMerge(room)
+                    populateRoomUserStore(room)
+
+                    onRoomCreatedListener.onRoom(room)
+
                 },
                 onFailure = { error ->
-
-                    Log.d("FOO", "error")
-
-
+                    onErrorListener.onError(error)
                 }
         )
+    }
+
+    private fun populateRoomUserStore(room: Room) {
+
+        room.memberUserIds.forEach { userId ->
+
+//            userStore.
+        }
+
+
+
     }
 
     fun addUsers(){

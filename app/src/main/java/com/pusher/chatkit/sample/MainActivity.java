@@ -2,7 +2,6 @@ package com.pusher.chatkit.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -24,7 +23,6 @@ import java.util.TreeMap;
 
 import elements.Error;
 import okhttp3.OkHttpClient;
-import timber.log.Timber;
 
 public class MainActivity extends Activity {
 
@@ -65,10 +63,7 @@ public class MainActivity extends Activity {
                                 Log.d(TAG, "onCurrentUser");
                                 currentUser = user;
 
-                                joinRoom();
-
-
-
+                                joinOrCreateRoom();
                             }
                         },
                         new ErrorListener() {
@@ -87,9 +82,9 @@ public class MainActivity extends Activity {
         );
     }
 
-    void joinRoom(){
+    void joinOrCreateRoom(){
         int numberOfRooms = currentUser.rooms().size();
-        if (numberOfRooms > 0){
+        if (numberOfRooms > 0 && false) {
             Log.d(TAG, "Rooms:");
             Iterator<Room> roomIterator = currentUser.rooms().iterator();
             while(roomIterator.hasNext()){
@@ -101,7 +96,7 @@ public class MainActivity extends Activity {
             Log.d(TAG, "No Rooms! Will create one now");
 
             currentUser.createRoom(
-                    "le-room",
+                    "le-room_1",
                     new RoomListener() {
                         @Override
                         public void onRoom(Room room) {
@@ -118,5 +113,7 @@ public class MainActivity extends Activity {
             );
 
         }
+
+//        currentUser.rooms()
     }
 }
