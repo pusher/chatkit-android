@@ -14,9 +14,11 @@ import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.RemovedFromRoomListener;
 import com.pusher.chatkit.Room;
+import com.pusher.chatkit.RoomListener;
 import com.pusher.chatkit.UserSubscriptionListeners;
 import com.pusher.platform.logger.LogLevel;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -30,6 +32,7 @@ public class MainActivity extends Activity {
     public static final String INSTANCE_ID = "v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
 
     ChatManager chatManager;
+    CurrentUser currentUser;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -37,7 +40,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         Map<String, String> tokenParams = new TreeMap<>();
-//        tokenParams.put("user_id", "zan");
 
         ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
                 "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/c090a50e-3e0e-4d05-96b0-a967ee4717ad/token?instance_id=v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad",
@@ -50,8 +52,10 @@ public class MainActivity extends Activity {
                 INSTANCE_ID,
                 getApplicationContext(),
                 tokenProvider,
+                null,
                 LogLevel.VERBOSE
         );
+
 
         chatManager.connect(
                 new UserSubscriptionListeners(
@@ -59,6 +63,12 @@ public class MainActivity extends Activity {
                             @Override
                             public void onCurrentUser(@NonNull CurrentUser user) {
                                 Log.d(TAG, "onCurrentUser");
+                                currentUser = user;
+
+                                joinRoom();
+
+
+
                             }
                         },
                         new ErrorListener() {
@@ -75,5 +85,38 @@ public class MainActivity extends Activity {
                         }
                 )
         );
+    }
+
+    void joinRoom(){
+        int numberOfRooms = currentUser.rooms().size();
+        if (numberOfRooms > 0){
+            Log.d(TAG, "Rooms:");
+            Iterator<Room> roomIterator = currentUser.rooms().iterator();
+            while(roomIterator.hasNext()){
+                Room room = roomIterator.next();
+                Log.d(TAG, "Room: " + room);
+            }
+        }
+        else {
+            Log.d(TAG, "No Rooms! Will create one now");
+
+            currentUser.createRoom(
+                    "le-room",
+                    new RoomListener() {
+                        @Override
+                        public void onRoom(Room room) {
+                            Log.d(TAG, "Room created " + room);
+                        }
+                    },
+                    new ErrorListener() {
+                        @Override
+                        public void onError(Error error) {
+                            Log.d(TAG, "Failed creating room "+ error);
+                        }
+                    }
+
+            );
+
+        }
     }
 }

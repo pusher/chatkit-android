@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
+import com.google.gson.reflect.TypeToken
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.logger.AndroidLogger
@@ -17,6 +18,7 @@ class ChatManager(
         instanceId: String,
         context: Context,
         val tokenProvider: TokenProvider? = null,
+        val tokenParams: ChatkitTokenParams? = null,
         logLevel: LogLevel = LogLevel.DEBUG
 ){
 
@@ -41,7 +43,9 @@ class ChatManager(
 
     val userStore = GlobalUserStore(
             instance = instance,
-            logger = logger
+            logger = logger,
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams
     )
 
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
@@ -54,9 +58,8 @@ class ChatManager(
                 instance = instance,
                 path = path,
                 userStore = userStore,
-                tokenProvider = tokenProvider,
+                tokenProvider = tokenProvider!!,
                 tokenParams = null,
-//                tokenParams = ChatkitTokenParams(),
                 logger = logger,
                 listeners = listeners
         )
@@ -87,7 +90,7 @@ class UserSubscriptionListeners @JvmOverloads constructor(
 
 data class InitialState(
         val rooms: List<Room>, //TODO: might need to use a different subsctructure for this
-        val currentUser: CurrentUser
+        val currentUser: User
 )
 
 data class AddedToRoom(
@@ -128,19 +131,26 @@ data class UserLeft(
 
 data class ChatEvent(val eventName: String, val userId: String? = null, val timestamp: String, val data: JsonElement)
 
-class GlobalUserStore(val instance: Instance, val logger: Logger) {
+class GlobalUserStore(
+        val instance: Instance,
+        val logger: Logger,
+        val tokenProvider: TokenProvider?,
+        val tokenParams: ChatkitTokenParams?) {
 
     fun fetchUsersWithIds(userIds: Set<String>, onComplete: UsersListener, onFailure: ErrorListener){
 
         var path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
+        val listOfUsersType = object: TypeToken<List<User>>(){}.type
 
         instance.request(
                 options = RequestOptions(
                         method = "GET",
                         path = path
                 ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
                 onSuccess = { response ->
-                    val users = ChatManager.GSON.fromJson<List<User>>(response.body()!!.charStream(), List::class.java)
+                    val users = ChatManager.GSON.fromJson<List<User>>(response.body()!!.charStream(), listOfUsersType)
                     onComplete.onUsers(users)
                 },
                 onFailure = {
@@ -171,6 +181,8 @@ class User(
 
 
 class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
+
+    fun rooms(): Set<Room>  = rooms.values.toSet()
 
     fun addOrMerge(room: Room) {
         if (rooms[room.id] != null){
@@ -209,9 +221,15 @@ data class Room(
         var updatedAt: String,
         var deletedAt: String,
         var memberUserIds: List<String>,
-        val userStore: UserStore = UserStore()
-
+        private var userStore: UserStore?
 ){
+
+    fun userStore(): UserStore {
+        if(userStore == null) userStore = UserStore()
+        return userStore!!
+    }
+
+
     fun updateWithPropertiesOfRoom(updatedRoom: Room){
         name = updatedRoom.name
         isPrivate = updatedRoom.isPrivate

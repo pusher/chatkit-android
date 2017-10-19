@@ -7,13 +7,14 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
+import java.util.concurrent.ConcurrentHashMap
 
 class UserSubscription(
-        instance: Instance,
+        val instance: Instance,
         path: String,
         val userStore: GlobalUserStore,
-        tokenProvider: TokenProvider?,
-        tokenParams: ChatkitTokenParams?,
+        val tokenProvider: TokenProvider,
+        val tokenParams: ChatkitTokenParams?,
         val logger: Logger,
         val listeners: UserSubscriptionListeners
 ) {
@@ -89,7 +90,6 @@ class UserSubscription(
             "user_left" -> {
 
             }
-
             else -> { throw Error("Invalid event name: ${chatEvent.eventName}") }
         }
     }
@@ -105,7 +105,21 @@ class UserSubscription(
             currentUser?.updateWithPropertiesOf(initialState.currentUser)
         }
         else{
-            currentUser = initialState.currentUser
+
+            currentUser = CurrentUser(
+                    id = initialState.currentUser.id,
+                    name = initialState.currentUser.name,
+                    updatedAt = initialState.currentUser.updatedAt,
+                    createdAt = initialState.currentUser.createdAt,
+                    avatarURL = initialState.currentUser.avatarURL,
+                    customData = initialState.currentUser.customData,
+
+                    userStore = userStore,
+                    rooms = initialState.rooms,
+                    instance = instance,
+                    tokenProvider = tokenProvider,
+                    tokenParams = tokenParams
+            )
         }
 
         currentUser?.presenceSubscription?.unsubscribe()
@@ -121,18 +135,23 @@ class UserSubscription(
             currentUser!!.roomStore.addOrMerge(room)
         }
 
-        fetchDetailsForUsers(
-                userIds = combinedRoomUserIds,
-                onComplete = UsersListener { users ->
-                    if(wasExistingCurrentUser){
-                        updateExistingRooms(roomsForConnection)
-                    }
-                    listeners.currentUserListener.onCurrentUser(currentUser!!)
-                },
-                onError = ErrorListener { error ->
-                    logger.error("Failed fetching user details $error")
-                    listeners.errorListener.onError(error)
-                })
+        if(combinedRoomUserIds.size > 0){
+            fetchDetailsForUsers(
+                    userIds = combinedRoomUserIds,
+                    onComplete = UsersListener { users ->
+                        if(wasExistingCurrentUser){
+                            updateExistingRooms(roomsForConnection)
+                        }
+                        listeners.currentUserListener.onCurrentUser(currentUser!!)
+                    },
+                    onError = ErrorListener { error ->
+                        logger.error("Failed fetching user details $error")
+                        listeners.errorListener.onError(error)
+                    })
+        }
+        else {
+            listeners.currentUserListener.onCurrentUser(currentUser!!)
+        }
     }
 
     private fun fetchDetailsForUsers(
@@ -145,31 +164,23 @@ class UserSubscription(
                 userIds = userIds,
                 onComplete = UsersListener { users ->
 
-                    currentUser!!.roomStore.rooms.values.forEach { room ->
+                    currentUser!!.rooms().forEach { room ->
                         room.memberUserIds.forEach { userId ->
                             val user = users.find { it.id == userId }
                             if(user != null){
-                                room.userStore.addOrMerge(user)
+                                room.userStore().addOrMerge(user)
                             }
                         }
                     }
+
                     onComplete.onUsers(users)
                 },
                 onFailure = onError
         )
     }
 
-    private val listener: UserSubscriptionListener = UserSubscriptionListener()
-
-    class UserSubscriptionListener {
-
-        fun removedFromRoom(room: Room){
-            TODO()
-        }
-    }
-
     private fun updateExistingRooms(roomsForConnection: MutableList<Room>) {
-        val roomsUserIsNoLongerAMemberOf = currentUser!!.rooms.values.toSet().subtract(roomsForConnection)
+        val roomsUserIsNoLongerAMemberOf = currentUser!!.rooms().subtract(roomsForConnection)
 
         roomsUserIsNoLongerAMemberOf.forEach { room ->
             listeners.removedFromRoomListener.removedFromRoom(room)
