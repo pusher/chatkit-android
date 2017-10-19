@@ -4,6 +4,7 @@ import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
+import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
 
@@ -14,11 +15,11 @@ class UserSubscription(
         tokenProvider: TokenProvider?,
         tokenParams: ChatkitTokenParams?,
         val logger: Logger,
-        onCurrentUser: CurrentUserListener,
-        onError: ErrorListener
+        val listeners: UserSubscriptionListeners
 ) {
 
     var subscription: Subscription? = null
+    lateinit var headers: Headers
 
     init {
         subscription = instance.subscribeResuming(
@@ -26,15 +27,16 @@ class UserSubscription(
                 listeners = SubscriptionListeners(
                         onOpen = { headers ->
                             logger.warn("OnOpen $headers")
+                            this.headers = headers
                         },
                         onEvent = { event ->
-
                             logger.warn("Event $event")
-
-                            handleEvent(event) },
+                            handleEvent(event)
+                        },
                         onError = { error ->
                             logger.warn("Error $error")
-                            onError.onError(error) },
+                            listeners.errorListener.onError(error)
+                        },
                         onSubscribe = {
                             logger.warn("onSubscribe")
                         },
@@ -119,22 +121,25 @@ class UserSubscription(
             currentUser!!.roomStore.addOrMerge(room)
         }
 
-        fetchDetailsForUsers(combinedRoomUserIds)
-
-        if(wasExistingCurrentUser){
-
-            reconcileExistingRoomStoreWithRoomsReceivedOnConnection(roomsForConnection)
-        }
-
-
-
-
-
-//        if currentUser = initialState.currentUser
-
+        fetchDetailsForUsers(
+                userIds = combinedRoomUserIds,
+                onComplete = UsersListener { users ->
+                    if(wasExistingCurrentUser){
+                        updateExistingRooms(roomsForConnection)
+                    }
+                    listeners.currentUserListener.onCurrentUser(currentUser!!)
+                },
+                onError = ErrorListener { error ->
+                    logger.error("Failed fetching user details $error")
+                    listeners.errorListener.onError(error)
+                })
     }
 
-    private fun fetchDetailsForUsers(userIds: Set<String>) {
+    private fun fetchDetailsForUsers(
+            userIds: Set<String>,
+            onComplete: UsersListener,
+            onError: ErrorListener
+    ) {
 
         userStore.fetchUsersWithIds(
                 userIds = userIds,
@@ -148,21 +153,10 @@ class UserSubscription(
                             }
                         }
                     }
+                    onComplete.onUsers(users)
                 },
-                onFailure = ErrorListener {
-                    error ->
-
-                }
+                onFailure = onError
         )
-
-
-//        currentUser!!.roomStore!!.rooms.forEach { t, u ->  }
-
-        TODO("Do this")
-        //PCUserStore.swift // fetchInitialUserInformationForUserIds(_ userIds: Set<String>, currentUser: PCCurrentUser) {
-
-//        userStore.fetchUsersWithIds()
-
     }
 
     private val listener: UserSubscriptionListener = UserSubscriptionListener()
@@ -174,13 +168,11 @@ class UserSubscription(
         }
     }
 
-    private fun reconcileExistingRoomStoreWithRoomsReceivedOnConnection(roomsForConnection: MutableList<Room>) {
+    private fun updateExistingRooms(roomsForConnection: MutableList<Room>) {
         val roomsUserIsNoLongerAMemberOf = currentUser!!.rooms.values.toSet().subtract(roomsForConnection)
 
-
-
         roomsUserIsNoLongerAMemberOf.forEach { room ->
-            listener.removedFromRoom(room)
+            listeners.removedFromRoomListener.removedFromRoom(room)
         }
 
 

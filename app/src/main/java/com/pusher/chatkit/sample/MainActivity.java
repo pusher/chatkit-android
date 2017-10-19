@@ -3,13 +3,18 @@ package com.pusher.chatkit.sample;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.pusher.chatkit.ChatManager;
 import com.pusher.chatkit.ChatkitTokenProvider;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
+import com.pusher.chatkit.RemovedFromRoomListener;
+import com.pusher.chatkit.Room;
+import com.pusher.chatkit.UserSubscriptionListeners;
 import com.pusher.platform.logger.LogLevel;
 
 import java.util.Map;
@@ -21,6 +26,7 @@ import timber.log.Timber;
 
 public class MainActivity extends Activity {
 
+    public static final String TAG = "Chatkit Sample";
     public static final String INSTANCE_ID = "v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
 
     ChatManager chatManager;
@@ -48,18 +54,26 @@ public class MainActivity extends Activity {
         );
 
         chatManager.connect(
-                new CurrentUserListener() {
-                    @Override
-                    public void onCurrentUser(CurrentUser user) {
-                        Timber.d("onCurrentUsers %s", user.toString());
-                    }
-                },
-                new ErrorListener() {
-                    @Override
-                    public void onError(Error error) {
-                        Timber.d("onError %s", error.toString());
-                    }
-                }
+                new UserSubscriptionListeners(
+                        new CurrentUserListener() {
+                            @Override
+                            public void onCurrentUser(@NonNull CurrentUser user) {
+                                Log.d(TAG, "onCurrentUser");
+                            }
+                        },
+                        new ErrorListener() {
+                            @Override
+                            public void onError(Error error) {
+                                Log.d(TAG, "onError");
+                            }
+                        },
+                        new RemovedFromRoomListener() {
+                            @Override
+                            public void removedFromRoom(Room room) {
+                                Log.d(TAG, "removed from room");
+                            }
+                        }
+                )
         );
     }
 }

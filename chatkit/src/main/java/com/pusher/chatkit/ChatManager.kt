@@ -10,7 +10,6 @@ import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -48,8 +47,7 @@ class ChatManager(
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
     fun connect(
-            onCurrentUser: CurrentUserListener,
-            onError: ErrorListener
+            listeners: UserSubscriptionListeners
     ){
         val path = "users"
         this.userSubscription = UserSubscription(
@@ -60,10 +58,19 @@ class ChatManager(
                 tokenParams = null,
 //                tokenParams = ChatkitTokenParams(),
                 logger = logger,
-                onCurrentUser = CurrentUserListener { user -> onCurrentUser.onCurrentUser(user) },
-                onError = ErrorListener { error -> onError.onError(error) }
+                listeners = listeners
         )
     }
+}
+
+class UserSubscriptionListeners @JvmOverloads constructor(
+        val currentUserListener: CurrentUserListener = CurrentUserListener{},
+        val errorListener: ErrorListener = ErrorListener {},
+        val removedFromRoomListener: RemovedFromRoomListener = RemovedFromRoomListener {}
+)
+{
+
+
 }
 
 //
@@ -130,15 +137,17 @@ class GlobalUserStore(val instance: Instance, val logger: Logger) {
         instance.request(
                 options = RequestOptions(
                         method = "GET",
-                        path = "/users_by_ids"
+                        path = path
                 ),
                 onSuccess = { response ->
                     val users = ChatManager.GSON.fromJson<List<User>>(response.body()!!.charStream(), List::class.java)
                     onComplete.onUsers(users)
                 },
-                onFailure = { error ->  logger.debug("Failed getting list of users")}
-
-                )
+                onFailure = {
+                    error ->  logger.debug("Failed getting list of users $error")
+                    onFailure.onError(error)
+                }
+        )
     }
 
 }
@@ -171,19 +180,6 @@ class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
             rooms.put(room.id, room)
         }
     }
-
-    fun updateRoomsWithUsers(users: List<User>) {
-        rooms.values.forEach {
-            room ->
-            room.memberUserIds.forEach { userId ->
-
-//
-
-
-            }
-        }
-//        users[0]
-    }
 }
 
 class UserStore {
@@ -200,8 +196,6 @@ class UserStore {
             members.put(user.id, user)
         }
     }
-
-
 }
 
 typealias CustomData = MutableMap<String, String>
