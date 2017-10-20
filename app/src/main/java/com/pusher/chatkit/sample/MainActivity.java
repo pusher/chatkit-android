@@ -84,7 +84,7 @@ public class MainActivity extends Activity {
 
     void joinOrCreateRoom(){
         int numberOfRooms = currentUser.rooms().size();
-        if (numberOfRooms > 0 && false) {
+        if (numberOfRooms > 0 && false) { //TODO: the && false bit is for testing purposes only
             Log.d(TAG, "Rooms:");
             Iterator<Room> roomIterator = currentUser.rooms().iterator();
             while(roomIterator.hasNext()){
@@ -114,6 +114,5 @@ public class MainActivity extends Activity {
 
         }
 
-//        currentUser.rooms()
     }
 }

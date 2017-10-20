@@ -1,13 +1,15 @@
 package com.pusher.chatkit
 
-import android.util.Log
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
+import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.tokenProvider.TokenProvider
+import elements.Headers
 import elements.Subscription
+import elements.SubscriptionEvent
+import elements.Error
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 class CurrentUser(
         val id: String,
@@ -81,15 +83,36 @@ class CurrentUser(
         )
     }
 
+    @JvmOverloads fun subscribeToRoom(
+            room: Room,
+            messageLimit: Int = 20,
+            listeners: RoomSubscriptionListeners
+    ){
+
+        val path = "/rooms/${room.id}?user_id=$id&message_limit=$messageLimit"
+
+        val roomSubscription = RoomSubscription(this, room, userStore, listeners)
+
+        instance.subscribeResuming(
+                path = path,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                listeners = roomSubscription.subscriptionListeners
+        )
+    }
+
     private fun populateRoomUserStore(room: Room) {
 
         room.memberUserIds.forEach { userId ->
 
-//            userStore.
+            userStore.findOrGetUser(
+                    id = userId,
+                    userListener = UserListener { user -> room.userStore().addOrMerge(user) },
+                    errorListener = ErrorListener {
+                        TODO("Not implemented")
+                    }
+            )
         }
-
-
-
     }
 
     fun addUsers(){
@@ -147,6 +170,62 @@ class CurrentUser(
     //TODO: All the other shit - typealias, messages for room, etc...
 
 }
+
+class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalUserStore, val listeners: RoomSubscriptionListeners) {
+
+    val subscriptionListeners = SubscriptionListeners(
+            onOpen = { handleOpen(it) },
+            onEvent = { handleMessage(it) },
+            onError = { handleError(it) }
+    )
+
+    fun handleOpen(headers: Headers){
+        //TODO("Not handled currently.")
+    }
+
+    fun handleMessage(event: SubscriptionEvent){
+
+        val chatEvent = GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
+
+        if(chatEvent.eventName == "new_message"){
+
+            val message= GSON.fromJson<Message>(chatEvent.data, Message::class.java)
+
+            message.room = room
+            userStore.fetchUsersWithIds(
+                    userIds = setOf(message.userId),
+                    onComplete = UsersListener { users ->
+                        if(users.isNotEmpty())
+                            message.user = users[0]
+                        listeners.onNewMessage.onMessage(message)
+
+                    },
+                    onFailure = ErrorListener {
+                        listeners.onNewMessage.onMessage(message)
+                    })
+        }
+        else {
+            TODO("Some weird shit has happened. Event received is of the wrong type ${chatEvent.eventName}")
+        }
+
+    }
+
+    fun handleError(error: Error){
+        listeners.errorListener.onError(error)
+    }
+}
+
+data class RoomSubscriptionListeners(
+        val onNewMessage: MessageListener = MessageListener {  },
+        val userStartedTyping: UserListener = UserListener {  },
+        val userStoppedTyping: UserListener = UserListener {  },
+        val userJoined: UserListener = UserListener {  },
+        val userLeft: UserListener = UserListener {  },
+        val userCameOnline: UserListener = UserListener {  },
+        val userWentOffline: UserListener = UserListener {  },
+        val usersUpdated: ErrorListener = ErrorListener {  }, //TODO
+        val errorListener: ErrorListener = ErrorListener {  }
+)
 
 data class RoomCreateRequest(
         val name: String,

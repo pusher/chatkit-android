@@ -7,7 +7,6 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
-import java.util.concurrent.ConcurrentHashMap
 
 class UserSubscription(
         val instance: Instance,
