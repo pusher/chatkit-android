@@ -175,7 +175,7 @@ class User(
 
 class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
 
-    fun rooms(): Set<Room>  = rooms.values.toSet()
+    fun setOfRooms(): Set<Room>  = rooms.values.toSet()
 
     fun addOrMerge(room: Room) {
         if (rooms[room.id] != null){

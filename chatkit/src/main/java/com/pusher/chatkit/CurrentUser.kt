@@ -1,10 +1,13 @@
 package com.pusher.chatkit
 
+import android.os.Handler
+import android.os.Looper
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Subscription
+import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
 
 class CurrentUser(
@@ -39,7 +42,8 @@ class CurrentUser(
         roomStore = RoomStore(instance = instance, rooms = roomMap)
     }
 
-    fun rooms(): Set<Room> = roomStore.rooms()
+    fun rooms(): Set<Room> = roomStore.setOfRooms()
+    fun getRoom(id: Int): Room? = roomStore.rooms[id]
 
     //Room membership related information
     @JvmOverloads fun createRoom(
@@ -106,6 +110,7 @@ class CurrentUser(
                     userListener = UserListener { user -> room.userStore().addOrMerge(user) },
                     errorListener = ErrorListener {
                         TODO("Not implemented")
+
                     }
             )
         }
@@ -148,10 +153,41 @@ class CurrentUser(
      * */
     fun joinRoom(
             roomId: Int,
-            onComplete: Any
+            completeListener: RoomListener,
+            errorListener: ErrorListener
     ){
-        TODO()
+        val mainThread = Handler(Looper.getMainLooper())
+        val completeListener = RoomListener { room -> mainThread.post { completeListener.onRoom(room) }}
+        val errorListener = ErrorListener { error -> mainThread.post { errorListener.onError(error) }}
+
+        val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/join").build().encodedPath()
+
+        instance.request(
+                options = RequestOptions(
+                        method = "POST",
+                        path = path,
+                        body = "" //TODO: this is a horrible OKHTTP hack.
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { response ->
+
+                    val room = GSON.fromJson<Room>(response.body()!!.charStream(), Room::class.java)
+                    roomStore.addOrMerge(room)
+                    populateRoomUserStore(room)
+                    completeListener.onRoom(room)
+
+                },
+                onFailure = { error ->
+                    errorListener.onError(error)
+                }
+        )
     }
+
+    fun joinRoom(room: Room, completeListener: RoomListener,  errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
+
+
+
 
     /**
      * Leave a room
@@ -166,18 +202,6 @@ class CurrentUser(
     //TODO: All the other shit - typealias, messages for room, etc...
 
 }
-
-data class RoomSubscriptionListeners @JvmOverloads constructor(
-        val onNewMessage: MessageListener = MessageListener {  },
-        val userStartedTyping: UserListener = UserListener {  },
-        val userStoppedTyping: UserListener = UserListener {  },
-        val userJoined: UserListener = UserListener {  },
-        val userLeft: UserListener = UserListener {  },
-        val userCameOnline: UserListener = UserListener {  },
-        val userWentOffline: UserListener = UserListener {  },
-        val usersUpdated: ErrorListener = ErrorListener {  }, //TODO
-        val errorListener: ErrorListener = ErrorListener {  }
-)
 
 data class RoomCreateRequest(
         val name: String,

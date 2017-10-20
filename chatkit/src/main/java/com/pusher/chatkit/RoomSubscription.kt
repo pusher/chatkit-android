@@ -31,11 +31,11 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
                     onComplete = UsersListener { users ->
                         if(users.isNotEmpty())
                             message.user = users[0]
-                        listeners.onNewMessage.onMessage(message)
+                        listeners.onNewMessage(message)
 
                     },
                     onFailure = ErrorListener {
-                        listeners.onNewMessage.onMessage(message)
+                        listeners.onNewMessage(message)
                     })
         }
         else {
@@ -45,6 +45,6 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
     }
 
     fun handleError(error: Error){
-        listeners.errorListener.onError(error)
+        listeners.onError(error)
     }
 }

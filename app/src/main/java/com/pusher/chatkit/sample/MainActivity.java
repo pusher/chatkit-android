@@ -12,15 +12,13 @@ import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Message;
-import com.pusher.chatkit.MessageListener;
 import com.pusher.chatkit.RemovedFromRoomListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
-import com.pusher.chatkit.RoomSubscriptionListeners;
+import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
 import com.pusher.chatkit.UserSubscriptionListeners;
 import com.pusher.platform.logger.LogLevel;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -86,23 +84,60 @@ public class MainActivity extends Activity {
     }
 
     void joinOrCreateRoom(){
-        int numberOfRooms = currentUser.rooms().size();
-        if (numberOfRooms > 0) {
-            Log.d(TAG, "Rooms:");
-            Iterator<Room> roomIterator = currentUser.rooms().iterator();
-            Room room = roomIterator.next();
-            Log.d(TAG, "Room: " + room);
+        Log.d(TAG, "Rooms: " + currentUser.rooms());
 
-            currentUser.subscribeToRoom(room, new RoomSubscriptionListeners(new MessageListener() {
-                @Override
-                public void onMessage(Message message) {
-                    Log.d(TAG, "Message! " + message );
-                }
+
+//        RoomSubscriptionListenersInterface rsli = new RoomSubscriptionListenersInterface() {}
+
+
+        if (!currentUser.rooms().isEmpty()) {
+
+            if(currentUser.getRoom(410861) != null){
+
+                currentUser.subscribeToRoom(
+                        currentUser.getRoom(410861),
+                        new RoomSubscriptionListenersAdapter() {
+                            @Override
+                            public void onNewMessage(Message message) {
+                                Log.d(TAG, "Message received " + message );
+                            }
+
+                            @Override
+                            public void onError(Error error) {
+                                Log.d(TAG, "OnError " + error);
+                            }
+                        }
+                 );
             }
-            ));
+            else{
+                currentUser.joinRoom(410861,
+                        new RoomListener() {
+                            @Override
+                            public void onRoom(Room room) {
+                                Log.d(TAG, "Joined room! " + room);
+
+
+                                currentUser.subscribeToRoom(
+                                        room,
+                                        new RoomSubscriptionListenersAdapter() {
+                                            @Override
+                                            public void onNewMessage(Message message) {
+                                                Log.d(TAG, "Message received " + message );
+                                            }
+                                        });
+                            }
+                        }, new ErrorListener() {
+                            @Override
+                            public void onError(Error error) {
+                                Log.d(TAG, "onError joining room " + error);
+                            }
+                        });
+            }
+
 
 
         }
+
         else {
             Log.d(TAG, "No Rooms! Will create one now");
 
