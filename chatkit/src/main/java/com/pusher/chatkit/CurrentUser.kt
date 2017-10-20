@@ -116,6 +116,35 @@ class CurrentUser(
         }
     }
 
+    fun addMessage(
+            text: String,
+            room: Room,
+            onCompleteListener: MessageSentListener,
+            onErrorListener: ErrorListener
+    ){
+        val message = MessageRequest(
+                text = text,
+                userId = id
+        )
+
+        val path = "/rooms/${room.id}/messages"
+        instance.request(
+                options = RequestOptions(
+                        method = "POST",
+                        path = path,
+                        body = GSON.toJson(message)
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { response ->
+
+                    val message = GSON.fromJson<MessageSendingResponse>(response.body()!!.charStream(), MessageSendingResponse::class.java)
+                    onCompleteListener.onMessage(message.messageId)
+                },
+                onFailure = { error -> onErrorListener.onError(error)}
+        )
+    }
+
     fun addUsers(){
         TODO()
     }
@@ -202,6 +231,10 @@ class CurrentUser(
     //TODO: All the other shit - typealias, messages for room, etc...
 
 }
+
+data class MessageRequest(val text: String, val userId: String)
+
+data class MessageSendingResponse(val messageId: Int)
 
 data class RoomCreateRequest(
         val name: String,

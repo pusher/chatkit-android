@@ -12,6 +12,7 @@ import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Message;
+import com.pusher.chatkit.MessageSentListener;
 import com.pusher.chatkit.RemovedFromRoomListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
@@ -94,8 +95,9 @@ public class MainActivity extends Activity {
 
             if(currentUser.getRoom(410861) != null){
 
+                Room room = currentUser.getRoom(410861);
                 currentUser.subscribeToRoom(
-                        currentUser.getRoom(410861),
+                        room,
                         new RoomSubscriptionListenersAdapter() {
                             @Override
                             public void onNewMessage(Message message) {
@@ -108,6 +110,9 @@ public class MainActivity extends Activity {
                             }
                         }
                  );
+
+                sendMessage(room);
+
             }
             else{
                 currentUser.joinRoom(410861,
@@ -125,6 +130,9 @@ public class MainActivity extends Activity {
                                                 Log.d(TAG, "Message received " + message );
                                             }
                                         });
+
+
+                                sendMessage(room);
                             }
                         }, new ErrorListener() {
                             @Override
@@ -160,5 +168,24 @@ public class MainActivity extends Activity {
 
         }
 
+    }
+
+    private void sendMessage(Room room) {
+        currentUser.addMessage(
+                "Hello, Android!",
+                room,
+                new MessageSentListener() {
+                    @Override
+                    public void onMessage(int messageId) {
+                        Log.d(TAG, "MEssage sent! " + messageId);
+                    }
+                },
+                new ErrorListener() {
+                    @Override
+                    public void onError(Error error) {
+                        Log.d(TAG, "MEssage sending failed! " + error);
+                    }
+                }
+        );
     }
 }
