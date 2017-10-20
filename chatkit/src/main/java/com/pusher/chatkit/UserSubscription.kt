@@ -1,5 +1,7 @@
 package com.pusher.chatkit
 
+import android.os.Handler
+import android.os.Looper
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
@@ -15,8 +17,10 @@ class UserSubscription(
         val tokenProvider: TokenProvider,
         val tokenParams: ChatkitTokenParams?,
         val logger: Logger,
-        val listeners: UserSubscriptionListeners
+        val listeners: ThreadedUserSubscriptionListeners
 ) {
+
+    private val mainThread = Handler(Looper.getMainLooper())
 
     var subscription: Subscription? = null
     lateinit var headers: Headers
@@ -52,8 +56,6 @@ class UserSubscription(
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams
         )
-
-        logger.warn("User subscription JEBOTELED")
     }
 
     fun handleEvent(event: SubscriptionEvent) {
@@ -171,7 +173,6 @@ class UserSubscription(
                             }
                         }
                     }
-
                     onComplete.onUsers(users)
                 },
                 onFailure = onError
@@ -184,9 +185,5 @@ class UserSubscription(
         roomsUserIsNoLongerAMemberOf.forEach { room ->
             listeners.removedFromRoomListener.removedFromRoom(room)
         }
-
-
-
-
     }
 }

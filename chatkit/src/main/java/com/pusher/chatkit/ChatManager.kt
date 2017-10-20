@@ -1,6 +1,8 @@
 package com.pusher.chatkit
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
@@ -50,6 +52,10 @@ class ChatManager(
     fun connect(
             listeners: UserSubscriptionListeners
     ){
+        val mainThreadListeners = ThreadedUserSubscriptionListeners.from(
+                listeners = listeners,
+                thread = Handler(Looper.getMainLooper()))
+
         val path = "users"
         this.userSubscription = UserSubscription(
                 instance = instance,
@@ -58,7 +64,7 @@ class ChatManager(
                 tokenProvider = tokenProvider!!,
                 tokenParams = null,
                 logger = logger,
-                listeners = listeners
+                listeners = mainThreadListeners
         )
     }
 }
@@ -68,9 +74,23 @@ class UserSubscriptionListeners @JvmOverloads constructor(
         val errorListener: ErrorListener = ErrorListener {},
         val removedFromRoomListener: RemovedFromRoomListener = RemovedFromRoomListener {}
 )
+
+class ThreadedUserSubscriptionListeners
+private constructor(
+        val currentUserListener: CurrentUserListener,
+        val errorListener: ErrorListener,
+        val removedFromRoomListener: RemovedFromRoomListener
+)
 {
-
-
+    companion object {
+        fun from(listeners: UserSubscriptionListeners, thread: Handler): ThreadedUserSubscriptionListeners{
+            return ThreadedUserSubscriptionListeners(
+                    currentUserListener = CurrentUserListener { user -> thread.post { listeners.currentUserListener.onCurrentUser(user) } },
+                    errorListener = ErrorListener { error -> listeners.errorListener.onError(error) },
+                    removedFromRoomListener = RemovedFromRoomListener { room -> listeners.removedFromRoomListener.removedFromRoom(room) }
+            )
+        }
+    }
 }
 
 //
