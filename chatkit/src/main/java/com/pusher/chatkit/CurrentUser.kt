@@ -181,27 +181,63 @@ class CurrentUser(
      * */
 
     fun updateRoom(
-            roomId: Int,
+            room: Room,
             name: String? = null,
-            isPrivate: Boolean = false,
-            onComplete: Any
+            isPrivate: Boolean? = null,
+            completeListener: OnCompleteListener,
+            errorListener: ErrorListener
     ){
-        TODO()
+        val path = "/rooms/${room.id}"
+        val data = UpdateRoomRequest(
+                    name = name ?: room.name,
+                    isPrivate =  isPrivate ?: room.isPrivate
+        )
+
+        instance.request(
+                options = RequestOptions(
+                        method = "PUT",
+                        path = path,
+                        body = GSON.toJson(data)
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { completeListener.onComplete() },
+                onFailure = { error -> errorListener.onError(error) }
+        )
     }
+
+    data class UpdateRoomRequest(val name: String, val isPrivate: Boolean)
 
     /**
      * Delete a room
      * */
+
+    fun deleteRoom(room: Room, completeListener: OnCompleteListener, errorListener: ErrorListener) = deleteRoom(room.id, completeListener, errorListener)
+
     fun deleteRoom(
             roomId: Int,
-            onComplete: Any
+            completeListener: OnCompleteListener,
+            errorListener: ErrorListener
     ){
-        TODO()
+        val path = "/rooms/$roomId"
+        instance.request(
+                options = RequestOptions(
+                        method = "DELETE",
+                        path = path,
+                        body = ""
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { completeListener.onComplete() },
+                onFailure = { error -> errorListener.onError(error) }
+        )
     }
 
     /**
      * Join a room
      * */
+    fun joinRoom(room: Room, completeListener: RoomListener,  errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
+
     fun joinRoom(
             roomId: Int,
             completeListener: RoomListener,
@@ -233,22 +269,12 @@ class CurrentUser(
         )
     }
 
-    fun joinRoom(room: Room, completeListener: RoomListener,  errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
 
     /**
      * Leave a room
      * */
-    fun leaveRoom(
-            room: Room,
-            completeListener: OnCompleteListener,
-            errorListener: ErrorListener
-    ){
-        leaveRoom(room.id, completeListener, errorListener)
-    }
+    fun leaveRoom(room: Room, completeListener: OnCompleteListener, errorListener: ErrorListener) = leaveRoom(room.id, completeListener, errorListener)
 
-    /**
-     * Leave a room
-     * */
     fun leaveRoom(
             roomId: Int,
             completeListener: OnCompleteListener,
