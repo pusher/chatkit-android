@@ -73,8 +73,8 @@ chatManager.connect(
                 new UserSubscriptionListeners(
                         new CurrentUserListener() {
                             @Override
-                            public void onCurrentUser(@NonNull CurrentUser user) {
-                                Log.d(TAG, "onCurrentUser");
+                            public void currentUserReceived(@NonNull CurrentUser user) {
+                                Log.d(TAG, "currentUserReceived");
                                 currentUser = user;
 
                                 joinOrCreateRoom();

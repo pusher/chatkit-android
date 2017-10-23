@@ -6,7 +6,6 @@ import com.pusher.chatkit.ChatManager;
 import com.pusher.chatkit.ChatkitTokenProvider;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
-import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.UserSubscriptionListenersAdapter;
 
@@ -42,7 +41,7 @@ public class MyApplication extends Application {
         chatManager.connect(
                 new UserSubscriptionListenersAdapter(){
                     @Override
-                    public void onCurrentUser(CurrentUser currentUser) {
+                    public void currentUserReceived(CurrentUser currentUser) {
                         MyApplication.this.currentUser = currentUser;
                         if(currentUserListener != null){
                             currentUserListener.onCurrentUser(currentUser);
@@ -57,8 +56,8 @@ public class MyApplication extends Application {
                     }
 
                     @Override
-                    public void onRemovedFromRoom(Room room) {
-                        super.onRemovedFromRoom(room);
+                    public void removedFromRoom(Room room) {
+                        super.removedFromRoom(room);
                         Timber.d("Removed from room: %s", room);
                     }
                 });

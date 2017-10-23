@@ -5,26 +5,65 @@ import elements.Error;
 /**
  * Adapterful of empty implementations.
  * */
-public abstract class UserSubscriptionListenersAdapter implements UserSubscriptionListeners {
+public class UserSubscriptionListenersAdapter implements UserSubscriptionListener {
+
+    @Override
+    public void onNewMessage(Message message) {
+
+    }
+
+    @Override
+    public void userStartedTyping(User user) {
+
+    }
+
+    @Override
+    public void userStoppedTyping(User user) {
+
+    }
+
+    @Override
+    public void userJoined(User user) {
+
+    }
+
+    @Override
+    public void userLeft(User user) {
+
+    }
+
+    @Override
+    public void userCameOnline(User user) {
+
+    }
+
+    @Override
+    public void userWentOffline(User user) {
+
+    }
+
+    @Override
+    public void usersUpdated() {
+
+    }
 
     @Override
     public void onError(Error error) {}
 
     @Override
-    public void onCurrentUser(CurrentUser currentUser) {}
+    public void currentUserReceived(CurrentUser currentUser) {}
 
     @Override
-    public void onRemovedFromRoom(Room room) {}
+    public void addedToRoom(Room room) {
+
+    }
 
     @Override
-    public void onUserJoined(int roomId, String userId) {}
+    public void removedFromRoom(Room room) {}
 
     @Override
-    public void onUserLeft(int roomId, String userId) {}
+    public void roomDeleted(int roomId) {}
 
     @Override
-    public void onRoomDeleted(int roomId) {}
-
-    @Override
-    public void onRoomUpdated(Room room) {}
+    public void roomUpdated(Room room) {}
 }

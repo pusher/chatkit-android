@@ -97,9 +97,9 @@ class ChatManager(
 
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
-    fun connect(listeners: UserSubscriptionListeners){
+    fun connect(listener: UserSubscriptionListener){
         val mainThreadListeners = ThreadedUserSubscriptionListeners.from(
-                listeners = listeners,
+                listener = listener,
                 thread = Handler(Looper.getMainLooper()))
 
         val path = "users"
@@ -123,11 +123,11 @@ private constructor(
 )
 {
     companion object {
-        fun from(listeners: UserSubscriptionListeners, thread: Handler): ThreadedUserSubscriptionListeners{
+        fun from(listener: UserSubscriptionListener, thread: Handler): ThreadedUserSubscriptionListeners{
             return ThreadedUserSubscriptionListeners(
-                    currentUserListener = CurrentUserListener { user -> thread.post { listeners.onCurrentUser(user) } },
-                    errorListener = ErrorListener { error -> listeners.onError(error) },
-                    removedFromRoomListener = RemovedFromRoomListener { room -> listeners.onRemovedFromRoom(room) }
+                    currentUserListener = CurrentUserListener { user -> thread.post { listener.currentUserReceived(user) } },
+                    errorListener = ErrorListener { error -> listener.onError(error) },
+                    removedFromRoomListener = RemovedFromRoomListener { room -> listener.removedFromRoom(room) }
             )
         }
     }

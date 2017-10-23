@@ -17,21 +17,13 @@ import com.pusher.chatkit.RemovedFromRoomListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
 import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
-import com.pusher.chatkit.UserSubscriptionListeners;
-import com.pusher.platform.logger.LogLevel;
-
-import java.util.Map;
-import java.util.TreeMap;
-
 import elements.Error;
-import okhttp3.OkHttpClient;
 
 public class MainActivity extends Activity {
 
     public static final String TAG = "Chatkit Sample";
     public static final String INSTANCE_ID = "v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
 
-    ChatManager chatManager;
     CurrentUser currentUser;
 
     @Override
@@ -43,8 +35,8 @@ public class MainActivity extends Activity {
         ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
-
-                
+                MainActivity.this.currentUser = user;
+//                displayRooms()
             }
         });
     }
