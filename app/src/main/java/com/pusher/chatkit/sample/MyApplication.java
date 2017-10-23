@@ -5,7 +5,12 @@ import android.app.Application;
 import com.pusher.chatkit.ChatManager;
 import com.pusher.chatkit.ChatkitTokenProvider;
 import com.pusher.chatkit.CurrentUser;
+import com.pusher.chatkit.CurrentUserListener;
+import com.pusher.chatkit.ErrorListener;
+import com.pusher.chatkit.Room;
+import com.pusher.chatkit.UserSubscriptionListenersAdapter;
 
+import elements.Error;
 import timber.log.Timber;
 
 public class MyApplication extends Application {
@@ -16,16 +21,14 @@ public class MyApplication extends Application {
 
     private ChatManager chatManager;
     private CurrentUser currentUser;
-    private ChatkitTokenProvider tokenProvider;
-
-
+    private CurrentUserListener currentUserListener;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Timber.plant(new Timber.DebugTree());
 
-        tokenProvider = new ChatkitTokenProvider(
+        ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
                 TOKEN_PROVIDER_ENDPOINT,
                 USER_NAME
         );
@@ -36,19 +39,42 @@ public class MyApplication extends Application {
                 .tokenProvider(tokenProvider)
                 .build();
 
+        chatManager.connect(
+                new UserSubscriptionListenersAdapter(){
+                    @Override
+                    public void onCurrentUser(CurrentUser currentUser) {
+                        MyApplication.this.currentUser = currentUser;
+                        if(currentUserListener != null){
+                            currentUserListener.onCurrentUser(currentUser);
+                            currentUserListener = null;
+                        }
+                    }
 
+                    @Override
+                    public void onError(Error error) {
+                        super.onError(error);
+                        Timber.d("Error %s", error.toString());
+                    }
 
-
-
-
-
+                    @Override
+                    public void onRemovedFromRoom(Room room) {
+                        super.onRemovedFromRoom(room);
+                        Timber.d("Removed from room: %s", room);
+                    }
+                });
     }
 
-    CurrentUser getCurrentUser(){
-        return null;
+    public void getCurrentUser(CurrentUserListener listener){
+        if(currentUser != null) {
+            listener.onCurrentUser(currentUser);
+            currentUserListener = null;
+        }
+        else{
+            this.currentUserListener = listener;
+        }
     }
 
-    ChatManager getChatManager(){
-        return null;
+    public ChatManager getChatManager(){
+        return chatManager;
     }
 }

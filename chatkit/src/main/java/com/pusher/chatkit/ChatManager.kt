@@ -97,9 +97,7 @@ class ChatManager(
 
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
-    fun connect(
-            listeners: UserSubscriptionListeners
-    ){
+    fun connect(listeners: UserSubscriptionListeners){
         val mainThreadListeners = ThreadedUserSubscriptionListeners.from(
                 listeners = listeners,
                 thread = Handler(Looper.getMainLooper()))
@@ -117,12 +115,6 @@ class ChatManager(
     }
 }
 
-class UserSubscriptionListeners @JvmOverloads constructor(
-        val currentUserListener: CurrentUserListener = CurrentUserListener{},
-        val errorListener: ErrorListener = ErrorListener {},
-        val removedFromRoomListener: RemovedFromRoomListener = RemovedFromRoomListener {}
-)
-
 class ThreadedUserSubscriptionListeners
 private constructor(
         val currentUserListener: CurrentUserListener,
@@ -133,9 +125,9 @@ private constructor(
     companion object {
         fun from(listeners: UserSubscriptionListeners, thread: Handler): ThreadedUserSubscriptionListeners{
             return ThreadedUserSubscriptionListeners(
-                    currentUserListener = CurrentUserListener { user -> thread.post { listeners.currentUserListener.onCurrentUser(user) } },
-                    errorListener = ErrorListener { error -> listeners.errorListener.onError(error) },
-                    removedFromRoomListener = RemovedFromRoomListener { room -> listeners.removedFromRoomListener.removedFromRoom(room) }
+                    currentUserListener = CurrentUserListener { user -> thread.post { listeners.onCurrentUser(user) } },
+                    errorListener = ErrorListener { error -> listeners.onError(error) },
+                    removedFromRoomListener = RemovedFromRoomListener { room -> listeners.onRemovedFromRoom(room) }
             )
         }
     }

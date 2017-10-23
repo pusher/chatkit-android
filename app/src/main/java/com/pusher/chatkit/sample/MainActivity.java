@@ -39,49 +39,14 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Map<String, String> tokenParams = new TreeMap<>();
 
-        ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
-                "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/c090a50e-3e0e-4d05-96b0-a967ee4717ad/token?instance_id=v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad",
-                "zan",
-                tokenParams,
-                new OkHttpClient()
-        );
+        ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
+            @Override
+            public void onCurrentUser(@NonNull CurrentUser user) {
 
-        chatManager = new ChatManager(
-                INSTANCE_ID,
-                getApplicationContext(),
-                tokenProvider,
-                null,
-                LogLevel.VERBOSE
-        );
-
-
-        chatManager.connect(
-                new UserSubscriptionListeners(
-                        new CurrentUserListener() {
-                            @Override
-                            public void onCurrentUser(@NonNull CurrentUser user) {
-                                Log.d(TAG, "onCurrentUser");
-                                currentUser = user;
-
-                                joinOrCreateRoom();
-                            }
-                        },
-                        new ErrorListener() {
-                            @Override
-                            public void onError(Error error) {
-                                Log.d(TAG, "onError");
-                            }
-                        },
-                        new RemovedFromRoomListener() {
-                            @Override
-                            public void removedFromRoom(Room room) {
-                                Log.d(TAG, "removed from room");
-                            }
-                        }
-                )
-        );
+                
+            }
+        });
     }
 
     void joinOrCreateRoom(){
