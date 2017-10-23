@@ -6,6 +6,7 @@ import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.tokenProvider.TokenProvider
+import elements.ErrorResponse
 import elements.Subscription
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
@@ -137,7 +138,6 @@ class CurrentUser(
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 onSuccess = { response ->
-
                     val message = GSON.fromJson<MessageSendingResponse>(response.body()!!.charStream(), MessageSendingResponse::class.java)
                     onCompleteListener.onMessage(message.messageId)
                 },
@@ -145,14 +145,36 @@ class CurrentUser(
         )
     }
 
-    fun addUsers(){
-        TODO()
-    }
+    fun addUsers(roomId: Int, users: Array<User>, completeListener: OnCompleteListener, errorListener: ErrorListener) = addUsers(roomId, users.map { id }.toTypedArray(), completeListener, errorListener)
+    fun addUsers(roomId: Int, userIds: Array<String>, completeListener: OnCompleteListener, errorListener: ErrorListener) = addOrRemoveUsers("add", roomId, userIds, completeListener, errorListener)
 
-    fun removeUsers(){
-        TODO()
-    }
+    fun removeUsers(roomId: Int, users: Array<User>, completeListener: OnCompleteListener, errorListener: ErrorListener) = removeUsers(roomId, users.map { id }.toTypedArray(), completeListener, errorListener)
+    fun removeUsers(roomId: Int, userIds: Array<String>, completeListener: OnCompleteListener, errorListener: ErrorListener) = addOrRemoveUsers("remove", roomId, userIds, completeListener, errorListener)
 
+    private fun addOrRemoveUsers(
+            operation: String,
+            roomId: Int,
+            userIds: Array<String>,
+            completeListener: OnCompleteListener,
+            errorListener: ErrorListener){
+
+        val data = object {
+            val userIds = userIds
+        }
+
+        val path = "/rooms/$roomId/users/$operation"
+        instance.request(
+                options = RequestOptions(
+                        method = "PUT",
+                        path = path,
+                        body = GSON.toJson(data)
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { completeListener.onComplete() },
+                onFailure = { error -> errorListener.onError(error) }
+        )
+    }
 
     /**
      * Update a room
@@ -207,29 +229,45 @@ class CurrentUser(
                     completeListener.onRoom(room)
 
                 },
-                onFailure = { error ->
-                    errorListener.onError(error)
-                }
+                onFailure = { error -> errorListener.onError(error) }
         )
     }
 
     fun joinRoom(room: Room, completeListener: RoomListener,  errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
 
-
-
+    /**
+     * Leave a room
+     * */
+    fun leaveRoom(
+            room: Room,
+            completeListener: OnCompleteListener,
+            errorListener: ErrorListener
+    ){
+        leaveRoom(room.id, completeListener, errorListener)
+    }
 
     /**
      * Leave a room
      * */
     fun leaveRoom(
             roomId: Int,
-            onComplete: Any
+            completeListener: OnCompleteListener,
+            errorListener: ErrorListener
     ){
-        TODO()
+        val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/leave").build().encodedPath()
+
+        instance.request(
+                options = RequestOptions(
+                        method = "POST",
+                        path = path,
+                        body = "" //TODO: this is a horrible OKHTTP hack - POST is required to have a body.
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { completeListener.onComplete() },
+                onFailure = { error -> errorListener.onError(error) }
+        )
     }
-
-    //TODO: All the other shit - typealias, messages for room, etc...
-
 }
 
 data class MessageRequest(val text: String, val userId: String)
