@@ -195,7 +195,7 @@ class CurrentUser(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
-                        body = "" //TODO: this is a horrible OKHTTP hack.
+                        body = "" //TODO: this is a horrible OKHTTP hack - POST is required to have a body.
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
