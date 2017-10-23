@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ChatKit</string>
+    <string name="title_activity_room_list">List of rooms</string>
 </resources>

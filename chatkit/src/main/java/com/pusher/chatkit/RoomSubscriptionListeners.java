@@ -1,8 +1,6 @@
 package com.pusher.chatkit;
 
-import elements.Error;
-
-public interface RoomSubscriptionListeners {
+public interface RoomSubscriptionListeners extends ErrorListener{
     void onNewMessage(Message message);
     void userStartedTyping(User user);
     void userStoppedTyping(User user);
@@ -11,5 +9,4 @@ public interface RoomSubscriptionListeners {
     void userCameOnline(User user);
     void userWentOffline(User user);
     void usersUpdated();
-    void onError(Error error);
 }

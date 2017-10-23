@@ -32,11 +32,20 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
 
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
                 MainActivity.this.currentUser = user;
-//                displayRooms()
+
+
+
             }
         });
     }
