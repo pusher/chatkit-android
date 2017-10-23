@@ -26,6 +26,8 @@ class CurrentUser(
         val tokenParams: ChatkitTokenParams?
 
 ) {
+    val mainThread = Handler(Looper.getMainLooper())
+
     fun updateWithPropertiesOf(newUser: User){
         updatedAt = newUser.updatedAt
         name = newUser.name
@@ -75,11 +77,11 @@ class CurrentUser(
                     roomStore.addOrMerge(room)
                     populateRoomUserStore(room)
 
-                    onRoomCreatedListener.onRoom(room)
+                    mainThread.post { onRoomCreatedListener.onRoom(room) }
 
                 },
                 onFailure = { error ->
-                    onErrorListener.onError(error)
+                    mainThread.post { onErrorListener.onError(error) }
                 }
         )
     }
@@ -201,8 +203,8 @@ class CurrentUser(
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
-                onSuccess = { completeListener.onComplete() },
-                onFailure = { error -> errorListener.onError(error) }
+                onSuccess = { mainThread.post {  completeListener.onComplete() } },
+                onFailure = { error -> mainThread.post { errorListener.onError(error) } }
         )
     }
 
@@ -228,8 +230,8 @@ class CurrentUser(
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
-                onSuccess = { completeListener.onComplete() },
-                onFailure = { error -> errorListener.onError(error) }
+                onSuccess = { mainThread.post {  completeListener.onComplete() } },
+                onFailure = { error -> mainThread.post { errorListener.onError(error) } }
         )
     }
 
@@ -243,7 +245,6 @@ class CurrentUser(
             completeListener: RoomListener,
             errorListener: ErrorListener
     ){
-        val mainThread = Handler(Looper.getMainLooper())
         val completeListener = RoomListener { room -> mainThread.post { completeListener.onRoom(room) }}
         val errorListener = ErrorListener { error -> mainThread.post { errorListener.onError(error) }}
 
