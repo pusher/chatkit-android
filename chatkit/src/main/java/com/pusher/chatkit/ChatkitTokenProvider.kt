@@ -21,7 +21,7 @@ class ChatkitTokenProvider
 @JvmOverloads constructor(
         val endpoint: String,
         val userId: String,
-        val authData: CustomData,
+        val authData: CustomData = TreeMap(),
         val client: OkHttpClient = OkHttpClient(),
         val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 

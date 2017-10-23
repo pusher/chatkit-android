@@ -27,6 +27,54 @@ class ChatManager(
                 .create()
     }
 
+    class Builder {
+
+        private var instanceId: String? = null
+        private var context: Context? = null
+        private var tokenProvider: TokenProvider? = null
+        private var tokenParams: ChatkitTokenParams? = null
+        private var logLevel = LogLevel.DEBUG
+
+        fun instanceId(instanceId: String): Builder{
+            this.instanceId = instanceId
+            return this
+        }
+
+        fun context(context: Context): Builder{
+            this.context = context
+            return this
+        }
+
+        fun tokenProvider(tokenProvider:  TokenProvider): Builder{
+            this.tokenProvider = tokenProvider
+            return this
+        }
+
+        fun tokenParams(tokenParams: ChatkitTokenParams): Builder{
+            this.tokenParams = tokenParams
+            return this
+        }
+
+        fun logLevel(logLevel: LogLevel): Builder{
+            this.logLevel = logLevel
+            return this
+        }
+
+        fun build(): ChatManager {
+            if(instanceId == null){
+                throw Error("setInstanceId() not called")
+            }
+            if(context == null){
+                throw Error("setContext() not called")
+            }
+            if(tokenProvider == null){
+                throw Error("setTokenProvider() not called")
+            }
+
+            return ChatManager(instanceId!!, context!!, tokenProvider, tokenParams, logLevel)
+        }
+    }
+
     var currentUser: CurrentUser? = null
     val serviceName = "chatkit"
     val serviceVersion = "v1"
