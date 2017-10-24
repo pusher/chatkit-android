@@ -66,6 +66,7 @@ public class ChatRoomActivity extends AppCompatActivity {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
                 Room room = user.getRoom(roomId);
+                setTitle(room.getName());
                 user.subscribeToRoom(room, new RoomSubscriptionListenersAdapter() {
                     @Override
                     public void onNewMessage(Message message) {
