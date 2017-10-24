@@ -56,9 +56,9 @@ public class MyApplication extends Application {
                     }
 
                     @Override
-                    public void removedFromRoom(Room room) {
-                        super.removedFromRoom(room);
-                        Timber.d("Removed from room: %s", room);
+                    public void removedFromRoom(int roomId) {
+                        super.removedFromRoom(roomId);
+                        Timber.d("Removed from room: %d", roomId);
                     }
                 });
     }
