@@ -2,6 +2,7 @@ package com.pusher.chatkit.sample;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -24,7 +25,6 @@ import com.pusher.chatkit.RoomListener;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import elements.Error;
 import timber.log.Timber;
@@ -52,12 +52,7 @@ public class RoomListActivity extends Activity {
         recyclerView = findViewById(R.id.recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(roomsAdapter);
-    }
 
-
-    @Override
-    protected void onResume() {
-        super.onResume();
 
         ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
@@ -65,6 +60,15 @@ public class RoomListActivity extends Activity {
                 roomsAdapter.addRooms(user.rooms());
             }
         });
+
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+
     }
 
     private void showNewRoomDialog() {
@@ -91,6 +95,9 @@ public class RoomListActivity extends Activity {
     }
 
     private void roomClicked(Room room){
+        Intent intent = new Intent(this, ChatRoomActivity.class);
+        intent.putExtra(ChatRoomActivity.EXTRA_ROOM_ID, room.getId());
+        startActivity(intent);
     }
 
     private void createNewRoom(final String name){
@@ -119,10 +126,6 @@ public class RoomListActivity extends Activity {
 
 
     }
-
-
-
-
 
 
     class RoomsAdapter extends RecyclerView.Adapter<RoomViewHolder> {

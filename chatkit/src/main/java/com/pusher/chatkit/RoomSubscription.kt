@@ -1,11 +1,15 @@
 package com.pusher.chatkit
 
+import android.os.Handler
+import android.os.Looper
 import com.pusher.platform.SubscriptionListeners
 import elements.Error
 import elements.Headers
 import elements.SubscriptionEvent
 
 class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalUserStore, val listeners: RoomSubscriptionListeners) {
+
+    val mainThread: Handler = Handler(Looper.getMainLooper())
 
     val subscriptionListeners = SubscriptionListeners(
             onOpen = { handleOpen(it) },
@@ -31,11 +35,11 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
                     onComplete = UsersListener { users ->
                         if(users.isNotEmpty())
                             message.user = users[0]
-                        listeners.onNewMessage(message)
+                        mainThread.post { listeners.onNewMessage(message) }
 
                     },
                     onFailure = ErrorListener {
-                        listeners.onNewMessage(message)
+                        mainThread.post { listeners.onNewMessage(message) }
                     })
         }
         else {
@@ -45,6 +49,6 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
     }
 
     fun handleError(error: Error){
-        listeners.onError(error)
+        mainThread.post { listeners.onError(error) }
     }
 }
