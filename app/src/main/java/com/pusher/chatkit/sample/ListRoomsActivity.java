@@ -1,20 +1,19 @@
 package com.pusher.chatkit.sample;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.pusher.chatkit.CurrentUser;
@@ -29,30 +28,22 @@ import java.util.Collection;
 import elements.Error;
 import timber.log.Timber;
 
-public class RoomListActivity extends Activity {
+public class ListRoomsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private RoomsAdapter roomsAdapter;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_room_list);
-
-        Button createNewRoomButton = findViewById(R.id.create_room_btn);
-
-        createNewRoomButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showNewRoomDialog();
-            }
-        });
+        setContentView(R.layout.activity_list_rooms);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         roomsAdapter = new RoomsAdapter();
-        recyclerView = findViewById(R.id.recycler);
+        recyclerView = findViewById(com.pusher.chatkit.sample.R.id.recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(roomsAdapter);
-
 
         ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
@@ -61,26 +52,25 @@ public class RoomListActivity extends Activity {
             }
         });
 
-    }
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showNewRoomDialog();
+            }
+        });
     }
 
     private void showNewRoomDialog() {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(RoomListActivity.this);
-        builder.setView(R.layout.create_room);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(com.pusher.chatkit.sample.R.layout.create_room);
 
         // Add the buttons
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
 
-                final EditText roomTitle = ((AlertDialog) dialog).findViewById(R.id.create_room_title);
+                final EditText roomTitle = ((AlertDialog) dialog).findViewById(com.pusher.chatkit.sample.R.id.create_room_title);
                 createNewRoom(roomTitle.getText().toString());
             }
         });
@@ -144,10 +134,8 @@ public class RoomListActivity extends Activity {
 
         @Override
         public RoomViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            TextView text = (TextView) LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.room_title_text, parent, false);
-
-            return new RoomViewHolder(text);
+            ViewGroup roomItem = (ViewGroup) LayoutInflater.from(parent.getContext()).inflate(R.layout.room_list_item, parent, false);
+            return new RoomViewHolder(roomItem);
         }
 
         @Override
@@ -165,10 +153,14 @@ public class RoomListActivity extends Activity {
 
         private Room room;
         TextView roomNameView;
+        TextView roomIdView;
 
-        RoomViewHolder(TextView itemView) {
+        RoomViewHolder(View itemView) {
             super(itemView);
-            roomNameView = itemView;
+
+            roomNameView = itemView.findViewById(R.id.room_name);
+            roomIdView = itemView.findViewById(R.id.room_id);
+
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -179,8 +171,9 @@ public class RoomListActivity extends Activity {
 
         void setRoom(Room room) {
             this.room = room;
-            String roomTitle = room.getId() + " - " + room.getName();
-            roomNameView.setText(roomTitle);
+            roomNameView.setText(room.getName());
+            roomIdView.setText(String.valueOf(room.getId()));
         }
     }
+
 }

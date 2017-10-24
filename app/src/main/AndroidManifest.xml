@@ -14,33 +14,24 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- <activity android:name=".MainActivity"> -->
-        <!-- <intent-filter> -->
-        <!-- <action android:name="android.intent.action.MAIN" /> -->
-
-
-        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
-        <!-- </intent-filter> -->
-        <!-- </activity> -->
-
         <activity
-            android:name=".RoomListActivity"
-            android:label="@string/title_activity_room_list"
+            android:name=".ChatRoomActivity"
+            android:label="@string/title_activity_chat_room"
+            android:parentActivityName=".ListRoomsActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.pusher.chatkit.sample.ListRoomsActivity" />
+        </activity>
+        <activity
+            android:name=".ListRoomsActivity"
+            android:label="@string/title_activity_list_rooms"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".ChatRoomActivity"
-            android:label="@string/title_activity_chat_room"
-            android:parentActivityName=".RoomListActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.pusher.chatkit.sample.RoomListActivity" />
         </activity>
     </application>
 
