@@ -2,11 +2,12 @@ package com.pusher.chatkit
 
 import android.os.Handler
 import android.os.Looper
+import android.provider.ContactsContract
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
+import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import elements.ErrorResponse
 import elements.Subscription
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
@@ -23,7 +24,8 @@ class CurrentUser(
         rooms: List<Room>,
         val instance: Instance,
         val tokenProvider: TokenProvider,
-        val tokenParams: ChatkitTokenParams?
+        val tokenParams: ChatkitTokenParams?,
+        val logger: Logger
 
 ) {
     val mainThread = Handler(Looper.getMainLooper())
@@ -34,7 +36,7 @@ class CurrentUser(
         customData = newUser.customData
     }
 
-    var presenceSubscription: Subscription? = null
+    var presenceSubscription: PresenceSubscription? = null
     val roomStore: RoomStore
 
     init {
@@ -238,7 +240,7 @@ class CurrentUser(
     /**
      * Join a room
      * */
-    fun joinRoom(room: Room, completeListener: RoomListener,  errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
+    fun joinRoom(room: Room, completeListener: RoomListener, errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
 
     fun joinRoom(
             roomId: Int,
@@ -293,6 +295,19 @@ class CurrentUser(
                 tokenParams = tokenParams,
                 onSuccess = { completeListener.onComplete() },
                 onFailure = { error -> errorListener.onError(error) }
+        )
+    }
+
+    fun establishPresenceSubscription(listeners: ThreadedUserSubscriptionListeners) {
+
+        presenceSubscription = PresenceSubscription(
+                instance = instance,
+                path = "/users/$id/presence",
+                listeners = listeners,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                userStore = userStore,
+                logger = logger
         )
     }
 }

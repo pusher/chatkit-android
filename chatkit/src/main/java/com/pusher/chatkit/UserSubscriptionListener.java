@@ -1,6 +1,6 @@
 package com.pusher.chatkit;
 
-public interface UserSubscriptionListener extends ErrorListener {
+public interface UserSubscriptionListener extends ErrorListener, PresenceSubscriptionListeners {
     void currentUserReceived(CurrentUser currentUser);
 
     void userStartedTyping(User user);

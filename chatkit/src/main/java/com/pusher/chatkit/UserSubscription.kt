@@ -1,7 +1,5 @@
 package com.pusher.chatkit
 
-import android.os.Handler
-import android.os.Looper
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
@@ -9,6 +7,28 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
+
+
+data class InitialState(
+        val rooms: List<Room>, //TODO: might need to use a different subsctructure for this
+        val currentUser: User
+)
+
+//Added to room
+data class RoomEvent(
+        val room: Room
+)
+
+//Room deleted, removed from room
+data class RoomIdEvent(
+        val roomId: Int
+)
+
+//User joined or left
+data class UserChangeEvent(
+        val roomId: Int,
+        val userId: String
+)
 
 class UserSubscription(
         val instance: Instance,
@@ -19,8 +39,6 @@ class UserSubscription(
         val logger: Logger,
         val listeners: ThreadedUserSubscriptionListeners
 ) {
-
-    private val mainThread = Handler(Looper.getMainLooper())
 
     var subscription: Subscription? = null
     lateinit var headers: Headers
@@ -158,6 +176,7 @@ class UserSubscription(
         var wasExistingCurrentUser = currentUser != null
 
         if(currentUser != null){
+            currentUser?.presenceSubscription?.unsubscribe()
             currentUser?.updateWithPropertiesOf(initialState.currentUser)
         }
         else{
@@ -174,7 +193,8 @@ class UserSubscription(
                     rooms = initialState.rooms,
                     instance = instance,
                     tokenProvider = tokenProvider,
-                    tokenParams = tokenParams
+                    tokenParams = tokenParams,
+                    logger = logger
             )
         }
 
@@ -198,7 +218,7 @@ class UserSubscription(
                         if(wasExistingCurrentUser){
                             updateExistingRooms(roomsForConnection)
                         }
-                        listeners.currentUserListener(currentUser!!)
+                        subscribePresenceAndCompleteCurrentUser()
                     },
                     onError = ErrorListener { error ->
                         logger.error("Failed fetching user details $error")
@@ -206,8 +226,16 @@ class UserSubscription(
                     })
         }
         else {
-            listeners.currentUserListener(currentUser!!)
+            subscribePresenceAndCompleteCurrentUser()
         }
+    }
+
+    private fun subscribePresenceAndCompleteCurrentUser() {
+
+        currentUser?.establishPresenceSubscription(listeners)
+
+
+        listeners.currentUserListener(currentUser!!)
     }
 
     private fun fetchDetailsForUsers(

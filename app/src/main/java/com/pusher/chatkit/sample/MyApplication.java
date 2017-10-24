@@ -6,7 +6,6 @@ import com.pusher.chatkit.ChatManager;
 import com.pusher.chatkit.ChatkitTokenProvider;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
-import com.pusher.chatkit.Room;
 import com.pusher.chatkit.UserSubscriptionListenersAdapter;
 
 import elements.Error;

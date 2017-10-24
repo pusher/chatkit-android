@@ -10,8 +10,6 @@ import com.pusher.platform.Instance
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.tokenProvider.TokenProvider
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 class ChatManager(
         instanceId: String,
@@ -124,7 +122,9 @@ private constructor(
         val roomUpdated: (Room) -> Unit,
         val roomDeleted: (Int) -> Unit,
         val userJoined: (User, Room) -> Unit,
-        val userLeft: (User, Room) -> Unit
+        val userLeft: (User, Room) -> Unit,
+        val userCameOnline: (User) -> Unit,
+        var userWentOffline: (User) -> Unit
 )
 {
     companion object {
@@ -137,38 +137,14 @@ private constructor(
                     roomUpdated = { room -> thread.post { listener.roomUpdated(room) }},
                     roomDeleted = { roomId -> thread.post { listener.roomDeleted(roomId) }},
                     userJoined = { user, room -> thread.post { listener.userJoined(user, room) }},
-                    userLeft = { user, room -> thread.post { listener.userLeft(user, room) }}
+                    userLeft = { user, room -> thread.post { listener.userLeft(user, room) }},
+                    userCameOnline = { user -> thread.post { listener.userCameOnline(user) }},
+                    userWentOffline = { user -> thread.post { listener.userWentOffline(user) }}
             )
         }
     }
 }
 
-//
-//enum class EventType(type: String){
-//    INITIAL_STATE("initial_state"),
-//    ADDED_TO_ROOM("added_to_room"),
-//    REMOVED_FROM_ROOM("removed_from_room"),
-//    NEW_MESSAGE("new_message"),
-//    ROOM_UPDATED("room_updated"),
-//    ROOM_DELETED("room_deleted"),
-//    USER_JOINED("user_joined"),
-//    USER_LEFT("user_left")
-//}
-
-data class InitialState(
-        val rooms: List<Room>, //TODO: might need to use a different subsctructure for this
-        val currentUser: User
-)
-
-//Added to room
-data class RoomEvent(
-        val room: Room
-)
-
-//Room deleted, removed from room
-data class RoomIdEvent(
-        val roomId: Int
-)
 
 data class Message(
         val id: Int,
@@ -182,100 +158,12 @@ data class Message(
         var room: Room?
 )
 
-//User joined or left
-data class UserChangeEvent(
-        val roomId: Int,
-        val userId: String
-)
-
 data class ChatEvent(
         val eventName: String,
         val userId: String? = null,
         val timestamp: String,
         val data: JsonElement)
 
-class User(
-        val id: String,
-        val createdAt: String,
-        var updatedAt: String,
-
-        var name: String?,
-        var avatarURL: String?,
-        var customData: CustomData?
-) {
-    fun updateWithPropertiesOfUser(user: User) {
-        updatedAt = user.updatedAt
-        name = user.name
-        avatarURL = user.avatarURL
-        customData = user.customData
-    }
-}
-
-
-class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
-
-    fun setOfRooms(): Set<Room>  = rooms.values.toSet()
-
-    fun addOrMerge(room: Room) {
-        if (rooms[room.id] != null){
-            rooms[room.id]!!.updateWithPropertiesOfRoom(room)
-        }
-        else{
-            rooms.put(room.id, room)
-        }
-    }
-}
-
-class UserStore {
-    private val members: ConcurrentMap<String, User>
-    init {
-        members = ConcurrentHashMap()
-    }
-
-    fun addOrMerge(user: User){
-        if(members[user.id] != null){
-            members[user.id]!!.updateWithPropertiesOfUser(user)
-        }
-        else{
-            members.put(user.id, user)
-        }
-    }
-
-    fun remove(userId: String) {
-        members.remove(userId)
-    }
-}
 
 typealias CustomData = MutableMap<String, String>
 
-data class Room(
-        val id: Int,
-        val createdById: String,
-        var name: String,
-        var isPrivate: Boolean,
-        val createdAt: String,
-        var updatedAt: String,
-        var deletedAt: String,
-        var memberUserIds: MutableList<String>,
-        private var userStore: UserStore?
-){
-
-    fun userStore(): UserStore {
-        if(userStore == null) userStore = UserStore()
-        return userStore!!
-    }
-
-    fun removeUser(userId: String){
-        memberUserIds.remove(userId)
-        userStore().remove(userId)
-    }
-
-
-    fun updateWithPropertiesOfRoom(updatedRoom: Room){
-        name = updatedRoom.name
-        isPrivate = updatedRoom.isPrivate
-        updatedAt = updatedRoom.updatedAt
-        deletedAt = updatedRoom.deletedAt
-        memberUserIds = updatedRoom.memberUserIds
-    }
-}
