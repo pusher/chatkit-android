@@ -117,17 +117,27 @@ class ChatManager(
 
 class ThreadedUserSubscriptionListeners
 private constructor(
-        val currentUserListener: CurrentUserListener,
-        val errorListener: ErrorListener,
-        val removedFromRoomListener: RemovedFromRoomListener
+        val currentUserListener: (CurrentUser) -> Unit,
+        val onError: (elements.Error) -> Unit,
+        val removedFromRoom: (Int) -> Unit,
+        val addedToRoom: (Room) -> Unit,
+        val roomUpdated: (Room) -> Unit,
+        val roomDeleted: (Int) -> Unit,
+        val userJoined: (User, Room) -> Unit,
+        val userLeft: (User, Room) -> Unit
 )
 {
     companion object {
         fun from(listener: UserSubscriptionListener, thread: Handler): ThreadedUserSubscriptionListeners{
             return ThreadedUserSubscriptionListeners(
-                    currentUserListener = CurrentUserListener { user -> thread.post { listener.currentUserReceived(user) } },
-                    errorListener = ErrorListener { error -> listener.onError(error) },
-                    removedFromRoomListener = RemovedFromRoomListener { room -> listener.removedFromRoom(room) }
+                    currentUserListener = { user -> thread.post { listener.currentUserReceived(user) }},
+                    onError = { error -> thread.post {  listener.onError(error) }},
+                    removedFromRoom = { roomId -> thread.post { listener.removedFromRoom(roomId) }},
+                    addedToRoom = { room -> thread.post { listener.addedToRoom(room) }},
+                    roomUpdated = { room -> thread.post { listener.roomUpdated(room) }},
+                    roomDeleted = { roomId -> thread.post { listener.roomDeleted(roomId) }},
+                    userJoined = { user, room -> thread.post { listener.userJoined(user, room) }},
+                    userLeft = { user, room -> thread.post { listener.userLeft(user, room) }}
             )
         }
     }
@@ -150,11 +160,13 @@ data class InitialState(
         val currentUser: User
 )
 
-data class AddedToRoom(
+//Added to room
+data class RoomEvent(
         val room: Room
 )
 
-data class RemovedFromRoomPayload(
+//Room deleted, removed from room
+data class RoomIdEvent(
         val roomId: Int
 )
 
@@ -170,24 +182,11 @@ data class Message(
         var room: Room?
 )
 
-data class RoomUpdated(
-        val room: Room
-)
-
-data class RoomDeleted(
-        val roomId: Int
-)
-
-data class UserJoined(
+//User joined or left
+data class UserChangeEvent(
         val roomId: Int,
         val userId: String
 )
-
-data class UserLeft(
-        val roomId: Int,
-        val userId: String
-)
-
 
 data class ChatEvent(
         val eventName: String,
@@ -241,6 +240,10 @@ class UserStore {
             members.put(user.id, user)
         }
     }
+
+    fun remove(userId: String) {
+        members.remove(userId)
+    }
 }
 
 typealias CustomData = MutableMap<String, String>
@@ -253,13 +256,18 @@ data class Room(
         val createdAt: String,
         var updatedAt: String,
         var deletedAt: String,
-        var memberUserIds: List<String>,
+        var memberUserIds: MutableList<String>,
         private var userStore: UserStore?
 ){
 
     fun userStore(): UserStore {
         if(userStore == null) userStore = UserStore()
         return userStore!!
+    }
+
+    fun removeUser(userId: String){
+        memberUserIds.remove(userId)
+        userStore().remove(userId)
     }
 
 

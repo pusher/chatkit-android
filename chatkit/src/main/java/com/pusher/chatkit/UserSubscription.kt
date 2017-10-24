@@ -39,17 +39,17 @@ class UserSubscription(
                         },
                         onError = { error ->
                             logger.warn("Error $error")
-                            listeners.errorListener.onError(error)
+                            listeners.onError(error)
                         },
                         onSubscribe = {
-                            logger.warn("onSubscribe")
+                            logger.warn("Subscription established.")
                         },
                         onRetrying = {
-                            logger.warn("onRetrying")
+                            logger.warn("Subscription lost. Trying again.")
                         },
                         onEnd = {
                             error ->
-                            logger.warn("onEnd $error")
+                            logger.warn("Subscription ended with: $error")
 
                         }
                 ),
@@ -69,31 +69,86 @@ class UserSubscription(
                 handleInitialState(body)
             }
             "added_to_room" -> {
-                val body = ChatManager.GSON.fromJson<AddedToRoom>(chatEvent.data, AddedToRoom::class.java)
-//                body.handle()
-//                handleAddedToRoom(body)
+                val body = ChatManager.GSON.fromJson<RoomEvent>(chatEvent.data, RoomEvent::class.java)
+                handleAddedToRoom(body.room)
             }
             "removed_from_room" -> {
-
-            }
-            "new_message" -> {
-
+                val body = ChatManager.GSON.fromJson<RoomIdEvent>(chatEvent.data, RoomIdEvent::class.java)
+                handleRemovedFromRoom(body.roomId)
             }
             "room_updated" -> {
-
+                val body = ChatManager.GSON.fromJson<RoomEvent>(chatEvent.data, RoomEvent::class.java)
+                handleRoomUpdated(body.room)
             }
             "room_deleted" -> {
-
+                val body = ChatManager.GSON.fromJson<RoomIdEvent>(chatEvent.data, RoomIdEvent::class.java)
+                handleRoomDeleted(body.roomId)
             }
             "user_joined" -> {
+                val body = ChatManager.GSON.fromJson<UserChangeEvent>(chatEvent.data, UserChangeEvent::class.java)
+                handleUserJoined(body.userId, body.roomId)
 
             }
             "user_left" -> {
-
+                val body = ChatManager.GSON.fromJson<UserChangeEvent>(chatEvent.data, UserChangeEvent::class.java)
+                handleUserLeft(body.userId, body.roomId)
             }
             else -> { throw Error("Invalid event name: ${chatEvent.eventName}") }
         }
     }
+
+    private fun handleUserLeft(userId: String, roomId: Int) {
+        userStore.findOrGetUser(
+                id = userId,
+                userListener = UserListener { user ->
+                    val room = currentUser?.getRoom(roomId)
+                    room!!.removeUser(userId)
+                    listeners.userLeft(user, room)
+                },
+                errorListener = ErrorListener { error ->
+                    logger.warn("User left a room but I failed getting it: $userId")
+                    listeners.onError(error)
+                })
+    }
+
+    private fun handleUserJoined(userId: String, roomId: Int) {
+
+        userStore.findOrGetUser(
+                id = userId,
+                userListener = UserListener { user ->
+                    val room = currentUser?.getRoom(roomId)
+                    room!!.userStore().addOrMerge(user)
+
+                    listeners.userJoined(user, room)
+                },
+                errorListener = ErrorListener { error ->
+                    logger.warn("User joined a room but I failed getting it: $userId")
+                    listeners.onError(error)
+                })
+    }
+
+    private fun handleRoomDeleted(roomId: Int) {
+        currentUser?.roomStore?.rooms?.remove(roomId)
+        listeners.roomDeleted(roomId)
+    }
+
+    private fun handleRoomUpdated(room: Room) {
+        currentUser?.roomStore?.addOrMerge(room)
+        listeners.roomUpdated(room)
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun handleRemovedFromRoom(roomId: Int) {
+        currentUser?.roomStore?.rooms?.remove(roomId)
+        listeners.removedFromRoom(roomId)
+    }
+
+    private fun handleAddedToRoom(room: Room){
+        currentUser?.roomStore?.addOrMerge(room)
+        listeners.addedToRoom(room)
+    }
+
+
 
     private var currentUser: CurrentUser? = null
 
@@ -143,15 +198,15 @@ class UserSubscription(
                         if(wasExistingCurrentUser){
                             updateExistingRooms(roomsForConnection)
                         }
-                        listeners.currentUserListener.onCurrentUser(currentUser!!)
+                        listeners.currentUserListener(currentUser!!)
                     },
                     onError = ErrorListener { error ->
                         logger.error("Failed fetching user details $error")
-                        listeners.errorListener.onError(error)
+                        listeners.onError(error)
                     })
         }
         else {
-            listeners.currentUserListener.onCurrentUser(currentUser!!)
+            listeners.currentUserListener(currentUser!!)
         }
     }
 
@@ -183,7 +238,7 @@ class UserSubscription(
         val roomsUserIsNoLongerAMemberOf = currentUser!!.rooms().subtract(roomsForConnection)
 
         roomsUserIsNoLongerAMemberOf.forEach { room ->
-            listeners.removedFromRoomListener.removedFromRoom(room)
+            listeners.removedFromRoom(room.id)
         }
     }
 }

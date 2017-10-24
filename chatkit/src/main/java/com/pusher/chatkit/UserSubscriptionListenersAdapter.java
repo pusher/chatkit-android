@@ -8,11 +8,6 @@ import elements.Error;
 public class UserSubscriptionListenersAdapter implements UserSubscriptionListener {
 
     @Override
-    public void onNewMessage(Message message) {
-
-    }
-
-    @Override
     public void userStartedTyping(User user) {
 
     }
@@ -23,12 +18,12 @@ public class UserSubscriptionListenersAdapter implements UserSubscriptionListene
     }
 
     @Override
-    public void userJoined(User user) {
+    public void userJoined(User user, Room room) {
 
     }
 
     @Override
-    public void userLeft(User user) {
+    public void userLeft(User user, Room room) {
 
     }
 
@@ -59,7 +54,7 @@ public class UserSubscriptionListenersAdapter implements UserSubscriptionListene
     }
 
     @Override
-    public void removedFromRoom(Room room) {}
+    public void removedFromRoom(int roomId) {}
 
     @Override
     public void roomDeleted(int roomId) {}
