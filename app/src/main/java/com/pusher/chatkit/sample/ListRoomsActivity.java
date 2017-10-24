@@ -45,7 +45,7 @@ public class ListRoomsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(roomsAdapter);
 
-        ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
+        ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
                 roomsAdapter.addRooms(user.rooms());
@@ -92,7 +92,7 @@ public class ListRoomsActivity extends AppCompatActivity {
 
     private void createNewRoom(final String name){
 
-        ((MyApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
+        ((ChatApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
 

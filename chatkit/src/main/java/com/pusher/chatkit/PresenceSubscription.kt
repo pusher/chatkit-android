@@ -1,6 +1,5 @@
 package com.pusher.chatkit
 
-import com.google.gson.reflect.TypeToken
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
@@ -25,7 +24,7 @@ class PresenceSubscription(
                 tokenProvider = tokenProvider,
                 listeners = SubscriptionListeners(
                         onEvent = { event ->
-                            val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, SubscriptionEvent::class.java)
+                            val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
 
                             when(chatEvent.eventName){
 
@@ -47,8 +46,8 @@ class PresenceSubscription(
 
                                 }
                                 "join_room_presence_update" -> {
-                                    val userPresences = ChatManager.GSON.fromJson<Array<UserPresence>>(chatEvent.data, Array<UserPresence>::class.java)
-                                    userPresences.forEach { userPresence ->
+                                    val userPresences = ChatManager.GSON.fromJson<UserPresences>(chatEvent.data, UserPresences::class.java)
+                                    userPresences.userStates.forEach { userPresence ->
                                         userStore.findOrGetUser(
                                                 id = userPresence.userId,
                                                 userListener = UserListener { user ->
@@ -61,8 +60,8 @@ class PresenceSubscription(
                                     }
                                 }
                                 "initial_state" -> {
-                                    val userPresences = ChatManager.GSON.fromJson<Array<UserPresence>>(chatEvent.data, Array<UserPresence>::class.java)
-                                    userPresences.forEach { userPresence ->
+                                    val userPresences = ChatManager.GSON.fromJson<UserPresences>(chatEvent.data, UserPresences::class.java)
+                                    userPresences.userStates.forEach { userPresence ->
                                         userStore.findOrGetUser(
                                                 id = userPresence.userId,
                                                 userListener = UserListener { user ->
@@ -91,3 +90,5 @@ class PresenceSubscription(
 data class UserPresence(val state: String, val lastSeenAt: String, val userId: String){
     fun isOnline(): Boolean = state.equals(other = "online", ignoreCase = true)
 }
+
+data class UserPresences(val userStates: Array<UserPresence>)

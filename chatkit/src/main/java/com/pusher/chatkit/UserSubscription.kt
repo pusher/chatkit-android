@@ -1,5 +1,7 @@
 package com.pusher.chatkit
 
+import android.os.Handler
+import android.os.Looper
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
@@ -232,10 +234,12 @@ class UserSubscription(
 
     private fun subscribePresenceAndCompleteCurrentUser() {
 
-        currentUser?.establishPresenceSubscription(listeners)
+        Handler(Looper.getMainLooper()).post {
+            currentUser?.establishPresenceSubscription(listeners)
 
+            listeners.currentUserListener(currentUser!!)
+        }
 
-        listeners.currentUserListener(currentUser!!)
     }
 
     private fun fetchDetailsForUsers(

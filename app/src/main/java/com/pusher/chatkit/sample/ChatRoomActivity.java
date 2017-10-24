@@ -61,7 +61,7 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         roomId = getIntent().getIntExtra(EXTRA_ROOM_ID, -1);
 
-        ((MyApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
+        ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
                 Room room = user.getRoom(roomId);
@@ -108,7 +108,7 @@ public class ChatRoomActivity extends AppCompatActivity {
     }
 
     private void enterMessage(final String message) {
-        ((MyApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
+        ((ChatApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
 
