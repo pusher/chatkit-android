@@ -14,8 +14,8 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 - Creating, joining and deleting rooms
 - Adding and removing users to rooms
 - Sending and receiving messages to and from rooms
-- Seeing who is currently "in" a room
-- Seeing who's currently typing in a room
+- Seeing who is currently in a room
+- Seeing who's currently online
 
 ## Setup
 
@@ -92,7 +92,7 @@ chatManager.connect(
         );
 ```
 
-### all the features in the world
+### Features breakdown
 
 Most operations are performed on the `CurrentUser` instance.
 It has the following params, with `CustomData` being an a Map of any extra params it might have set:
