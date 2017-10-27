@@ -24,12 +24,25 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 Chatkit is currently distributed as a snapshot, so make sure to have the maven snapshots repository added:
 
 ```groovy
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven{
+            url "https://oss.sonatype.org/content/repositories/snapshots"
+        }
+    }
+}
 
 ```
 
 Then add the library to your app's `dependencies` field in `app/build.gradle`
 
 ```groovy
+dependencies {
+    ...
+    api 'com.pusher:chatkit:0.0.1-SNAPSHOT'
+}
 
 ```
 
