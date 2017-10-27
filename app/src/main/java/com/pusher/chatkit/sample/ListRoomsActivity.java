@@ -19,11 +19,16 @@ import android.widget.TextView;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
+import com.pusher.chatkit.Message;
+import com.pusher.chatkit.MessageSentListener;
+import com.pusher.chatkit.OnCompleteListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
+import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import elements.Error;
 import timber.log.Timber;
@@ -47,10 +52,12 @@ public class ListRoomsActivity extends AppCompatActivity {
 
         ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
-            public void onCurrentUser(@NonNull CurrentUser user) {
-                roomsAdapter.addRooms(user.rooms());
+            public void onCurrentUser(@NonNull CurrentUser currentUser) {
+                roomsAdapter.addRooms(currentUser.rooms());
             }
         });
+
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
