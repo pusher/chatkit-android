@@ -48,20 +48,16 @@ To include it in your application, create it with your details, as such:
 
 ```java
 
- ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
-                "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/c090a50e-3e0e-4d05-96b0-a967ee4717ad/token?instance_id=v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad",
-                "zan",
-                tokenParams,
-                new OkHttpClient()
+ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
+                TOKEN_PROVIDER_ENDPOINT,
+                USER_NAME
         );
 
-        chatManager = new ChatManager(
-                INSTANCE_ID,
-                getApplicationContext(),
-                tokenProvider,
-                null,
-                LogLevel.VERBOSE
-        );
+ChatManager chatManager = new ChatManager.Builder()
+                        .instanceId(INSTANCE_ID)
+                        .context(getApplicationContext())
+                        .tokenProvider(tokenProvider)
+                        .build();
 
 ```
 
@@ -255,11 +251,32 @@ currentUser.addUsers(room.getId(), new String[]{"zan", "ham", "vivan"}, new OnCo
                 });
 ```
 
-### Auth!!!
+### Implementing a Token Provider
 
-### Typing indicators & stuff
+In a non-testing application you will need to implement your own Token Provider endpoint, and provide it to the `ChatkitTokenProvider` constructor.
+You can read more about how authentication flow works on the documentation site for it: https://docs.pusher.com/chatkit/authentication/#the-authentication-flow
 
+The core interface to implement on the client is this:
 
+```java
+ ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
+                TOKEN_PROVIDER_ENDPOINT,
+                USER_NAME
+        );
+```
 
+### Who's Online
 
+You will get informed of who is currently online by attaching listeners to the `ChatManager` object.
+
+The methods to implement are defined in `PresenceSubscriptionListeners`:
+
+```java
+
+public interface PresenceSubscriptionListeners {
+    void userCameOnline(User user);
+    void userWentOffline(User user);
+}
+
+```
 

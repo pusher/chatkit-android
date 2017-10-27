@@ -19,16 +19,11 @@ import android.widget.TextView;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
-import com.pusher.chatkit.Message;
-import com.pusher.chatkit.MessageSentListener;
-import com.pusher.chatkit.OnCompleteListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
-import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
 
 import elements.Error;
 import timber.log.Timber;
@@ -120,8 +115,6 @@ public class ListRoomsActivity extends AppCompatActivity {
                         });
             }
         });
-
-
     }
 
 
