@@ -5,7 +5,7 @@ A rather chatty kit.
 
 The Android client for Pusher Chatkit. If you aren't already here, you can find the source on [Github](https://github.com/pusher/chatkit-android).
 
-For more information the Chatkit service, see [here](http://pusher.com/chatkit). For full documentation, see [here](https://docs.pusher.com/chatkit/overview/)
+For more information on the Chatkit service, see [here](http://pusher.com/chatkit). For full documentation, see [here](https://docs.pusher.com/chatkit/overview/)
 
 The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 
