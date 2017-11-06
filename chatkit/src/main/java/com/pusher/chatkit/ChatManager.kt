@@ -12,7 +12,7 @@ import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.tokenProvider.TokenProvider
 
 class ChatManager(
-        instanceId: String,
+        instanceLocator: String,
         context: Context,
         val tokenProvider: TokenProvider? = null,
         val tokenParams: ChatkitTokenParams? = null,
@@ -27,14 +27,14 @@ class ChatManager(
 
     class Builder {
 
-        private var instanceId: String? = null
+        private var instanceLocator: String? = null
         private var context: Context? = null
         private var tokenProvider: TokenProvider? = null
         private var tokenParams: ChatkitTokenParams? = null
         private var logLevel = LogLevel.DEBUG
 
-        fun instanceId(instanceId: String): Builder{
-            this.instanceId = instanceId
+        fun instanceLocator(instanceLocator: String): Builder{
+            this.instanceLocator = instanceLocator
             return this
         }
 
@@ -59,7 +59,7 @@ class ChatManager(
         }
 
         fun build(): ChatManager {
-            if(instanceId == null){
+            if(instanceLocator == null){
                 throw Error("setInstanceId() not called")
             }
             if(context == null){
@@ -69,7 +69,7 @@ class ChatManager(
                 throw Error("setTokenProvider() not called")
             }
 
-            return ChatManager(instanceId!!, context!!, tokenProvider, tokenParams, logLevel)
+            return ChatManager(instanceLocator!!, context!!, tokenProvider, tokenParams, logLevel)
         }
     }
 
@@ -79,7 +79,7 @@ class ChatManager(
     val logger = AndroidLogger(logLevel)
 
     val instance = Instance(
-            instanceId = instanceId,
+            instanceId = instanceLocator,
             serviceName = serviceName,
             serviceVersion = serviceVersion,
             context = context,

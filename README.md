@@ -67,7 +67,7 @@ ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
         );
 
 ChatManager chatManager = new ChatManager.Builder()
-                        .instanceId(INSTANCE_ID)
+                        .instanceLocator(INSTANCE_LOCATOR)
                         .context(getApplicationContext())
                         .tokenProvider(tokenProvider)
                         .build();

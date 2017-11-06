@@ -101,7 +101,7 @@ class ChatkitTokenProvider
                     onFailure(elements.ErrorResponse(
                             statusCode = response!!.code(),
                             headers = response.headers().toMultimap(),
-                            error = response.body().toString()
+                            error = response.body()!!.string()
                     ))
                 }
             }
