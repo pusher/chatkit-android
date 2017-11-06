@@ -15,8 +15,8 @@ import timber.log.Timber;
 
 public class ChatApplication extends Application {
 
-    private static final String INSTANCE_ID = "v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
-    private static final String TOKEN_PROVIDER_ENDPOINT = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/c090a50e-3e0e-4d05-96b0-a967ee4717ad/token?instance_id=v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
+    private static final String INSTANCE_LOCATOR = "v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
+    private static final String TOKEN_PROVIDER_ENDPOINT = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/c090a50e-3e0e-4d05-96b0-a967ee4717ad/token?instance_locator=v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
     private static final String USER_NAME = "zan";
 
     private ChatManager chatManager;
@@ -34,7 +34,7 @@ public class ChatApplication extends Application {
         );
 
         chatManager = new ChatManager.Builder()
-                .instanceId(INSTANCE_ID)
+                .instanceLocator(INSTANCE_LOCATOR)
                 .context(getApplicationContext())
                 .tokenProvider(tokenProvider)
                 .build();
