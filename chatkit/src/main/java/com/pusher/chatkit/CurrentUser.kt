@@ -11,6 +11,9 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Subscription
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+
 
 class CurrentUser(
         val id: String,
@@ -86,6 +89,31 @@ class CurrentUser(
                     mainThread.post { onErrorListener.onError(error) }
                 }
         )
+    }
+
+    @JvmOverloads fun getUserRooms(onlyJoinable: Boolean = false, onCompleteListener: RoomsListener){
+
+        val roomListType = object : TypeToken<List<Room>>() {}.getType()
+        val path = "/users/$id/rooms"
+        instance.request(
+                options = RequestOptions(
+                    method = "GET",
+                    path = path+"?joinable=$onlyJoinable"
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { response ->
+                    val rooms = GSON.fromJson<List<Room>>(response!!.body()!!.string(), roomListType)
+                    onCompleteListener.onRooms(rooms)
+                },
+                onFailure = { error ->
+                    logger.error("Tragedy! No rooms could have been returned!")
+                }
+        )
+    }
+
+    @JvmOverloads fun getJoinableRooms(onCompleteListener: RoomsListener){
+        getUserRooms(onlyJoinable = true, onCompleteListener = onCompleteListener)
     }
 
     @JvmOverloads fun subscribeToRoom(

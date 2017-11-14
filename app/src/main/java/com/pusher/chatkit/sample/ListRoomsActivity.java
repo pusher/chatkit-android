@@ -21,9 +21,12 @@ import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
+import com.pusher.chatkit.RoomsListener;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import elements.Error;
 import timber.log.Timber;
@@ -45,12 +48,36 @@ public class ListRoomsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(roomsAdapter);
 
+
+
         ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
-            public void onCurrentUser(@NonNull CurrentUser currentUser) {
+            public void onCurrentUser(@NonNull final CurrentUser currentUser) {
+
                 roomsAdapter.addRooms(currentUser.rooms());
+
+                currentUser.getJoinableRooms(new RoomsListener() {
+                    @Override
+                    public void onRooms(List<Room> rooms) {
+                        for(Room room : rooms){
+                            currentUser.joinRoom(room, new RoomListener() {
+                                @Override
+                                public void onRoom(Room room) {
+                                    roomsAdapter.addRoom(room);
+                                }
+                            }, new ErrorListener() {
+                                @Override
+                                public void onError(Error error) {
+                                    Timber.d("Room could not be joined :(");
+                                }
+                            });
+                        }
+                    }
+                });
             }
         });
+
+
 
 
 
@@ -108,7 +135,7 @@ public class ListRoomsActivity extends AppCompatActivity {
                             }
                         }, new ErrorListener() {
                             @Override
-                            public void onError(Error error) {
+                            public void onError(elements.Error error) {
                                 Timber.d("Error creating room! %s", error);
 
                             }
