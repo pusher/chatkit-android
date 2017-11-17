@@ -2,15 +2,15 @@ package com.pusher.chatkit
 
 import android.os.Handler
 import android.os.Looper
-import android.provider.ContactsContract
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import elements.Subscription
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
+import com.google.gson.reflect.TypeToken
+
 
 class CurrentUser(
         val id: String,
@@ -60,7 +60,7 @@ class CurrentUser(
     ){
         val roomRequest = RoomCreateRequest(
                 name = name,
-                isPrivate = isPrivate,
+                private = isPrivate,
                 createdById = id,
                 userIds = userIds
         )
@@ -86,6 +86,31 @@ class CurrentUser(
                     mainThread.post { onErrorListener.onError(error) }
                 }
         )
+    }
+
+    @JvmOverloads fun getUserRooms(onlyJoinable: Boolean = false, onCompleteListener: RoomsListener){
+
+        val roomListType = object : TypeToken<List<Room>>() {}.getType()
+        val path = "/users/$id/rooms"
+        instance.request(
+                options = RequestOptions(
+                    method = "GET",
+                    path = path+"?joinable=$onlyJoinable"
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { response ->
+                    val rooms = GSON.fromJson<List<Room>>(response!!.body()!!.string(), roomListType)
+                    onCompleteListener.onRooms(rooms)
+                },
+                onFailure = { error ->
+                    logger.error("Tragedy! No rooms could have been returned!")
+                }
+        )
+    }
+
+    @JvmOverloads fun getJoinableRooms(onCompleteListener: RoomsListener){
+        getUserRooms(onlyJoinable = true, onCompleteListener = onCompleteListener)
     }
 
     @JvmOverloads fun subscribeToRoom(
@@ -318,7 +343,7 @@ data class MessageSendingResponse(val messageId: Int)
 
 data class RoomCreateRequest(
         val name: String,
-        val isPrivate: Boolean,
+        val private: Boolean,
         val createdById: String,
         var userIds: Array<String>? = null
 )

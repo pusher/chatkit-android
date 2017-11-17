@@ -15,8 +15,8 @@ import timber.log.Timber;
 
 public class ChatApplication extends Application {
 
-    private static final String INSTANCE_LOCATOR = "v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
-    private static final String TOKEN_PROVIDER_ENDPOINT = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/c090a50e-3e0e-4d05-96b0-a967ee4717ad/token?instance_locator=v1:us1:c090a50e-3e0e-4d05-96b0-a967ee4717ad";
+    private static final String INSTANCE_LOCATOR = "v1:us1:044c6cbe-804b-4f86-9ab6-1fae51d44e11";
+    private static final String TOKEN_PROVIDER_ENDPOINT = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/044c6cbe-804b-4f86-9ab6-1fae51d44e11/token?instance_locator=v1:us1:044c6cbe-804b-4f86-9ab6-1fae51d44e11";
     private static final String USER_NAME = "zan";
 
     private ChatManager chatManager;
