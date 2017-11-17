@@ -2,16 +2,13 @@ package com.pusher.chatkit
 
 import android.os.Handler
 import android.os.Looper
-import android.provider.ContactsContract
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import elements.Subscription
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
-import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 
@@ -63,7 +60,7 @@ class CurrentUser(
     ){
         val roomRequest = RoomCreateRequest(
                 name = name,
-                isPrivate = isPrivate,
+                private = isPrivate,
                 createdById = id,
                 userIds = userIds
         )
@@ -346,7 +343,7 @@ data class MessageSendingResponse(val messageId: Int)
 
 data class RoomCreateRequest(
         val name: String,
-        val isPrivate: Boolean,
+        val private: Boolean,
         val createdById: String,
         var userIds: Array<String>? = null
 )

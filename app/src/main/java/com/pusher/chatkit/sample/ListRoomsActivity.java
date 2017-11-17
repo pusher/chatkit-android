@@ -127,6 +127,7 @@ public class ListRoomsActivity extends AppCompatActivity {
 
                 user.createRoom(
                         name,
+                        false,
                         new RoomListener() {
                             @Override
                             public void onRoom(Room room) {
