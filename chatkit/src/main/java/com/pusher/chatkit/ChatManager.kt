@@ -79,7 +79,7 @@ class ChatManager(
     val logger = AndroidLogger(logLevel)
 
     val instance = Instance(
-            instanceId = instanceLocator,
+            locator = instanceLocator,
             serviceName = serviceName,
             serviceVersion = serviceVersion,
             context = context,
