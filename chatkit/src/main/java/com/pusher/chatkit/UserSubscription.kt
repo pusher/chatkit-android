@@ -216,7 +216,7 @@ class UserSubscription(
         if(combinedRoomUserIds.size > 0){
             fetchDetailsForUsers(
                     userIds = combinedRoomUserIds,
-                    onComplete = UsersListener { users ->
+                    onComplete = UsersListener {
                         if(wasExistingCurrentUser){
                             updateExistingRooms(roomsForConnection)
                         }

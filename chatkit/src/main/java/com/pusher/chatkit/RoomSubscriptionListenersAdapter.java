@@ -12,6 +12,11 @@ public class RoomSubscriptionListenersAdapter implements RoomSubscriptionListene
     }
 
     @Override
+    public void onCursorSet(Cursor cursor) {
+
+    }
+
+    @Override
     public void onError(Error error) {
 
     }

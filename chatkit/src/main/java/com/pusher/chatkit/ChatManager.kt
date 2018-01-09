@@ -158,12 +158,22 @@ data class Message(
         var room: Room?
 )
 
+data class Cursor(
+        val userId: String,
+        val type: Int,
+        val position: Int,
+        val updatedAt: String,
+
+        var user: User?,
+        var room: Room?
+)
+
 data class ChatEvent(
         val eventName: String,
         val userId: String? = null,
         val timestamp: String,
-        val data: JsonElement)
-
+        val data: JsonElement
+)
 
 typealias CustomData = MutableMap<String, String>
 

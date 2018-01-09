@@ -100,16 +100,16 @@ class CurrentUser(
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 onSuccess = { response ->
-                    val rooms = GSON.fromJson<List<Room>>(response!!.body()!!.string(), roomListType)
+                    val rooms = GSON.fromJson<List<Room>>(response.body()!!.string(), roomListType)
                     onCompleteListener.onRooms(rooms)
                 },
-                onFailure = { error ->
+                onFailure = {
                     logger.error("Tragedy! No rooms could have been returned!")
                 }
         )
     }
 
-    @JvmOverloads fun getJoinableRooms(onCompleteListener: RoomsListener){
+    fun getJoinableRooms(onCompleteListener: RoomsListener){
         getUserRooms(onlyJoinable = true, onCompleteListener = onCompleteListener)
     }
 
@@ -152,7 +152,7 @@ class CurrentUser(
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
     ){
-        val message = MessageRequest(
+        val messageReq = MessageRequest(
                 text = text,
                 userId = id
         )
@@ -162,7 +162,7 @@ class CurrentUser(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
-                        body = GSON.toJson(message)
+                        body = GSON.toJson(messageReq)
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
@@ -272,8 +272,8 @@ class CurrentUser(
             completeListener: RoomListener,
             errorListener: ErrorListener
     ){
-        val completeListener = RoomListener { room -> mainThread.post { completeListener.onRoom(room) }}
-        val errorListener = ErrorListener { error -> mainThread.post { errorListener.onError(error) }}
+        val wrappedCompleteListener = RoomListener { room -> mainThread.post { completeListener.onRoom(room) }}
+        val wrappedErrorListener = ErrorListener { error -> mainThread.post { errorListener.onError(error) }}
 
         val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/join").build().encodedPath()
 
@@ -290,10 +290,10 @@ class CurrentUser(
                     val room = GSON.fromJson<Room>(response.body()!!.charStream(), Room::class.java)
                     roomStore.addOrMerge(room)
                     populateRoomUserStore(room)
-                    completeListener.onRoom(room)
+                    wrappedCompleteListener.onRoom(room)
 
                 },
-                onFailure = { error -> errorListener.onError(error) }
+                onFailure = { error -> wrappedErrorListener.onError(error) }
         )
     }
 

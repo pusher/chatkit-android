@@ -39,7 +39,7 @@ class PresenceSubscription(
 
                                                 user.online = userPresence.isOnline()
                                             },
-                                            errorListener = ErrorListener { error ->
+                                            errorListener = ErrorListener {
                                                 logger.warn("Failed getting user for a presence update")
                                             }
                                     )
@@ -53,7 +53,7 @@ class PresenceSubscription(
                                                 userListener = UserListener { user ->
                                                     user.online = userPresence.isOnline()
                                                 },
-                                                errorListener = ErrorListener { error ->
+                                                errorListener = ErrorListener {
                                                     logger.warn("Failed getting user for a presence update")
                                                 }
                                         )
@@ -67,7 +67,7 @@ class PresenceSubscription(
                                                 userListener = UserListener { user ->
                                                     user.online = userPresence.isOnline()
                                                 },
-                                                errorListener = ErrorListener { error ->
+                                                errorListener = ErrorListener {
                                                     logger.warn("Failed getting user for a presence update")
                                                 }
                                         )
