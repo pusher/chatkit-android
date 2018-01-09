@@ -22,7 +22,8 @@ class CurrentUser(
 
         val userStore: GlobalUserStore,
         rooms: List<Room>,
-        val instance: Instance,
+        val apiInstance: Instance,
+        val cursorsInstance: Instance,
         val tokenProvider: TokenProvider,
         val tokenParams: ChatkitTokenParams?,
         val logger: Logger
@@ -44,7 +45,7 @@ class CurrentUser(
         rooms.forEach { room ->
             roomMap.put(room.id, room)
         }
-        roomStore = RoomStore(instance = instance, rooms = roomMap)
+        roomStore = RoomStore(instance = apiInstance, rooms = roomMap)
     }
 
     fun rooms(): Set<Room> = roomStore.setOfRooms()
@@ -65,7 +66,7 @@ class CurrentUser(
                 userIds = userIds
         )
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = "/rooms",
@@ -92,7 +93,7 @@ class CurrentUser(
 
         val roomListType = object : TypeToken<List<Room>>() {}.getType()
         val path = "/users/$id/rooms"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                     method = "GET",
                     path = path+"?joinable=$onlyJoinable"
@@ -116,18 +117,22 @@ class CurrentUser(
     @JvmOverloads fun subscribeToRoom(
             room: Room,
             messageLimit: Int = 20,
-            listeners: RoomSubscriptionListeners
+            listeners: RoomSubscriptionListeners,
+            cursorsListeners: CursorsSubscriptionListeners
     ){
-
-        val path = "/rooms/${room.id}?user_id=$id&message_limit=$messageLimit"
-
         val roomSubscription = RoomSubscription(this, room, userStore, listeners)
-
-        instance.subscribeResuming(
-                path = path,
+        apiInstance.subscribeResuming(
+                path = "/rooms/${room.id}?user_id=$id&message_limit=$messageLimit",
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 listeners = roomSubscription.subscriptionListeners
+        )
+        val cursorsSubscription = CursorsSubscription(this, room, userStore, cursorsListeners)
+        cursorsInstance.subscribeResuming(
+                path = "/cursors/0/rooms/${room.id}/",
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                listeners = cursorsSubscription.subscriptionListeners
         )
     }
 
@@ -158,7 +163,7 @@ class CurrentUser(
         )
 
         val path = "/rooms/${room.id}/messages"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
@@ -192,7 +197,7 @@ class CurrentUser(
         }
 
         val path = "/rooms/$roomId/users/$operation"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "PUT",
                         path = path,
@@ -222,7 +227,7 @@ class CurrentUser(
                     isPrivate =  isPrivate ?: room.isPrivate
         )
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "PUT",
                         path = path,
@@ -249,7 +254,7 @@ class CurrentUser(
             errorListener: ErrorListener
     ){
         val path = "/rooms/$roomId"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "DELETE",
                         path = path,
@@ -277,7 +282,7 @@ class CurrentUser(
 
         val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/join").build().encodedPath()
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
@@ -310,7 +315,7 @@ class CurrentUser(
     ){
         val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/leave").build().encodedPath()
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
@@ -326,7 +331,7 @@ class CurrentUser(
     fun establishPresenceSubscription(listeners: ThreadedUserSubscriptionListeners) {
 
         presenceSubscription = PresenceSubscription(
-                instance = instance,
+                instance = apiInstance,
                 path = "/users/$id/presence",
                 listeners = listeners,
                 tokenProvider = tokenProvider,

@@ -74,20 +74,29 @@ class ChatManager(
     }
 
     var currentUser: CurrentUser? = null
-    val serviceName = "chatkit"
+    val apiServiceName = "chatkit"
+    val cursorsServiceName = "chatkit_cursors"
     val serviceVersion = "v1"
     val logger = AndroidLogger(logLevel)
 
-    val instance = Instance(
+    val apiInstance = Instance(
             locator = instanceLocator,
-            serviceName = serviceName,
+            serviceName = apiServiceName,
+            serviceVersion = serviceVersion,
+            context = context,
+            logger = logger
+    )
+
+    val cursorsInstance = Instance(
+            locator = instanceLocator,
+            serviceName = cursorsServiceName,
             serviceVersion = serviceVersion,
             context = context,
             logger = logger
     )
 
     val userStore = GlobalUserStore(
-            instance = instance,
+            instance = apiInstance,
             logger = logger,
             tokenProvider = tokenProvider,
             tokenParams = tokenParams
@@ -102,7 +111,8 @@ class ChatManager(
 
         val path = "users"
         this.userSubscription = UserSubscription(
-                instance = instance,
+                apiInstance = apiInstance,
+                cursorsInstance = cursorsInstance,
                 path = path,
                 userStore = userStore,
                 tokenProvider = tokenProvider!!,

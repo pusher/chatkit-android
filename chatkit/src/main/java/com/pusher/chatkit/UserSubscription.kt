@@ -33,7 +33,8 @@ data class UserChangeEvent(
 )
 
 class UserSubscription(
-        val instance: Instance,
+        val apiInstance: Instance,
+        val cursorsInstance: Instance,
         path: String,
         val userStore: GlobalUserStore,
         val tokenProvider: TokenProvider,
@@ -46,7 +47,7 @@ class UserSubscription(
     lateinit var headers: Headers
 
     init {
-        subscription = instance.subscribeResuming(
+        subscription = apiInstance.subscribeResuming(
                 path = path,
                 listeners = SubscriptionListeners(
                         onOpen = { headers ->
@@ -193,7 +194,8 @@ class UserSubscription(
 
                     userStore = userStore,
                     rooms = initialState.rooms,
-                    instance = instance,
+                    apiInstance = apiInstance,
+                    cursorsInstance = cursorsInstance,
                     tokenProvider = tokenProvider,
                     tokenParams = tokenParams,
                     logger = logger

@@ -5,9 +5,9 @@ import elements.Error;
 /**
  * Contains empty implementations
  * */
-public class RoomSubscriptionListenersAdapter implements RoomSubscriptionListeners {
+public class CursorsSubscriptionListenersAdapter implements CursorsSubscriptionListeners {
     @Override
-    public void onNewMessage(Message message) {
+    public void onCursorSet(Cursor cursor) {
 
     }
 
