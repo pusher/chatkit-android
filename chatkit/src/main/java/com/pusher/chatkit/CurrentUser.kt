@@ -139,6 +139,25 @@ class CurrentUser(
         )
     }
 
+    fun setCursor(
+            position: Int,
+            room: Room,
+            onCompleteListener: SetCursorListener,
+            onErrorListener: ErrorListener
+    ) {
+        cursorsInstance.request(
+                options = RequestOptions(
+                        method = "PUT",
+                        path = "/cursors/0/rooms/${room.id}/users/$id",
+                        body = GSON.toJson(SetCursorRequest(position))
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { onCompleteListener.onSetCursor() },
+                onFailure = { onErrorListener.onError(it) }
+        )
+    }
+
     private fun populateRoomUserStore(room: Room) {
 
         room.memberUserIds.forEach { userId ->
@@ -346,6 +365,8 @@ class CurrentUser(
 }
 
 data class MessageRequest(val text: String, val userId: String)
+
+data class SetCursorRequest(val position: Int)
 
 data class MessageSendingResponse(val messageId: Int)
 
