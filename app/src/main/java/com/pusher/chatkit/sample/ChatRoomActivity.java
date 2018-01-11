@@ -81,19 +81,8 @@ public class ChatRoomActivity extends AppCompatActivity {
                             public void onError(Error error) {
                                 Timber.e("Error subscribing to room! %s", error);
                             }
-                        },
-                        // TODO this should be optional
-                        new CursorsSubscriptionListenersAdapter() {
-                            @Override
-                            public void onCursorSet(Cursor cursor) {
-                                Timber.d("New cursor: %s", cursor);
-                            }
-
-                            @Override
-                            public void onError(Error error) {
-                                Timber.e("Error on curors subscription! %s", error);
-                            }
-                        });
+                        }
+                );
             }
         });
     }

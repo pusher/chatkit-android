@@ -118,7 +118,7 @@ class CurrentUser(
             room: Room,
             messageLimit: Int = 20,
             listeners: RoomSubscriptionListeners,
-            cursorsListeners: CursorsSubscriptionListeners
+            cursorsListeners: CursorsSubscriptionListeners? = null
     ){
         val roomSubscription = RoomSubscription(this, room, userStore, listeners)
         apiInstance.subscribeResuming(
@@ -127,6 +127,9 @@ class CurrentUser(
                 tokenParams = tokenParams,
                 listeners = roomSubscription.subscriptionListeners
         )
+        if (cursorsListeners == null) {
+            return
+        }
         val cursorsSubscription = CursorsSubscription(this, room, userStore, cursorsListeners)
         cursorsInstance.subscribeResuming(
                 path = "/cursors/0/rooms/${room.id}/",
