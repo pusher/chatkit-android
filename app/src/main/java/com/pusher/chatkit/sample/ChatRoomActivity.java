@@ -17,8 +17,6 @@ import android.widget.TextView;
 
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
-import com.pusher.chatkit.Cursor;
-import com.pusher.chatkit.CursorsSubscriptionListenersAdapter;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Message;
 import com.pusher.chatkit.MessageSentListener;
@@ -63,26 +61,23 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         roomId = getIntent().getIntExtra(EXTRA_ROOM_ID, -1);
 
-        ((ChatApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
+        ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
                 Room room = user.getRoom(roomId);
                 setTitle(room.getName());
-                user.subscribeToRoom(
-                        room,
-                        new RoomSubscriptionListenersAdapter() {
-                            @Override
-                            public void onNewMessage(Message message) {
-                                Timber.d("New message: %s", message);
-                                messagesAdapter.addMessage(message);
-                            }
+                user.subscribeToRoom(room, new RoomSubscriptionListenersAdapter() {
+                    @Override
+                    public void onNewMessage(Message message) {
+                        Timber.d("New message: %s", message);
+                        messagesAdapter.addMessage(message);
+                    }
 
-                            @Override
-                            public void onError(Error error) {
-                                Timber.e("Error subscribing to room! %s", error);
-                            }
-                        }
-                );
+                    @Override
+                    public void onError(Error error) {
+                        Timber.e("Error subscribing to room! %s", error);
+                    }
+                });
             }
         });
     }
@@ -134,14 +129,14 @@ public class ChatRoomActivity extends AppCompatActivity {
         });
     }
 
-    private class MessagesAdapter extends RecyclerView.Adapter<MessageViewHolder> {
+    private class MessagesAdapter extends RecyclerView.Adapter<MessageViewHolder>{
 
         List<Message> messages = new ArrayList<>();
 
-        void addMessage(Message newMessage) {
+        void addMessage(Message newMessage){
             messages.add(newMessage);
-            notifyItemInserted(messages.size() - 1);
-            recyclerView.scrollToPosition(messages.size() - 1);
+            notifyItemInserted(messages.size() -1);
+            recyclerView.scrollToPosition(messages.size() -1);
         }
 
         @Override
@@ -161,7 +156,7 @@ public class ChatRoomActivity extends AppCompatActivity {
         }
     }
 
-    private class MessageViewHolder extends RecyclerView.ViewHolder {
+    private class MessageViewHolder extends RecyclerView.ViewHolder{
         TextView nameText;
         TextView messageText;
         Message message;
@@ -173,11 +168,11 @@ public class ChatRoomActivity extends AppCompatActivity {
             messageText = itemView.findViewById(R.id.message_text);
         }
 
-        void setMessage(Message message) {
+        void setMessage(Message message){
             this.message = message;
             User sender = message.getUser();
 
-            if (sender != null && sender.getName() != null) nameText.setText(sender.getName());
+            if(sender != null && sender.getName() != null) nameText.setText(sender.getName());
             else nameText.setText(message.getUserId());
 
             messageText.setText(message.getText());
