@@ -17,18 +17,24 @@ import android.widget.TextView;
 
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
+import com.pusher.chatkit.Cursor;
+import com.pusher.chatkit.CursorsSubscriptionListenersAdapter;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Message;
 import com.pusher.chatkit.MessageSentListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
+import com.pusher.chatkit.SetCursorListener;
 import com.pusher.chatkit.User;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import elements.Error;
 import timber.log.Timber;
+
+import static java.util.Objects.requireNonNull;
 
 public class ChatRoomActivity extends AppCompatActivity {
 
@@ -63,21 +69,61 @@ public class ChatRoomActivity extends AppCompatActivity {
 
         ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
-            public void onCurrentUser(@NonNull CurrentUser user) {
-                Room room = user.getRoom(roomId);
+            public void onCurrentUser(final CurrentUser user) {
+                final Room room = user.getRoom(roomId);
                 setTitle(room.getName());
-                user.subscribeToRoom(room, new RoomSubscriptionListenersAdapter() {
-                    @Override
-                    public void onNewMessage(Message message) {
-                        Timber.d("New message: %s", message);
-                        messagesAdapter.addMessage(message);
-                    }
+                user.subscribeToRoom(
+                        room,
+                        20,
+                        new RoomSubscriptionListenersAdapter() {
+                            @Override
+                            public void onNewMessage(final Message message) {
+                                Timber.d("New message: %s", message);
+                                final int position = user.getCursors().get(roomId).getPosition();
+                                Timber.d("Current cursor: %s", position);
+                                final int messageId = message.getId();
+                                if (messageId > position) {
+                                    user.setCursor(
+                                            messageId,
+                                            room,
+                                            new SetCursorListener() {
+                                                @Override
+                                                public void onSetCursor() {
+                                                    Timber.d("set cursor to: %s", messageId);
+                                                }
+                                            },
+                                            new ErrorListener() {
+                                                @Override
+                                                public void onError(Error error) {
+                                                    Timber.d("error setting cursor!");
+                                                }
+                                            }
+                                    );
+                                }
+                                messagesAdapter.addMessage(message);
+                            }
 
-                    @Override
-                    public void onError(Error error) {
-                        Timber.e("Error subscribing to room! %s", error);
-                    }
-                });
+                            @Override
+                            public void onError(Error error) {
+                                Timber.e("Error subscribing to room! %s", error);
+                            }
+                        },
+                        new CursorsSubscriptionListenersAdapter() {
+                            @Override
+                            public void onCursorSet(Cursor cursor) {
+                                Timber.d(
+                                        "%s's cursor was set: %s",
+                                        cursor.getUser().getName(),
+                                        cursor.getPosition()
+                                );
+                            }
+
+                            @Override
+                            public void onError(Error error) {
+                                Timber.e("Error subscribing to cursors! %s", error);
+                            }
+                        }
+                );
             }
         });
     }

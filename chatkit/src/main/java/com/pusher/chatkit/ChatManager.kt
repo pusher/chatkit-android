@@ -122,6 +122,9 @@ class ChatManager(
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
     fun connect(listener: UserSubscriptionListener){
+        if (tokenProvider is ChatkitTokenProvider) {
+            tokenProvider.userId = userId
+        }
         val mainThreadListeners = ThreadedUserSubscriptionListeners.from(
                 listener = listener,
                 thread = Handler(Looper.getMainLooper()))

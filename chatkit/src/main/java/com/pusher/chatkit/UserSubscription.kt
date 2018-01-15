@@ -10,9 +10,8 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
+import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 
 
 data class InitialState(
@@ -50,11 +49,10 @@ class UserSubscription(
 
     var subscription: Subscription? = null
     lateinit var headers: Headers
-    private lateinit var cursorsByRoom: ConcurrentHashMap<Int, Cursor>
-    private val cursorsMux: Lock = ReentrantLock()
+    private val cursorsByRoom: ConcurrentHashMap<Int, Cursor> = ConcurrentHashMap<Int, Cursor>()
+    private var cursorsReqDone: Boolean = false
 
     init {
-        cursorsMux.lock()
         cursorsInstance.request(
                 options = RequestOptions(
                         method = "GET",
@@ -70,9 +68,13 @@ class UserSubscription(
                     for (cursor in cursors) {
                         cursorsByRoom[cursor.roomId] = cursor
                     }
-                    cursorsMux.unlock()
+                    cursorsReqDone = true
                 },
-                onFailure = {}
+                onFailure = { error ->
+                    logger.warn("Error $error")
+                    listeners.onError(error)
+                    cursorsReqDone = true
+                }
         )
         subscription = apiInstance.subscribeResuming(
                 path = path,
@@ -210,8 +212,10 @@ class UserSubscription(
             currentUser?.updateWithPropertiesOf(initialState.currentUser)
         }
         else{
-            // cursorsMux is unlocked when the cursorsByRoom property has been initialised
-            cursorsMux.lock()
+            // TODO this is just a hack while I research alternatives
+            while (!cursorsReqDone) {
+                sleep(1)
+            }
             currentUser = CurrentUser(
                     apiInstance = apiInstance,
                     avatarURL = initialState.currentUser.avatarURL,
@@ -228,7 +232,6 @@ class UserSubscription(
                     updatedAt = initialState.currentUser.updatedAt,
                     userStore = userStore
             )
-            cursorsMux.unlock()
         }
 
         currentUser?.presenceSubscription?.unsubscribe()
