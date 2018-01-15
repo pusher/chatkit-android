@@ -8,7 +8,7 @@ import elements.Headers
 import elements.SubscriptionEvent
 
 class CursorsSubscription(
-        user: CurrentUser,
+        val user: CurrentUser,
         val room: Room,
         val userStore: GlobalUserStore,
         val listeners: CursorsSubscriptionListeners
@@ -32,6 +32,7 @@ class CursorsSubscription(
             TODO("Event received is of the wrong type ${chatEvent.eventName}")
         }
         val cursor = ChatManager.GSON.fromJson<Cursor>(chatEvent.data, Cursor::class.java)
+        handleCursorSetInternal(cursor)
         cursor.room = room
         userStore.fetchUsersWithIds(
                 userIds = setOf(cursor.userId),
@@ -45,6 +46,12 @@ class CursorsSubscription(
                     mainThread.post { listeners.onCursorSet(cursor) }
                 }
         )
+    }
+
+    private fun handleCursorSetInternal(cursor: Cursor) {
+        if (cursor.userId === user.id) {
+            user.cursors[cursor.roomId] = cursor
+        }
     }
 
     fun handleError(error: Error) {

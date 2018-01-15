@@ -13,20 +13,20 @@ import com.google.gson.reflect.TypeToken
 
 
 class CurrentUser(
-        val id: String,
-        val createdAt: String,
-        var updatedAt: String,
-        var name: String?,
-        var avatarURL: String?,
-        var customData: CustomData?,
-
-        val userStore: GlobalUserStore,
         rooms: List<Room>,
         val apiInstance: Instance,
+        val createdAt: String,
+        val cursors: ConcurrentHashMap<Int, Cursor>,
         val cursorsInstance: Instance,
-        val tokenProvider: TokenProvider,
+        val id: String,
+        val logger: Logger,
         val tokenParams: ChatkitTokenParams?,
-        val logger: Logger
+        val tokenProvider: TokenProvider,
+        val userStore: GlobalUserStore,
+        var avatarURL: String?,
+        var customData: CustomData?,
+        var name: String?,
+        var updatedAt: String
 
 ) {
     val mainThread = Handler(Looper.getMainLooper())

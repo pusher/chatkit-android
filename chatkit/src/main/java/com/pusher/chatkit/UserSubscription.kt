@@ -3,12 +3,16 @@ package com.pusher.chatkit
 import android.os.Handler
 import android.os.Looper
 import com.pusher.platform.Instance
+import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 
 
 data class InitialState(
@@ -33,6 +37,7 @@ data class UserChangeEvent(
 )
 
 class UserSubscription(
+        val userId: String,
         val apiInstance: Instance,
         val cursorsInstance: Instance,
         path: String,
@@ -45,8 +50,30 @@ class UserSubscription(
 
     var subscription: Subscription? = null
     lateinit var headers: Headers
+    private lateinit var cursorsByRoom: ConcurrentHashMap<Int, Cursor>
+    private val cursorsMux: Lock = ReentrantLock()
 
     init {
+        cursorsMux.lock()
+        cursorsInstance.request(
+                options = RequestOptions(
+                        method = "GET",
+                        path = "/cursors/0/users/$userId"
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { res ->
+                    val cursors : Array<Cursor> = ChatManager.GSON.fromJson<Array<Cursor>>(
+                            res.body()!!.charStream(),
+                            Array<Cursor>::class.java
+                    )
+                    for (cursor in cursors) {
+                        cursorsByRoom[cursor.roomId] = cursor
+                    }
+                    cursorsMux.unlock()
+                },
+                onFailure = {}
+        )
         subscription = apiInstance.subscribeResuming(
                 path = path,
                 listeners = SubscriptionListeners(
@@ -183,23 +210,25 @@ class UserSubscription(
             currentUser?.updateWithPropertiesOf(initialState.currentUser)
         }
         else{
-
+            // cursorsMux is unlocked when the cursorsByRoom property has been initialised
+            cursorsMux.lock()
             currentUser = CurrentUser(
-                    id = initialState.currentUser.id,
-                    name = initialState.currentUser.name,
-                    updatedAt = initialState.currentUser.updatedAt,
-                    createdAt = initialState.currentUser.createdAt,
-                    avatarURL = initialState.currentUser.avatarURL,
-                    customData = initialState.currentUser.customData,
-
-                    userStore = userStore,
-                    rooms = initialState.rooms,
                     apiInstance = apiInstance,
+                    avatarURL = initialState.currentUser.avatarURL,
+                    createdAt = initialState.currentUser.createdAt,
+                    cursors = cursorsByRoom,
                     cursorsInstance = cursorsInstance,
-                    tokenProvider = tokenProvider,
+                    customData = initialState.currentUser.customData,
+                    id = initialState.currentUser.id,
+                    logger = logger,
+                    name = initialState.currentUser.name,
+                    rooms = initialState.rooms,
                     tokenParams = tokenParams,
-                    logger = logger
+                    tokenProvider = tokenProvider,
+                    updatedAt = initialState.currentUser.updatedAt,
+                    userStore = userStore
             )
+            cursorsMux.unlock()
         }
 
         currentUser?.presenceSubscription?.unsubscribe()

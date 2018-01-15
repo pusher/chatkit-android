@@ -13,6 +13,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 
 class ChatManager(
         instanceLocator: String,
+        val userId: String,
         context: Context,
         val tokenProvider: TokenProvider? = null,
         val tokenParams: ChatkitTokenParams? = null,
@@ -28,6 +29,7 @@ class ChatManager(
     class Builder {
 
         private var instanceLocator: String? = null
+        private var userId: String? = null
         private var context: Context? = null
         private var tokenProvider: TokenProvider? = null
         private var tokenParams: ChatkitTokenParams? = null
@@ -35,6 +37,11 @@ class ChatManager(
 
         fun instanceLocator(instanceLocator: String): Builder{
             this.instanceLocator = instanceLocator
+            return this
+        }
+
+        fun userId(userId: String): Builder{
+            this.userId = userId
             return this
         }
 
@@ -62,6 +69,9 @@ class ChatManager(
             if(instanceLocator == null){
                 throw Error("setInstanceId() not called")
             }
+            if(userId == null) {
+                throw Error("userId() not called")
+            }
             if(context == null){
                 throw Error("setContext() not called")
             }
@@ -69,7 +79,14 @@ class ChatManager(
                 throw Error("setTokenProvider() not called")
             }
 
-            return ChatManager(instanceLocator!!, context!!, tokenProvider, tokenParams, logLevel)
+            return ChatManager(
+                    instanceLocator!!,
+                    userId!!,
+                    context!!,
+                    tokenProvider,
+                    tokenParams,
+                    logLevel
+            )
         }
     }
 
@@ -111,6 +128,7 @@ class ChatManager(
 
         val path = "users"
         this.userSubscription = UserSubscription(
+                userId = userId,
                 apiInstance = apiInstance,
                 cursorsInstance = cursorsInstance,
                 path = path,
@@ -170,6 +188,7 @@ data class Message(
 
 data class Cursor(
         val userId: String,
+        val roomId: Int,
         val type: Int,
         val position: Int,
         val updatedAt: String,
