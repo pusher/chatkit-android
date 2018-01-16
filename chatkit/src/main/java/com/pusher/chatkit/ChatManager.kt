@@ -6,15 +6,16 @@ import android.os.Looper
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
+import com.pusher.platform.BaseClient
 import com.pusher.platform.Instance
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.tokenProvider.TokenProvider
 
 class ChatManager(
-        instanceLocator: String,
+        val instanceLocator: String,
         val userId: String,
-        context: Context,
+        val context: Context,
         val tokenProvider: TokenProvider? = null,
         val tokenParams: ChatkitTokenParams? = null,
         logLevel: LogLevel = LogLevel.DEBUG
@@ -91,37 +92,51 @@ class ChatManager(
     }
 
     var currentUser: CurrentUser? = null
+    var baseClient: BaseClient? = null
     val apiServiceName = "chatkit"
     val cursorsServiceName = "chatkit_cursors"
     val serviceVersion = "v1"
     val logger = AndroidLogger(logLevel)
 
-    val apiInstance = Instance(
-            locator = instanceLocator,
-            serviceName = apiServiceName,
-            serviceVersion = serviceVersion,
-            context = context,
-            logger = logger
-    )
-
-    val cursorsInstance = Instance(
-            locator = instanceLocator,
-            serviceName = cursorsServiceName,
-            serviceVersion = serviceVersion,
-            context = context,
-            logger = logger
-    )
-
-    val userStore = GlobalUserStore(
-            instance = apiInstance,
-            logger = logger,
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams
-    )
-
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
     fun connect(listener: UserSubscriptionListener){
+        val splitInstanceLocator = instanceLocator.split(":")
+        if (splitInstanceLocator.size == 3) {
+            // Let the platform library do the error handling if this is of the wrong format
+            val cluster = splitInstanceLocator[1]
+            baseClient = BaseClient(
+                    host = "$cluster.pusherplatform.io",
+                    logger = logger,
+                    context = context
+            )
+        }
+
+        val apiInstance = Instance(
+                locator = instanceLocator,
+                serviceName = apiServiceName,
+                serviceVersion = serviceVersion,
+                context = context,
+                logger = logger,
+                baseClient = baseClient
+        )
+
+        val cursorsInstance = Instance(
+                locator = instanceLocator,
+                serviceName = cursorsServiceName,
+                serviceVersion = serviceVersion,
+                context = context,
+                logger = logger,
+                baseClient = baseClient
+        )
+
+        val userStore = GlobalUserStore(
+                instance = apiInstance,
+                logger = logger,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams
+        )
+
         if (tokenProvider is ChatkitTokenProvider) {
             tokenProvider.userId = userId
         }
