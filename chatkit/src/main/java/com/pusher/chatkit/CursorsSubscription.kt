@@ -49,7 +49,7 @@ class CursorsSubscription(
     }
 
     private fun handleCursorSetInternal(cursor: Cursor) {
-        if (cursor.userId === user.id) {
+        if (cursor.userId == user.id) {
             user.cursors[cursor.roomId] = cursor
         }
     }

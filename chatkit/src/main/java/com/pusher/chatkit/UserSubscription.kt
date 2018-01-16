@@ -10,9 +10,11 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
-import java.lang.Thread.sleep
+import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.ConcurrentHashMap
-
+import kotlin.coroutines.experimental.suspendCoroutine
 
 data class InitialState(
         val rooms: List<Room>, //TODO: might need to use a different subsctructure for this
@@ -48,34 +50,10 @@ class UserSubscription(
 ) {
 
     var subscription: Subscription? = null
+    private val cursors: Deferred<ConcurrentHashMap<Int, Cursor>> = async { getCursors() }
     lateinit var headers: Headers
-    private val cursorsByRoom: ConcurrentHashMap<Int, Cursor> = ConcurrentHashMap<Int, Cursor>()
-    private var cursorsReqDone: Boolean = false
 
     init {
-        cursorsInstance.request(
-                options = RequestOptions(
-                        method = "GET",
-                        path = "/cursors/0/users/$userId"
-                ),
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                onSuccess = { res ->
-                    val cursors : Array<Cursor> = ChatManager.GSON.fromJson<Array<Cursor>>(
-                            res.body()!!.charStream(),
-                            Array<Cursor>::class.java
-                    )
-                    for (cursor in cursors) {
-                        cursorsByRoom[cursor.roomId] = cursor
-                    }
-                    cursorsReqDone = true
-                },
-                onFailure = { error ->
-                    logger.warn("Error $error")
-                    listeners.onError(error)
-                    cursorsReqDone = true
-                }
-        )
         subscription = apiInstance.subscribeResuming(
                 path = path,
                 listeners = SubscriptionListeners(
@@ -105,6 +83,32 @@ class UserSubscription(
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams
+        )
+    }
+
+    private suspend fun getCursors(): ConcurrentHashMap<Int, Cursor> = suspendCoroutine { cont ->
+        val cursorsByRoom: ConcurrentHashMap<Int, Cursor> = ConcurrentHashMap()
+        cursorsInstance.request(
+                options = RequestOptions(
+                        method = "GET",
+                        path = "/cursors/0/users/$userId"
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { res ->
+                    val cursors: Array<Cursor> = ChatManager.GSON.fromJson<Array<Cursor>>(
+                            res.body()!!.charStream(),
+                            Array<Cursor>::class.java
+                    )
+                    for (cursor in cursors) {
+                        cursorsByRoom[cursor.roomId] = cursor
+                    }
+                    cont.resume(cursorsByRoom)
+                },
+                onFailure = { error ->
+                    logger.warn("Error $error")
+                    cont.resume(cursorsByRoom)
+                }
         )
     }
 
@@ -202,7 +206,7 @@ class UserSubscription(
 
     private var currentUser: CurrentUser? = null
 
-    private fun handleInitialState(initialState: InitialState) {
+    private fun handleInitialState(initialState: InitialState) = launch {
         logger.verbose("Initial state received $initialState")
 
         var wasExistingCurrentUser = currentUser != null
@@ -212,15 +216,11 @@ class UserSubscription(
             currentUser?.updateWithPropertiesOf(initialState.currentUser)
         }
         else{
-            // TODO this is just a hack while I research alternatives
-            while (!cursorsReqDone) {
-                sleep(1)
-            }
             currentUser = CurrentUser(
                     apiInstance = apiInstance,
                     avatarURL = initialState.currentUser.avatarURL,
                     createdAt = initialState.currentUser.createdAt,
-                    cursors = cursorsByRoom,
+                    cursors = cursors.await(),
                     cursorsInstance = cursorsInstance,
                     customData = initialState.currentUser.customData,
                     id = initialState.currentUser.id,
