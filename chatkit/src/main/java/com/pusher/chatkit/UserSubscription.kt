@@ -106,7 +106,8 @@ class UserSubscription(
                     cont.resume(cursorsByRoom)
                 },
                 onFailure = { error ->
-                    logger.warn("Error $error")
+                    logger.warn("Failed to get cursors: $error")
+                    listeners.onError(error)
                     cont.resume(cursorsByRoom)
                 }
         )
