@@ -61,13 +61,11 @@ To include it in your application, create it with your details, as such:
 
 ```java
 
-ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
-                TOKEN_PROVIDER_ENDPOINT,
-                USER_NAME
-        );
+ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
 
 ChatManager chatManager = new ChatManager.Builder()
                         .instanceLocator(INSTANCE_LOCATOR)
+                        .userId(USER_NAME)
                         .context(getApplicationContext())
                         .tokenProvider(tokenProvider)
                         .build();
@@ -117,6 +115,7 @@ class CurrentUser(
         var updatedAt: String,
         var name: String?,
         var avatarURL: String?,
+        var cursors: Map<Int, Cursor>
         var customData: CustomData?
 )
 
@@ -238,7 +237,6 @@ Subscribe to messages in a room:
                     @Override
                     public void onNewMessage(Message message) {
 
-
                     }
 
                     @Override
@@ -246,6 +244,65 @@ Subscribe to messages in a room:
 
                     }
                 });
+```
+
+Or subscribe both to messages and to cursors:
+
+```java
+
+currentUser.subscribeToRoom(
+        room,
+        20,
+        new RoomSubscriptionListenersAdapter() {
+            @Override
+            public void onNewMessage(Message message) {
+
+            }
+
+            @Override
+            public void onError(Error error) {
+
+            }
+        },
+        new CursorsSubscriptionListenersAdapter() {
+            @Override
+            public void onCursorSet(Cursor cursor) {
+
+            }
+
+            @Override
+            public void onError(Error error) {
+
+            }
+        }
+);
+```
+
+Set your cursor in a room:
+
+```java
+currentUser.setCursor(
+    someMessage.getId(),
+    room,
+    new SetCursorListener() {
+        @Override
+        public void onSetCursor() {
+
+        }
+    },
+    new ErrorListener() {
+        @Override
+        public void onError(Error error) {
+
+        }
+    }
+);
+```
+
+Get all your cursors (as a map, indexed by room ID):
+
+```java
+currentUser.getCursors();
 ```
 
 Add others to a room:
@@ -272,10 +329,7 @@ You can read more about how authentication flow works on the documentation site 
 The core interface to implement on the client is this:
 
 ```java
- ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
-                TOKEN_PROVIDER_ENDPOINT,
-                USER_NAME
-        );
+ ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
 ```
 
 ### Who's Online

@@ -6,14 +6,16 @@ import android.os.Looper
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
+import com.pusher.platform.BaseClient
 import com.pusher.platform.Instance
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.tokenProvider.TokenProvider
 
 class ChatManager(
-        instanceLocator: String,
-        context: Context,
+        val instanceLocator: String,
+        val userId: String,
+        val context: Context,
         val tokenProvider: TokenProvider? = null,
         val tokenParams: ChatkitTokenParams? = null,
         logLevel: LogLevel = LogLevel.DEBUG
@@ -28,6 +30,7 @@ class ChatManager(
     class Builder {
 
         private var instanceLocator: String? = null
+        private var userId: String? = null
         private var context: Context? = null
         private var tokenProvider: TokenProvider? = null
         private var tokenParams: ChatkitTokenParams? = null
@@ -35,6 +38,11 @@ class ChatManager(
 
         fun instanceLocator(instanceLocator: String): Builder{
             this.instanceLocator = instanceLocator
+            return this
+        }
+
+        fun userId(userId: String): Builder{
+            this.userId = userId
             return this
         }
 
@@ -62,6 +70,9 @@ class ChatManager(
             if(instanceLocator == null){
                 throw Error("setInstanceId() not called")
             }
+            if(userId == null) {
+                throw Error("userId() not called")
+            }
             if(context == null){
                 throw Error("setContext() not called")
             }
@@ -69,40 +80,75 @@ class ChatManager(
                 throw Error("setTokenProvider() not called")
             }
 
-            return ChatManager(instanceLocator!!, context!!, tokenProvider, tokenParams, logLevel)
+            return ChatManager(
+                    instanceLocator!!,
+                    userId!!,
+                    context!!,
+                    tokenProvider,
+                    tokenParams,
+                    logLevel
+            )
         }
     }
 
     var currentUser: CurrentUser? = null
-    val serviceName = "chatkit"
+    var baseClient: BaseClient? = null
+    val apiServiceName = "chatkit"
+    val cursorsServiceName = "chatkit_cursors"
     val serviceVersion = "v1"
     val logger = AndroidLogger(logLevel)
-
-    val instance = Instance(
-            locator = instanceLocator,
-            serviceName = serviceName,
-            serviceVersion = serviceVersion,
-            context = context,
-            logger = logger
-    )
-
-    val userStore = GlobalUserStore(
-            instance = instance,
-            logger = logger,
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams
-    )
 
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
     fun connect(listener: UserSubscriptionListener){
+        val splitInstanceLocator = instanceLocator.split(":")
+        if (splitInstanceLocator.size == 3) {
+            // Let the platform library do the error handling if this is of the wrong format
+            val cluster = splitInstanceLocator[1]
+            baseClient = BaseClient(
+                    host = "$cluster.pusherplatform.io",
+                    logger = logger,
+                    context = context
+            )
+        }
+
+        val apiInstance = Instance(
+                locator = instanceLocator,
+                serviceName = apiServiceName,
+                serviceVersion = serviceVersion,
+                context = context,
+                logger = logger,
+                baseClient = baseClient
+        )
+
+        val cursorsInstance = Instance(
+                locator = instanceLocator,
+                serviceName = cursorsServiceName,
+                serviceVersion = serviceVersion,
+                context = context,
+                logger = logger,
+                baseClient = baseClient
+        )
+
+        val userStore = GlobalUserStore(
+                instance = apiInstance,
+                logger = logger,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams
+        )
+
+        if (tokenProvider is ChatkitTokenProvider) {
+            tokenProvider.userId = userId
+        }
         val mainThreadListeners = ThreadedUserSubscriptionListeners.from(
                 listener = listener,
                 thread = Handler(Looper.getMainLooper()))
 
         val path = "users"
         this.userSubscription = UserSubscription(
-                instance = instance,
+                userId = userId,
+                apiInstance = apiInstance,
+                cursorsInstance = cursorsInstance,
                 path = path,
                 userStore = userStore,
                 tokenProvider = tokenProvider!!,
@@ -158,12 +204,23 @@ data class Message(
         var room: Room?
 )
 
+data class Cursor(
+        val userId: String,
+        val roomId: Int,
+        val type: Int,
+        val position: Int,
+        val updatedAt: String,
+
+        var user: User?,
+        var room: Room?
+)
+
 data class ChatEvent(
         val eventName: String,
         val userId: String? = null,
         val timestamp: String,
-        val data: JsonElement)
-
+        val data: JsonElement
+)
 
 typealias CustomData = MutableMap<String, String>
 

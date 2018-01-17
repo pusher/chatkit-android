@@ -28,13 +28,11 @@ public class ChatApplication extends Application {
         super.onCreate();
         Timber.plant(new Timber.DebugTree());
 
-        ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(
-                TOKEN_PROVIDER_ENDPOINT,
-                USER_NAME
-        );
+        ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
 
         chatManager = new ChatManager.Builder()
                 .instanceLocator(INSTANCE_LOCATOR)
+                .userId(USER_NAME)
                 .context(getApplicationContext())
                 .tokenProvider(tokenProvider)
                 .build();

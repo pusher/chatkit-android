@@ -13,19 +13,20 @@ import com.google.gson.reflect.TypeToken
 
 
 class CurrentUser(
-        val id: String,
+        rooms: List<Room>,
+        val apiInstance: Instance,
         val createdAt: String,
-        var updatedAt: String,
-        var name: String?,
+        val cursors: ConcurrentHashMap<Int, Cursor>,
+        val cursorsInstance: Instance,
+        val id: String,
+        val logger: Logger,
+        val tokenParams: ChatkitTokenParams?,
+        val tokenProvider: TokenProvider,
+        val userStore: GlobalUserStore,
         var avatarURL: String?,
         var customData: CustomData?,
-
-        val userStore: GlobalUserStore,
-        rooms: List<Room>,
-        val instance: Instance,
-        val tokenProvider: TokenProvider,
-        val tokenParams: ChatkitTokenParams?,
-        val logger: Logger
+        var name: String?,
+        var updatedAt: String
 
 ) {
     val mainThread = Handler(Looper.getMainLooper())
@@ -44,7 +45,7 @@ class CurrentUser(
         rooms.forEach { room ->
             roomMap.put(room.id, room)
         }
-        roomStore = RoomStore(instance = instance, rooms = roomMap)
+        roomStore = RoomStore(instance = apiInstance, rooms = roomMap)
     }
 
     fun rooms(): Set<Room> = roomStore.setOfRooms()
@@ -65,7 +66,7 @@ class CurrentUser(
                 userIds = userIds
         )
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = "/rooms",
@@ -92,7 +93,7 @@ class CurrentUser(
 
         val roomListType = object : TypeToken<List<Room>>() {}.getType()
         val path = "/users/$id/rooms"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                     method = "GET",
                     path = path+"?joinable=$onlyJoinable"
@@ -100,34 +101,60 @@ class CurrentUser(
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 onSuccess = { response ->
-                    val rooms = GSON.fromJson<List<Room>>(response!!.body()!!.string(), roomListType)
+                    val rooms = GSON.fromJson<List<Room>>(response.body()!!.string(), roomListType)
                     onCompleteListener.onRooms(rooms)
                 },
-                onFailure = { error ->
+                onFailure = {
                     logger.error("Tragedy! No rooms could have been returned!")
                 }
         )
     }
 
-    @JvmOverloads fun getJoinableRooms(onCompleteListener: RoomsListener){
+    fun getJoinableRooms(onCompleteListener: RoomsListener){
         getUserRooms(onlyJoinable = true, onCompleteListener = onCompleteListener)
     }
 
     @JvmOverloads fun subscribeToRoom(
             room: Room,
             messageLimit: Int = 20,
-            listeners: RoomSubscriptionListeners
+            listeners: RoomSubscriptionListeners,
+            cursorsListeners: CursorsSubscriptionListeners? = null
     ){
-
-        val path = "/rooms/${room.id}?user_id=$id&message_limit=$messageLimit"
-
         val roomSubscription = RoomSubscription(this, room, userStore, listeners)
-
-        instance.subscribeResuming(
-                path = path,
+        apiInstance.subscribeResuming(
+                path = "/rooms/${room.id}?user_id=$id&message_limit=$messageLimit",
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 listeners = roomSubscription.subscriptionListeners
+        )
+        if (cursorsListeners == null) {
+            return
+        }
+        val cursorsSubscription = CursorsSubscription(this, room, userStore, cursorsListeners)
+        cursorsInstance.subscribeResuming(
+                path = "/cursors/0/rooms/${room.id}/",
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                listeners = cursorsSubscription.subscriptionListeners
+        )
+    }
+
+    fun setCursor(
+            position: Int,
+            room: Room,
+            onCompleteListener: SetCursorListener,
+            onErrorListener: ErrorListener
+    ) {
+        cursorsInstance.request(
+                options = RequestOptions(
+                        method = "PUT",
+                        path = "/cursors/0/rooms/${room.id}/users/$id",
+                        body = GSON.toJson(SetCursorRequest(position))
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { onCompleteListener.onSetCursor() },
+                onFailure = { onErrorListener.onError(it) }
         )
     }
 
@@ -152,17 +179,17 @@ class CurrentUser(
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
     ){
-        val message = MessageRequest(
+        val messageReq = MessageRequest(
                 text = text,
                 userId = id
         )
 
         val path = "/rooms/${room.id}/messages"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
-                        body = GSON.toJson(message)
+                        body = GSON.toJson(messageReq)
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
@@ -192,7 +219,7 @@ class CurrentUser(
         }
 
         val path = "/rooms/$roomId/users/$operation"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "PUT",
                         path = path,
@@ -222,7 +249,7 @@ class CurrentUser(
                     isPrivate =  isPrivate ?: room.isPrivate
         )
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "PUT",
                         path = path,
@@ -249,7 +276,7 @@ class CurrentUser(
             errorListener: ErrorListener
     ){
         val path = "/rooms/$roomId"
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "DELETE",
                         path = path,
@@ -272,12 +299,12 @@ class CurrentUser(
             completeListener: RoomListener,
             errorListener: ErrorListener
     ){
-        val completeListener = RoomListener { room -> mainThread.post { completeListener.onRoom(room) }}
-        val errorListener = ErrorListener { error -> mainThread.post { errorListener.onError(error) }}
+        val wrappedCompleteListener = RoomListener { room -> mainThread.post { completeListener.onRoom(room) }}
+        val wrappedErrorListener = ErrorListener { error -> mainThread.post { errorListener.onError(error) }}
 
         val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/join").build().encodedPath()
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
@@ -290,10 +317,10 @@ class CurrentUser(
                     val room = GSON.fromJson<Room>(response.body()!!.charStream(), Room::class.java)
                     roomStore.addOrMerge(room)
                     populateRoomUserStore(room)
-                    completeListener.onRoom(room)
+                    wrappedCompleteListener.onRoom(room)
 
                 },
-                onFailure = { error -> errorListener.onError(error) }
+                onFailure = { error -> wrappedErrorListener.onError(error) }
         )
     }
 
@@ -310,7 +337,7 @@ class CurrentUser(
     ){
         val path = HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/leave").build().encodedPath()
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
@@ -326,7 +353,7 @@ class CurrentUser(
     fun establishPresenceSubscription(listeners: ThreadedUserSubscriptionListeners) {
 
         presenceSubscription = PresenceSubscription(
-                instance = instance,
+                instance = apiInstance,
                 path = "/users/$id/presence",
                 listeners = listeners,
                 tokenProvider = tokenProvider,
@@ -338,6 +365,8 @@ class CurrentUser(
 }
 
 data class MessageRequest(val text: String, val userId: String)
+
+data class SetCursorRequest(val position: Int)
 
 data class MessageSendingResponse(val messageId: Int)
 
