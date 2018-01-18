@@ -98,6 +98,7 @@ class ChatManager(
     val serviceVersion = "v1"
     val logger = AndroidLogger(logLevel)
 
+
     var userSubscription: UserSubscription? = null //Initialised when connect() is called.
 
     fun connect(listener: UserSubscriptionListener){
@@ -130,8 +131,17 @@ class ChatManager(
                 baseClient = baseClient
         )
 
+        val filesInstance = Instance(
+                locator = instanceLocator,
+                serviceName = "chatkit_files",
+                serviceVersion = "v1",
+                context = context,
+                logger = logger,
+                baseClient = baseClient
+        )
+
         val userStore = GlobalUserStore(
-                instance = apiInstance,
+                apiInstance = apiInstance,
                 logger = logger,
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams
@@ -149,6 +159,7 @@ class ChatManager(
                 userId = userId,
                 apiInstance = apiInstance,
                 cursorsInstance = cursorsInstance,
+                filesInstance = filesInstance,
                 path = path,
                 userStore = userStore,
                 tokenProvider = tokenProvider!!,

@@ -1,7 +1,10 @@
 package com.pusher.chatkit.sample;
 
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -13,12 +16,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.pusher.chatkit.AttachmentBody;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
+<<<<<<< Updated upstream
 import com.pusher.chatkit.Cursor;
 import com.pusher.chatkit.CursorsSubscriptionListenersAdapter;
+=======
+import com.pusher.chatkit.DataAttachment;
+>>>>>>> Stashed changes
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Message;
 import com.pusher.chatkit.MessageSentListener;
@@ -27,6 +36,7 @@ import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
 import com.pusher.chatkit.SetCursorListener;
 import com.pusher.chatkit.User;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -39,6 +49,7 @@ import static java.util.Objects.requireNonNull;
 public class ChatRoomActivity extends AppCompatActivity {
 
     public static final String EXTRA_ROOM_ID = ChatRoomActivity.class.getName() + "ExtraRoomId";
+    private static final int PICK_IMAGE_REQUEST = 1;
     private MessagesAdapter messagesAdapter;
     private RecyclerView recyclerView;
     private int roomId;
@@ -128,18 +139,16 @@ public class ChatRoomActivity extends AppCompatActivity {
         });
     }
 
-
     private void showNewMessageDialog() {
-
         AlertDialog.Builder builder = new AlertDialog.Builder(ChatRoomActivity.this);
         builder.setView(R.layout.insert_message);
 
         // Add the buttons
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-
                 final EditText messageText = ((AlertDialog) dialog).findViewById(R.id.editText);
-                enterMessage(messageText.getText().toString());
+                final EditText editText = ((AlertDialog) dialog).findViewById(R.id.fileNameText);
+                enterMessage(messageText.getText().toString(), new DataAttachment(new File(editText.getText().toString()), "gh.png"));
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -147,19 +156,35 @@ public class ChatRoomActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
+        builder.setNeutralButton("Add picture", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            }
+        });
 
-        AlertDialog dialog = builder.create();
+        final AlertDialog dialog = builder.create();
         dialog.show();
 
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Boolean closeDialog = false;
+                if (closeDialog) {
+                    dialog.dismiss();
+                }
+
+                final EditText fileNameText = ((AlertDialog) dialog).findViewById(R.id.fileNameText);
+                fileNameText.setText(Environment.getExternalStorageDirectory().getPath() + "/gh.png");
+            }
+        });
     }
 
-    private void enterMessage(final String message) {
+    private void enterMessage(final String message, final DataAttachment attachment) {
         ((ChatApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
 
                 Room room = user.getRoom(roomId);
-                user.addMessage(message, room, new MessageSentListener() {
+                user.addMessage(message, room, attachment, new MessageSentListener() {
                     @Override
                     public void onMessage(int messageId) {
                         Timber.d("Message sent! %d", messageId);
