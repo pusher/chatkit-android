@@ -8,7 +8,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import java.util.concurrent.ConcurrentHashMap
 
 class GlobalUserStore(
-        val apiInstance: Instance,
+        val instance: Instance,
         val logger: Logger,
         val tokenProvider: TokenProvider?,
         val tokenParams: ChatkitTokenParams?) {
@@ -20,7 +20,7 @@ class GlobalUserStore(
         val path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
         val listOfUsersType = object: TypeToken<List<User>>(){}.type
 
-        apiInstance.request(
+        instance.request(
                 options = RequestOptions(
                         method = "GET",
                         path = path
