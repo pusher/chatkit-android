@@ -41,6 +41,7 @@ class UserSubscription(
         val userId: String,
         val apiInstance: Instance,
         val cursorsInstance: Instance,
+        val filesInstance: Instance,
         path: String,
         val userStore: GlobalUserStore,
         val tokenProvider: TokenProvider,
@@ -228,8 +229,9 @@ class UserSubscription(
                     logger = logger,
                     name = initialState.currentUser.name,
                     rooms = initialState.rooms,
-                    tokenParams = tokenParams,
+                    filesInstance = filesInstance,
                     tokenProvider = tokenProvider,
+                    tokenParams = tokenParams,
                     updatedAt = initialState.currentUser.updatedAt,
                     userStore = userStore
             )

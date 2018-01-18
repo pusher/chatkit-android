@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import android.os.Handler
 import android.os.Looper
+import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -10,6 +11,15 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
 import com.google.gson.reflect.TypeToken
+import com.pusher.platform.Cancelable
+import com.pusher.platform.RequestDestination
+import elements.Error
+import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
+import okhttp3.Response
+import java.io.File
+import kotlin.coroutines.experimental.suspendCoroutine
 
 
 class CurrentUser(
@@ -20,6 +30,7 @@ class CurrentUser(
         val cursorsInstance: Instance,
         val id: String,
         val logger: Logger,
+        val filesInstance: Instance,
         val tokenParams: ChatkitTokenParams?,
         val tokenProvider: TokenProvider,
         val userStore: GlobalUserStore,
@@ -27,7 +38,6 @@ class CurrentUser(
         var customData: CustomData?,
         var name: String?,
         var updatedAt: String
-
 ) {
     val mainThread = Handler(Looper.getMainLooper())
 
@@ -173,32 +183,113 @@ class CurrentUser(
         }
     }
 
-    fun addMessage(
-            text: String,
-            room: Room,
+    fun sendMessage(
+            roomId: Int,
+            text: String? = null,
+            attachment: GenericAttachment? = null,
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
-    ){
-        val messageReq = MessageRequest(
-                text = text,
-                userId = id
-        )
+    ): Cancelable? {
+        var attachmentBody: AttachmentBody? = null
 
-        val path = "/rooms/${room.id}/messages"
-        apiInstance.request(
-                options = RequestOptions(
-                        method = "POST",
-                        path = path,
-                        body = GSON.toJson(messageReq)
-                ),
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
+        if (attachment != null) {
+            when (attachment) {
+                is DataAttachment -> {
+                            return uploadFile(
+                                    file = attachment.file,
+                                    fileName = attachment.name,
+                                    roomId = roomId,
+                                    onSuccess = { response ->
+                                        attachmentBody = GSON.fromJson<AttachmentBody>(response.body()!!.charStream(), AttachmentBody::class.java)
+                                        sendCompleteMessage(
+                                                roomId = roomId,
+                                                text = text,
+                                                attachment = attachmentBody,
+                                                onSuccess = { messageResponse ->
+                                                    val message = GSON.fromJson<MessageSendingResponse>(messageResponse.body()!!.charStream(), MessageSendingResponse::class.java)
+                                                    onCompleteListener.onMessage(message.messageId)
+                                                },
+                                                onError = { error -> onErrorListener.onError(error) }
+                                        )
+
+                                    },
+                                    onError = { error ->
+                                        logger.info("hello")
+                                        logger.error("Failed to upload file: $error")
+                                        onErrorListener.onError(error)
+                                    })
+                }
+                is LinkAttachment -> {
+                    attachmentBody = AttachmentBody(attachment.link, attachment.type)
+                }
+            }
+        }
+        return sendCompleteMessage(
+                roomId = roomId,
+                text = text,
+                attachment = attachmentBody,
                 onSuccess = { response ->
                     val message = GSON.fromJson<MessageSendingResponse>(response.body()!!.charStream(), MessageSendingResponse::class.java)
                     onCompleteListener.onMessage(message.messageId)
                 },
-                onFailure = { error -> onErrorListener.onError(error)}
+                onError = { error -> onErrorListener.onError(error) }
         )
+    }
+
+    private fun sendCompleteMessage(
+            roomId: Int,
+            text: String? = null,
+            attachment: AttachmentBody? = null,
+            onSuccess: (Response) -> Unit,
+            onError: (Error) -> Unit): Cancelable {
+        val path = "/rooms/$roomId/messages"
+        val message = MessageRequest(text = text, userId = id, attachment = attachment)
+        return apiInstance.request(
+                options = RequestOptions(
+                        method = "POST",
+                        path = path,
+                        body = GSON.toJson(message)
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = onSuccess,
+                onFailure = onError
+        )
+    }
+
+    fun fetchAttachment(
+            attachmentUrl: String,
+            onCompleteListener: FetchedAttachmentListener,
+            onErrorListener: ErrorListener) {
+        filesInstance.request(
+                options = RequestOptions(
+                        method = "GET",
+                        destination = RequestDestination.Absolute(attachmentUrl)
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { response ->
+                    val fetchedAttachment = GSON.fromJson<FetchedAttachment>(response.body()!!.charStream(), FetchedAttachment::class.java)
+                    onCompleteListener.onFetch(fetchedAttachment)
+                },
+                onFailure = { error -> onErrorListener.onError(error) }
+
+        )
+    }
+
+    private fun uploadFile(
+            file: File,
+            fileName: String,
+            roomId: Int,
+            onSuccess: (Response) -> Unit,
+            onError: (Error) -> Unit): Cancelable? {
+        return filesInstance.upload(
+                path = "/rooms/$roomId/files/$fileName",
+                file = file,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = onSuccess,
+                onFailure = onError)
     }
 
     fun addUsers(roomId: Int, users: Array<User>, completeListener: OnCompleteListener, errorListener: ErrorListener) = addUsers(roomId, users.map { id }.toTypedArray(), completeListener, errorListener)
@@ -364,7 +455,9 @@ class CurrentUser(
     }
 }
 
-data class MessageRequest(val text: String, val userId: String)
+data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
+
+data class AttachmentBody(val resourceLink: String, val type: String)
 
 data class SetCursorRequest(val position: Int)
 
@@ -376,3 +469,11 @@ data class RoomCreateRequest(
         val createdById: String,
         var userIds: Array<String>? = null
 )
+
+data class FetchedAttachment(
+        val file: FetchedAttachmentFile,
+        @SerializedName("resource_link") val link: String,
+        val ttl: Double
+)
+
+data class FetchedAttachmentFile(val bytes: Int, val lastModified: Double, val name: String)
