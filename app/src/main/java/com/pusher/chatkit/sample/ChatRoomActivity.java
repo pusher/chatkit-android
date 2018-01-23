@@ -29,6 +29,8 @@ import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.CursorsSubscriptionListenersAdapter;
 import com.pusher.chatkit.DataAttachment;
 import com.pusher.chatkit.ErrorListener;
+import com.pusher.chatkit.FetchedAttachment;
+import com.pusher.chatkit.FetchedAttachmentListener;
 import com.pusher.chatkit.Message;
 import com.pusher.chatkit.MessageSentListener;
 import com.pusher.chatkit.Room;
@@ -115,6 +117,23 @@ public class ChatRoomActivity extends AppCompatActivity {
                                     );
                                 }
                                 messagesAdapter.addMessage(message);
+                                if (message.getAttachment() != null && message.getAttachment().getFetchRequired()) {
+                                    user.fetchAttachment(
+                                            message.getAttachment().getLink(),
+                                            new FetchedAttachmentListener() {
+                                                @Override
+                                                public void onFetch(FetchedAttachment attachment) {
+                                                    Log.d("PC", attachment.getLink());
+                                                }
+                                            },
+                                            new ErrorListener() {
+                                                @Override
+                                                public void onError(Error error) {
+                                                    Log.d("PC", error.toString());
+                                                }
+                                            }
+                                    );
+                                }
                             }
 
                             @Override
@@ -280,7 +299,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                         public void onCurrentUser(@NonNull CurrentUser user) {
 
                             Room room = user.getRoom(roomId);
-                            messageCancelable = user.addMessage(messageText.getText().toString(), room, null, new MessageSentListener() {
+                            messageCancelable = user.sendMessage(room.getId(), messageText.getText().toString(), null, new MessageSentListener() {
                                 @Override
                                 public void onMessage(int messageId) {
                                     Timber.d("Message sent without attachment! %d", messageId);
@@ -329,7 +348,7 @@ public class ChatRoomActivity extends AppCompatActivity {
             public void onCurrentUser(@NonNull CurrentUser user) {
 
                 Room room = user.getRoom(roomId);
-                messageCancelable = user.addMessage(message, room, attachment, new MessageSentListener() {
+                messageCancelable = user.sendMessage(room.getId(), message, attachment, new MessageSentListener() {
                     @Override
                     public void onMessage(int messageId) {
                         Timber.d("Message sent! %d", messageId);

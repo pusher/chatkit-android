@@ -121,7 +121,6 @@ public class ListRoomsActivity extends AppCompatActivity {
         // Add the buttons
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-
                 final EditText roomTitle = ((AlertDialog) dialog).findViewById(com.pusher.chatkit.sample.R.id.create_room_title);
                 createNewRoom(roomTitle.getText().toString());
             }
@@ -155,7 +154,7 @@ public class ListRoomsActivity extends AppCompatActivity {
                             @Override
                             public void onRoom(Room room) {
                                 roomsAdapter.addRoom(room);
-                                Timber.d("ROOM CREATED! %s", room );
+                                Timber.d("Room created! %s", room );
                             }
                         }, new ErrorListener() {
                             @Override
@@ -172,9 +171,9 @@ public class ListRoomsActivity extends AppCompatActivity {
         switch(requestCode) {
             case READ_EXTERNAL_MEDIA_REQUEST:
                 if(grantResults.length != 0 && grantResults[0] == 0) {
-                    Log.d("PC", "PERMISSION IS GRANTED");
+                    Log.d("PC", "Permission granted");
                 } else {
-                    Log.d("PC", "PERMISSION IS DENIED");
+                    Log.d("PC", "Permission denied");
                 }
 
                 return;
