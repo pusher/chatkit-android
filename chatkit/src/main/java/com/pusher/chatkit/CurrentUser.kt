@@ -214,7 +214,6 @@ class CurrentUser(
 
                                     },
                                     onError = { error ->
-                                        logger.info("hello")
                                         logger.error("Failed to upload file: $error")
                                         onErrorListener.onError(error)
                                     })
