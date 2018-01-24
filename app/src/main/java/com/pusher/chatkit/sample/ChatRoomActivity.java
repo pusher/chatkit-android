@@ -58,8 +58,6 @@ public class ChatRoomActivity extends AppCompatActivity {
     private int roomId;
     private File selectedFile;
 
-    public Cancelable messageCancelable;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,26 +93,28 @@ public class ChatRoomActivity extends AppCompatActivity {
                             @Override
                             public void onNewMessage(final Message message) {
                                 Timber.d("New message: %s", message);
-                                final int position = user.getCursors().get(roomId).getPosition();
-                                Timber.d("Current cursor: %s", position);
-                                final int messageId = message.getId();
-                                if (messageId > position) {
-                                    user.setCursor(
-                                            messageId,
-                                            room,
-                                            new SetCursorListener() {
-                                                @Override
-                                                public void onSetCursor() {
-                                                    Timber.d("set cursor to: %s", messageId);
+                                if (user.getCursors().get(roomId) != null) {
+                                    final int position = user.getCursors().get(roomId).getPosition();
+                                    Timber.d("Current cursor: %s", position);
+                                    final int messageId = message.getId();
+                                    if (messageId > position) {
+                                        user.setCursor(
+                                                messageId,
+                                                room,
+                                                new SetCursorListener() {
+                                                    @Override
+                                                    public void onSetCursor() {
+                                                        Timber.d("set cursor to: %s", messageId);
+                                                    }
+                                                },
+                                                new ErrorListener() {
+                                                    @Override
+                                                    public void onError(Error error) {
+                                                        Timber.d("error setting cursor!");
+                                                    }
                                                 }
-                                            },
-                                            new ErrorListener() {
-                                                @Override
-                                                public void onError(Error error) {
-                                                    Timber.d("error setting cursor!");
-                                                }
-                                            }
-                                    );
+                                        );
+                                    }
                                 }
                                 messagesAdapter.addMessage(message);
                                 if (message.getAttachment() != null && message.getAttachment().getFetchRequired()) {
@@ -299,7 +299,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                         public void onCurrentUser(@NonNull CurrentUser user) {
 
                             Room room = user.getRoom(roomId);
-                            messageCancelable = user.sendMessage(room.getId(), messageText.getText().toString(), null, new MessageSentListener() {
+                            user.sendMessage(room.getId(), messageText.getText().toString(), null, new MessageSentListener() {
                                 @Override
                                 public void onMessage(int messageId) {
                                     Timber.d("Message sent without attachment! %d", messageId);
@@ -348,7 +348,7 @@ public class ChatRoomActivity extends AppCompatActivity {
             public void onCurrentUser(@NonNull CurrentUser user) {
 
                 Room room = user.getRoom(roomId);
-                messageCancelable = user.sendMessage(room.getId(), message, attachment, new MessageSentListener() {
+                user.sendMessage(room.getId(), message, attachment, new MessageSentListener() {
                     @Override
                     public void onMessage(int messageId) {
                         Timber.d("Message sent! %d", messageId);
