@@ -39,7 +39,8 @@ dependencies {
     })
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21.2'
-//    api 'com.pusher:pusher-platform:0.0.1-SNAPSHOT' //Remote pusher platform
-    compile project(':pusher-platform-local')
+    api 'com.pusher:pusher-platform-android:0.3.0'
+    // Use if you're developing locally in conjunction with pusher-platform-android
+    // compile project(':pusher-platform-local')
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21.2'
 }

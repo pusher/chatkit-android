@@ -1,3 +1,1 @@
-include ':app', ':chatkit', ':pusher-platform-local'
-
-project(':pusher-platform-local').projectDir = new File('../pusher-platform-android/library')
+include ':app', ':chatkit' // , ':pusher-platform-local' if you're developing locally
