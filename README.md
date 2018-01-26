@@ -149,30 +149,30 @@ Join a room:
 
 ```java
         currentUser.joinRoom(
-                        room, 
+                        room,
                         new RoomListener() {
                             @Override
                             public void onRoom(Room room) {
-        
+
                             }
                         }, new ErrorListener() {
                             @Override
                             public void onError(Error error) {
-                                
+
                             }
                 });
 
         currentUser.joinRoom(
-                        roomId, 
+                        roomId,
                         new RoomListener() {
                             @Override
                             public void onRoom(Room room) {
-        
+
                             }
                         }, new ErrorListener() {
                             @Override
                             public void onError(Error error) {
-                                
+
                             }
                 });
 ```
@@ -180,7 +180,7 @@ Join a room:
 Create a room:
 
 ```java
-    user.createRoom("roomName", 
+    user.createRoom("roomName",
                         new RoomListener() {
                     @Override
                     public void onRoom(Room room) {
@@ -189,7 +189,7 @@ Create a room:
                 }, new ErrorListener() {
                     @Override
                     public void onError(Error error) {
-                        
+
                     }
                 });
 ```
@@ -298,7 +298,7 @@ currentUser.addUsers(room.getId(), new String[]{"zan", "ham", "vivan"}, new OnCo
                 }, new ErrorListener() {
                     @Override
                     public void onError(Error error) {
-                        
+
                     }
                 });
 ```
@@ -321,11 +321,9 @@ You will get informed of who is currently online by attaching listeners to the `
 The methods to implement are defined in `PresenceSubscriptionListeners`:
 
 ```java
-
 public interface PresenceSubscriptionListeners {
     void userCameOnline(User user);
     void userWentOffline(User user);
 }
-
 ```
 
