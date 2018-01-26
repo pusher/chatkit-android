@@ -18,26 +18,14 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 
 ### Include it in project
 
-Chatkit is currently distributed as a snapshot, so make sure to have the maven snapshots repository added:
-
-```groovy
-allprojects {
-    repositories {
-        google()
-        jcenter()
-    }
-}
-
-```
-
-Then add the library to your app's `dependencies` field in `app/build.gradle`
+You can install the SDK via Gradle. First add this to your $PROJECT_ROOT/app/build.gradle
 
 ```groovy
 dependencies {
-    ...
-    api 'com.pusher:chatkit:0.0.1-SNAPSHOT'
-}
+    // ...
 
+    api 'com.pusher:chatkit-android:0.1.0'
+}
 ```
 
 ## Usage
