@@ -22,17 +22,27 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+}
 
+kotlin {
+    experimental {
+        coroutines 'enable'
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     implementation 'com.android.support:appcompat-v7:26.1.0'
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21.2'
+
+    api 'com.pusher:pusher-platform-android:0.3.0'
+    // Use if you're developing locally in conjunction with pusher-platform-android
+    // compile project(':pusher-platform-local')
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.1', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-    api 'com.pusher:pusher-platform:0.0.1-SNAPSHOT' //Remote pusher platform
-    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21.2'
 }

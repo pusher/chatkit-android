@@ -1,15 +1,20 @@
 package com.pusher.chatkit.sample;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +27,8 @@ import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomListener;
 import com.pusher.chatkit.RoomsListener;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +43,8 @@ public class ListRoomsActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RoomsAdapter roomsAdapter;
 
+    private static final int READ_EXTERNAL_MEDIA_REQUEST = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,17 +52,35 @@ public class ListRoomsActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        if (ContextCompat.checkSelfPermission(ListRoomsActivity.this,
+        Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    ListRoomsActivity.this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+            )) {
+                // Do nothing (because it's an example app)
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(
+                        ListRoomsActivity.this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        READ_EXTERNAL_MEDIA_REQUEST
+                );
+            }
+        }
+
         roomsAdapter = new RoomsAdapter();
         recyclerView = findViewById(com.pusher.chatkit.sample.R.id.recycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(roomsAdapter);
 
-
-
         ((ChatApplication)getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull final CurrentUser currentUser) {
 
+                currentUser.getLogger().info(currentUser.rooms().toString(), null);
                 roomsAdapter.addRooms(currentUser.rooms());
 
                 currentUser.getJoinableRooms(new RoomsListener() {
@@ -77,10 +104,6 @@ public class ListRoomsActivity extends AppCompatActivity {
             }
         });
 
-
-
-
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,7 +121,6 @@ public class ListRoomsActivity extends AppCompatActivity {
         // Add the buttons
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-
                 final EditText roomTitle = ((AlertDialog) dialog).findViewById(com.pusher.chatkit.sample.R.id.create_room_title);
                 createNewRoom(roomTitle.getText().toString());
             }
@@ -132,7 +154,7 @@ public class ListRoomsActivity extends AppCompatActivity {
                             @Override
                             public void onRoom(Room room) {
                                 roomsAdapter.addRoom(room);
-                                Timber.d("ROOM CREATED! %s", room );
+                                Timber.d("Room created! %s", room );
                             }
                         }, new ErrorListener() {
                             @Override
@@ -145,6 +167,19 @@ public class ListRoomsActivity extends AppCompatActivity {
         });
     }
 
+    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions, @NotNull int[] grantResults) {
+        switch(requestCode) {
+            case READ_EXTERNAL_MEDIA_REQUEST:
+                if(grantResults.length != 0 && grantResults[0] == 0) {
+                    Log.d("PC", "Permission granted");
+                } else {
+                    Log.d("PC", "Permission denied");
+                }
+
+                return;
+            default:
+        }
+    }
 
     class RoomsAdapter extends RecyclerView.Adapter<RoomViewHolder> {
 

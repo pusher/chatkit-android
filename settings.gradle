@@ -1,5 +1,1 @@
-include ':app', ':chatkit'
-
-
-
-
+include ':app', ':chatkit' // , ':pusher-platform-local' if you're developing locally

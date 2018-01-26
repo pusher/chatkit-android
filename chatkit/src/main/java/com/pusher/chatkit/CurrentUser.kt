@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import android.os.Handler
 import android.os.Looper
+import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -10,6 +11,11 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import okhttp3.HttpUrl
 import java.util.concurrent.ConcurrentHashMap
 import com.google.gson.reflect.TypeToken
+import com.pusher.platform.RequestDestination
+import elements.Error
+import kotlinx.coroutines.experimental.async
+import java.io.File
+import kotlin.coroutines.experimental.suspendCoroutine
 
 
 class CurrentUser(
@@ -20,6 +26,7 @@ class CurrentUser(
         val cursorsInstance: Instance,
         val id: String,
         val logger: Logger,
+        val filesInstance: Instance,
         val tokenParams: ChatkitTokenParams?,
         val tokenProvider: TokenProvider,
         val userStore: GlobalUserStore,
@@ -27,7 +34,6 @@ class CurrentUser(
         var customData: CustomData?,
         var name: String?,
         var updatedAt: String
-
 ) {
     val mainThread = Handler(Looper.getMainLooper())
 
@@ -173,31 +179,118 @@ class CurrentUser(
         }
     }
 
-    fun addMessage(
-            text: String,
-            room: Room,
+    fun sendMessage(
+            roomId: Int,
+            text: String? = null,
+            attachment: GenericAttachment? = null,
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
-    ){
-        val messageReq = MessageRequest(
-                text = text,
-                userId = id
-        )
+    ) {
+        async {
+            var attachmentBody: AttachmentBody? = null
 
-        val path = "/rooms/${room.id}/messages"
+            if (attachment != null) {
+                when (attachment) {
+                    is DataAttachment -> {
+                        val uploadRes = uploadFile(
+                                file = attachment.file,
+                                fileName = attachment.name,
+                                roomId = roomId
+                        )
+
+                        when (uploadRes) {
+                            is Ok -> {
+                                attachmentBody = uploadRes.value
+                            }
+                            is Err -> {
+                                logger.error("Failed to upload file: ${uploadRes.error}")
+                                onErrorListener.onError(uploadRes.error)
+                                return@async
+                            }
+                        }
+                    }
+                    is LinkAttachment -> {
+                        attachmentBody = AttachmentBody(attachment.link, attachment.type)
+                    }
+                }
+            }
+
+            val sendMesageRes = sendCompleteMessage(
+                    roomId = roomId,
+                    text = text,
+                    attachment = attachmentBody
+            )
+
+            when (sendMesageRes) {
+                is Ok -> {
+                    onCompleteListener.onMessage(sendMesageRes.value.messageId)
+                }
+                is Err -> {
+                    onErrorListener.onError(sendMesageRes.error)
+                }
+            }
+        }
+    }
+
+    private suspend fun sendCompleteMessage(
+            roomId: Int,
+            text: String? = null,
+            attachment: AttachmentBody? = null
+    ): Result<MessageSendingResponse, Error> = suspendCoroutine {
+        val path = "/rooms/$roomId/messages"
+        val message = MessageRequest(text = text, userId = id, attachment = attachment)
         apiInstance.request(
                 options = RequestOptions(
                         method = "POST",
                         path = path,
-                        body = GSON.toJson(messageReq)
+                        body = GSON.toJson(message)
+                ),
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { res ->
+                    val messageRes = GSON.fromJson<MessageSendingResponse>(res.body()!!.charStream(), MessageSendingResponse::class.java)
+                    it.resume(Ok(messageRes))
+                },
+                onFailure = { err -> it.resume(Err(err)) }
+        )
+    }
+
+    fun fetchAttachment(
+            attachmentUrl: String,
+            onCompleteListener: FetchedAttachmentListener,
+            onErrorListener: ErrorListener
+    ) {
+        filesInstance.request(
+                options = RequestOptions(
+                        method = "GET",
+                        destination = RequestDestination.Absolute(attachmentUrl)
                 ),
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
                 onSuccess = { response ->
-                    val message = GSON.fromJson<MessageSendingResponse>(response.body()!!.charStream(), MessageSendingResponse::class.java)
-                    onCompleteListener.onMessage(message.messageId)
+                    val fetchedAttachment = GSON.fromJson<FetchedAttachment>(response.body()!!.charStream(), FetchedAttachment::class.java)
+                    onCompleteListener.onFetch(fetchedAttachment)
                 },
-                onFailure = { error -> onErrorListener.onError(error)}
+                onFailure = { error -> onErrorListener.onError(error) }
+
+        )
+    }
+
+    private suspend fun uploadFile(
+            file: File,
+            fileName: String,
+            roomId: Int
+    ): Result<AttachmentBody, Error> = suspendCoroutine {
+        filesInstance.upload(
+                path = "/rooms/$roomId/files/$fileName",
+                file = file,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                onSuccess = { res ->
+                    val attachmentBody = GSON.fromJson<AttachmentBody>(res.body()!!.charStream(), AttachmentBody::class.java)
+                    it.resume(Ok(attachmentBody))
+                },
+                onFailure = { err -> it.resume(Err(err)) }
         )
     }
 
@@ -364,7 +457,9 @@ class CurrentUser(
     }
 }
 
-data class MessageRequest(val text: String, val userId: String)
+data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
+
+data class AttachmentBody(val resourceLink: String, val type: String)
 
 data class SetCursorRequest(val position: Int)
 
@@ -376,3 +471,11 @@ data class RoomCreateRequest(
         val createdById: String,
         var userIds: Array<String>? = null
 )
+
+data class FetchedAttachment(
+        val file: FetchedAttachmentFile,
+        @SerializedName("resource_link") val link: String,
+        val ttl: Double
+)
+
+data class FetchedAttachmentFile(val bytes: Int, val lastModified: Double, val name: String)

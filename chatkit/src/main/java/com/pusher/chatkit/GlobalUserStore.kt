@@ -8,7 +8,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import java.util.concurrent.ConcurrentHashMap
 
 class GlobalUserStore(
-        val instance: Instance,
+        val apiInstance: Instance,
         val logger: Logger,
         val tokenProvider: TokenProvider?,
         val tokenParams: ChatkitTokenParams?) {
@@ -16,11 +16,10 @@ class GlobalUserStore(
     val users = ConcurrentHashMap<String, User>()
 
     fun fetchUsersWithIds(userIds: Set<String>, onComplete: UsersListener, onFailure: ErrorListener){
-
         val path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
         val listOfUsersType = object: TypeToken<List<User>>(){}.type
 
-        instance.request(
+        apiInstance.request(
                 options = RequestOptions(
                         method = "GET",
                         path = path
@@ -42,10 +41,9 @@ class GlobalUserStore(
     }
 
     fun findOrGetUser(id: String, userListener: UserListener, errorListener: ErrorListener){
-
-        if(users.contains(id)) userListener.onUser(users.getValue(id))
-
-        else{
+        if (users.contains(id)) {
+            userListener.onUser(users.getValue(id))
+        } else {
             fetchUsersWithIds(
                     userIds = setOf(id),
                     onComplete = UsersListener { users ->
@@ -55,7 +53,6 @@ class GlobalUserStore(
                     onFailure = errorListener
             )
         }
-
 
     }
 
