@@ -8,10 +8,10 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 
 ## Features
 
-- Creating, joining and deleting rooms
+- Creating, joining, and deleting rooms
 - Adding and removing users to rooms
-- Sending and receiving messages to and from rooms
-- Seeing who is currently in a room
+- Sending and receiving messages to and from rooms, with attachments
+- Seeing who's currently in a room
 - Seeing who's currently online
 
 ## Setup
