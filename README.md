@@ -1,7 +1,4 @@
 # chatkit-android
-A rather chatty kit.
-
-🚨 Note - this project is in early preview stage. Use at your own risk. 🚨
 
 The Android client for Pusher Chatkit. If you aren't already here, you can find the source on [Github](https://github.com/pusher/chatkit-android).
 
