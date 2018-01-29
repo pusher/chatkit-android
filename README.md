@@ -107,9 +107,7 @@ typealias CustomData = MutableMap<String, String>
 List all joined rooms:
 
 ```java
-
 Set<Room> rooms = user.rooms();
-
 ```
 
 Where `Room` is a Kotlin data class with the following parameters:
@@ -126,7 +124,6 @@ data class Room(
         var memberUserIds: MutableList<String>,
         private var userStore: UserStore?
 ){
-
     fun userStore(): UserStore {
         if(userStore == null) userStore = UserStore()
         return userStore!!
@@ -148,84 +145,71 @@ Room room = currentUser.getRoom(roomId);
 Join a room:
 
 ```java
-        currentUser.joinRoom(
-                        room,
-                        new RoomListener() {
-                            @Override
-                            public void onRoom(Room room) {
+currentUser.joinRoom(
+        roomId,
+        new RoomListener() {
+            @Override
+            public void onRoom(Room room) {
 
-                            }
-                        }, new ErrorListener() {
-                            @Override
-                            public void onError(Error error) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onError(Error error) {
 
-                            }
-                });
-
-        currentUser.joinRoom(
-                        roomId,
-                        new RoomListener() {
-                            @Override
-                            public void onRoom(Room room) {
-
-                            }
-                        }, new ErrorListener() {
-                            @Override
-                            public void onError(Error error) {
-
-                            }
-                });
+            }
+        }
+);
 ```
 
 Create a room:
 
 ```java
-    user.createRoom("roomName",
-                        new RoomListener() {
-                    @Override
-                    public void onRoom(Room room) {
+user.createRoom("roomName",
+    new RoomListener() {
+        @Override
+        public void onRoom(Room room) {
 
-                    }
-                }, new ErrorListener() {
-                    @Override
-                    public void onError(Error error) {
+        }
+    }, new ErrorListener() {
+        @Override
+        public void onError(Error error) {
 
-                    }
-                });
+        }
+    }
+);
 ```
 
 
 Send message:
 
 ```java
-                currentUser.addMessage("Hello, world!", room, new MessageSentListener() {
-                    @Override
-                    public void onMessage(int messageId) {
+currentUser.addMessage("Hello, world!", room, new MessageSentListener() {
+    @Override
+    public void onMessage(int messageId) {
 
-                    }
-                }, new ErrorListener() {
-                    @Override
-                    public void onError(Error error) {
+    }
+}, new ErrorListener() {
+    @Override
+    public void onError(Error error) {
 
-                    }
-                });
+    }
+});
 ```
 
 Subscribe to messages in a room:
 
 ```java
-
  currentUser.subscribeToRoom(room, new RoomSubscriptionListenersAdapter(){
-                    @Override
-                    public void onNewMessage(Message message) {
+    @Override
+    public void onNewMessage(Message message) {
 
-                    }
+    }
 
-                    @Override
-                    public void onError(Error error) {
+    @Override
+    public void onError(Error error) {
 
-                    }
-                });
+    }
+});
 ```
 
 Or subscribe both to messages and to cursors:
@@ -290,17 +274,22 @@ currentUser.getCursors();
 Add others to a room:
 
 ```java
-currentUser.addUsers(room.getId(), new String[]{"zan", "ham", "vivan"}, new OnCompleteListener() {
-                    @Override
-                    public void onComplete() {
+currentUser.addUsers(
+    room.getId(),
+    new String[]{"zan", "ham", "vivan"},
+    new OnCompleteListener() {
+        @Override
+        public void onComplete() {
 
-                    }
-                }, new ErrorListener() {
-                    @Override
-                    public void onError(Error error) {
+        }
+    },
+    new ErrorListener() {
+        @Override
+        public void onError(Error error) {
 
-                    }
-                });
+        }
+    }
+);
 ```
 
 ### Implementing a Token Provider
@@ -311,7 +300,7 @@ You can read more about how authentication flow works on the documentation site 
 The core interface to implement on the client is this:
 
 ```java
- ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
+ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
 ```
 
 ### Who's Online
@@ -326,4 +315,3 @@ public interface PresenceSubscriptionListeners {
     void userWentOffline(User user);
 }
 ```
-
