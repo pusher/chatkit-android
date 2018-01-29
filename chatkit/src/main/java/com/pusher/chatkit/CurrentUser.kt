@@ -181,37 +181,58 @@ class CurrentUser(
 
     fun sendMessage(
             roomId: Int,
+            text: String,
+            onCompleteListener: MessageSentListener,
+            onErrorListener: ErrorListener
+    ) {
+        async {
+            val sendMesageRes = sendCompleteMessage(
+                    roomId = roomId,
+                    text = text
+            )
+
+            when (sendMesageRes) {
+                is Ok -> {
+                    onCompleteListener.onMessage(sendMesageRes.value.messageId)
+                }
+                is Err -> {
+                    onErrorListener.onError(sendMesageRes.error)
+                }
+            }
+        }
+    }
+
+    fun sendMessage(
+            roomId: Int,
             text: String? = null,
-            attachment: GenericAttachment? = null,
+            attachment: GenericAttachment,
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
     ) {
         async {
             var attachmentBody: AttachmentBody? = null
 
-            if (attachment != null) {
-                when (attachment) {
-                    is DataAttachment -> {
-                        val uploadRes = uploadFile(
-                                file = attachment.file,
-                                fileName = attachment.name,
-                                roomId = roomId
-                        )
+            when (attachment) {
+                is DataAttachment -> {
+                    val uploadRes = uploadFile(
+                            file = attachment.file,
+                            fileName = attachment.name,
+                            roomId = roomId
+                    )
 
-                        when (uploadRes) {
-                            is Ok -> {
-                                attachmentBody = uploadRes.value
-                            }
-                            is Err -> {
-                                logger.error("Failed to upload file: ${uploadRes.error}")
-                                onErrorListener.onError(uploadRes.error)
-                                return@async
-                            }
+                    when (uploadRes) {
+                        is Ok -> {
+                            attachmentBody = uploadRes.value
+                        }
+                        is Err -> {
+                            logger.error("Failed to upload file: ${uploadRes.error}")
+                            onErrorListener.onError(uploadRes.error)
+                            return@async
                         }
                     }
-                    is LinkAttachment -> {
-                        attachmentBody = AttachmentBody(attachment.link, attachment.type)
-                    }
+                }
+                is LinkAttachment -> {
+                    attachmentBody = AttachmentBody(attachment.link, attachment.type)
                 }
             }
 
