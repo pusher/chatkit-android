@@ -31,6 +31,8 @@ import com.pusher.chatkit.DataAttachment;
 import com.pusher.chatkit.ErrorListener;
 import com.pusher.chatkit.FetchedAttachment;
 import com.pusher.chatkit.FetchedAttachmentListener;
+import com.pusher.chatkit.GenericAttachment;
+import com.pusher.chatkit.LinkAttachment;
 import com.pusher.chatkit.Message;
 import com.pusher.chatkit.MessageSentListener;
 import com.pusher.chatkit.Room;
@@ -314,6 +316,9 @@ public class ChatRoomActivity extends AppCompatActivity {
                         }
                     });
                 }
+
+                // Use this if you want to try sending a link:
+                // enterMessage(messageText.getText().toString(), new LinkAttachment("https://i.giphy.com/PYEGoZXABBMuk.gif", "image"));
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -342,7 +347,7 @@ public class ChatRoomActivity extends AppCompatActivity {
         });
     }
 
-    private void enterMessage(final String message, final DataAttachment attachment) {
+    private void enterMessage(final String message, final GenericAttachment attachment) {
         ((ChatApplication) getApplication()).getCurrentUser(new CurrentUserListener() {
             @Override
             public void onCurrentUser(@NonNull CurrentUser user) {
