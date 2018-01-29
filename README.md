@@ -183,20 +183,74 @@ user.createRoom("roomName",
 Send message:
 
 ```java
-currentUser.addMessage("Hello, world!", room, new MessageSentListener() {
-    @Override
-    public void onMessage(int messageId) {
+currentUser.sendMessage(
+    room.getId(),
+    "Hey there!",
+    new MessageSentListener() {
+        @Override
+        public void onMessage(int messageId) {
 
-    }
-}, new ErrorListener() {
-    @Override
-    public void onError(Error error) {
+        }
+    }, new ErrorListener() {
+        @Override
+        public void onError(Error error) {
 
+        }
     }
-});
+);
 ```
 
-Subscribe to messages in a room:
+You can also send messages with attachments. In the following example we assume that `getAttachmentFile` is a function that returns a `File` object.
+
+```java
+File myAttachment = getAttachmentFile();
+String chosenFilename = "testing.png";
+
+currentUser.sendMessage(
+    room.getId(),
+    "Hey there!",
+    new DataAttachment(myFile, chosenFilename),
+    new MessageSentListener() {
+        @Override
+        public void onMessage(int messageId) {
+
+        }
+    }, new ErrorListener() {
+        @Override
+        public void onError(Error error) {
+
+        }
+    }
+);
+```
+
+There are currently 2 different types of attachment supported:
+
+* `DataAttachment(val file: File, val name: String)`: Use this if you have your file as a `File` and you want it to be stored by the Chatkit servers. The `name` parameter is the name that the file will be given when it is stored by our servers.
+* `LinkAttachment(val link: String, val type: String)`: Use this if you have a file stored elsewhere that you would like to attach to a message without it being uploaded to and stored by the Chatkit servers. The `type` `parameter` currently needs to be one of `"image"`, `"video"`, `"audio"`, or `"file"`. This will likely eventually be encoded in an `enum` but for now we're leaving it as just a `String` while we finalise the API.
+
+Here's an example of using a `LinkAttachment`:
+
+```java
+currentUser.sendMessage(
+    myRoom.getId(),
+    "Hey there",
+    new LinkAttachment("https://i.giphy.com/PYEGoZXABBMuk.gif", "image"),
+    new MessageSentListener() {
+        @Override
+        public void onMessage(int messageId) {
+
+        }
+    }, new ErrorListener() {
+        @Override
+        public void onError(Error error) {
+
+        }
+    }
+);
+```
+
+Subscribe to receive messages in a room:
 
 ```java
  currentUser.subscribeToRoom(room, new RoomSubscriptionListenersAdapter(){
