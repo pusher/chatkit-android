@@ -59,30 +59,30 @@ Connect to the ChatManager and implement the `UserSubscriptionListeners`:
 
 ```java
 chatManager.connect(
-                new UserSubscriptionListeners(
-                        new CurrentUserListener() {
-                            @Override
-                            public void currentUserReceived(@NonNull CurrentUser user) {
-                                Log.d(TAG, "currentUserReceived");
-                                currentUser = user;
+    new UserSubscriptionListeners(
+        new CurrentUserListener() {
+            @Override
+            public void currentUserReceived(@NonNull CurrentUser user) {
+                Log.d(TAG, "currentUserReceived");
+                currentUser = user;
 
-                                joinOrCreateRoom();
-                            }
-                        },
-                        new ErrorListener() {
-                            @Override
-                            public void onError(Error error) {
-                                Log.d(TAG, "onError");
-                            }
-                        },
-                        new RemovedFromRoomListener() {
-                            @Override
-                            public void removedFromRoom(Room room) {
-                                Log.d(TAG, "removed from room");
-                            }
-                        }
-                )
-        );
+                joinOrCreateRoom();
+            }
+        },
+        new ErrorListener() {
+            @Override
+            public void onError(Error error) {
+                Log.d(TAG, "onError");
+            }
+        },
+        new RemovedFromRoomListener() {
+            @Override
+            public void removedFromRoom(Room room) {
+                Log.d(TAG, "removed from room");
+            }
+        }
+    )
+);
 ```
 
 ### Features breakdown
@@ -92,13 +92,13 @@ It has the following params, with `CustomData` being an a Map of any extra param
 
 ```kotlin
 class CurrentUser(
-        val id: String,
-        val createdAt: String,
-        var updatedAt: String,
-        var name: String?,
-        var avatarURL: String?,
-        var cursors: Map<Int, Cursor>
-        var customData: CustomData?
+    val id: String,
+    val createdAt: String,
+    var updatedAt: String,
+    var name: String?,
+    var avatarURL: String?,
+    var cursors: Map<Int, Cursor>
+    var customData: CustomData?
 )
 
 typealias CustomData = MutableMap<String, String>
@@ -114,15 +114,15 @@ Where `Room` is a Kotlin data class with the following parameters:
 
 ```kotlin
 data class Room(
-        val id: Int,
-        val createdById: String,
-        var name: String,
-        var isPrivate: Boolean,
-        val createdAt: String,
-        var updatedAt: String,
-        var deletedAt: String,
-        var memberUserIds: MutableList<String>,
-        private var userStore: UserStore?
+    val id: Int,
+    val createdById: String,
+    var name: String,
+    var isPrivate: Boolean,
+    val createdAt: String,
+    var updatedAt: String,
+    var deletedAt: String,
+    var memberUserIds: MutableList<String>,
+    private var userStore: UserStore?
 ){
     fun userStore(): UserStore {
         if(userStore == null) userStore = UserStore()
@@ -146,18 +146,18 @@ Join a room:
 
 ```java
 currentUser.joinRoom(
-        roomId,
-        new RoomListener() {
-            @Override
-            public void onRoom(Room room) {
+    roomId,
+    new RoomListener() {
+        @Override
+        public void onRoom(Room room) {
 
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onError(Error error) {
-
-            }
         }
+    }, new ErrorListener() {
+        @Override
+        public void onError(Error error) {
+
+        }
+    }
 );
 ```
 
@@ -217,30 +217,30 @@ Or subscribe both to messages and to cursors:
 ```java
 
 currentUser.subscribeToRoom(
-        room,
-        20,
-        new RoomSubscriptionListenersAdapter() {
-            @Override
-            public void onNewMessage(Message message) {
+    room,
+    20,
+    new RoomSubscriptionListenersAdapter() {
+        @Override
+        public void onNewMessage(Message message) {
 
-            }
-
-            @Override
-            public void onError(Error error) {
-
-            }
-        },
-        new CursorsSubscriptionListenersAdapter() {
-            @Override
-            public void onCursorSet(Cursor cursor) {
-
-            }
-
-            @Override
-            public void onError(Error error) {
-
-            }
         }
+
+        @Override
+        public void onError(Error error) {
+
+        }
+    },
+    new CursorsSubscriptionListenersAdapter() {
+        @Override
+        public void onCursorSet(Cursor cursor) {
+
+        }
+
+        @Override
+        public void onError(Error error) {
+
+        }
+    }
 );
 ```
 
