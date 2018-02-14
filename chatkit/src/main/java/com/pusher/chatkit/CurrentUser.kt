@@ -205,7 +205,7 @@ class CurrentUser(
     fun sendMessage(
             roomId: Int,
             text: String? = null,
-            attachment: GenericAttachment,
+            attachment: GenericAttachment?,
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
     ) {
