@@ -179,75 +179,45 @@ class CurrentUser(
         }
     }
 
-    fun sendMessage(
-            roomId: Int,
-            text: String,
-            onCompleteListener: MessageSentListener,
-            onErrorListener: ErrorListener
-    ) {
-        async {
-            val sendMesageRes = sendCompleteMessage(
-                    roomId = roomId,
-                    text = text
-            )
-
-            when (sendMesageRes) {
-                is Ok -> {
-                    onCompleteListener.onMessage(sendMesageRes.value.messageId)
-                }
-                is Err -> {
-                    onErrorListener.onError(sendMesageRes.error)
-                }
-            }
-        }
-    }
-
+    @JvmOverloads
     fun sendMessage(
             roomId: Int,
             text: String? = null,
-            attachment: GenericAttachment,
+            attachment: GenericAttachment = NoAttachment,
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
     ) {
         async {
-            var attachmentBody: AttachmentBody? = null
-
-            when (attachment) {
+            val attachmentBody = when (attachment) {
                 is DataAttachment -> {
                     val uploadRes = uploadFile(
-                            file = attachment.file,
-                            fileName = attachment.name,
-                            roomId = roomId
+                        file = attachment.file,
+                        fileName = attachment.name,
+                        roomId = roomId
                     )
 
                     when (uploadRes) {
-                        is Ok -> {
-                            attachmentBody = uploadRes.value
-                        }
-                        is Err -> {
-                            logger.error("Failed to upload file: ${uploadRes.error}")
-                            onErrorListener.onError(uploadRes.error)
-                            return@async
-                        }
+                        is Ok -> uploadRes.value
+                        is Err -> AttachmentBody.Failed(uploadRes.error)
                     }
                 }
-                is LinkAttachment -> {
-                    attachmentBody = AttachmentBody(attachment.link, attachment.type)
-                }
+                is LinkAttachment -> AttachmentBody.Resource(attachment.link, attachment.type)
+                is NoAttachment -> null
             }
 
-            val sendMesageRes = sendCompleteMessage(
+            if (attachmentBody is AttachmentBody.Failed) {
+                logger.error("Failed to upload file: ${attachmentBody.error}")
+                onErrorListener.onError(attachmentBody.error)
+            } else {
+                val sendMessageRes = sendCompleteMessage(
                     roomId = roomId,
                     text = text,
                     attachment = attachmentBody
-            )
+                )
 
-            when (sendMesageRes) {
-                is Ok -> {
-                    onCompleteListener.onMessage(sendMesageRes.value.messageId)
-                }
-                is Err -> {
-                    onErrorListener.onError(sendMesageRes.error)
+                when (sendMessageRes) {
+                    is Ok -> onCompleteListener.onMessage(sendMessageRes.value.messageId)
+                    is Err -> onErrorListener.onError(sendMessageRes.error)
                 }
             }
         }
@@ -480,7 +450,10 @@ class CurrentUser(
 
 data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
 
-data class AttachmentBody(val resourceLink: String, val type: String)
+sealed class AttachmentBody {
+    data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
+    data class Failed(val error: Error) : AttachmentBody()
+}
 
 data class SetCursorRequest(val position: Int)
 
