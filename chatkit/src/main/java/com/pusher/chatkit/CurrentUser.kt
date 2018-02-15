@@ -179,33 +179,11 @@ class CurrentUser(
         }
     }
 
-    fun sendMessage(
-            roomId: Int,
-            text: String,
-            onCompleteListener: MessageSentListener,
-            onErrorListener: ErrorListener
-    ) {
-        async {
-            val sendMesageRes = sendCompleteMessage(
-                    roomId = roomId,
-                    text = text
-            )
-
-            when (sendMesageRes) {
-                is Ok -> {
-                    onCompleteListener.onMessage(sendMesageRes.value.messageId)
-                }
-                is Err -> {
-                    onErrorListener.onError(sendMesageRes.error)
-                }
-            }
-        }
-    }
-
+    @JvmOverloads
     fun sendMessage(
             roomId: Int,
             text: String? = null,
-            attachment: GenericAttachment,
+            attachment: GenericAttachment = NoAttachment,
             onCompleteListener: MessageSentListener,
             onErrorListener: ErrorListener
     ) {

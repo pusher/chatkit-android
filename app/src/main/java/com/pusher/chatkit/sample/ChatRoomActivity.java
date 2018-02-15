@@ -303,7 +303,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                         public void onCurrentUser(@NonNull CurrentUser user) {
 
                             Room room = user.getRoom(roomId);
-                            user.sendMessage(room.getId(), messageText.getText().toString(), NoAttachment.INSTANCE, new MessageSentListener() {
+                            user.sendMessage(room.getId(), messageText.getText().toString(), new MessageSentListener() {
                                 @Override
                                 public void onMessage(int messageId) {
                                     Timber.d("Message sent without attachment! %d", messageId);
