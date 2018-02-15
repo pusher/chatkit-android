@@ -16,6 +16,7 @@ android:
     - android-27
     - add-on
     - extra
+    - sys-img-armeabi-v7a-android-26
   licenses:
     - 'android-sdk-preview-.+'
     - 'android-sdk-license-.+'
