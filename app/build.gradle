@@ -19,6 +19,30 @@ android {
     }
 }
 
+def buildConfigStringFields(variant, Map<String, String> values) {
+    def invalid = []
+    values.forEach { name, key ->
+        if(project.hasProperty(key)) {
+            variant.buildConfigField "String", name, "\"${project.property(key)}\""
+        } else {
+            invalid += key
+        }
+    }
+    if (!invalid.empty) {
+        throw new StopActionException("Please set value(s) for ${invalid.join(", ")} in ~/.gradle/gradle.properties")
+    }
+}
+
+android.applicationVariants.all { variant ->
+    buildConfigStringFields(variant,
+        [
+            "INSTANCE_LOCATOR" : "pusher_instance_locator",
+            "TOKEN_PROVIDER_ENDPOINT" : "pusher_token_provider_url",
+            "USER_ID" : "pusher_user_name"
+        ]
+    )
+}
+
 dependencies {
     implementation 'com.android.support:appcompat-v7:27.0.2'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
