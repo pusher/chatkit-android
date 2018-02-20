@@ -1,5 +1,9 @@
 language: android
 
+# https://stackoverflow.com/a/47726910/458365
+before_install:
+- yes | sdkmanager "platforms;android-27"
+
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
