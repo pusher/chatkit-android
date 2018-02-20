@@ -19,11 +19,12 @@ android {
     }
 }
 
-def buildConfigStringFields(variant, Map<String, String> values) {
+static def buildConfigStringFields(variant, Map<String, String> values) {
     def invalid = []
     values.forEach { name, key ->
-        if(project.hasProperty(key)) {
-            variant.buildConfigField "String", name, "\"${project.property(key)}\""
+        def value = properties.get(key) ?: System.getenv(key)
+        if(value) {
+            variant.buildConfigField "String", name, "\"$value\""
         } else {
             invalid += key
         }
