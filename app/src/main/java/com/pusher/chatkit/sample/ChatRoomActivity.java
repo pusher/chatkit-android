@@ -24,6 +24,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.database.Cursor;
 
+import com.pusher.chatkit.AttachmentBody;
 import com.pusher.chatkit.CurrentUser;
 import com.pusher.chatkit.CurrentUserListener;
 import com.pusher.chatkit.CursorsSubscriptionListenersAdapter;
@@ -35,6 +36,7 @@ import com.pusher.chatkit.GenericAttachment;
 import com.pusher.chatkit.LinkAttachment;
 import com.pusher.chatkit.Message;
 import com.pusher.chatkit.MessageSentListener;
+import com.pusher.chatkit.NoAttachment;
 import com.pusher.chatkit.Room;
 import com.pusher.chatkit.RoomSubscriptionListenersAdapter;
 import com.pusher.chatkit.SetCursorListener;
@@ -301,7 +303,7 @@ public class ChatRoomActivity extends AppCompatActivity {
                         public void onCurrentUser(@NonNull CurrentUser user) {
 
                             Room room = user.getRoom(roomId);
-                            user.sendMessage(room.getId(), messageText.getText().toString(), null, new MessageSentListener() {
+                            user.sendMessage(room.getId(), messageText.getText().toString(), new MessageSentListener() {
                                 @Override
                                 public void onMessage(int messageId) {
                                     Timber.d("Message sent without attachment! %d", messageId);

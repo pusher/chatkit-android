@@ -14,9 +14,6 @@ import elements.Error;
 import timber.log.Timber;
 
 public class ChatApplication extends Application {
-    private static final String INSTANCE_LOCATOR = "YOUR_INSTANCE_LOCATOR";
-    private static final String TOKEN_PROVIDER_ENDPOINT = "YOUR_TEST_TOKEN_PROVIDER_URL";
-    private static final String USER_ID = "YOUR_CREATED_USER_ID";
 
     private ChatManager chatManager;
     private CurrentUser currentUser;
@@ -27,11 +24,11 @@ public class ChatApplication extends Application {
         super.onCreate();
         Timber.plant(new Timber.DebugTree());
 
-        ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
+        ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(BuildConfig.TOKEN_PROVIDER_ENDPOINT);
 
         chatManager = new ChatManager.Builder()
-                .instanceLocator(INSTANCE_LOCATOR)
-                .userId(USER_ID)
+                .instanceLocator(BuildConfig.INSTANCE_LOCATOR)
+                .userId(BuildConfig.USER_ID)
                 .context(getApplicationContext())
                 .tokenProvider(tokenProvider)
                 .build();
