@@ -96,6 +96,8 @@ class ChatManager(
     var baseClient: BaseClient? = null
     val apiServiceName = "chatkit"
     val cursorsServiceName = "chatkit_cursors"
+    val filesServiceName = "chatkit_files"
+    val presenceServiceName = "chatkit_presence"
     val serviceVersion = "v1"
     val logger = AndroidLogger(logLevel)
 
@@ -134,7 +136,16 @@ class ChatManager(
 
         val filesInstance = Instance(
                 locator = instanceLocator,
-                serviceName = "chatkit_files",
+                serviceName = filesServiceName,
+                serviceVersion = "v1",
+                context = context,
+                logger = logger,
+                baseClient = baseClient
+        )
+
+        val presenceInstance = Instance(
+                locator = instanceLocator,
+                serviceName = presenceServiceName,
                 serviceVersion = "v1",
                 context = context,
                 logger = logger,
@@ -161,6 +172,7 @@ class ChatManager(
                 apiInstance = apiInstance,
                 cursorsInstance = cursorsInstance,
                 filesInstance = filesInstance,
+                presenceInstance = presenceInstance,
                 path = path,
                 userStore = userStore,
                 tokenProvider = tokenProvider!!,

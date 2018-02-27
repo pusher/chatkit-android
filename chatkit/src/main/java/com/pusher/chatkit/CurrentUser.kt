@@ -27,6 +27,7 @@ class CurrentUser(
         val id: String,
         val logger: Logger,
         val filesInstance: Instance,
+        val presenceInstance: Instance,
         val tokenParams: ChatkitTokenParams?,
         val tokenProvider: TokenProvider,
         val userStore: GlobalUserStore,
@@ -437,7 +438,7 @@ class CurrentUser(
     fun establishPresenceSubscription(listeners: ThreadedUserSubscriptionListeners) {
 
         presenceSubscription = PresenceSubscription(
-                instance = apiInstance,
+                instance = presenceInstance,
                 path = "/users/$id/presence",
                 listeners = listeners,
                 tokenProvider = tokenProvider,
