@@ -369,3 +369,17 @@ public interface PresenceSubscriptionListeners {
     void userWentOffline(User user);
 }
 ```
+
+### Development build
+
+When building this project, you may choose to use a local version of [`pusher-platform-android`](1). 
+
+To do so you can add the path to your local copy in your `~/.gradle/gradle.properties`:
+
+````
+pusher_platform_local=../pusher-platform-android
+````
+
+It can be either a relative or absolute path.
+
+[1]: https://github.com/pusher/pusher-platform-android
