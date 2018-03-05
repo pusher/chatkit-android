@@ -1,0 +1,14 @@
+ext.buildConfigStringFields = { variant, values ->
+    def invalid = []
+    values.forEach { name, key ->
+        def value = project.hasProperty(key) ? project.getProperty(key) : System.getenv(key)
+        if(value) {
+            variant.buildConfigField "String", name, "\"$value\""
+        } else {
+            invalid += key
+        }
+    }
+    if (!invalid.empty) {
+        throw new StopActionException("Please set value(s) for ${invalid.join(", ")} in ~/.gradle/gradle.properties")
+    }
+}

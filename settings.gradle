@@ -1,1 +1,12 @@
-include ':app', ':chatkit' // , ':pusher-platform-local' if you're developing locally
+include ':app', ':chatkit'
+def injectProject = { projectName, projectPath ->
+    include "$projectName"
+    project("$projectName").projectDir = new File(settingsDir, projectPath)
+}
+
+// set pusher_platform_local for local development
+if (properties.containsKey("pusher_platform_local")) {
+    def localPath = properties["pusher_platform_local"]
+    injectProject(':pusher-platform-local', "$localPath/library")
+    injectProject(':library-core', "$localPath/library-core")
+}
