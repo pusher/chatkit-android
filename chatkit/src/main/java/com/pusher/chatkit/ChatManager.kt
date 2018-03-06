@@ -5,6 +5,7 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.platform.*
@@ -15,6 +16,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 
 private const val USERS_PATH = "users"
@@ -122,13 +124,8 @@ class ChatManager @JvmOverloads constructor(
 }
 
 @UsesCoroutines
-fun ChatManager.connectAsync(): SubscriptionReceiveChannel<ChatKitEvent> =
-    with(BroadcastChannel<ChatKitEvent>(CONFLATED)) {
-        connect { event ->
-            offer(event)
-        }
-        openSubscription()
-    }
+fun ChatManager.connectAsync(): ReceiveChannel<ChatKitEvent> =
+    broadcast { connect { event -> offer(event) } }
 
 data class Message(
     val id: Int,
