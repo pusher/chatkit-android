@@ -1,4 +1,6 @@
-include ':app', ':chatkit'
+include ':chatkit'
+include ':demos:kotlin-app'
+
 def injectProject = { projectName, projectPath ->
     include "$projectName"
     project("$projectName").projectDir = new File(settingsDir, projectPath)

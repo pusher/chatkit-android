@@ -1,24 +1,22 @@
 package com.pusher.chatkit
 
-import android.os.Handler
-import android.os.Looper
 import com.pusher.platform.SubscriptionListeners
 import elements.Error
 import elements.Headers
 import elements.SubscriptionEvent
 import java.net.URL
-import java.net.URLDecoder
-import java.util.*
 
 
-class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalUserStore, val listeners: RoomSubscriptionListeners) {
-
-    val mainThread: Handler = Handler(Looper.getMainLooper())
+class RoomSubscription(
+    val room: Room,
+    private val userStore: GlobalUserStore,
+    private val onEvent: (Event) -> Unit
+) {
 
     val subscriptionListeners = SubscriptionListeners(
-            onOpen = { handleOpen(it) },
-            onEvent = { handleMessage(it) },
-            onError = { handleError(it) }
+        onOpen = { handleOpen(it) },
+        onEvent = { handleMessage(it) },
+        onError = { handleError(it) }
     )
 
     fun handleOpen(headers: Headers) {
@@ -49,16 +47,15 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
 
             message.room = room
             userStore.fetchUsersWithIds(
-                    userIds = setOf(message.userId),
-                    onComplete = UsersListener { users ->
-                        if (users.isNotEmpty())
-                            message.user = users[0]
-                        mainThread.post { listeners.onNewMessage(message) }
-
-                    },
-                    onFailure = ErrorListener {
-                        mainThread.post { listeners.onNewMessage(message) }
-                    })
+                userIds = setOf(message.userId),
+                onComplete = UsersListener { users ->
+                    if (users.isNotEmpty())
+                        message.user = users[0]
+                    onEvent(Event.OnNewMessage(message))
+                },
+                onFailure = ErrorListener {
+                    onEvent(Event.OnNewMessage(message))
+                })
         } else {
             TODO("Some weird shit has happened. Event received is of the wrong type ${chatEvent.eventName}")
         }
@@ -66,7 +63,13 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
     }
 
     fun handleError(error: Error) {
-        mainThread.post { listeners.onError(error) }
+        onEvent(Event.OnError(error))
+    }
+
+    sealed class Event {
+        data class OnNewMessage(val message: Message) : Event()
+        data class OnError(val error: Error) : Event()
     }
 
 }
+

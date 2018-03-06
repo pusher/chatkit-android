@@ -1,25 +1,21 @@
 package com.pusher.chatkit
 
-import android.os.Handler
-import android.os.Looper
 import com.pusher.platform.SubscriptionListeners
 import elements.Error
 import elements.Headers
 import elements.SubscriptionEvent
 
 class CursorsSubscription(
-        val user: CurrentUser,
-        val room: Room,
-        val userStore: GlobalUserStore,
-        val listeners: CursorsSubscriptionListeners
+    val user: CurrentUser,
+    val room: Room,
+    val userStore: GlobalUserStore,
+    val onEvent: (Event) -> Unit
 ) {
 
-    val mainThread: Handler = Handler(Looper.getMainLooper())
-
     val subscriptionListeners = SubscriptionListeners(
-            onOpen = { handleOpen(it) },
-            onEvent = { handleCursor(it) },
-            onError = { handleError(it) }
+        onOpen = { handleOpen(it) },
+        onEvent = { handleCursor(it) },
+        onError = { handleError(it) }
     )
 
     fun handleOpen(headers: Headers) {
@@ -35,16 +31,14 @@ class CursorsSubscription(
         handleCursorSetInternal(cursor)
         cursor.room = room
         userStore.fetchUsersWithIds(
-                userIds = setOf(cursor.userId),
-                onComplete = UsersListener { users ->
-                    if (users.isNotEmpty()) {
-                        cursor.user = users[0]
-                    }
-                    mainThread.post { listeners.onCursorSet(cursor) }
-                },
-                onFailure = ErrorListener {
-                    mainThread.post { listeners.onCursorSet(cursor) }
-                }
+            userIds = setOf(cursor.userId),
+            onComplete = UsersListener { users ->
+                cursor.user = users.firstOrNull()
+                onEvent(Event.OnCursorSet(cursor))
+            },
+            onFailure = ErrorListener {
+                onEvent(Event.OnCursorSet(cursor))
+            }
         )
     }
 
@@ -55,6 +49,12 @@ class CursorsSubscription(
     }
 
     fun handleError(error: Error) {
-        mainThread.post { listeners.onError(error) }
+        onEvent(Event.OnError(error))
     }
+
+    sealed class Event {
+        data class OnCursorSet(val cursor: Cursor) : Event()
+        data class OnError(val error: Error) : Event()
+    }
+
 }

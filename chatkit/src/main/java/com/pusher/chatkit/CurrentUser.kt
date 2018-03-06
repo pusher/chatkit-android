@@ -14,6 +14,7 @@ import com.google.gson.reflect.TypeToken
 import com.pusher.platform.RequestDestination
 import elements.Error
 import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import java.io.File
 import kotlin.coroutines.experimental.suspendCoroutine
 
@@ -44,7 +45,16 @@ class CurrentUser(
         customData = newUser.customData
     }
 
-    var presenceSubscription: PresenceSubscription? = null
+    val presenceSubscription: PresenceSubscription by lazy {
+        PresenceSubscription(
+            instance = presenceInstance,
+            path = "/users/$id/presence",
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams,
+            userStore = userStore,
+            logger = logger
+        )
+    }
     val roomStore: RoomStore
 
     init {
@@ -52,11 +62,11 @@ class CurrentUser(
         rooms.forEach { room ->
             roomMap.put(room.id, room)
         }
-        roomStore = RoomStore(instance = apiInstance, rooms = roomMap)
+        roomStore = RoomStore(roomsMap = roomMap)
     }
 
-    fun rooms(): Set<Room> = roomStore.setOfRooms()
-    fun getRoom(id: Int): Room? = roomStore.rooms[id]
+    fun rooms(): List<Room> = roomStore.rooms
+    fun getRoom(id: Int): Room? = roomStore.roomsMap[id]
 
     //Room membership related information
     @JvmOverloads fun createRoom(
@@ -119,31 +129,6 @@ class CurrentUser(
 
     fun getJoinableRooms(onCompleteListener: RoomsListener){
         getUserRooms(onlyJoinable = true, onCompleteListener = onCompleteListener)
-    }
-
-    @JvmOverloads fun subscribeToRoom(
-            room: Room,
-            messageLimit: Int = 20,
-            listeners: RoomSubscriptionListeners,
-            cursorsListeners: CursorsSubscriptionListeners? = null
-    ){
-        val roomSubscription = RoomSubscription(this, room, userStore, listeners)
-        apiInstance.subscribeResuming(
-                path = "/rooms/${room.id}?user_id=$id&message_limit=$messageLimit",
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                listeners = roomSubscription.subscriptionListeners
-        )
-        if (cursorsListeners == null) {
-            return
-        }
-        val cursorsSubscription = CursorsSubscription(this, room, userStore, cursorsListeners)
-        cursorsInstance.subscribeResuming(
-                path = "/cursors/0/rooms/${room.id}/",
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                listeners = cursorsSubscription.subscriptionListeners
-        )
     }
 
     fun setCursor(
@@ -353,7 +338,8 @@ class CurrentUser(
      * Delete a room
      * */
 
-    fun deleteRoom(room: Room, completeListener: OnCompleteListener, errorListener: ErrorListener) = deleteRoom(room.id, completeListener, errorListener)
+    fun deleteRoom(room: Room, completeListener: OnCompleteListener, errorListener: ErrorListener) =
+        deleteRoom(room.id, completeListener, errorListener)
 
     fun deleteRoom(
             roomId: Int,
@@ -377,7 +363,8 @@ class CurrentUser(
     /**
      * Join a room
      * */
-    fun joinRoom(room: Room, completeListener: RoomListener, errorListener: ErrorListener) = joinRoom(room.id, completeListener, errorListener)
+    fun joinRoom(room: Room, completeListener: RoomListener, errorListener: ErrorListener) =
+        joinRoom(room.id, completeListener, errorListener)
 
     fun joinRoom(
             roomId: Int,
@@ -413,7 +400,8 @@ class CurrentUser(
     /**
      * Leave a room
      * */
-    fun leaveRoom(room: Room, completeListener: OnCompleteListener, errorListener: ErrorListener) = leaveRoom(room.id, completeListener, errorListener)
+    fun leaveRoom(room: Room, completeListener: OnCompleteListener, errorListener: ErrorListener) =
+        leaveRoom(room.id, completeListener, errorListener)
 
     fun leaveRoom(
             roomId: Int,
@@ -435,18 +423,9 @@ class CurrentUser(
         )
     }
 
-    fun establishPresenceSubscription(listeners: ThreadedUserSubscriptionListeners) {
+    val presenceEvents: SubscriptionReceiveChannel<ChatKitEvent>
+        get() = presenceSubscription.openSubscription()
 
-        presenceSubscription = PresenceSubscription(
-                instance = presenceInstance,
-                path = "/users/$id/presence",
-                listeners = listeners,
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                userStore = userStore,
-                logger = logger
-        )
-    }
 }
 
 data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
