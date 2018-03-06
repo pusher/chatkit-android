@@ -1,9 +1,9 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.*
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import com.pusher.chatkit.channels.broadcast
+import elements.Subscription
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
 
 class MessageService(
     val room: Room,
@@ -12,14 +12,14 @@ class MessageService(
 ) {
 
     @JvmOverloads
-    fun messageEvents(messageLimit: Int? = null, callback: (RoomSubscription.Event) -> Unit) {
+    fun messageEvents(messageLimit: Int? = null, callback: (RoomSubscription.Event) -> Unit): Subscription {
         val roomSubscription = RoomSubscription(room, chatManager.userStore, callback)
         with(chatManager) {
             val path = when (messageLimit) {
                 null -> "/rooms/${room.id}?user_id=${currentUser.id}"
                 else -> "/rooms/${room.id}?user_id=${currentUser.id}&message_limit=$messageLimit"
             }
-            apiInstance.subscribeResuming(
+            return apiInstance.subscribeResuming(
                 path = path,
                 tokenProvider = tokenProvider,
                 tokenParams = tokenParams,
@@ -30,11 +30,8 @@ class MessageService(
 
     @JvmOverloads
     @UsesCoroutines
-    fun messageEvents(messageLimit: Int? = null): SubscriptionReceiveChannel<RoomSubscription.Event> =
-        with(BroadcastChannel<RoomSubscription.Event>(Channel.CONFLATED)) {
-            messageEvents(messageLimit) { offer(it) }
-            openSubscription()
-        }
+    fun messageEvents(messageLimit: Int? = null): ReceiveChannel<RoomSubscription.Event> =
+        broadcast { messageEvents(messageLimit) { offer(it) } }
 
     fun cursors(callback: (CursorsSubscription.Event) -> Unit) {
         val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager.userStore, callback)

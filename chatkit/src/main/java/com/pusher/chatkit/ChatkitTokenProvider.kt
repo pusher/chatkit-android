@@ -17,18 +17,14 @@ import java.util.*
  * @param tokenCache
  * */
 class ChatkitTokenProvider
-
-
 @JvmOverloads constructor(
         val endpoint: String,
+        var userId: String,
         val authData: CustomData = TreeMap(),
         val client: OkHttpClient = OkHttpClient(),
         val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 
 ): TokenProvider {
-
-    lateinit var userId: String
-    var call: Call? = null
 
     override fun fetchToken(tokenParams: Any?, onSuccess: (String) -> Unit, onFailure: (Error) -> Unit): Cancelable {
 
