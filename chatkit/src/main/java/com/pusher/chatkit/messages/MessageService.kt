@@ -3,7 +3,6 @@ package com.pusher.chatkit.messages
 import com.google.gson.reflect.TypeToken
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.*
-import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.chatkit.network.toJson
 import com.pusher.platform.network.Promise
@@ -11,7 +10,6 @@ import com.pusher.platform.network.asPromise
 import com.pusher.util.*
 import elements.Error
 import elements.Subscription
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
 
 typealias MessagesPromiseResult = Promise<Result<List<Message>, Error>>
 typealias MessageIdPromiseResult = Promise<Result<Int, Error>>
@@ -28,7 +26,7 @@ class MessageService(
     private val filesInstance get() = chatManager.filesInstance
 
     @JvmOverloads
-    fun messageEvents(messageLimit: Int? = null, callback: (RoomSubscription.Event) -> Unit): Subscription {
+    fun messageEvents(messageLimit: Int? = null, callback: (Result<Message, Error>) -> Unit): Subscription {
         val roomSubscription = RoomSubscription(room, chatManager.userStore, callback)
         with(chatManager) {
             val path = when (messageLimit) {
@@ -46,8 +44,10 @@ class MessageService(
 
     @JvmOverloads
     @UsesCoroutines
-    fun messageEvents(messageLimit: Int? = null): ReceiveChannel<RoomSubscription.Event> =
-        broadcast { messageEvents(messageLimit) { offer(it) } }
+    fun messageEvents(messageLimit: Int? = null): Promise<Result<Message, Error>> =
+        Promise.promise {
+            messageEvents(messageLimit) { report(it) }
+        }
 
     fun cursors(callback: (CursorsSubscription.Event) -> Unit) {
         val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager.userStore, callback)
@@ -60,8 +60,6 @@ class MessageService(
             )
         }
     }
-
-    private val roomListType = object : TypeToken<List<Message>>() {}.type
 
     fun fetchMessages(): MessagesPromiseResult =
         chatManager.doGet("/rooms/${room.id}/messages")

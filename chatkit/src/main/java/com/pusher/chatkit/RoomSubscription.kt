@@ -1,8 +1,12 @@
 package com.pusher.chatkit
 
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.util.Result
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
 import com.pusher.util.fold
 import elements.Error
+import elements.Errors
 import elements.Headers
 import elements.SubscriptionEvent
 import java.net.URL
@@ -11,7 +15,7 @@ import java.net.URL
 class RoomSubscription(
     val room: Room,
     private val userStore: GlobalUserStore,
-    private val onEvent: (Event) -> Unit
+    private val onEvent: (Result<Message, Error>) -> Unit
 ) {
 
     val subscriptionListeners = SubscriptionListeners(
@@ -20,11 +24,11 @@ class RoomSubscription(
         onError = { handleError(it) }
     )
 
-    fun handleOpen(headers: Headers) {
+    private fun handleOpen(headers: Headers) {
         //TODO("Not handled currently.")
     }
 
-    fun handleMessage(event: SubscriptionEvent) {
+    private fun handleMessage(event: SubscriptionEvent) {
 
         val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
 
@@ -48,24 +52,19 @@ class RoomSubscription(
 
             message.room = room
             userStore.findOrGetUser(message.userId).fold({
-                onEvent(Event.OnNewMessage(message))
+                onEvent(message.asSuccess())
             }, { user ->
                 message.user = user
-                onEvent(Event.OnNewMessage(message))
+                onEvent(message.asSuccess())
             })
         } else {
-            TODO("Some weird shit has happened. Event received is of the wrong type ${chatEvent.eventName}")
+            onEvent(Errors.other("Wrong event type: ${chatEvent.eventName}").asFailure())
         }
 
     }
 
-    fun handleError(error: Error) {
-        onEvent(Event.OnError(error))
-    }
-
-    sealed class Event {
-        data class OnNewMessage(val message: Message) : Event()
-        data class OnError(val error: Error) : Event()
+    private fun handleError(error: Error) {
+        onEvent(error.asFailure())
     }
 
 }

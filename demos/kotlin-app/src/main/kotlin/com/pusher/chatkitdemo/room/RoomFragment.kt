@@ -4,41 +4,43 @@ import android.os.Bundle
 import android.support.annotation.UiThread
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
 import com.pusher.chatkit.Message
-import com.pusher.chatkit.RoomSubscription.Event.OnError
-import com.pusher.chatkit.RoomSubscription.Event.OnNewMessage
+import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.RoomResult
 import com.pusher.chatkitdemo.R
 import com.pusher.chatkitdemo.app
-import com.pusher.chatkitdemo.parallel.onLifecycle
 import com.pusher.chatkitdemo.recyclerview.dataAdapterFor
+import com.pusher.platform.network.await
+import com.pusher.util.Result
+import elements.Error
 import kotlinx.android.synthetic.main.fragment_room.*
 import kotlinx.android.synthetic.main.fragment_room.view.*
 import kotlinx.android.synthetic.main.item_message.*
 import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.launch
 import kotlin.properties.Delegates
 
 class RoomFragment : Fragment() {
 
-    private val roomIdBroadcast = BroadcastChannel<Int>(Channel.CONFLATED)
-    private val room
-        get() = roomIdBroadcast.openSubscription()
-            .flatMap { id -> app.rooms.map { it.findBy(id) } }
-            .map { (it as? RoomResult.Found)?.room ?: TODO() }
+    private val roomIdChannel = Channel<Int>(Channel.CONFLATED)
 
-    private val messageService =
-        room.flatMap { r -> app.messageServiceFor(r) }
+    private suspend fun roomId(): Int =
+        roomIdChannel.receive()
 
-    private val messageEvents
-        get() = onLifecycle { messageService.flatMap { it.messageEvents() } }
+    private suspend fun room(): RoomResult =
+        app.rooms().flatMap { it.findBy(roomId()) }
+
+    private suspend fun messageService(): Result<MessageService, Error> =
+        room().flatMap { room -> app.messageServiceFor(room) }
+
+    private suspend fun messageEvents(): Result<Message, Error> =
+        messageService().flatMap { it.messageEvents().await() }
 
     private val adapter = dataAdapterFor<Message>(R.layout.item_message) { message ->
         userNameView.text = message.user?.name ?: "???"
@@ -48,15 +50,13 @@ class RoomFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         launch {
-            room.consumeEach { activity?.title = it.coolName }
+            activity?.title = room().map { it.coolName }.recover { "???" }
         }
         launch {
-            messageEvents.consumeEach { event ->
-                when (event) {
-                    is OnNewMessage -> addMessage(event.message)
-                    is OnError -> TODO("${event.error}")
-                }
-            }
+            messageEvents().fold(
+                { TODO("$it") },
+                { addMessage(it) }
+            )
         }
     }
 
@@ -77,9 +77,8 @@ class RoomFragment : Fragment() {
 
     private fun sendMessage(message: String) {
         launch {
-            messageService.receive().sendMessage(message) {
-                Log.d("TEST", it.toString())
-            }
+            messageService().map { it.sendMessage(message) }
+                .recover { TODO("report $it") }
         }
     }
 
@@ -89,7 +88,7 @@ class RoomFragment : Fragment() {
 
     fun bind(roomId: Int) {
         state = State.Idle
-        roomIdBroadcast.offer(roomId)
+        roomIdChannel.offer(roomId)
     }
 
     private var state by Delegates.observable<State>(State.Idle) { _, _, newState ->

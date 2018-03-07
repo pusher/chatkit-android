@@ -18,7 +18,7 @@ import kotlinx.coroutines.experimental.launch
 import kotlin.properties.Delegates
 
 data class InitialState(
-    val rooms: List<Room>, //TODO: might need to use a different subsctructure for this
+    val rooms: List<Room>, //TODO: might need to use a different substructure for this
     val currentUser: User
 )
 
@@ -60,7 +60,9 @@ class UserSubscription(
     private val subscription: Subscription
 
     private val broadcast = { event: ChatKitEvent ->
-        launch { consumeEvent(event) }
+        launch {
+            consumeEvent(event)
+        }
     }
 
     init {
@@ -185,31 +187,36 @@ class UserSubscription(
                     }
                 }
             }
-        }.mapResult { user ->
-            val combinedRoomUserIds = initialState.rooms.flatMap { it.memberUserIds }.toSet()
-            user.roomStore += initialState.rooms
-            val promisedEvents = when {
-                combinedRoomUserIds.isNotEmpty() -> user.fetchDetailsForUsers(combinedRoomUserIds)
-                    .mapResult { user.updateExistingRooms(initialState.rooms) }
-                    .mapResult { listOf(CurrentUserReceived(user)) + it }
-                else -> listOf(CurrentUserReceived(user)).asSuccess<List<ChatKitEvent>, elements.Error>().asPromise()
-            }
-            promisedEvents
-                .recover { listOf(ErrorOccurred(it)) }
-                .onReady { events ->
-                    events.forEach { broadcast(it) }
-                }
-            launch {
-                user.presenceSubscription.openSubscription().consumeEach { broadcast(it) }
-            }
-            currentUser = user
-        }.recover { error ->
-            broadcast(ErrorOccurred(error))
-            logger.error("handleInitialState", Error("Error: $error"))
+        }.onReady {
+            it.fold({ error ->
+                broadcast(ErrorOccurred(error))
+            }, { user ->
+                handleUpdatedUser(user, initialState)
+            })
+        }
+
+    }
+
+    private fun handleUpdatedUser(user: CurrentUser, initialState: InitialState) {
+        val combinedRoomUserIds = initialState.rooms.flatMap { it.memberUserIds }.toSet()
+        user.roomStore += initialState.rooms
+        val promisedEvents = when {
+            combinedRoomUserIds.isNotEmpty() -> user.fetchDetailsForUsers(combinedRoomUserIds)
+                .mapResult { user.updateExistingRooms(initialState.rooms) }
+                .mapResult { listOf(CurrentUserReceived(user)) + it }
+            else -> listOf(CurrentUserReceived(user)).asSuccess<List<ChatKitEvent>, elements.Error>().asPromise()
+        }
+        promisedEvents
+            .recover { listOf(ErrorOccurred(it)) }
+            .onReady { events -> events.forEach { broadcast(it) } }
+        currentUser = user
+
+        launch {
+            user.presenceSubscription.openSubscription().consumeEach { broadcast(it) }
         }
     }
 
-    private fun broadcastError(error: elements.Error, message: String) {
+    private fun broadcastError(error: elements.Error, message: String = error.reason) {
         logger.error(message)
         broadcast(ErrorOccurred(error))
     }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/root"
+    tools:context="com.pusher.chatkitdemo.EntryActivity">
+
+    <include
+        android:id="@+id/idleLayout"
+        layout="@layout/activity_entry_loading" />
+
+    <include
+        android:id="@+id/loadedLayout"
+        layout="@layout/activity_entry_loaded" />
+
+    <include
+        android:id="@+id/errorLayout"
+        layout="@layout/activity_entry_error" />
+
+</FrameLayout>
