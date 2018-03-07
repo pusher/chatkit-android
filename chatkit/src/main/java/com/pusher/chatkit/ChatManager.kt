@@ -14,10 +14,7 @@ import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.network.AndroidConnectivityHelper
 import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Subscription
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -85,7 +82,7 @@ class ChatManager @JvmOverloads constructor(
         }
     }
 
-    fun connect(consumer: (ChatKitEvent) -> Unit): Subscription = UserSubscription(
+    fun connect(consumer: (ChatManagerEvent) -> Unit): Subscription = UserSubscription(
         userId = userId,
         chatManager = this,
         path = USERS_PATH,
@@ -104,7 +101,7 @@ class ChatManager @JvmOverloads constructor(
     fun messageService(room: Room, user: CurrentUser): MessageService =
         MessageService(room, user, this)
 
-    fun roomService( user: CurrentUser): RoomService =
+    fun roomService(user: CurrentUser): RoomService =
         RoomService(user)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
@@ -124,7 +121,7 @@ class ChatManager @JvmOverloads constructor(
 }
 
 @UsesCoroutines
-fun ChatManager.connectAsync(): ReceiveChannel<ChatKitEvent> =
+fun ChatManager.connectAsync(): ReceiveChannel<ChatManagerEvent> =
     broadcast { connect { event -> offer(event) } }
 
 data class Message(
@@ -166,14 +163,14 @@ data class ChatEvent(
 
 typealias CustomData = MutableMap<String, String>
 
-sealed class ChatKitEvent
+sealed class ChatManagerEvent
 
-data class CurrentUserReceived(val currentUser: CurrentUser) : ChatKitEvent()
-data class ErrorOccurred(val error: elements.Error) : ChatKitEvent()
-data class CurrentUserAddedToRoom(val room: Room) : ChatKitEvent()
-data class CurrentUserRemovedFromRoom(val roomId: Int) : ChatKitEvent()
-data class RoomDeleted(val roomId: Int) : ChatKitEvent()
-data class RoomUpdated(val room: Room) : ChatKitEvent()
-data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatKitEvent()
-data class UserJoinedRoom(val user: User, val room: Room) : ChatKitEvent()
-data class UserLeftRoom(val user: User, val room: Room) : ChatKitEvent()
+data class CurrentUserReceived(val currentUser: CurrentUser) : ChatManagerEvent()
+data class ErrorOccurred(val error: elements.Error) : ChatManagerEvent()
+data class CurrentUserAddedToRoom(val room: Room) : ChatManagerEvent()
+data class CurrentUserRemovedFromRoom(val roomId: Int) : ChatManagerEvent()
+data class RoomDeleted(val roomId: Int) : ChatManagerEvent()
+data class RoomUpdated(val room: Room) : ChatManagerEvent()
+data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatManagerEvent()
+data class UserJoinedRoom(val user: User, val room: Room) : ChatManagerEvent()
+data class UserLeftRoom(val user: User, val room: Room) : ChatManagerEvent()

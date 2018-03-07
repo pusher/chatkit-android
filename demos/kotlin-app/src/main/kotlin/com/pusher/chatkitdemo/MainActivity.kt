@@ -41,9 +41,9 @@ class MainActivity : AppCompatActivity() {
         state = State.Idle
 
         launch {
-            app.rooms
-                .map { s -> s.findAll() }
-                .consumeEach { rooms -> state = State.Loaded(rooms) }
+            app.rooms.map { it.findAll() }.consumeEach { rooms ->
+                state = State.Loaded(rooms)
+            }
         }
     }
 

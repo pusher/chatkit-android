@@ -5,11 +5,10 @@ import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.launch
 
-
-fun <A> lazyBroadcast(block: suspend BroadcastChannel<A>.() -> Unit = {}) =
-    lazy { broadcast(block) }
-
-fun <A> broadcast(block: suspend BroadcastChannel<A>.() -> Unit = {}) =
+fun <A> broadcastToChannel(block: suspend BroadcastChannel<A>.() -> Unit = {}) =
     BroadcastChannel<A>(Channel.CONFLATED).also {
         launch { block(it) }
     }
+
+suspend fun <A> ReceiveChannel<A>.whenReady(block: A.() -> Unit) =
+    receive().apply(block)

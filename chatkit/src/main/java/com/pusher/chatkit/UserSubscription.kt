@@ -37,6 +37,7 @@ data class UserChangeEvent(
     val userId: String
 )
 
+@UsesCoroutines
 class UserSubscription(
     val userId: String,
     private val chatManager: ChatManager,
@@ -45,7 +46,7 @@ class UserSubscription(
     val tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams?,
     val logger: Logger,
-    consumeEvent: (ChatKitEvent) -> Unit
+    consumeEvent: (ChatManagerEvent) -> Unit
 ) : Subscription {
 
     private val apiInstance get() = chatManager.apiInstance
@@ -58,7 +59,7 @@ class UserSubscription(
         logger.verbose("OnOpen $headers")
     }
     private val subscription: Subscription
-    private val broadcast = { event: ChatKitEvent ->
+    private val broadcast = { event: ChatManagerEvent ->
         launch { consumeEvent(event) }
     }
 
@@ -201,28 +202,29 @@ class UserSubscription(
     private fun handleInitialState(initialState: InitialState) = launch(UI) {
         logger.verbose("Initial state received $initialState")
 
-        var wasExistingCurrentUser = currentUser != null
+        val wasExistingCurrentUser = currentUser != null
 
         if (currentUser != null) {
             currentUser?.presenceSubscription?.unsubscribe()
             currentUser?.updateWithPropertiesOf(initialState.currentUser)
         } else {
             currentUser = CurrentUser(
-                    apiInstance = apiInstance,
-                    avatarURL = initialState.currentUser.avatarURL,
-                    createdAt = initialState.currentUser.createdAt,
-                    cursors = cursors.await(),
-                    cursorsInstance = cursorsInstance,
-                    customData = initialState.currentUser.customData,
-                    id = initialState.currentUser.id,
-                    logger = logger,
-                    name = initialState.currentUser.name,
-                    rooms = initialState.rooms,
-                    filesInstance = filesInstance,
-                    presenceInstance = presenceInstance,tokenProvider = tokenProvider,
-                    tokenParams = tokenParams,
-                    updatedAt = initialState.currentUser.updatedAt,
-                    userStore = userStore
+                apiInstance = apiInstance,
+                avatarURL = initialState.currentUser.avatarURL,
+                createdAt = initialState.currentUser.createdAt,
+                cursors = cursors.await(),
+                cursorsInstance = cursorsInstance,
+                customData = initialState.currentUser.customData,
+                id = initialState.currentUser.id,
+                logger = logger,
+                name = initialState.currentUser.name,
+                rooms = initialState.rooms,
+                filesInstance = filesInstance,
+                presenceInstance = presenceInstance,
+                tokenProvider = tokenProvider,
+                tokenParams = tokenParams,
+                updatedAt = initialState.currentUser.updatedAt,
+                userStore = userStore
             )
         }
 
@@ -242,7 +244,7 @@ class UserSubscription(
             fetchDetailsForUsers(
                 userIds = combinedRoomUserIds,
                 onComplete = UsersListener {
-                    if (wasExistingCurrentUser) {
+                    if (currentUser != null) {
                         updateExistingRooms(roomsForConnection)
                     }
                     subscribePresenceAndCompleteCurrentUser()

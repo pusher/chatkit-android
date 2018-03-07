@@ -423,7 +423,7 @@ class CurrentUser(
         )
     }
 
-    val presenceEvents: SubscriptionReceiveChannel<ChatKitEvent>
+    val presenceEvents: SubscriptionReceiveChannel<ChatManagerEvent>
         get() = presenceSubscription.openSubscription()
 
 }

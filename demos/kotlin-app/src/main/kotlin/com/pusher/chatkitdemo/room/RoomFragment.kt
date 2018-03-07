@@ -17,6 +17,7 @@ import com.pusher.chatkit.rooms.RoomResult
 import com.pusher.chatkitdemo.R
 import com.pusher.chatkitdemo.app
 import com.pusher.chatkitdemo.parallel.onLifecycle
+import com.pusher.chatkitdemo.parallel.whenReady
 import com.pusher.chatkitdemo.recyclerview.dataAdapterFor
 import kotlinx.android.synthetic.main.fragment_room.*
 import kotlinx.android.synthetic.main.fragment_room.view.*
@@ -48,7 +49,7 @@ class RoomFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         launch {
-            room.consumeEach { activity?.title = it.coolName }
+            activity?.title = room.receive().coolName
         }
         launch {
             messageEvents.consumeEach { event ->
@@ -77,8 +78,8 @@ class RoomFragment : Fragment() {
 
     private fun sendMessage(message: String) {
         launch {
-            messageService.receive().sendMessage(message) {
-                Log.d("TEST", it.toString())
+            messageService.whenReady {
+                sendMessage(message)
             }
         }
     }
@@ -118,8 +119,8 @@ class RoomFragment : Fragment() {
 
         operator fun plus(message: Message): State =
             when (this) {
-                is Loaded -> Loaded(this.messages + message)
                 is Idle -> Loaded(listOf(message))
+                is Loaded -> Loaded(messages + message)
             }
 
     }

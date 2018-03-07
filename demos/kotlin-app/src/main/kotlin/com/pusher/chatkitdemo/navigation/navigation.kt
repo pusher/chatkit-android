@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.UriMatcher
 import android.net.Uri
+import android.widget.Toast
 import com.pusher.chatkit.Room
 import com.pusher.chatkitdemo.app
 
@@ -53,7 +54,7 @@ fun Context.open(room: Room) =
     open("https://chat.pusher.com/room/${room.id}")
 
 fun Activity.failNavigation(navigationEvent: NavigationEvent) {
-
+    Toast.makeText(this, "Failed to navigate to $navigationEvent", Toast.LENGTH_LONG).show()
     app.logger.error("Failed to load navigation: $navigationEvent")
     finish()
 }

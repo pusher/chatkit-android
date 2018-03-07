@@ -11,21 +11,24 @@ class MessageService(
     private val chatManager: ChatManager
 ) {
 
+    private val apiInstance get() = chatManager.apiInstance
+    private val tokenProvider get() = chatManager.tokenProvider
+    private val tokenParams get() = chatManager.tokenParams
+    private val cursorsInstance get() = chatManager.cursorsInstance
+
     @JvmOverloads
     fun messageEvents(messageLimit: Int? = null, callback: (RoomSubscription.Event) -> Unit): Subscription {
         val roomSubscription = RoomSubscription(room, chatManager.userStore, callback)
-        with(chatManager) {
-            val path = when (messageLimit) {
-                null -> "/rooms/${room.id}?user_id=${currentUser.id}"
-                else -> "/rooms/${room.id}?user_id=${currentUser.id}&message_limit=$messageLimit"
-            }
-            return apiInstance.subscribeResuming(
-                path = path,
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                listeners = roomSubscription.subscriptionListeners
-            )
+        val path = when (messageLimit) {
+            null -> "/rooms/${room.id}?user_id=${currentUser.id}"
+            else -> "/rooms/${room.id}?user_id=${currentUser.id}&message_limit=$messageLimit"
         }
+        return apiInstance.subscribeResuming(
+            path = path,
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams,
+            listeners = roomSubscription.subscriptionListeners
+        )
     }
 
     @JvmOverloads
@@ -33,17 +36,13 @@ class MessageService(
     fun messageEvents(messageLimit: Int? = null): ReceiveChannel<RoomSubscription.Event> =
         broadcast { messageEvents(messageLimit) { offer(it) } }
 
-    fun cursors(callback: (CursorsSubscription.Event) -> Unit) {
-        val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager.userStore, callback)
-        with(chatManager) {
-            cursorsInstance.subscribeResuming(
-                path = "/cursors/0/rooms/${room.id}/",
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                listeners = cursorsSubscription.subscriptionListeners
-            )
-        }
-    }
+    fun cursorEvents(callback: (CursorsSubscription.Event) -> Unit): Subscription =
+        cursorsInstance.subscribeResuming(
+            path = "/cursors/0/rooms/${room.id}/",
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams,
+            listeners = CursorsSubscription(currentUser, room, chatManager.userStore, callback).subscriptionListeners
+        )
 
     @JvmOverloads
     fun sendMessage(message: String, callback: (MessageSentEvent) -> Unit = {}) {

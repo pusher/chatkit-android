@@ -18,8 +18,8 @@ class PresenceSubscription(
     val tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams?,
     val logger: Logger,
-    private val events: BroadcastChannel<ChatKitEvent> = BroadcastChannel(Channel.CONFLATED)
-) : BroadcastChannel<ChatKitEvent> by events {
+    private val events: BroadcastChannel<ChatManagerEvent> = BroadcastChannel(Channel.CONFLATED)
+) : BroadcastChannel<ChatManagerEvent> by events {
     var subscription: Subscription
 
     init {

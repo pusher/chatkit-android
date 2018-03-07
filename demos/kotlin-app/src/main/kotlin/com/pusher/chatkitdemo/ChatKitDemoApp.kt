@@ -7,11 +7,14 @@ import com.pusher.chatkit.*
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkitdemo.BuildConfig.*
-import com.pusher.chatkitdemo.parallel.lazyBroadcast
+import com.pusher.chatkitdemo.parallel.broadcastToChannel
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.logger.Logger
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.channels.filterNotNull
+import kotlinx.coroutines.experimental.channels.map
 
 val Context.app: ChatKitDemoApp
     get() = when (applicationContext) {
@@ -27,7 +30,7 @@ class ChatKitDemoApp : Application() {
 
     private val tokenProvider = ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT, USER_ID)
 
-    val logger : Logger by lazy { AndroidLogger(LogLevel.VERBOSE) }
+    val logger: Logger by lazy { AndroidLogger(LogLevel.VERBOSE) }
 
     val chat: ChatManager by lazy {
         ChatManager(
@@ -39,12 +42,14 @@ class ChatKitDemoApp : Application() {
         )
     }
 
-    private val events by lazy { chat.connectAsync() }
+    private val events: ReceiveChannel<ChatManagerEvent> by lazy { chat.connectAsync() }
 
-    private val currentUserBroadcast by lazyBroadcast<CurrentUser> {
-        events.map { event -> (event as? CurrentUserReceived)?.currentUser }
-            .filterNotNull()
-            .consumeEach { offer(it) }
+    private val currentUserBroadcast by lazy {
+        broadcastToChannel<CurrentUser> {
+            events.map { event -> (event as? CurrentUserReceived)?.currentUser }
+                .filterNotNull()
+                .consumeEach { offer(it) }
+        }
     }
 
     val currentUser: ReceiveChannel<CurrentUser>
