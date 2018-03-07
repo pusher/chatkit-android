@@ -5,7 +5,7 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.pusher.chatkit.channels.broadcast
+import com.pusher.chatkit.channels.broadcastToChannel
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.platform.*
@@ -122,7 +122,7 @@ class ChatManager @JvmOverloads constructor(
 
 @UsesCoroutines
 fun ChatManager.connectAsync(): ReceiveChannel<ChatManagerEvent> =
-    broadcast { connect { event -> offer(event) } }
+    broadcastToChannel { connect { event -> offer(event) } }
 
 data class Message(
     val id: Int,

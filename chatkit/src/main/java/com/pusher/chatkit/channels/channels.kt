@@ -8,7 +8,7 @@ import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 
 @UsesCoroutines
-fun <A> broadcast(onSubscribe: BroadcastChannel<A>.() -> Subscription): ReceiveChannel<A> =
+fun <A> broadcastToChannel(onSubscribe: BroadcastChannel<A>.() -> Subscription): ReceiveChannel<A> =
     BroadCastChannelWithSubscription(onSubscribe)
 
 @UsesCoroutines

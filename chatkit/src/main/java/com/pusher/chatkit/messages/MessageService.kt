@@ -1,7 +1,7 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.channels.broadcast
+import com.pusher.chatkit.channels.broadcastToChannel
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 
@@ -34,7 +34,7 @@ class MessageService(
     @JvmOverloads
     @UsesCoroutines
     fun messageEvents(messageLimit: Int? = null): ReceiveChannel<RoomSubscription.Event> =
-        broadcast { messageEvents(messageLimit) { offer(it) } }
+        broadcastToChannel { messageEvents(messageLimit) { offer(it) } }
 
     fun cursorEvents(callback: (CursorsSubscription.Event) -> Unit): Subscription =
         cursorsInstance.subscribeResuming(
