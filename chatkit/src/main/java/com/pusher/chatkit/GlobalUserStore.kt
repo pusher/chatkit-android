@@ -3,57 +3,49 @@ package com.pusher.chatkit
 import com.google.gson.reflect.TypeToken
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
-import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.Promise
+import com.pusher.platform.network.asPromise
 import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.util.Result
+import com.pusher.util.flatMapResult
+import com.pusher.util.mapResult
+import com.pusher.util.orElse
+import elements.Error
+import elements.Errors
+import elements.OtherError
 import java.util.concurrent.ConcurrentHashMap
 
+
+private val listOfUsersType = object : TypeToken<List<User>>() {}.type
+
 class GlobalUserStore(
-        val apiInstance: Instance,
-        val logger: Logger,
-        val tokenProvider: TokenProvider?,
-        val tokenParams: ChatkitTokenParams?) {
+    val apiInstance: Instance,
+    val tokenProvider: TokenProvider?,
+    val tokenParams: ChatkitTokenParams?) {
 
     val users = ConcurrentHashMap<String, User>()
 
-    fun fetchUsersWithIds(userIds: Set<String>, onComplete: UsersListener, onFailure: ErrorListener){
-        val path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
-        val listOfUsersType = object: TypeToken<List<User>>(){}.type
-
-        apiInstance.request(
-                options = RequestOptions(
-                        method = "GET",
-                        path = path
-                ),
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                onSuccess = { response ->
-                    val users = ChatManager.GSON.fromJson<List<User>>(response.body()!!.charStream(), listOfUsersType)
-                    users.forEach { user ->
-                        this.users.put(user.id, user)
-                    }
-                    onComplete.onUsers(users)
-                },
-                onFailure = {
-                    error ->  logger.debug("Failed getting list of users $error")
-                    onFailure.onError(error)
-                }
-        )
-    }
-
-    fun findOrGetUser(id: String, userListener: UserListener, errorListener: ErrorListener){
-        if (users.contains(id)) {
-            userListener.onUser(users.getValue(id))
-        } else {
-            fetchUsersWithIds(
-                    userIds = setOf(id),
-                    onComplete = UsersListener { users ->
-                        if(users.isNotEmpty()) userListener.onUser(users[0])
-                        else errorListener.onError(elements.NetworkError("User not found!"))
-                    },
-                    onFailure = errorListener
-            )
+    fun fetchUsersWithIds(userIds: Set<String>): Promise<Result<List<User>, Error>> = apiInstance.request(
+        options = RequestOptions(
+            method = "GET",
+            path = "/users_by_ids?user_ids=${userIds.joinToString(separator = ",")}"
+        ),
+        tokenProvider = tokenProvider,
+        tokenParams = tokenParams
+    ).mapResult {
+        ChatManager.GSON.fromJson<List<User>>(it.body()!!.charStream(), listOfUsersType).apply {
+            forEach { user -> users[user.id] = user }
         }
-
     }
+
+    fun findOrGetUser(id: String): Promise<Result<User, Error>> =
+        users[id].orElse<User, Error> { OtherError("") }
+            .asPromise()
+            .flatMap { findUser(id) }
+
+    private fun findUser(id: String): Promise<Result<User, Error>> =
+        fetchUsersWithIds(setOf(id)).flatMapResult {
+            it.firstOrNull().orElse { Errors.network("User not found!") }.asPromise()
+        }
 
 }

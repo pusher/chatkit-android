@@ -2,9 +2,11 @@ package com.pusher.chatkit
 
 import android.content.Context
 import com.google.gson.FieldNamingPolicy
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.RoomService
@@ -12,12 +14,11 @@ import com.pusher.platform.*
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.network.AndroidConnectivityHelper
+import com.pusher.platform.network.OkHttpResponsePromise
 import com.pusher.platform.tokenProvider.TokenProvider
 import elements.Subscription
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import java.io.Reader
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -25,6 +26,7 @@ private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
 private const val SERVICE_VERSION = "v1"
 private const val FILES_SERVICE_NAME = "chatkit_files"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
+
 
 class ChatManager @JvmOverloads constructor(
     val instanceLocator: String,
@@ -36,12 +38,12 @@ class ChatManager @JvmOverloads constructor(
 ) {
 
     companion object {
-        val GSON = GsonBuilder()
+        val GSON: Gson = GsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create()
     }
 
-    private val logger = AndroidLogger(logLevel)
+    internal val logger = AndroidLogger(logLevel)
 
     private val cluster by lazy {
         val splitInstanceLocator = instanceLocator.split(":")
@@ -73,7 +75,6 @@ class ChatManager @JvmOverloads constructor(
     internal val userStore by lazy {
         GlobalUserStore(
             apiInstance = apiInstance,
-            logger = logger,
             tokenProvider = tokenProvider,
             tokenParams = tokenParams
         )
@@ -104,8 +105,8 @@ class ChatManager @JvmOverloads constructor(
     fun messageService(room: Room, user: CurrentUser): MessageService =
         MessageService(room, user, this)
 
-    fun roomService( user: CurrentUser): RoomService =
-        RoomService(user)
+    fun roomService(user: CurrentUser): RoomService =
+        RoomService(user, this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         Instance(
@@ -120,6 +121,23 @@ class ChatManager @JvmOverloads constructor(
             mediatypeResolver = mediaTypeResolver
         )
     }
+
+    internal fun doPost(path : String, body: String?): OkHttpResponsePromise =
+        doRequest("POST", path, body)
+
+    internal fun doGet(path : String): OkHttpResponsePromise =
+        doRequest("GET", path, "")  //TODO: this is a horrible OKHTTP hack - POST is required to have a body.
+
+    private fun doRequest(method : String, path : String, body: String?) : OkHttpResponsePromise =
+        apiInstance.request(
+            options = RequestOptions(
+                method = method,
+                path = path,
+                body = body
+            ),
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams
+        )
 
 }
 
@@ -177,3 +195,4 @@ data class RoomUpdated(val room: Room) : ChatKitEvent()
 data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatKitEvent()
 data class UserJoinedRoom(val user: User, val room: Room) : ChatKitEvent()
 data class UserLeftRoom(val user: User, val room: Room) : ChatKitEvent()
+object NoEvent: ChatKitEvent()

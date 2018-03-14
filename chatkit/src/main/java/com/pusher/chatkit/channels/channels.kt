@@ -1,6 +1,6 @@
 package com.pusher.chatkit.channels
 
-import com.pusher.chatkit.UsesCoroutines
+import com.pusher.annotations.UsesCoroutines
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.Channel
