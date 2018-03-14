@@ -9,6 +9,7 @@ import com.pusher.platform.network.Promise
 import com.pusher.platform.network.asPromise
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
+import elements.Errors
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
@@ -102,15 +103,19 @@ class UserSubscription(
                     "room_deleted" -> data.parseAs<RoomIdEvent>().map { handleRoomDeleted(it.roomId) }
                     "user_joined" -> data.parseAs<UserChangeEvent>().map { handleUserJoined(userId, it.roomId) }
                     "user_left" -> data.parseAs<UserChangeEvent>().map { handleUserLeft(userId, it.roomId) }
-                    else -> throw Error("Invalid event name: $eventName")
+                    else -> handleError(Errors.other("Invalid event name: $eventName"))
                 }
             }
+    }
+
+    private fun handleError(error: elements.Error) {
+        broadcast(ErrorOccurred(error))
     }
 
     private fun handleUserLeft(userId: String, roomId: Int) {
         userStore.findOrGetUser(id = userId)
             .fold({ error ->
-                broadcastError(error, "User left a room but I failed getting it: $userId")
+                broadcastError(error, "User($userId) left a room couldn't recover it ($roomId) ")
             }, { user ->
                 val room = currentUser?.getRoom(roomId)
                 room!!.removeUser(userId)
@@ -121,7 +126,7 @@ class UserSubscription(
     private fun handleUserJoined(userId: String, roomId: Int) {
         userStore.findOrGetUser(id = userId)
             .fold({ error ->
-                broadcastError(error, "User joined a room but I failed getting it: $userId")
+                broadcastError(error, "User($userId) joined a room couldn't recover it ($roomId) ")
             }, { user ->
                 val room = currentUser?.getRoom(roomId)
                 room!!.userStore.addOrMerge(user)

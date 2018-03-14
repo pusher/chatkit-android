@@ -13,9 +13,9 @@ import elements.Error
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 
-typealias MessageListFutureResult = Promise<Result<List<Message>, Error>>
-typealias MessageIdResult = Promise<Result<Int, Error>>
-typealias AttachmentFutureResult = Promise<Result<AttachmentBody, Error>>
+typealias MessagesPromiseResult = Promise<Result<List<Message>, Error>>
+typealias MessageIdPromiseResult = Promise<Result<Int, Error>>
+typealias AttachmentPromiseResult = Promise<Result<AttachmentBody, Error>>
 
 class MessageService(
     val room: Room,
@@ -63,7 +63,7 @@ class MessageService(
 
     private val roomListType = object : TypeToken<List<Message>>() {}.type
 
-    fun fetchMessages(): MessageListFutureResult =
+    fun fetchMessages(): MessagesPromiseResult =
         chatManager.doGet("/rooms/${room.id}/messages")
             .parseResponseWhenReady()
 
@@ -71,7 +71,7 @@ class MessageService(
     fun sendMessage(
         text: String? = null,
         attachment: GenericAttachment = NoAttachment
-    ): MessageIdResult = when (attachment) {
+    ): MessageIdPromiseResult = when (attachment) {
         is DataAttachment -> uploadFile(attachment, room.id)
         is LinkAttachment -> Promise.now(AttachmentBody.Resource(attachment.link, attachment.type).asSuccess<AttachmentBody, elements.Error>())
         is NoAttachment -> Promise.now(AttachmentBody.None.asSuccess<AttachmentBody, Error>())
@@ -82,7 +82,7 @@ class MessageService(
     private fun uploadFile(
         attachment: DataAttachment,
         roomId: Int
-    ): AttachmentFutureResult = filesInstance.upload(
+    ): AttachmentPromiseResult = filesInstance.upload(
         path = "/rooms/$roomId/files/${attachment.name}",
         file = attachment.file,
         tokenProvider = tokenProvider,
@@ -92,7 +92,7 @@ class MessageService(
     private fun sendCompleteMessage(
         text: String? = null,
         attachment: AttachmentBody
-    ): MessageIdResult =
+    ): MessageIdPromiseResult =
         MessageRequest(text = text, userId = currentUser.id, attachment = attachment.takeIf { it !== AttachmentBody.None })
             .toJson()
             .map { body -> chatManager.doPost("/rooms/${room.id}/messages", body) }
