@@ -6,10 +6,10 @@ import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.util.fold
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.launch
 
 class PresenceSubscription(
     val instance: Instance,
@@ -32,54 +32,28 @@ class PresenceSubscription(
                     val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
 
                     when (chatEvent.eventName) {
-
-                        "presence_update" -> {
-                            val userPresence = ChatManager.GSON.fromJson<UserPresence>(chatEvent.data, UserPresence::class.java)
-                            userStore.findOrGetUser(
-                                id = userPresence.userId,
-                                userListener = UserListener { user ->
-                                    val presence = if (userPresence.isOnline()) Online else Offline
-                                    launch {
-                                        events.send(UserPresenceUpdated(user, presence))
+                        "presence_update" -> arrayOf(ChatManager.GSON.fromJson<UserPresence>(chatEvent.data, UserPresence::class.java))
+                        "join_room_presence_update" -> ChatManager.GSON.fromJson<UserPresences>(chatEvent.data, UserPresences::class.java).userStates
+                        "initial_state" -> ChatManager.GSON.fromJson<UserPresences>(chatEvent.data, UserPresences::class.java).userStates
+                        else -> emptyArray()
+                    }.forEach { presence ->
+                        userStore.findOrGetUser(presence.userId)
+                            .fold(
+                                onFailure = { ErrorOccurred(it) as ChatKitEvent },
+                                onSuccess = { user ->
+                                    when {
+                                        user.online != presence.isOnline() -> UserPresenceUpdated(user, if (presence.isOnline()) Online else Offline)
+                                        else -> NoEvent
                                     }
-                                    user.online = userPresence.isOnline()
-                                },
-                                errorListener = ErrorListener {
-                                    logger.warn("Failed getting user for a presence update")
                                 }
                             )
-
-                        }
-                        "join_room_presence_update" -> {
-                            val userPresences = ChatManager.GSON.fromJson<UserPresences>(chatEvent.data, UserPresences::class.java)
-                            userPresences.userStates.forEach { userPresence ->
-                                userStore.findOrGetUser(
-                                    id = userPresence.userId,
-                                    userListener = UserListener { user ->
-                                        user.online = userPresence.isOnline()
-                                    },
-                                    errorListener = ErrorListener {
-                                        logger.warn("Failed getting user for a presence update")
-                                    }
-                                )
+                            .onReady { event ->
+                                if (event is UserPresenceUpdated) {
+                                    event.user.online = presence.isOnline()
+                                }
+                                events.offer(event)
                             }
-                        }
-                        "initial_state" -> {
-                            val userPresences = ChatManager.GSON.fromJson<UserPresences>(chatEvent.data, UserPresences::class.java)
-                            userPresences.userStates.forEach { userPresence ->
-                                userStore.findOrGetUser(
-                                    id = userPresence.userId,
-                                    userListener = UserListener { user ->
-                                        user.online = userPresence.isOnline()
-                                    },
-                                    errorListener = ErrorListener {
-                                        logger.warn("Failed getting user for a presence update")
-                                    }
-                                )
-                            }
-                        }
                     }
-
                 },
                 onError = { error ->
                     logger.debug("Something bad happened when trying to establish presence subscription $error")

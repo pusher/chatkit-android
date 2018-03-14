@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.util.fold
 import elements.Error
 import elements.Headers
 import elements.SubscriptionEvent
@@ -46,16 +47,15 @@ class RoomSubscription(
             }
 
             message.room = room
-            userStore.fetchUsersWithIds(
-                userIds = setOf(message.userId),
-                onComplete = UsersListener { users ->
-                    if (users.isNotEmpty())
-                        message.user = users[0]
+            userStore.findOrGetUser(message.userId).fold(
+                onFailure = {
                     onEvent(Event.OnNewMessage(message))
                 },
-                onFailure = ErrorListener {
+                onSuccess = { user ->
+                    message.user = user
                     onEvent(Event.OnNewMessage(message))
-                })
+                }
+            )
         } else {
             TODO("Some weird shit has happened. Event received is of the wrong type ${chatEvent.eventName}")
         }

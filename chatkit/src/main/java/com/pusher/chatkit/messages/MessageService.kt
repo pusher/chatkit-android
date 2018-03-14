@@ -1,15 +1,33 @@
 package com.pusher.chatkit.messages
 
+import com.google.gson.reflect.TypeToken
+import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.*
 import com.pusher.chatkit.channels.broadcast
+import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.network.parseResponseWhenReady
+import com.pusher.chatkit.network.toJson
+import com.pusher.platform.network.Promise
+import com.pusher.platform.network.asPromise
+import com.pusher.util.*
+import elements.Error
+import elements.Errors
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
+
+typealias MessageListFutureResult = Promise<Result<List<Message>, Error>>
+typealias MessageIdResult = Promise<Result<Int, Error>>
+typealias AttachmentFutureResult = Promise<Result<AttachmentBody, Error>>
 
 class MessageService(
     val room: Room,
     private val currentUser: CurrentUser,
     private val chatManager: ChatManager
 ) {
+
+    private val tokenProvider get() = chatManager.tokenProvider
+    private val tokenParams get() = chatManager.tokenParams
+    private val filesInstance get() = chatManager.filesInstance
 
     @JvmOverloads
     fun messageEvents(messageLimit: Int? = null, callback: (RoomSubscription.Event) -> Unit): Subscription {
@@ -45,23 +63,47 @@ class MessageService(
         }
     }
 
+    private val roomListType = object : TypeToken<List<Message>>() {}.type
+
+    fun fetchMessages(): MessageListFutureResult =
+        chatManager.doGet("/rooms/${room.id}/messages")
+            .parseResponseWhenReady()
+
     @JvmOverloads
-    fun sendMessage(message: String, callback: (MessageSentEvent) -> Unit = {}) {
-        currentUser.sendMessage(
-            roomId = room.id,
-            text = message,
-            onCompleteListener = MessageSentListener { id ->
-                callback(MessageSentEvent.Successful(id))
-            },
-            onErrorListener = ErrorListener { error ->
-                callback(MessageSentEvent.Failed(error))
-            }
-        )
+    fun sendMessage(
+        text: String? = null,
+        attachment: GenericAttachment = NoAttachment
+    ): MessageIdResult = when (attachment) {
+        is DataAttachment -> uploadFile(attachment, room.id)
+        is LinkAttachment -> Promise.now(AttachmentBody.Resource(attachment.link, attachment.type).asSuccess<AttachmentBody, elements.Error>())
+        is NoAttachment -> Promise.now(AttachmentBody.None.asSuccess<AttachmentBody, Error>())
+    }.flatMapResult {
+        sendCompleteMessage(text, it)
     }
 
+    private fun uploadFile(
+        attachment: DataAttachment,
+        roomId: Int
+    ): AttachmentFutureResult = filesInstance.upload(
+        path = "/rooms/$roomId/files/${attachment.name}",
+        file = attachment.file,
+        tokenProvider = tokenProvider,
+        tokenParams = tokenParams
+    ).parseResponseWhenReady()
+
+    private fun sendCompleteMessage(
+        text: String? = null,
+        attachment: AttachmentBody
+    ): MessageIdResult =
+        MessageRequest(text = text, userId = currentUser.id, attachment = attachment.takeIf { it !== AttachmentBody.None })
+            .toJson()
+            .map { body -> chatManager.doPost("/rooms/${room.id}/messages", body) }
+            .fold(
+                { error -> error.asFailure<MessageSendingResponse, Error>().asPromise() },
+                { promise -> promise.parseResponseWhenReady() }
+            )
+            .mapResult { it.messageId }
+
 }
 
-sealed class MessageSentEvent {
-    data class Successful(val messageId: Int) : MessageSentEvent()
-    data class Failed(val error: elements.Error) : MessageSentEvent()
-}
+private data class MessageSendingResponse(val messageId: Int)

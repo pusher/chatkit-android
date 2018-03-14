@@ -1,19 +1,20 @@
 package com.pusher.chatkit
 
+import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.Promise
+import com.pusher.platform.network.asPromise
 import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.util.*
+import elements.Errors
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.experimental.suspendCoroutine
 import kotlin.properties.Delegates
 
 data class InitialState(
@@ -53,11 +54,11 @@ class UserSubscription(
     private val filesInstance get() = chatManager.filesInstance
     private val presenceInstance get() = chatManager.presenceInstance
 
-    private val cursors: Deferred<ConcurrentHashMap<Int, Cursor>> = async { getCursors() }
     private var headers: Headers by Delegates.observable(mutableMapOf()) { _, _, _ ->
         logger.verbose("OnOpen $headers")
     }
     private val subscription: Subscription
+
     private val broadcast = { event: ChatKitEvent ->
         launch { consumeEvent(event) }
     }
@@ -81,98 +82,51 @@ class UserSubscription(
     override fun unsubscribe() =
         subscription.unsubscribe()
 
-    private suspend fun getCursors(): ConcurrentHashMap<Int, Cursor> = suspendCoroutine { cont ->
-        val cursorsByRoom: ConcurrentHashMap<Int, Cursor> = ConcurrentHashMap()
-        cursorsInstance.request(
-            options = RequestOptions(
-                method = "GET",
-                path = "/cursors/0/users/$userId"
-            ),
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
-            onSuccess = { res ->
-                val cursors: Array<Cursor> = ChatManager.GSON.fromJson<Array<Cursor>>(
-                    res.body()!!.charStream(),
-                    Array<Cursor>::class.java
-                )
-                for (cursor in cursors) {
-                    cursorsByRoom[cursor.roomId] = cursor
-                }
-                cont.resume(cursorsByRoom)
-            },
-            onFailure = { error ->
-                logger.warn("Failed to get cursors: $error")
-                broadcast(ErrorOccurred(error))
-                cont.resume(cursorsByRoom)
-            }
-        )
-    }
+    private fun getCursors(): Promise<Result<Map<Int, Cursor>, elements.Error>> = cursorsInstance.request(
+        options = RequestOptions(
+            method = "GET",
+            path = "/cursors/0/users/$userId"
+        ),
+        tokenProvider = tokenProvider,
+        tokenParams = tokenParams
+    ).parseResponseWhenReady<Array<Cursor>>()
+        .mapResult { cursors -> cursors.map { it.roomId to it }.toMap() }
 
     private fun handleEvent(event: SubscriptionEvent) {
-
-        logger.verbose("Handle Event $event")
-
-        val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
-        when (chatEvent.eventName) {
-            "initial_state" -> {
-                val body = ChatManager.GSON.fromJson<InitialState>(chatEvent.data, InitialState::class.java)
-                handleInitialState(body)
+        event.body.parseAs<ChatEvent>()
+            .map { (eventName, _, _, data) ->
+                when (eventName) {
+                    "initial_state" -> data.parseAs<InitialState>().map { handleInitialState(it) }
+                    "added_to_room" -> data.parseAs<RoomEvent>().map { handleAddedToRoom(it.room) }
+                    "removed_from_room" -> data.parseAs<RoomIdEvent>().map { handleRemovedFromRoom(it.roomId) }
+                    "room_updated" -> data.parseAs<RoomEvent>().map { handleRoomUpdated(it.room) }
+                    "room_deleted" -> data.parseAs<RoomIdEvent>().map { handleRoomDeleted(it.roomId) }
+                    "user_joined" -> data.parseAs<UserChangeEvent>().map { handleUserJoined(userId, it.roomId) }
+                    "user_left" -> data.parseAs<UserChangeEvent>().map { handleUserLeft(userId, it.roomId) }
+                    else -> throw Error("Invalid event name: $eventName")
+                }
             }
-            "added_to_room" -> {
-                val body = ChatManager.GSON.fromJson<RoomEvent>(chatEvent.data, RoomEvent::class.java)
-                handleAddedToRoom(body.room)
-            }
-            "removed_from_room" -> {
-                val body = ChatManager.GSON.fromJson<RoomIdEvent>(chatEvent.data, RoomIdEvent::class.java)
-                handleRemovedFromRoom(body.roomId)
-            }
-            "room_updated" -> {
-                val body = ChatManager.GSON.fromJson<RoomEvent>(chatEvent.data, RoomEvent::class.java)
-                handleRoomUpdated(body.room)
-            }
-            "room_deleted" -> {
-                val body = ChatManager.GSON.fromJson<RoomIdEvent>(chatEvent.data, RoomIdEvent::class.java)
-                handleRoomDeleted(body.roomId)
-            }
-            "user_joined" -> {
-                val body = ChatManager.GSON.fromJson<UserChangeEvent>(chatEvent.data, UserChangeEvent::class.java)
-                handleUserJoined(body.userId, body.roomId)
-
-            }
-            "user_left" -> {
-                val body = ChatManager.GSON.fromJson<UserChangeEvent>(chatEvent.data, UserChangeEvent::class.java)
-                handleUserLeft(body.userId, body.roomId)
-            }
-            else -> {
-                throw Error("Invalid event name: ${chatEvent.eventName}")
-            }
-        }
     }
 
     private fun handleUserLeft(userId: String, roomId: Int) {
-        userStore.findOrGetUser(
-            id = userId,
-            userListener = UserListener { user ->
+        userStore.findOrGetUser(id = userId)
+            .fold({ error ->
+                broadcastError(error, "User left a room but I failed getting it: $userId")
+            }, { user ->
                 val room = currentUser?.getRoom(roomId)
                 room!!.removeUser(userId)
                 broadcast(UserLeftRoom(user, room))
-            },
-            errorListener = ErrorListener { error ->
-                broadcastError(error, "User left a room but I failed getting it: $userId")
             })
     }
 
     private fun handleUserJoined(userId: String, roomId: Int) {
-
-        userStore.findOrGetUser(
-            id = userId,
-            userListener = UserListener { user ->
-                val room = currentUser?.getRoom(roomId)
-                room!!.userStore().addOrMerge(user)
-                broadcast(UserJoinedRoom(user, room))
-            },
-            errorListener = ErrorListener { error ->
+        userStore.findOrGetUser(id = userId)
+            .fold({ error ->
                 broadcastError(error, "User joined a room but I failed getting it: $userId")
+            }, { user ->
+                val room = currentUser?.getRoom(roomId)
+                room!!.userStore.addOrMerge(user)
+                broadcast(UserJoinedRoom(user, room))
             })
     }
 
@@ -198,60 +152,56 @@ class UserSubscription(
 
     private var currentUser: CurrentUser? = null
 
-    private fun handleInitialState(initialState: InitialState) = launch(UI) {
+    private fun handleInitialState(initialState: InitialState) = launch {
         logger.verbose("Initial state received $initialState")
-
-        var wasExistingCurrentUser = currentUser != null
-
-        if (currentUser != null) {
-            currentUser?.presenceSubscription?.unsubscribe()
-            currentUser?.updateWithPropertiesOf(initialState.currentUser)
-        } else {
-            currentUser = CurrentUser(
-                    apiInstance = apiInstance,
-                    avatarURL = initialState.currentUser.avatarURL,
-                    createdAt = initialState.currentUser.createdAt,
-                    cursors = cursors.await(),
-                    cursorsInstance = cursorsInstance,
-                    customData = initialState.currentUser.customData,
-                    id = initialState.currentUser.id,
-                    logger = logger,
-                    name = initialState.currentUser.name,
-                    rooms = initialState.rooms,
-                    filesInstance = filesInstance,
-                    presenceInstance = presenceInstance,tokenProvider = tokenProvider,
-                    tokenParams = tokenParams,
-                    updatedAt = initialState.currentUser.updatedAt,
-                    userStore = userStore
-            )
-        }
-
-        currentUser?.presenceSubscription?.unsubscribe()
-
-        val combinedRoomUserIds = mutableSetOf<String>()
-        val roomsForConnection = mutableListOf<Room>()
-
-        initialState.rooms.forEach { room ->
-            combinedRoomUserIds.addAll(room.memberUserIds)
-            roomsForConnection.add(room)
-
-            currentUser!!.roomStore.addOrMerge(room)
-        }
-
-        if (combinedRoomUserIds.size > 0) {
-            fetchDetailsForUsers(
-                userIds = combinedRoomUserIds,
-                onComplete = UsersListener {
-                    if (wasExistingCurrentUser) {
-                        updateExistingRooms(roomsForConnection)
+        getCursors().mapResult { cursors ->
+            with(currentUser) {
+                when (this) {
+                    null -> CurrentUser(
+                        apiInstance = apiInstance,
+                        avatarURL = initialState.currentUser.avatarURL,
+                        createdAt = initialState.currentUser.createdAt,
+                        cursors = cursors.toMutableMap(),
+                        cursorsInstance = cursorsInstance,
+                        customData = initialState.currentUser.customData,
+                        id = initialState.currentUser.id,
+                        logger = logger,
+                        name = initialState.currentUser.name,
+                        rooms = initialState.rooms,
+                        filesInstance = filesInstance,
+                        presenceInstance = presenceInstance,
+                        tokenProvider = tokenProvider,
+                        tokenParams = tokenParams,
+                        updatedAt = initialState.currentUser.updatedAt,
+                        userStore = userStore
+                    )
+                    else -> this.also {
+                        it.presenceSubscription.unsubscribe()
+                        it.updateWithPropertiesOf(initialState.currentUser)
                     }
-                    subscribePresenceAndCompleteCurrentUser()
-                },
-                onError = ErrorListener { error ->
-                    broadcastError(error, "Failed fetching user details $error")
-                })
-        } else {
-            subscribePresenceAndCompleteCurrentUser()
+                }
+            }
+        }.mapResult { user ->
+            val combinedRoomUserIds = initialState.rooms.flatMap { it.memberUserIds }.toSet()
+            user.roomStore += initialState.rooms
+            val promisedEvents = when {
+                combinedRoomUserIds.isNotEmpty() -> user.fetchDetailsForUsers(combinedRoomUserIds)
+                    .mapResult { user.updateExistingRooms(initialState.rooms) }
+                    .mapResult { listOf(CurrentUserReceived(user)) + it }
+                else -> listOf(CurrentUserReceived(user)).asSuccess<List<ChatKitEvent>, elements.Error>().asPromise()
+            }
+            promisedEvents
+                .recover { listOf(ErrorOccurred(it)) }
+                .onReady { events ->
+                    events.forEach { broadcast(it) }
+                }
+            launch {
+                user.presenceSubscription.openSubscription().consumeEach { broadcast(it) }
+            }
+            currentUser = user
+        }.recover {error ->
+            broadcast(ErrorOccurred(error))
+            logger.error("handleInitialState", Error("Error: $error"))
         }
     }
 
@@ -260,43 +210,19 @@ class UserSubscription(
         broadcast(ErrorOccurred(error))
     }
 
-    private fun subscribePresenceAndCompleteCurrentUser() {
-        currentUser?.run {
-            broadcast(CurrentUserReceived(this@run))
-            launch { presenceEvents.consumeEach {  event -> broadcast(event)} }
-        }
-    }
-
-    private fun fetchDetailsForUsers(
-        userIds: Set<String>,
-        onComplete: UsersListener,
-        onError: ErrorListener
-    ) {
-
-        userStore.fetchUsersWithIds(
-            userIds = userIds,
-            onComplete = UsersListener { users ->
-
-                currentUser!!.rooms().forEach { room ->
-                    room.memberUserIds.forEach { userId ->
-                        val user = users.find { it.id == userId }
-                        if (user != null) {
-                            room.userStore().addOrMerge(user)
-                        }
-                    }
+    private fun CurrentUser.fetchDetailsForUsers(userIds: Set<String>): Promise<Result<List<User>, elements.Error>> =
+        userStore.fetchUsersWithIds(userIds)
+            .mapResult { users ->
+                rooms().forEach { room ->
+                    room.userStore += room.memberUserIds
+                        .mapNotNull { id -> users.find { it.id == id } }
                 }
-                onComplete.onUsers(users)
-            },
-            onFailure = onError
-        )
-    }
+                users
+            }
 
-    private fun updateExistingRooms(roomsForConnection: MutableList<Room>) {
-        val roomsUserIsNoLongerAMemberOf = currentUser!!.rooms().subtract(roomsForConnection)
+    private fun CurrentUser.updateExistingRooms(roomsForConnection: List<Room>): List<ChatKitEvent> =
+        (rooms() - roomsForConnection)
+            .map { CurrentUserRemovedFromRoom(it.id) }
 
-        roomsUserIsNoLongerAMemberOf.forEach { room ->
-            broadcast(CurrentUserRemovedFromRoom(room.id))
-        }
-    }
 
 }

@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.util.fold
 import elements.Error
 import elements.Headers
 import elements.SubscriptionEvent
@@ -8,8 +9,8 @@ import elements.SubscriptionEvent
 class CursorsSubscription(
     val user: CurrentUser,
     val room: Room,
-    val userStore: GlobalUserStore,
-    val onEvent: (Event) -> Unit
+    private val userStore: GlobalUserStore,
+    private val onEvent: (Event) -> Unit
 ) {
 
     val subscriptionListeners = SubscriptionListeners(
@@ -30,16 +31,12 @@ class CursorsSubscription(
         val cursor = ChatManager.GSON.fromJson<Cursor>(chatEvent.data, Cursor::class.java)
         handleCursorSetInternal(cursor)
         cursor.room = room
-        userStore.fetchUsersWithIds(
-            userIds = setOf(cursor.userId),
-            onComplete = UsersListener { users ->
-                cursor.user = users.firstOrNull()
-                onEvent(Event.OnCursorSet(cursor))
-            },
-            onFailure = ErrorListener {
-                onEvent(Event.OnCursorSet(cursor))
-            }
-        )
+        userStore.findOrGetUser(cursor.userId).fold({
+            onEvent(Event.OnCursorSet(cursor))
+        }, {
+            cursor.user = it
+            onEvent(Event.OnCursorSet(cursor))
+        })
     }
 
     private fun handleCursorSetInternal(cursor: Cursor) {

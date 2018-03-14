@@ -14,4 +14,11 @@ class RoomStore(val roomsMap: ConcurrentMap<Int, Room>) {
             roomsMap[room.id] = room
         }
     }
+
+    operator fun plusAssign(room: Room) =
+        addOrMerge(room)
+
+    operator fun plusAssign(rooms: List<Room>) =
+        rooms.forEach(::plusAssign)
+
 }
