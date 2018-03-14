@@ -47,10 +47,9 @@ class CurrentUser(
         PresenceSubscription(
             instance = presenceInstance,
             path = "/users/$id/presence",
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
             userStore = userStore,
-            logger = logger
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams
         )
     }
     val roomStore: RoomStore

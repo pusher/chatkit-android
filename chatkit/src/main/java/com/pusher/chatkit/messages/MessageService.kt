@@ -4,14 +4,12 @@ import com.google.gson.reflect.TypeToken
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.*
 import com.pusher.chatkit.channels.broadcast
-import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.chatkit.network.toJson
 import com.pusher.platform.network.Promise
 import com.pusher.platform.network.asPromise
 import com.pusher.util.*
 import elements.Error
-import elements.Errors
 import elements.Subscription
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 

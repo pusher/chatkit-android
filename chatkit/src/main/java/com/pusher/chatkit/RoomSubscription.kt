@@ -47,15 +47,12 @@ class RoomSubscription(
             }
 
             message.room = room
-            userStore.findOrGetUser(message.userId).fold(
-                onFailure = {
-                    onEvent(Event.OnNewMessage(message))
-                },
-                onSuccess = { user ->
-                    message.user = user
-                    onEvent(Event.OnNewMessage(message))
-                }
-            )
+            userStore.findOrGetUser(message.userId).fold({
+                onEvent(Event.OnNewMessage(message))
+            }, { user ->
+                message.user = user
+                onEvent(Event.OnNewMessage(message))
+            })
         } else {
             TODO("Some weird shit has happened. Event received is of the wrong type ${chatEvent.eventName}")
         }

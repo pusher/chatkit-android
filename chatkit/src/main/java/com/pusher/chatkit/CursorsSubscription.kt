@@ -31,12 +31,14 @@ class CursorsSubscription(
         val cursor = ChatManager.GSON.fromJson<Cursor>(chatEvent.data, Cursor::class.java)
         handleCursorSetInternal(cursor)
         cursor.room = room
-        userStore.findOrGetUser(cursor.userId).fold({
-            onEvent(Event.OnCursorSet(cursor))
-        }, {
-            cursor.user = it
-            onEvent(Event.OnCursorSet(cursor))
-        })
+        userStore.findOrGetUser(cursor.userId)
+            .fold({
+                onEvent(Event.OnCursorSet(cursor))
+            },{ user ->
+                cursor.user = user
+                onEvent(Event.OnCursorSet(cursor))
+            }
+        )
     }
 
     private fun handleCursorSetInternal(cursor: Cursor) {

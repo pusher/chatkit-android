@@ -9,7 +9,6 @@ import com.pusher.platform.network.Promise
 import com.pusher.platform.network.asPromise
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
-import elements.Errors
 import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
@@ -199,7 +198,7 @@ class UserSubscription(
                 user.presenceSubscription.openSubscription().consumeEach { broadcast(it) }
             }
             currentUser = user
-        }.recover {error ->
+        }.recover { error ->
             broadcast(ErrorOccurred(error))
             logger.error("handleInitialState", Error("Error: $error"))
         }

@@ -27,6 +27,7 @@ private const val SERVICE_VERSION = "v1"
 private const val FILES_SERVICE_NAME = "chatkit_files"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 
+
 class ChatManager @JvmOverloads constructor(
     val instanceLocator: String,
     val userId: String,

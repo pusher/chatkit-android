@@ -34,9 +34,7 @@ class GlobalUserStore(
         tokenParams = tokenParams
     ).mapResult {
         ChatManager.GSON.fromJson<List<User>>(it.body()!!.charStream(), listOfUsersType).apply {
-            forEach { user ->
-                users[user.id] = user
-            }
+            forEach { user -> users[user.id] = user }
         }
     }
 
