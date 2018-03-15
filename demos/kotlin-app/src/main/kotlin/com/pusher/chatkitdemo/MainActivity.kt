@@ -48,14 +48,16 @@ class MainActivity : AppCompatActivity() {
         state = State.Idle
 
         launch {
-            app.events.map { it as? ErrorOccurred }.filterNotNull()
+            app.events.map { it as? ErrorOccurred }
+                .filterNotNull()
                 .consumeEach { (error) ->
                     state = State.Failed(error)
                 }
         }
 
         launch {
-            state = app.rooms()
+            val roomService = app.rooms()
+            state = roomService
                 .flatMap { it.fetchUserRooms(true).await() }
                 .fold({ error ->
                     State.Failed(error)

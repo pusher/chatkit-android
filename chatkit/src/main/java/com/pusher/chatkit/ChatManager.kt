@@ -123,10 +123,10 @@ class ChatManager @JvmOverloads constructor(
     }
 
     internal fun doPost(path : String, body: String?): OkHttpResponsePromise =
-        doRequest("POST", path, body)
+        doRequest("POST", path, body ?: "")
 
     internal fun doGet(path : String): OkHttpResponsePromise =
-        doRequest("GET", path, "")  //TODO: this is a horrible OKHTTP hack - POST is required to have a body.
+        doRequest("GET", path, null)
 
     private fun doRequest(method : String, path : String, body: String?) : OkHttpResponsePromise =
         apiInstance.request(

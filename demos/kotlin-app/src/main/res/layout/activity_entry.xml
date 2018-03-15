@@ -8,14 +8,16 @@
 
     <include
         android:id="@+id/idleLayout"
-        layout="@layout/activity_entry_loading" />
+        layout="@layout/include_loading" />
 
     <include
         android:id="@+id/loadedLayout"
+        android:visibility="gone"
         layout="@layout/activity_entry_loaded" />
 
     <include
         android:id="@+id/errorLayout"
-        layout="@layout/activity_entry_error" />
+        android:visibility="gone"
+        layout="@layout/include_error" />
 
 </FrameLayout>

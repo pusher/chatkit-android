@@ -1,6 +1,5 @@
 package com.pusher.chatkit.messages
 
-import com.google.gson.reflect.TypeToken
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.*
 import com.pusher.chatkit.network.parseResponseWhenReady

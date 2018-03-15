@@ -9,12 +9,16 @@ import com.pusher.chatkit.CurrentUser
 import com.pusher.chatkitdemo.ChatKitDemoApp.Companion.app
 import com.pusher.chatkitdemo.EntryActivity.State.*
 import com.pusher.chatkitdemo.arch.viewModel
-import com.pusher.chatkitdemo.navigation.*
+import com.pusher.chatkitdemo.navigation.NavigationEvent
+import com.pusher.chatkitdemo.navigation.navigationEvent
+import com.pusher.chatkitdemo.navigation.openInBrowser
+import com.pusher.chatkitdemo.navigation.openMain
 import elements.Error
 import elements.NetworkError
 import kotlinx.android.synthetic.main.activity_entry.*
-import kotlinx.android.synthetic.main.activity_entry_error.*
 import kotlinx.android.synthetic.main.activity_entry_loaded.*
+import kotlinx.android.synthetic.main.include_error.*
+import kotlinx.android.synthetic.main.include_loading.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.Channel
@@ -42,7 +46,7 @@ class EntryActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         val navigationEvent = intent?.navigationEvent
-        when(navigationEvent) {
+        when (navigationEvent) {
             is NavigationEvent.Entry.WithGitHubCode -> viewModel.authorize(navigationEvent.code)// Log.d("TOKEN", "token: ${navigationEvent.code}")
         }
     }
@@ -72,6 +76,7 @@ class EntryActivity : AppCompatActivity() {
 
     private fun renderIdle() {
         views.showOnly(idleLayout)
+        loadingTextView.setText(R.string.logging_you_in)
     }
 
     private fun renderUser(user: CurrentUser) {
@@ -129,10 +134,7 @@ class EntryViewModel : ViewModel() {
 
     suspend fun loadUser(userId: String) {
         userPreferences.userId = userId
-        val state = app.currentUser().fold(
-            { error -> Failure(error) },
-            { user -> UserReady(user) }
-        )
+        val state = app.currentUser().fold(::Failure, ::UserReady)
         stateBroadcast.send(state)
     }
 
@@ -152,7 +154,7 @@ class EntryViewModel : ViewModel() {
             }.build()
             val response = client.newCall(request).execute()
             val responseBody = response.body()?.fromJson<AuthResponseBody>()
-            when(responseBody) {
+            when (responseBody) {
                 null -> stateBroadcast.offer(Failure(NetworkError("Oops! response: $response")))
                 else -> responseBody.let { (id, token) ->
                     userPreferences.userId = id

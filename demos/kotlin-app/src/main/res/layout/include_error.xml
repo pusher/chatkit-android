@@ -4,30 +4,32 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
     tools:showIn="@layout/activity_entry">
 
-    <ProgressBar
-
-        android:id="@+id/progressBar"
+    <TextView
+        android:id="@+id/errorMessageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/textView"
+        android:text="@string/generic_error_message"
+        app:layout_constraintBottom_toTopOf="@+id/retryButton"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
 
-    <TextView
-        android:id="@+id/textView"
+    <Button
+        android:id="@+id/retryButton"
+        style="?borderlessButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:text="@string/logging_you_in"
+        android:layout_marginTop="32dp"
+        android:text="@string/retry"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progressBar" />
+        app:layout_constraintTop_toBottomOf="@+id/errorMessageView" />
 
 </android.support.constraint.ConstraintLayout>
