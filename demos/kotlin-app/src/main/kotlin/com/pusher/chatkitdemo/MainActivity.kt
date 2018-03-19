@@ -2,19 +2,22 @@ package com.pusher.chatkitdemo
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.support.annotation.UiThread
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import com.pusher.chatkit.ErrorOccurred
 import com.pusher.chatkit.Room
 import com.pusher.chatkitdemo.navigation.open
 import com.pusher.chatkitdemo.recyclerview.dataAdapterFor
 import com.pusher.chatkitdemo.room.coolName
+import com.pusher.platform.network.await
+import elements.Error
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_room.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.channels.filterNotNull
 import kotlinx.coroutines.experimental.channels.map
 import kotlinx.coroutines.experimental.launch
 import kotlin.properties.Delegates
@@ -30,6 +33,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var state by Delegates.observable<State>(State.Idle) { _, _, state ->
+        state.render()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -41,35 +48,55 @@ class MainActivity : AppCompatActivity() {
         state = State.Idle
 
         launch {
-            app.rooms
-                .map { s -> s.findAll() }
-                .consumeEach { rooms -> state = State.Loaded(rooms) }
+            app.events.map { it as? ErrorOccurred }
+                .filterNotNull()
+                .consumeEach { (error) ->
+                    state = State.Failed(error)
+                }
+        }
+
+        launch {
+            val roomService = app.rooms()
+            state = roomService
+                .flatMap { it.fetchUserRooms(true).await() }
+                .fold({ error ->
+                    State.Failed(error)
+                }, { rooms ->
+                    State.Loaded(rooms)
+                })
         }
     }
 
-    private var state by Delegates.observable<State>(State.Idle) { _, _, newState ->
-        when (newState) {
-            is State.Idle -> renderIdle()
-            is State.Loaded -> renderLoaded(newState.rooms)
-        }
+    private fun State.render() = when (this) {
+        is State.Idle -> launch(UI) { renderIdle() }
+        is State.Loaded -> launch(UI) { renderLoaded(rooms) }
+        is State.Failed -> launch(UI) { renderFailed(error) }
     }
 
-    @UiThread
-    private fun renderIdle() = launch(UI) {
+    private fun renderIdle() {
         progress.visibility = VISIBLE
         roomListView.visibility = GONE
+        errorView.visibility = GONE
     }
 
-    @UiThread
-    private fun renderLoaded(rooms: List<Room>) = launch(UI) {
+    private fun renderLoaded(rooms: List<Room>) {
         progress.visibility = GONE
         roomListView.visibility = VISIBLE
-        adapter.data = rooms
+        errorView.visibility = GONE
+        adapter.data = rooms.filter { it.memberUserIds.size < 100 }
+    }
+
+    private fun renderFailed(error: Error) {
+        progress.visibility = GONE
+        roomListView.visibility = GONE
+        errorView.visibility = VISIBLE
+        errorView.text = error.reason
     }
 
     sealed class State {
         object Idle : State()
         data class Loaded(val rooms: List<Room>) : State()
+        data class Failed(val error: Error) : State()
     }
 
 }

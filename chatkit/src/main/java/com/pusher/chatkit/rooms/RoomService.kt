@@ -38,7 +38,6 @@ class RoomService(
     @JvmOverloads
     fun fetchUserRooms(onlyJoinable: Boolean = false): RoomListFutureResult =
         chatManager.doGet("/users/${currentUser.id}/rooms?joinable=$onlyJoinable")
-            // TODO: may need `object : TypeToken<Room>() {}.type`
             .parseResponseWhenReady()
 
     fun joinRoom(room: Room): RoomFutureResult =
