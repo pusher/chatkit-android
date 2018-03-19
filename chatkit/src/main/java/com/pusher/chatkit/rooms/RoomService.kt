@@ -40,14 +40,12 @@ class RoomService(
             .orElse { OtherError("User not found locally") }
 
     @JvmOverloads
-    fun fetchUserRooms(onlyJoinable: Boolean = false): RoomListResultPromise {
-        val roomsPromise = chatManager.doGet("/users/${currentUser.id}/rooms?joinable=$onlyJoinable")
-            .parseResponseWhenReady<List<Room>>()
-        roomsPromise.onReady { result ->
-            chatManager.roomStore += result.recover { emptyList() }
-        }
-        return roomsPromise
-    }
+    fun fetchUserRooms(onlyJoinable: Boolean = false): RoomListResultPromise =
+        chatManager.doGet("/users/${currentUser.id}/rooms?joinable=$onlyJoinable")
+            .parseResponseWhenReady<List<Room>>().onReady { result ->
+                chatManager.roomStore += result.recover { emptyList() }
+            }
+
 
     fun joinRoom(room: Room): RoomPromiseResult =
         joinRoom(room.id)

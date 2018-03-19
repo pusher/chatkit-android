@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         progress.visibility = GONE
         roomListView.visibility = VISIBLE
         errorView.visibility = GONE
-        adapter.data = rooms
+        adapter.data = rooms.filter { it.memberUserIds.size < 100 }
     }
 
     private fun renderFailed(error: Error) {

@@ -4,7 +4,6 @@ import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.fold
 import elements.Error
 import elements.Errors
 import elements.Headers
