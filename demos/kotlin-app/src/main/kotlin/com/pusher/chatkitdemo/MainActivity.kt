@@ -6,8 +6,9 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import com.pusher.chatkit.ErrorOccurred
 import com.pusher.chatkit.Room
+import com.pusher.chatkitdemo.MainActivity.State.Failed
+import com.pusher.chatkitdemo.MainActivity.State.Loaded
 import com.pusher.chatkitdemo.navigation.open
 import com.pusher.chatkitdemo.recyclerview.dataAdapterFor
 import com.pusher.chatkitdemo.room.coolName
@@ -16,9 +17,6 @@ import elements.Error
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_room.*
 import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.channels.filterNotNull
-import kotlinx.coroutines.experimental.channels.map
 import kotlinx.coroutines.experimental.launch
 import kotlin.properties.Delegates
 import kotlinx.android.synthetic.main.activity_main.room_list as roomListView
@@ -48,22 +46,10 @@ class MainActivity : AppCompatActivity() {
         state = State.Idle
 
         launch {
-            app.events.map { it as? ErrorOccurred }
-                .filterNotNull()
-                .consumeEach { (error) ->
-                    state = State.Failed(error)
-                }
-        }
-
-        launch {
-            val roomService = app.rooms()
-            state = roomService
-                .flatMap { it.fetchUserRooms(true).await() }
-                .fold({ error ->
-                    State.Failed(error)
-                }, { rooms ->
-                    State.Loaded(rooms)
-                })
+            state = app.rooms()
+                .flatMap { it.fetchUserRooms().await() }
+                .map {rooms -> rooms.filter { it.memberUserIds.size < 100 } }
+                .fold(::Failed, ::Loaded)
         }
     }
 
@@ -83,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         progress.visibility = GONE
         roomListView.visibility = VISIBLE
         errorView.visibility = GONE
-        adapter.data = rooms.filter { it.memberUserIds.size < 100 }
+        adapter.data = rooms
     }
 
     private fun renderFailed(error: Error) {

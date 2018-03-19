@@ -9,10 +9,7 @@ import com.pusher.platform.network.Promise
 import com.pusher.platform.network.asPromise
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
-import elements.Errors
-import elements.Headers
-import elements.Subscription
-import elements.SubscriptionEvent
+import elements.*
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.properties.Delegates
@@ -115,44 +112,52 @@ class UserSubscription(
     }
 
     private fun handleUserLeft(userId: String, roomId: Int) {
-        userStore.findOrGetUser(id = userId)
+        chatManager.userService().fetchUserBy(userId)
             .fold({ error ->
                 broadcastError(error, "User($userId) left a room couldn't recover it ($roomId) ")
             }, { user ->
-                val room = currentUser?.getRoom(roomId)
+                val room = chatManager.roomStore[roomId]
                 room!!.removeUser(userId)
                 broadcast(UserLeftRoom(user, room))
             })
     }
 
     private fun handleUserJoined(userId: String, roomId: Int) {
-        userStore.findOrGetUser(id = userId)
+        chatManager.userService().fetchUserBy(userId)
             .fold({ error ->
-                broadcastError(error, "User($userId) joined a room couldn't recover it ($roomId) ")
+                ChatKitEvent.onError(error)
             }, { user ->
-                val room = currentUser?.getRoom(roomId)
-                room!!.userStore.addOrMerge(user)
-                broadcast(UserJoinedRoom(user, room))
+                val room = chatManager.roomStore[roomId]
+                when (room) {
+                    null -> ChatKitEvent.onError(OtherError("Could not find room with id: $roomId"))
+                    else -> ChatKitEvent.onUserJoinedRoom(user, room)
+                }
             })
+            .onReady { event ->
+                if (event is UserJoinedRoom) {
+                    event.room.memberUserIds() += userId
+                }
+                broadcast(event)
+            }
     }
 
     private fun handleRoomDeleted(roomId: Int) {
-        currentUser?.roomStore?.roomsMap?.remove(roomId)
+        chatManager.roomStore -= roomId
         broadcast(RoomDeleted(roomId))
     }
 
     private fun handleRoomUpdated(room: Room) {
-        currentUser?.roomStore?.addOrMerge(room)
+        chatManager.roomStore += room
         broadcast(RoomUpdated(room))
     }
 
     private fun handleRemovedFromRoom(roomId: Int) {
-        currentUser?.roomStore?.roomsMap?.remove(roomId)
+        chatManager.roomStore -= roomId
         broadcast(CurrentUserRemovedFromRoom(roomId))
     }
 
     private fun handleAddedToRoom(room: Room) {
-        currentUser?.roomStore?.addOrMerge(room)
+        chatManager.roomStore += room
         broadcast(CurrentUserAddedToRoom(room))
     }
 
@@ -165,21 +170,21 @@ class UserSubscription(
                 when (this) {
                     null -> CurrentUser(
                         apiInstance = apiInstance,
-                        avatarURL = initialState.currentUser.avatarURL,
                         createdAt = initialState.currentUser.createdAt,
                         cursors = cursors.toMutableMap(),
                         cursorsInstance = cursorsInstance,
-                        customData = initialState.currentUser.customData,
                         id = initialState.currentUser.id,
                         logger = logger,
-                        name = initialState.currentUser.name,
-                        rooms = initialState.rooms,
                         filesInstance = filesInstance,
                         presenceInstance = presenceInstance,
-                        tokenProvider = tokenProvider,
                         tokenParams = tokenParams,
+                        tokenProvider = tokenProvider,
+                        userStore = userStore,
+                        avatarURL = initialState.currentUser.avatarURL,
+                        customData = initialState.currentUser.customData,
+                        name = initialState.currentUser.name,
                         updatedAt = initialState.currentUser.updatedAt,
-                        userStore = userStore
+                        chatManager = chatManager
                     )
                     else -> this.also {
                         it.presenceSubscription.unsubscribe()
@@ -199,10 +204,10 @@ class UserSubscription(
 
     private fun handleUpdatedUser(user: CurrentUser, initialState: InitialState) {
         val combinedRoomUserIds = initialState.rooms.flatMap { it.memberUserIds }.toSet()
-        user.roomStore += initialState.rooms
+        chatManager.roomStore += initialState.rooms
         val promisedEvents = when {
-            combinedRoomUserIds.isNotEmpty() -> user.fetchDetailsForUsers(combinedRoomUserIds)
-                .mapResult { user.updateExistingRooms(initialState.rooms) }
+            combinedRoomUserIds.isNotEmpty() -> fetchDetailsForUsers(combinedRoomUserIds)
+                .mapResult { updateExistingRooms(initialState.rooms) }
                 .mapResult { listOf(CurrentUserReceived(user)) + it }
             else -> listOf(CurrentUserReceived(user)).asSuccess<List<ChatKitEvent>, elements.Error>().asPromise()
         }
@@ -221,18 +226,11 @@ class UserSubscription(
         broadcast(ErrorOccurred(error))
     }
 
-    private fun CurrentUser.fetchDetailsForUsers(userIds: Set<String>): Promise<Result<List<User>, elements.Error>> =
-        userStore.fetchUsersWithIds(userIds)
-            .mapResult { users ->
-                rooms().forEach { room ->
-                    room.userStore += room.memberUserIds
-                        .mapNotNull { id -> users.find { it.id == id } }
-                }
-                users
-            }
+    private fun fetchDetailsForUsers(userIds: Set<String>): Promise<Result<List<User>, elements.Error>> =
+        chatManager.userService().fetchUsersBy(userIds)
 
-    private fun CurrentUser.updateExistingRooms(roomsForConnection: List<Room>): List<ChatKitEvent> =
-        (rooms() - roomsForConnection)
+    private fun updateExistingRooms(roomsForConnection: List<Room>): List<ChatKitEvent> =
+        chatManager.roomStore.rooms.minus(roomsForConnection)
             .map { CurrentUserRemovedFromRoom(it.id) }
 
 

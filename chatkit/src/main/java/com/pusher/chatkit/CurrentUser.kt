@@ -13,13 +13,10 @@ import com.pusher.util.mapResult
 import elements.Error
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import okhttp3.HttpUrl
-import java.util.concurrent.ConcurrentHashMap
-
 
 typealias ConfirmationPromise = Promise<Result<Boolean, Error>>
 
 class CurrentUser(
-    rooms: List<Room>,
     val apiInstance: Instance,
     val createdAt: String,
     val cursors: MutableMap<Int, Cursor>,
@@ -34,7 +31,8 @@ class CurrentUser(
     var avatarURL: String?,
     var customData: CustomData?,
     var name: String?,
-    var updatedAt: String
+    var updatedAt: String,
+    private val chatManager: ChatManager
 ) {
 
     fun updateWithPropertiesOf(newUser: User) {
@@ -47,23 +45,11 @@ class CurrentUser(
         PresenceSubscription(
             instance = presenceInstance,
             path = "/users/$id/presence",
-            userStore = userStore,
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams
+            tokenParams = tokenParams,
+            chatManager = chatManager
         )
     }
-    val roomStore: RoomStore
-
-    init {
-        val roomMap = ConcurrentHashMap<Int, Room>()
-        rooms.forEach { room ->
-            roomMap.put(room.id, room)
-        }
-        roomStore = RoomStore(roomsMap = roomMap)
-    }
-
-    fun rooms(): List<Room> = roomStore.rooms
-    fun getRoom(id: Int): Room? = roomStore.roomsMap[id]
 
     fun setCursor(
         position: Int,

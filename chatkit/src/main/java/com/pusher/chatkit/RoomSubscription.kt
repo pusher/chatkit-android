@@ -15,7 +15,8 @@ import java.net.URL
 class RoomSubscription(
     val room: Room,
     private val userStore: GlobalUserStore,
-    private val onEvent: (Result<Message, Error>) -> Unit
+    private val onEvent: (Result<Message, Error>) -> Unit,
+    private val chatManager: ChatManager
 ) {
 
     val subscriptionListeners = SubscriptionListeners(
@@ -50,13 +51,7 @@ class RoomSubscription(
                 }
             }
 
-            message.room = room
-            userStore.findOrGetUser(message.userId).fold({
-                onEvent(message.asSuccess())
-            }, { user ->
-                message.user = user
-                onEvent(message.asSuccess())
-            })
+            onEvent(message.asSuccess())
         } else {
             onEvent(Errors.other("Wrong event type: ${chatEvent.eventName}").asFailure())
         }

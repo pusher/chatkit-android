@@ -16,9 +16,9 @@ import kotlinx.coroutines.experimental.channels.Channel
 class PresenceSubscription(
     val instance: Instance,
     path: String,
-    val userStore: GlobalUserStore,
     val tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams?,
+    private val chatManager: ChatManager,
     private val events: BroadcastChannel<ChatKitEvent> = BroadcastChannel(Channel.CONFLATED)
 ) : BroadcastChannel<ChatKitEvent> by events {
 
@@ -51,7 +51,7 @@ class PresenceSubscription(
     }
 
     private fun updatePresenceForUser(userId: String, presence: UserPresence) {
-        userStore.findOrGetUser(userId)
+        chatManager.userService().fetchUserBy(userId)
             .fold({ error ->
                 ErrorOccurred(error) as ChatKitEvent
             }, { user ->

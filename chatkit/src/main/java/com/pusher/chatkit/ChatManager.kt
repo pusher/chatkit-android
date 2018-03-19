@@ -9,16 +9,21 @@ import com.google.gson.annotations.SerializedName
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.rooms.RoomPromiseResult
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.network.AndroidConnectivityHelper
 import com.pusher.platform.network.OkHttpResponsePromise
+import com.pusher.platform.network.Promise
 import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.util.Result
+import elements.Error
 import elements.Subscription
+import elements.asSystemError
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import java.io.Reader
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -43,7 +48,7 @@ class ChatManager @JvmOverloads constructor(
             .create()
     }
 
-    internal val logger = AndroidLogger(logLevel)
+    private val logger = AndroidLogger(logLevel)
 
     private val cluster by lazy {
         val splitInstanceLocator = instanceLocator.split(":")
@@ -72,13 +77,9 @@ class ChatManager @JvmOverloads constructor(
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
     internal val filesInstance by lazyInstance(FILES_SERVICE_NAME, SERVICE_VERSION)
     internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
-    internal val userStore by lazy {
-        GlobalUserStore(
-            apiInstance = apiInstance,
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams
-        )
-    }
+
+    internal val userStore by lazy { GlobalUserStore() }
+    internal val roomStore by lazy { RoomStore() }
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {
@@ -94,19 +95,30 @@ class ChatManager @JvmOverloads constructor(
         tokenProvider = tokenProvider,
         tokenParams = null,
         logger = logger,
-        consumeEvent = {
-            if (it is CurrentUserReceived) {
-                currentUser = it.currentUser
-            }
-            consumer(it)
+        consumeEvent = { event ->
+            event.handleEvent()
+            consumer(event)
         }
     )
+
+    private fun ChatKitEvent.handleEvent() {
+        when (this) {
+            is CurrentUserReceived -> this@ChatManager.currentUser = currentUser
+            is ErrorOccurred -> logger.error(error.reason, error.asSystemError())
+            is RoomDeleted -> roomStore -= roomId
+            is RoomUpdated -> roomStore += room
+            is CurrentUserRemovedFromRoom -> currentUser?.id?.let { id -> roomStore[roomId]?.removeUser(id) }
+        }
+    }
 
     fun messageService(room: Room, user: CurrentUser): MessageService =
         MessageService(room, user, this)
 
     fun roomService(user: CurrentUser): RoomService =
         RoomService(user, this)
+
+    fun userService(): UserService =
+        UserService(this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         Instance(
@@ -122,8 +134,9 @@ class ChatManager @JvmOverloads constructor(
         )
     }
 
-    internal fun doPost(path : String, body: String?): OkHttpResponsePromise =
-        doRequest("POST", path, body ?: "")
+    @JvmOverloads
+    internal fun doPost(path : String, body: String = ""): OkHttpResponsePromise =
+        doRequest("POST", path, body)
 
     internal fun doGet(path : String): OkHttpResponsePromise =
         doRequest("GET", path, null)
@@ -152,11 +165,14 @@ data class Message(
     val text: String? = null,
     val attachment: Attachment? = null,
     val createdAt: String,
-    val updatedAt: String,
-
-    var user: User?,
-    var room: Room?
+    val updatedAt: String
 )
+
+fun UserService.userFor(message: Message): Promise<Result<User, Error>> =
+    fetchUserBy(message.userId)
+
+fun RoomService.roomFor(message: Message): RoomPromiseResult =
+    fetchRoomBy(message.roomId)
 
 data class Attachment(
     @Transient var fetchRequired: Boolean = false,
@@ -169,11 +185,14 @@ data class Cursor(
     val roomId: Int,
     val type: Int,
     val position: Int,
-    val updatedAt: String,
-
-    var user: User?,
-    var room: Room?
+    val updatedAt: String
 )
+
+fun UserService.userFor(cursor: Cursor): Promise<Result<User, Error>> =
+    fetchUserBy(cursor.userId)
+
+fun RoomService.roomFor(cursor: Cursor): RoomPromiseResult =
+    fetchRoomBy(cursor.roomId)
 
 data class ChatEvent(
     val eventName: String,
@@ -184,7 +203,14 @@ data class ChatEvent(
 
 typealias CustomData = MutableMap<String, String>
 
-sealed class ChatKitEvent
+sealed class ChatKitEvent {
+
+    companion object {
+        fun onError(error: Error): ChatKitEvent = ErrorOccurred(error)
+        fun onUserJoinedRoom(user: User, room: Room): ChatKitEvent = UserJoinedRoom(user, room)
+    }
+
+}
 
 data class CurrentUserReceived(val currentUser: CurrentUser) : ChatKitEvent()
 data class ErrorOccurred(val error: elements.Error) : ChatKitEvent()
