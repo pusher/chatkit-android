@@ -55,7 +55,7 @@ class RoomFragment : Fragment() {
         messageService().flatMap { it.messageEvents().await() }
 
     private val adapter = dataAdapterFor<Message>(R.layout.item_message) { message ->
-        userNameView.text = "Loading..."
+        userNameView.setText(R.string.loading)
         app.users()
             .userFor(message)
             .onReady {

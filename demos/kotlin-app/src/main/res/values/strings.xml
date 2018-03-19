@@ -5,6 +5,6 @@
     <string name="logging_you_in">Logging you in</string>
     <string name="generic_error_message">Oops! Something went wrong</string>
     <string name="retry">retry</string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading…</string>
 
 </resources>
