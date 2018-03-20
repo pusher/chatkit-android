@@ -9,8 +9,10 @@ import com.google.gson.annotations.SerializedName
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.rooms.RoomPromiseResult
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.users.HasUser
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
 import com.pusher.platform.logger.AndroidLogger
@@ -160,19 +162,13 @@ fun ChatManager.connectAsync(): ReceiveChannel<ChatKitEvent> =
 
 data class Message(
     val id: Int,
-    val userId: String,
-    val roomId: Int,
+    override val userId: String,
+    override val roomId: Int,
     val text: String? = null,
     val attachment: Attachment? = null,
     val createdAt: String,
     val updatedAt: String
-)
-
-fun UserService.userFor(message: Message): Promise<Result<User, Error>> =
-    fetchUserBy(message.userId)
-
-fun RoomService.roomFor(message: Message): RoomPromiseResult =
-    fetchRoomBy(message.roomId)
+) : HasRoom, HasUser
 
 data class Attachment(
     @Transient var fetchRequired: Boolean = false,
@@ -181,25 +177,19 @@ data class Attachment(
 )
 
 data class Cursor(
-    val userId: String,
-    val roomId: Int,
+    override val userId: String,
+    override val roomId: Int,
     val type: Int,
     val position: Int,
     val updatedAt: String
-)
-
-fun UserService.userFor(cursor: Cursor): Promise<Result<User, Error>> =
-    fetchUserBy(cursor.userId)
-
-fun RoomService.roomFor(cursor: Cursor): RoomPromiseResult =
-    fetchRoomBy(cursor.roomId)
+) : HasUser, HasRoom
 
 data class ChatEvent(
     val eventName: String,
-    val userId: String? = null,
+    override val userId: String = "",
     val timestamp: String,
     val data: JsonElement
-)
+) : HasUser
 
 typealias CustomData = MutableMap<String, String>
 

@@ -24,6 +24,11 @@ class DataAdapter<A>(
         notifyDataSetChanged()
     }
 
+    @JvmName("append")
+    operator fun plusAssign(item: A) {
+        data = listOf(item) + data
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         DataViewHolder(parent, layoutRes, onBind)
 
