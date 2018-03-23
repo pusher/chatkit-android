@@ -8,6 +8,7 @@ import com.pusher.platform.network.Promise
 import com.pusher.platform.network.asPromise
 import com.pusher.util.*
 import elements.Error
+import elements.Errors
 import elements.Subscription
 
 typealias MessagesPromiseResult = Promise<Result<List<Message>, Error>>
@@ -16,7 +17,6 @@ typealias AttachmentPromiseResult = Promise<Result<AttachmentBody, Error>>
 
 class MessageService(
     val room: Room,
-    private val currentUser: CurrentUser,
     private val chatManager: ChatManager
 ) {
 
@@ -25,60 +25,66 @@ class MessageService(
     private val filesInstance get() = chatManager.filesInstance
 
     @JvmOverloads
-    fun messageEvents(messageLimit: Int? = null, callback: (Result<Message, Error>) -> Unit): Subscription {
-        val roomSubscription = RoomSubscription(room, chatManager.userStore, callback, chatManager)
-        with(chatManager) {
-            val path = when (messageLimit) {
-                null -> "/rooms/${room.id}?user_id=${currentUser.id}"
-                else -> "/rooms/${room.id}?user_id=${currentUser.id}&message_limit=$messageLimit"
-            }
-            return apiInstance.subscribeResuming(
+    fun messageEvents(
+        messageLimit: Int = 10,
+        callback: (Result<Message, Error>) -> Unit
+    ): Promise<Result<Subscription, Error>> = chatManager.currentUser
+        .flatMapResult { currentUser -> messageEventsPath(currentUser, messageLimit).asPromise() }
+        .mapResult { path ->
+            val roomSubscription = RoomSubscription(room, chatManager.userStore, callback, chatManager)
+            chatManager.apiInstance.subscribeResuming(
                 path = path,
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
+                tokenProvider = chatManager.tokenProvider,
+                tokenParams = chatManager.tokenParams,
                 listeners = roomSubscription.subscriptionListeners
             )
         }
+
+    private fun messageEventsPath(currentUser: CurrentUser, messageLimit: Int): Result<String, Error> = when {
+        messageLimit < 0 -> Errors.other("messageLimit should be greater than 0").asFailure()
+        else -> "/rooms/${room.id}?user_id=${currentUser.id}&message_limit=$messageLimit".asSuccess()
     }
+
 
     @JvmOverloads
     @UsesCoroutines
-    fun messageEvents(messageLimit: Int? = null): Promise<Result<Message, Error>> =
+    fun messageEvents(messageLimit: Int = 10): Promise<Result<Message, Error>> =
         Promise.promise {
-            messageEvents(messageLimit) { report(it) }
+            val subscription = messageEvents(messageLimit) { report(it) }
+            onCancel { subscription.cancel() }
         }
 
-    fun cursors(callback: (CursorsSubscription.Event) -> Unit) {
-        val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager, callback)
-        with(chatManager) {
-            cursorsInstance.subscribeResuming(
-                path = "/cursors/0/rooms/${room.id}/",
-                tokenProvider = tokenProvider,
-                tokenParams = tokenParams,
-                listeners = cursorsSubscription.subscriptionListeners
-            )
-        }
-    }
+    // TODO: Create cursor service
+//    fun cursors(callback: (CursorsSubscription.Event) -> Unit) {
+//
+//        val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager, callback)
+//        with(chatManager) {
+//            cursorsInstance.subscribeResuming(
+//                path = "/cursors/0/rooms/${room.id}/",
+//                tokenProvider = tokenProvider,
+//                tokenParams = tokenParams,
+//                listeners = cursorsSubscription.subscriptionListeners
+//            )
+//        }
+//    }
 
-    fun fetchMessages(limit: Int = -1): MessagesPromiseResult {
-        val path = when {
+    fun fetchMessages(limit: Int = -1): MessagesPromiseResult =
+        chatManager.doGet(when {
             limit > 0 -> "/rooms/${room.id}/messages?limit=$limit"
             else -> "/rooms/${room.id}/messages"
-        }
-        return chatManager.doGet(path)
-            .parseResponseWhenReady()
-    }
+        }).parseResponseWhenReady()
 
     @JvmOverloads
     fun sendMessage(
-        text: String? = null,
+        text: CharSequence = "",
         attachment: GenericAttachment = NoAttachment
-    ): MessageIdPromiseResult = when (attachment) {
-        is DataAttachment -> uploadFile(attachment, room.id)
-        is LinkAttachment -> Promise.now(AttachmentBody.Resource(attachment.link, attachment.type).asSuccess<AttachmentBody, elements.Error>())
-        is NoAttachment -> Promise.now(AttachmentBody.None.asSuccess<AttachmentBody, Error>())
-    }.flatMapResult {
-        sendCompleteMessage(text, it)
+    ): MessageIdPromiseResult =
+        attachment.asAttachmentBody().flatMapResult { body -> sendMessage(text, body) }
+
+    private fun GenericAttachment.asAttachmentBody(): AttachmentPromiseResult = when (this) {
+        is DataAttachment -> uploadFile(this, room.id)
+        is LinkAttachment -> AttachmentBody.Resource(link, type).asSuccess<AttachmentBody, elements.Error>().asPromise()
+        is NoAttachment -> AttachmentBody.None.asSuccess<AttachmentBody, Error>().asPromise()
     }
 
     private fun uploadFile(
@@ -91,17 +97,23 @@ class MessageService(
         tokenParams = tokenParams
     ).parseResponseWhenReady()
 
-    private fun sendCompleteMessage(
-        text: String? = null,
+    private fun sendMessage(
+        text: CharSequence = "",
         attachment: AttachmentBody
     ): MessageIdPromiseResult =
-        MessageRequest(text = text, userId = currentUser.id, attachment = attachment.takeIf { it !== AttachmentBody.None })
+        chatManager.currentUser.flatMapResult { currentUser ->
+            currentUser.sendMessage(text, attachment)
+        }
+
+    private fun CurrentUser.sendMessage(
+        text: CharSequence = "",
+        attachment: AttachmentBody
+    ): MessageIdPromiseResult =
+        MessageRequest(text.toString(), id, attachment.takeIf { it !== AttachmentBody.None })
             .toJson()
             .map { body -> chatManager.doPost("/rooms/${room.id}/messages", body) }
-            .fold(
-                { error -> error.asFailure<MessageSendingResponse, Error>().asPromise() },
-                { promise -> promise.parseResponseWhenReady() }
-            )
+            .map { it.parseResponseWhenReady<MessageSendingResponse>() }
+            .recover { error -> error.asFailure<MessageSendingResponse, Error>().asPromise() }
             .mapResult { it.messageId }
 
 }

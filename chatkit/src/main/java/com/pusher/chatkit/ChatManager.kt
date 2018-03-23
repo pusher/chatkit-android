@@ -10,9 +10,10 @@ import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.HasRoom
-import com.pusher.chatkit.rooms.RoomPromiseResult
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.rooms.RoomStateMachine
 import com.pusher.chatkit.users.HasUser
+import com.pusher.chatkit.users.UserPromiseResult
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
 import com.pusher.platform.logger.AndroidLogger
@@ -20,12 +21,16 @@ import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.network.AndroidConnectivityHelper
 import com.pusher.platform.network.OkHttpResponsePromise
 import com.pusher.platform.network.Promise
+import com.pusher.platform.network.Promise.PromiseContext
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
+import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import elements.asSystemError
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlin.properties.Delegates
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -33,7 +38,6 @@ private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
 private const val SERVICE_VERSION = "v1"
 private const val FILES_SERVICE_NAME = "chatkit_files"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
-
 
 class ChatManager @JvmOverloads constructor(
     val instanceLocator: String,
@@ -50,7 +54,7 @@ class ChatManager @JvmOverloads constructor(
             .create()
     }
 
-    private val logger = AndroidLogger(logLevel)
+    internal val logger = AndroidLogger(logLevel)
 
     private val cluster by lazy {
         val splitInstanceLocator = instanceLocator.split(":")
@@ -73,7 +77,13 @@ class ChatManager @JvmOverloads constructor(
             mainScheduler = mainScheduler
         )
     }
-    private var currentUser: CurrentUser? = null
+
+    // TODO: report when relevant error occurs (i.e.: failed to connect)
+    private var currentUserPromiseContext: PromiseContext<Result<CurrentUser, Error>> by Delegates.notNull()
+
+    val currentUser: Promise<Result<CurrentUser, Error>> = Promise.promise {
+        currentUserPromiseContext = this
+    }
 
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
@@ -105,22 +115,30 @@ class ChatManager @JvmOverloads constructor(
 
     private fun ChatKitEvent.handleEvent() {
         when (this) {
-            is CurrentUserReceived -> this@ChatManager.currentUser = currentUser
+            is CurrentUserReceived -> currentUserPromiseContext.report(currentUser.asSuccess())
             is ErrorOccurred -> logger.error(error.reason, error.asSystemError())
             is RoomDeleted -> roomStore -= roomId
             is RoomUpdated -> roomStore += room
-            is CurrentUserRemovedFromRoom -> currentUser?.id?.let { id -> roomStore[roomId]?.removeUser(id) }
+            is CurrentUserRemovedFromRoom -> currentUser.onReady { result ->
+                result.map { currentUser -> roomStore[roomId]?.removeUser(currentUser.id) }
+            }
+            is CurrentUserAddedToRoom -> currentUser.onReady { result ->
+                result.map { currentUser -> room.addUser(currentUser.id) }
+            }
         }
     }
 
-    fun messageService(room: Room, user: CurrentUser): MessageService =
-        MessageService(room, user, this)
+    fun messageService(room: Room): MessageService =
+        MessageService(room, this)
 
-    fun roomService(user: CurrentUser): RoomService =
-        RoomService(user, this)
+    fun roomService(): Promise<Result<RoomService, Error>> =
+        currentUser.mapResult { user -> RoomService(user, this) }
 
     fun userService(): UserService =
         UserService(this)
+
+    fun roomStateMachine() : RoomStateMachine =
+        RoomStateMachine(BackgroundScheduler(), this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         Instance(
@@ -137,13 +155,13 @@ class ChatManager @JvmOverloads constructor(
     }
 
     @JvmOverloads
-    internal fun doPost(path : String, body: String = ""): OkHttpResponsePromise =
+    internal fun doPost(path: String, body: String = ""): OkHttpResponsePromise =
         doRequest("POST", path, body)
 
-    internal fun doGet(path : String): OkHttpResponsePromise =
+    internal fun doGet(path: String): OkHttpResponsePromise =
         doRequest("GET", path, null)
 
-    private fun doRequest(method : String, path : String, body: String?) : OkHttpResponsePromise =
+    private fun doRequest(method: String, path: String, body: String?): OkHttpResponsePromise =
         apiInstance.request(
             options = RequestOptions(
                 method = method,
@@ -211,4 +229,28 @@ data class RoomUpdated(val room: Room) : ChatKitEvent()
 data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatKitEvent()
 data class UserJoinedRoom(val user: User, val room: Room) : ChatKitEvent()
 data class UserLeftRoom(val user: User, val room: Room) : ChatKitEvent()
-object NoEvent: ChatKitEvent()
+object NoEvent : ChatKitEvent()
+
+interface ChatAware {
+
+    val chat: ChatManager
+    fun currentUser() = chat.currentUser
+
+    fun roomService(): Promise<Result<RoomService, Error>> =
+        chat.roomService()
+
+    val HasUser.user: UserPromiseResult
+        get() = chat.userService().userFor(this)
+
+}
+
+interface RoomAware : ChatAware {
+
+    fun room(): Promise<Result<Room, Error>>
+
+    fun messageService(): Promise<Result<MessageService, Error>> =
+        room().mapResult { room ->
+            chat.messageService(room)
+        }
+
+}

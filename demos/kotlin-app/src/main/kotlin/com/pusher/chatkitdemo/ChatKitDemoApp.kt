@@ -15,8 +15,8 @@ import com.pusher.platform.network.Promise
 import com.pusher.platform.network.await
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
-import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
@@ -55,7 +55,7 @@ class ChatKitDemoApp : Application() {
     val logger: Logger by lazy { AndroidLogger(LogLevel.VERBOSE) }
     val userPreferences by lazy { UserPreferences(this) }
 
-    private val chat: ChatManager by lazy {
+    val chat: ChatManager by lazy {
         ChatManager(
             instanceLocator = INSTANCE_LOCATOR,
             userId = userPreferences.userId ?: USER_ID,
@@ -82,13 +82,13 @@ class ChatKitDemoApp : Application() {
     suspend fun currentUser(): Result<CurrentUser, Error> =
         currentUserBroadcast.await()
 
-    suspend fun rooms(): Result<RoomService, Error> =
-        currentUser().map { chat.roomService(it) }
+    suspend fun roomService(): Result<RoomService, Error> =
+        chat.roomService().await()
 
-    suspend fun messageServiceFor(room: Room): Result<MessageService, Error> =
-        currentUser().map { chat.messageService(room, it) }
+    fun messageServiceFor(room: Room): MessageService =
+        chat.messageService(room)
 
-    fun users(): UserService =
+    fun userService(): UserService =
          chat.userService()
 
 }
