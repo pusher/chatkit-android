@@ -4,7 +4,6 @@ import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.fold
 import elements.Error
 import elements.Errors
 import elements.Headers
@@ -15,7 +14,8 @@ import java.net.URL
 class RoomSubscription(
     val room: Room,
     private val userStore: GlobalUserStore,
-    private val onEvent: (Result<Message, Error>) -> Unit
+    private val onEvent: (Result<Message, Error>) -> Unit,
+    private val chatManager: ChatManager
 ) {
 
     val subscriptionListeners = SubscriptionListeners(
@@ -50,13 +50,7 @@ class RoomSubscription(
                 }
             }
 
-            message.room = room
-            userStore.findOrGetUser(message.userId).fold({
-                onEvent(message.asSuccess())
-            }, { user ->
-                message.user = user
-                onEvent(message.asSuccess())
-            })
+            onEvent(message.asSuccess())
         } else {
             onEvent(Errors.other("Wrong event type: ${chatEvent.eventName}").asFailure())
         }

@@ -26,7 +26,7 @@ class MessageService(
 
     @JvmOverloads
     fun messageEvents(messageLimit: Int? = null, callback: (Result<Message, Error>) -> Unit): Subscription {
-        val roomSubscription = RoomSubscription(room, chatManager.userStore, callback)
+        val roomSubscription = RoomSubscription(room, chatManager.userStore, callback, chatManager)
         with(chatManager) {
             val path = when (messageLimit) {
                 null -> "/rooms/${room.id}?user_id=${currentUser.id}"
@@ -49,7 +49,7 @@ class MessageService(
         }
 
     fun cursors(callback: (CursorsSubscription.Event) -> Unit) {
-        val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager.userStore, callback)
+        val cursorsSubscription = CursorsSubscription(currentUser, room, chatManager, callback)
         with(chatManager) {
             cursorsInstance.subscribeResuming(
                 path = "/cursors/0/rooms/${room.id}/",
@@ -60,9 +60,14 @@ class MessageService(
         }
     }
 
-    fun fetchMessages(): MessagesPromiseResult =
-        chatManager.doGet("/rooms/${room.id}/messages")
+    fun fetchMessages(limit: Int = -1): MessagesPromiseResult {
+        val path = when {
+            limit > 0 -> "/rooms/${room.id}/messages?limit=$limit"
+            else -> "/rooms/${room.id}/messages"
+        }
+        return chatManager.doGet(path)
             .parseResponseWhenReady()
+    }
 
     @JvmOverloads
     fun sendMessage(

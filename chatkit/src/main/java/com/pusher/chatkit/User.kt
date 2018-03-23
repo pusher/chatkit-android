@@ -10,13 +10,6 @@ class User(
     var customData: CustomData?,
     var online: Boolean = false
 ) {
-    fun updateWithPropertiesOfUser(user: User) {
-        updatedAt = user.updatedAt
-        name = user.name
-        avatarURL = user.avatarURL
-        customData = user.customData
-        online = user.online
-    }
 
     sealed class Presence {
         object Online : Presence()

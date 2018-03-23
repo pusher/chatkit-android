@@ -12,25 +12,18 @@ data class Room(
     var deletedAt: String
 ) {
 
-    @SerializedName("member_user_ids") private var _memberUserIds: MutableList<String>? = null
-    val memberUserIds: List<String>
-        get() = _memberUserIds ?: mutableListOf<String>().also { _memberUserIds = it }
+    @SerializedName("member_user_ids") private var _memberUserIds: MutableSet<String>? = null
+    val memberUserIds: Set<String>
+        get() = memberUserIds()
 
-    private var _userStore : UserStore? = null
-    val userStore: UserStore
-        get() = _userStore ?: UserStore().also { _userStore = it }
+    internal fun memberUserIds(): MutableSet<String> = _memberUserIds
+        ?: mutableSetOf<String>().also { _memberUserIds = it }
 
     fun removeUser(userId: String) {
-        _memberUserIds?.remove(userId)
-        userStore.remove(userId)
+        memberUserIds() -= userId
     }
 
-    fun updateWithPropertiesOfRoom(updatedRoom: Room) {
-        name = updatedRoom.name
-        isPrivate = updatedRoom.isPrivate
-        updatedAt = updatedRoom.updatedAt
-        deletedAt = updatedRoom.deletedAt
-        _memberUserIds = updatedRoom._memberUserIds
+    fun addUser(userId: String) {
+        memberUserIds() += userId
     }
-
 }

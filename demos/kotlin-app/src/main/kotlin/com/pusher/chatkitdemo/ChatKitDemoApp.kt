@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment
 import com.pusher.chatkit.*
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkitdemo.BuildConfig.*
 import com.pusher.platform.logger.AndroidLogger
 import com.pusher.platform.logger.LogLevel
@@ -72,7 +73,6 @@ class ChatKitDemoApp : Application() {
                 events.consumeEach { event ->
                     when (event) {
                         is CurrentUserReceived -> report(event.currentUser.asSuccess())
-                        is ErrorOccurred -> report(event.error.asFailure())
                     }
                 }
             }
@@ -87,5 +87,8 @@ class ChatKitDemoApp : Application() {
 
     suspend fun messageServiceFor(room: Room): Result<MessageService, Error> =
         currentUser().map { chat.messageService(room, it) }
+
+    fun users(): UserService =
+         chat.userService()
 
 }
