@@ -1,10 +1,11 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.ChatManager.Companion.GSON
-import com.pusher.platform.Cancelable
+import com.pusher.chatkit.network.parseAs
+import com.pusher.platform.network.Promise
 import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.util.*
 import elements.Error
-import elements.NetworkError
+import elements.Errors
 import okhttp3.*
 import java.io.IOException
 import java.util.*
@@ -18,53 +19,37 @@ import java.util.*
  * */
 class ChatkitTokenProvider
 @JvmOverloads constructor(
-        val endpoint: String,
-        var userId: String,
-        val authData: CustomData = TreeMap(),
-        val client: OkHttpClient = OkHttpClient(),
-        val tokenCache: TokenCache = InMemoryTokenCache(Clock())
+    private val endpoint: String,
+    var userId: String,
+    private val authData: CustomData = TreeMap(),
+    private val client: OkHttpClient = OkHttpClient(),
+    private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 
-): TokenProvider {
+) : TokenProvider {
 
-    override fun fetchToken(tokenParams: Any?, onSuccess: (String) -> Unit, onFailure: (Error) -> Unit): Cancelable {
-
+    override fun fetchToken(tokenParams: Any?): Promise<Result<String, Error>> {
         val cachedToken = tokenCache.getTokenFromCache()
-
-        return if(cachedToken != null){
-            onSuccess(cachedToken)
-            object: Cancelable {
-                override fun cancel() {} //Nothing to cancel, we can ignore.
-            }
+        return when (cachedToken) {
+            null -> fetchTokenFromEndpoint(tokenParams)
+            else -> Promise.now(cachedToken.asSuccess())
         }
-        else fetchTokenFromEndpoint(
-                tokenParams = tokenParams,
-                onFailure = onFailure,
-                onSuccess = { token ->
-                    tokenCache.cache(token.accessToken, token.expiresIn.toLong())
-                    onSuccess(token.accessToken)
-                })
     }
 
     override fun clearToken(token: String?) {
         tokenCache.clearCache()
     }
 
-
-    private fun fetchTokenFromEndpoint(tokenParams: Any?, onSuccess: (TokenResponse) -> Unit, onFailure: (Error) -> Unit): Cancelable {
-
-        var call: Call?
-
+    private fun fetchTokenFromEndpoint(tokenParams: Any?): Promise<Result<String, Error>> {
         val urlBuilder = HttpUrl.parse(endpoint)!!
-                .newBuilder()
+            .newBuilder()
         urlBuilder.addQueryParameter("user_id", userId)
 
         val requestBodyBuilder = FormBody.Builder()
-                .add("grant_type", "client_credentials")
-
+            .add("grant_type", "client_credentials")
 
         //TODO: Maybe add to query params instead???
         //Add any extras to the token provider's request.
-        if(tokenParams is ChatkitTokenParams){
+        if (tokenParams is ChatkitTokenParams) {
             tokenParams.extras.keys.forEach { key ->
                 requestBodyBuilder.add(key, tokenParams.extras.getValue(key))
             }
@@ -77,62 +62,65 @@ class ChatkitTokenProvider
         val requestBody = requestBodyBuilder.build()
 
         val request = Request.Builder()
-                .url(urlBuilder.build())
-                .post(requestBody)
-                .build()
+            .url(urlBuilder.build())
+            .post(requestBody)
+            .build()
 
-        call = client.newCall(request)
+        val call = client.newCall(request)
 
-        call!!.enqueue( object: Callback {
+        return Promise.promise {
+            call.enqueue(object : Callback {
+                override fun onFailure(call: Call?, e: IOException?) =
+                    report(Errors.network("Failed to load token: $e").asFailure())
 
-            override fun onResponse(call: Call?, response: Response?) {
-
-                if(response != null && response.code() == 200) {
-                    val token = GSON.fromJson<TokenResponse>(response.body()!!.charStream(), TokenResponse::class.java)
-
-                    tokenCache.cache(token.accessToken, token.expiresIn.toLong())
-                    onSuccess(token)
+                override fun onResponse(call: Call?, response: Response?) {
+                    report(when (response?.code()) {
+                        200 -> parseTokenResponse(response)
+                        else -> response.asError().asFailure()
+                    })
                 }
-
-                else{
-                    onFailure(elements.ErrorResponse(
-                            statusCode = response!!.code(),
-                            headers = response.headers().toMultimap(),
-                            error = response.body()!!.string()
-                    ))
-                }
-            }
-
-            override fun onFailure(call: Call?, e: IOException?) {
-                onFailure(NetworkError("Failed! $e"))
-            }
-
-        })
-
-    return object: Cancelable {
-        override fun cancel() {
-            call?.cancel()
+            })
         }
     }
-}
+
+    private fun Response?.asError(): Error = when (this) {
+        null -> Errors.network("No response available")
+        else -> Errors.response(
+            statusCode = code(),
+            headers = headers().toMultimap(),
+            error = body().toString()
+        )
+    }
+
+    private fun parseTokenResponse(response: Response): Result<String, Error> {
+        return response.body()
+            ?.charStream()
+            ?.parseAs<TokenResponse>()
+            .orElse { Errors.network("Could not parse token from response: $response") }
+            .flatten()
+            .map { token ->
+                tokenCache.cache(token.accessToken, token.expiresIn.toLong())
+                token.accessToken
+            }
+    }
 }
 
 data class TokenResponse(
 
-        val accessToken: String,
-        val tokenType: String,
-        val expiresIn: String,
-        val refreshToken: String
+    val accessToken: String,
+    val tokenType: String,
+    val expiresIn: String,
+    val refreshToken: String
 )
 
 data class ChatkitTokenParams(
-        val extras: Map<String, String> = emptyMap()
+    val extras: Map<String, String> = emptyMap()
 )
 
 /**
  * Default token expiry tolerance - 10 minutes
  * */
-val CACHE_EXPIRY_TOLERANCE = 10*60
+val CACHE_EXPIRY_TOLERANCE = 10 * 60
 
 interface TokenCache {
     /**
@@ -158,12 +146,12 @@ interface TokenCache {
 /**
  * A simple in-memory cache implementation
  * */
-class InMemoryTokenCache(val clock: Clock): TokenCache{
+class InMemoryTokenCache(val clock: Clock) : TokenCache {
     var token: String? = null
     var expiration: Long = -1
 
 
-    override fun cache(token: String, expiresIn: Long){
+    override fun cache(token: String, expiresIn: Long) {
 
         this.token = token
         this.expiration = clock.currentTimestampInSeconds() + expiresIn - CACHE_EXPIRY_TOLERANCE
@@ -173,7 +161,7 @@ class InMemoryTokenCache(val clock: Clock): TokenCache{
 
         val now = clock.currentTimestampInSeconds()
 
-        return if(token != null && now < expiration) token
+        return if (token != null && now < expiration) token
         else null
 
     }
@@ -189,7 +177,7 @@ class InMemoryTokenCache(val clock: Clock): TokenCache{
  * Utility class we can use for mocking
  * Returns current timestamp in seconds from epoch
  * */
-class Clock{
+class Clock {
     fun currentTimestampInSeconds(): Long {
         return Date().time / 1000
     }
