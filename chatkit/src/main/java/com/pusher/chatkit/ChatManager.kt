@@ -230,27 +230,3 @@ data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) :
 data class UserJoinedRoom(val user: User, val room: Room) : ChatKitEvent()
 data class UserLeftRoom(val user: User, val room: Room) : ChatKitEvent()
 object NoEvent : ChatKitEvent()
-
-interface ChatAware {
-
-    val chat: ChatManager
-    fun currentUser() = chat.currentUser
-
-    fun roomService(): Promise<Result<RoomService, Error>> =
-        chat.roomService()
-
-    val HasUser.user: UserPromiseResult
-        get() = chat.userService().userFor(this)
-
-}
-
-interface RoomAware : ChatAware {
-
-    fun room(): Promise<Result<Room, Error>>
-
-    fun messageService(): Promise<Result<MessageService, Error>> =
-        room().mapResult { room ->
-            chat.messageService(room)
-        }
-
-}
