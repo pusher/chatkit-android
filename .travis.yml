@@ -18,13 +18,13 @@ cache:
     - ${TRAVIS_BUILD_DIR}/android-sdk/extras/
 
 env:
- - pusher_platform_local=$TRAVIS_BUILD_DIR/platform
+ - pusher_platform_local=platform
 
 before_script:
-  - mkdir $TRAVIS_BUILD_DIR/platform
-  - git clone https://github.com/pusher/pusher-platform-android.git --branch=master --single-branch  $TRAVIS_BUILD_DIR/platform
+  - mkdir platform
+  - git clone https://github.com/pusher/pusher-platform-android.git --branch=master --single-branch  platform
 
-script: ./gradlew build -Ppusher_platform_local=${TRAVIS_BUILD_DIR}/platform --stacktrace
+script: ./gradlew build -Ppusher_platform_local=platform --stacktrace
 
 android:
   components:
