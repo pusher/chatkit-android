@@ -102,7 +102,7 @@ class EntryViewModel : ViewModel() {
 
     private object Github {
         private const val gitHubClientId = "20cdd317000f92af12fe"
-        private const val callbackUri = "https://chatkit-demo-server.herokuapp.com/success/android"
+        private const val callbackUri = "https://chatkit-demo-server.herokuapp.com/success?url=chatkit://auth"
 
         const val gitHubAuthUrl = "https://github.com/login/oauth/authorize" +
             "?client_id=$gitHubClientId" +

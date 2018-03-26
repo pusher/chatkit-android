@@ -1,9 +1,6 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.CurrentUser
-import com.pusher.chatkit.Room
-import com.pusher.chatkit.RoomCreateRequest
+import com.pusher.chatkit.*
 import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.chatkit.network.toJson
 import com.pusher.platform.network.Promise
@@ -78,6 +75,8 @@ class RoomService(
             )
             .updateStoreWhenReady()
 
+    fun roomFor(roomAware: HasRoom) =
+        fetchRoomBy(roomAware.roomId)
 
     private fun RoomPromiseResult.updateStoreWhenReady() = onReady {
         it.map { room ->
@@ -90,6 +89,10 @@ class RoomService(
         chatManager.userService().populateUserStore(room.memberUserIds)
     }
 
+}
+
+interface HasRoom {
+    val roomId: Int
 }
 
 data class NoRoomMembershipError(val room: Room) : Error {

@@ -19,8 +19,8 @@ class PresenceSubscription(
     val tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams?,
     private val chatManager: ChatManager,
-    private val events: BroadcastChannel<ChatKitEvent> = BroadcastChannel(Channel.CONFLATED)
-) : BroadcastChannel<ChatKitEvent> by events {
+    private val events: BroadcastChannel<ChatManagerEvent> = BroadcastChannel(Channel.CONFLATED)
+) : BroadcastChannel<ChatManagerEvent> by events {
 
     var subscription: Subscription
 
@@ -53,7 +53,7 @@ class PresenceSubscription(
     private fun updatePresenceForUser(userId: String, presence: UserPresence) {
         chatManager.userService().fetchUserBy(userId)
             .fold({ error ->
-                ErrorOccurred(error) as ChatKitEvent
+                ErrorOccurred(error) as ChatManagerEvent
             }, { user ->
                 when {
                     user.online != presence.isOnline() -> UserPresenceUpdated(user, if (presence.isOnline()) Online else Offline)

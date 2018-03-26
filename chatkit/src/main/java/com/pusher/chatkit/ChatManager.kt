@@ -9,8 +9,10 @@ import com.google.gson.annotations.SerializedName
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
-import com.pusher.chatkit.rooms.RoomPromiseResult
+import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.rooms.RoomStateMachine
+import com.pusher.chatkit.users.HasUser
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
 import com.pusher.platform.logger.AndroidLogger
@@ -18,12 +20,16 @@ import com.pusher.platform.logger.LogLevel
 import com.pusher.platform.network.AndroidConnectivityHelper
 import com.pusher.platform.network.OkHttpResponsePromise
 import com.pusher.platform.network.Promise
+import com.pusher.platform.network.Promise.PromiseContext
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
+import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import elements.asSystemError
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlin.properties.Delegates
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -31,7 +37,6 @@ private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
 private const val SERVICE_VERSION = "v1"
 private const val FILES_SERVICE_NAME = "chatkit_files"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
-
 
 class ChatManager @JvmOverloads constructor(
     val instanceLocator: String,
@@ -48,7 +53,7 @@ class ChatManager @JvmOverloads constructor(
             .create()
     }
 
-    private val logger = AndroidLogger(logLevel)
+    internal val logger = AndroidLogger(logLevel)
 
     private val cluster by lazy {
         val splitInstanceLocator = instanceLocator.split(":")
@@ -71,7 +76,13 @@ class ChatManager @JvmOverloads constructor(
             mainScheduler = mainScheduler
         )
     }
-    private var currentUser: CurrentUser? = null
+
+    // TODO: report when relevant error occurs (i.e.: failed to connect)
+    private var currentUserPromiseContext: PromiseContext<Result<CurrentUser, Error>> by Delegates.notNull()
+
+    val currentUser: Promise<Result<CurrentUser, Error>> = Promise.promise {
+        currentUserPromiseContext = this
+    }
 
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
@@ -87,7 +98,7 @@ class ChatManager @JvmOverloads constructor(
         }
     }
 
-    fun connect(consumer: (ChatKitEvent) -> Unit): Subscription = UserSubscription(
+    fun connect(consumer: (ChatManagerEvent) -> Unit): Subscription = UserSubscription(
         userId = userId,
         chatManager = this,
         path = USERS_PATH,
@@ -101,24 +112,32 @@ class ChatManager @JvmOverloads constructor(
         }
     )
 
-    private fun ChatKitEvent.handleEvent() {
+    private fun ChatManagerEvent.handleEvent() {
         when (this) {
-            is CurrentUserReceived -> this@ChatManager.currentUser = currentUser
+            is CurrentUserReceived -> currentUserPromiseContext.report(currentUser.asSuccess())
             is ErrorOccurred -> logger.error(error.reason, error.asSystemError())
             is RoomDeleted -> roomStore -= roomId
             is RoomUpdated -> roomStore += room
-            is CurrentUserRemovedFromRoom -> currentUser?.id?.let { id -> roomStore[roomId]?.removeUser(id) }
+            is CurrentUserRemovedFromRoom -> currentUser.onReady { result ->
+                result.map { currentUser -> roomStore[roomId]?.removeUser(currentUser.id) }
+            }
+            is CurrentUserAddedToRoom -> currentUser.onReady { result ->
+                result.map { currentUser -> room.addUser(currentUser.id) }
+            }
         }
     }
 
-    fun messageService(room: Room, user: CurrentUser): MessageService =
-        MessageService(room, user, this)
+    fun messageService(room: Room): MessageService =
+        MessageService(room, this)
 
-    fun roomService(user: CurrentUser): RoomService =
-        RoomService(user, this)
+    fun roomService(): Promise<Result<RoomService, Error>> =
+        currentUser.mapResult { user -> RoomService(user, this) }
 
     fun userService(): UserService =
         UserService(this)
+
+    fun roomStateMachine() : RoomStateMachine =
+        RoomStateMachine(BackgroundScheduler(), this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         Instance(
@@ -135,13 +154,13 @@ class ChatManager @JvmOverloads constructor(
     }
 
     @JvmOverloads
-    internal fun doPost(path : String, body: String = ""): OkHttpResponsePromise =
+    internal fun doPost(path: String, body: String = ""): OkHttpResponsePromise =
         doRequest("POST", path, body)
 
-    internal fun doGet(path : String): OkHttpResponsePromise =
+    internal fun doGet(path: String): OkHttpResponsePromise =
         doRequest("GET", path, null)
 
-    private fun doRequest(method : String, path : String, body: String?) : OkHttpResponsePromise =
+    private fun doRequest(method: String, path: String, body: String?): OkHttpResponsePromise =
         apiInstance.request(
             options = RequestOptions(
                 method = method,
@@ -155,24 +174,18 @@ class ChatManager @JvmOverloads constructor(
 }
 
 @UsesCoroutines
-fun ChatManager.connectAsync(): ReceiveChannel<ChatKitEvent> =
+fun ChatManager.connectAsync(): ReceiveChannel<ChatManagerEvent> =
     broadcast { connect { event -> offer(event) } }
 
 data class Message(
     val id: Int,
-    val userId: String,
-    val roomId: Int,
+    override val userId: String,
+    override val roomId: Int,
     val text: String? = null,
     val attachment: Attachment? = null,
     val createdAt: String,
     val updatedAt: String
-)
-
-fun UserService.userFor(message: Message): Promise<Result<User, Error>> =
-    fetchUserBy(message.userId)
-
-fun RoomService.roomFor(message: Message): RoomPromiseResult =
-    fetchRoomBy(message.roomId)
+) : HasRoom, HasUser
 
 data class Attachment(
     @Transient var fetchRequired: Boolean = false,
@@ -181,44 +194,38 @@ data class Attachment(
 )
 
 data class Cursor(
-    val userId: String,
-    val roomId: Int,
+    override val userId: String,
+    override val roomId: Int,
     val type: Int,
     val position: Int,
     val updatedAt: String
-)
-
-fun UserService.userFor(cursor: Cursor): Promise<Result<User, Error>> =
-    fetchUserBy(cursor.userId)
-
-fun RoomService.roomFor(cursor: Cursor): RoomPromiseResult =
-    fetchRoomBy(cursor.roomId)
+) : HasUser, HasRoom
 
 data class ChatEvent(
     val eventName: String,
-    val userId: String? = null,
+    override val userId: String = "",
     val timestamp: String,
     val data: JsonElement
-)
+) : HasUser
 
 typealias CustomData = MutableMap<String, String>
 
-sealed class ChatKitEvent {
+sealed class ChatManagerEvent {
 
     companion object {
-        fun onError(error: Error): ChatKitEvent = ErrorOccurred(error)
-        fun onUserJoinedRoom(user: User, room: Room): ChatKitEvent = UserJoinedRoom(user, room)
+        fun onError(error: Error): ChatManagerEvent = ErrorOccurred(error)
+        fun onUserJoinedRoom(user: User, room: Room): ChatManagerEvent = UserJoinedRoom(user, room)
     }
 
 }
 
-data class CurrentUserReceived(val currentUser: CurrentUser) : ChatKitEvent()
-data class ErrorOccurred(val error: elements.Error) : ChatKitEvent()
-data class CurrentUserAddedToRoom(val room: Room) : ChatKitEvent()
-data class CurrentUserRemovedFromRoom(val roomId: Int) : ChatKitEvent()
-data class RoomDeleted(val roomId: Int) : ChatKitEvent()
-data class RoomUpdated(val room: Room) : ChatKitEvent()
-data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatKitEvent()
-data class UserJoinedRoom(val user: User, val room: Room) : ChatKitEvent()
-data class UserLeftRoom(val user: User, val room: Room) : ChatKitEvent()
-object NoEvent: ChatKitEvent()
+data class CurrentUserReceived(val currentUser: CurrentUser) : ChatManagerEvent()
+data class ErrorOccurred(val error: elements.Error) : ChatManagerEvent()
+data class CurrentUserAddedToRoom(val room: Room) : ChatManagerEvent()
+data class CurrentUserRemovedFromRoom(val roomId: Int) : ChatManagerEvent()
+data class RoomDeleted(val roomId: Int) : ChatManagerEvent()
+data class RoomUpdated(val room: Room) : ChatManagerEvent()
+data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatManagerEvent()
+data class UserJoinedRoom(val user: User, val room: Room) : ChatManagerEvent()
+data class UserLeftRoom(val user: User, val room: Room) : ChatManagerEvent()
+object NoEvent : ChatManagerEvent()

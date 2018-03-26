@@ -1,6 +1,6 @@
 package com.pusher.chatkitdemo.room
 
-import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.Lifecycle.State.STARTED
 import android.arch.lifecycle.LifecycleOwner
 import android.os.Bundle
 import android.support.annotation.UiThread
@@ -10,20 +10,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.pusher.chatkit.Message
 import com.pusher.chatkit.Room
-import com.pusher.chatkit.messages.MessageService
-import com.pusher.chatkit.rooms.NoRoomMembershipError
-import com.pusher.chatkit.rooms.RoomResult
-import com.pusher.chatkit.userFor
+import com.pusher.chatkit.rooms.RoomState
+import com.pusher.chatkit.rooms.RoomState.*
 import com.pusher.chatkitdemo.R
 import com.pusher.chatkitdemo.app
+import com.pusher.chatkitdemo.nameOf
 import com.pusher.chatkitdemo.recyclerview.dataAdapterFor
-import com.pusher.chatkitdemo.room.RoomFragment.State.*
-import com.pusher.chatkitdemo.room.RoomFragment.State.Loaded.WithRoom
 import com.pusher.chatkitdemo.showOnly
-import com.pusher.platform.network.await
-import com.pusher.util.Result
 import elements.Error
 import kotlinx.android.synthetic.main.fragment_room.*
 import kotlinx.android.synthetic.main.fragment_room_loaded.view.*
@@ -32,36 +26,27 @@ import kotlinx.android.synthetic.main.item_message.*
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.launch
-import kotlin.properties.Delegates
 
 class RoomFragment : Fragment() {
 
+    private val stateMachine by lazy { app.chat.roomStateMachine() }
+
     private val views by lazy { arrayOf(idleLayout, loadedLayout, errorLayout) }
 
-    private val roomIdChannel = Channel<Int>(Channel.CONFLATED)
-
-    private suspend fun roomId(): Int =
-        roomIdChannel.receive()
-
-    private suspend fun room(): RoomResult =
-        app.rooms().flatMap { it.fetchRoomBy(roomId()).await() }
-
-    private suspend fun messageService(): Result<MessageService, Error> =
-        room().flatMap { room -> app.messageServiceFor(room) }
-
-    private suspend fun messageEvents(): Result<Message, Error> =
-        messageService().flatMap { it.messageEvents().await() }
-
-    private val adapter = dataAdapterFor<Message>(R.layout.item_message) { message ->
-        userNameView.setText(R.string.loading)
-        app.users()
-            .userFor(message)
-            .onReady {
-                userNameView.text = it.map { it.name }.recover { "???" }
-            }
-        messageView.text = message.text
+    private val adapter = dataAdapterFor<Item> {
+        on<Item.Loaded>(R.layout.item_message) { (details) ->
+            userNameView.text = details.userName
+            messageView.text = details.message
+        }
+        on<Item.Pending>(R.layout.item_message_pending) { (details) ->
+            userNameView.text = details.userName
+            messageView.text = details.message
+        }
+        on<Item.Failed>(R.layout.item_message_pending) { (details, error) ->
+            userNameView.text = details.userName
+            messageView.text = details.message
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
@@ -71,101 +56,72 @@ class RoomFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         with(view) {
             messageList.adapter = adapter
-            messageList.layoutManager = LinearLayoutManager(activity)
+            messageList.layoutManager = LinearLayoutManager(activity).apply {
+                reverseLayout = true
+            }
             sendButton.setOnClickListener {
-                val message = messageInput.text.toString()
-                //TODO()
+                val messageText = messageInput.text
+                if (messageText.isNotBlank()) {
+                    stateMachine.state.let { state ->
+                        when(state) {
+                            is Ready -> state.addMessage(messageText)
+                            else -> TODO()
+                        }
+                    }
+                    messageInput.setText("")
+                }
             }
         }
-        loadRoom()
     }
 
-    fun bind(roomId: Int) {
-        state = Idle
-        roomIdChannel.offer(roomId)
+    fun bind(roomId: Int) = stateMachine.onStateChanged { state ->
+        state.render()
+        when(state) {
+            is Initial -> state.loadRoom(roomId)
+            is NoMembership -> state.join()
+            is RoomLoaded -> state.loadMessages()
+            else -> Log.d(nameOf<RoomFragment>(), "State $state didn't trigger anything.")
+        }
     }
 
-    private var state by Delegates.observable<State>(Idle) { _, _, newState ->
-        newState.render()
-    }
-
-    private fun State.render() = when (this) {
-        is Idle -> launchOnUi { renderIdle() }
-        is Loaded.WithRoom -> launchOnUi { renderLoadedRoom(room) }
-        is Loaded.WithoutRoomMembership -> launchOnUi { renderNoMembership(room) }
-        is Loaded.Complete -> launchOnUi { renderLoadedCompletely(room, messages) }
-        is Failed -> launchOnUi { renderFailed(error) }
+    private fun RoomState.render(): Job = when (this) {
+        is Initial -> renderIdle()
+        is Idle -> renderIdle()
+        is NoMembership -> renderNoMembership()
+        is RoomLoaded -> renderLoadedRoom(room)
+        is Ready -> renderLoadedCompletely(room, items)
+        is Failed -> renderFailed(error)
     }
 
     @UiThread
-    private fun renderIdle() {
+    private fun renderIdle() = launchOnUi {
         views.showOnly(idleLayout)
         adapter.data = emptyList()
     }
 
-    private fun renderLoadedRoom(room: Room) {
+    private fun renderLoadedRoom(room: Room) = launchOnUi {
         views.showOnly(loadedLayout)
         activity?.title = room.coolName
-        loadMessages(room)
     }
 
-    private fun renderLoadedCompletely(room: Room, messages: List<Message>) {
-        renderLoadedRoom(room)
+    private fun renderLoadedCompletely(room: Room, messages: List<Item>) = launchOnUi {
+        views.showOnly(loadedLayout)
+        activity?.title = room.coolName
         adapter.data = messages
     }
 
-    private fun renderFailed(error: Error) {
+    private fun renderFailed(error: Error) = launchOnUi {
         views.showOnly(errorLayout)
         errorMessageView.text = error.reason
         retryButton.visibility = View.GONE // TODO: Retry policy
     }
 
-    private fun renderNoMembership(room: Room) {
+    private fun renderNoMembership() =
         renderIdle()
-        joinRoom(room)
-    }
-
-    private fun loadRoom() = launch {
-        state = room().fold(::forError, ::WithRoom)
-    }
-
-    private fun loadMessages(room: Room) = launch {
-        state = app.messageServiceFor(room)
-            .flatMap { it.fetchMessages(10).await() }
-            .map<State> { messages -> Loaded.Complete(room, messages) }
-            .recover(::forError)
-    }
-
-    private fun joinRoom(room: Room) = launch {
-        state = app.rooms()
-            .flatMap<State> {
-                it.joinRoom(room).await()
-                    .map { Loaded.WithRoom(room) }
-            }
-            .recover(::forError)
-    }
-
-    private fun forError(error: Error): State = when (error) {
-        is NoRoomMembershipError -> Loaded.WithoutRoomMembership(error.room)
-        else -> Failed(error)
-    }
-
-    sealed class State {
-        sealed class Loaded : State() {
-            data class WithoutRoomMembership(val room: Room) : Loaded()
-            data class WithRoom(val room: Room) : Loaded()
-            data class Complete(val room: Room, val messages: List<Message>) : Loaded()
-        }
-        data class Failed(val error: Error) : State()
-        object Idle : State()
-    }
 
 }
 
-private fun LifecycleOwner.launchOnUi(block: suspend CoroutineScope.() -> Unit): Job =
-    launch(UI) {
-        when {
-            lifecycle.currentState != Lifecycle.State.DESTROYED -> block()
-            else -> Log.d("Boo", "Unexpected lifecycle state: ${lifecycle.currentState}")
-        }
-    }
+private fun LifecycleOwner.launchOnUi(block: suspend CoroutineScope.() -> Unit) = when {
+    lifecycle.currentState > STARTED -> launch(context = UI, block = block)
+    else -> launch { Log.d("Boo", "Unexpected lifecycle state: ${lifecycle.currentState}") }
+}

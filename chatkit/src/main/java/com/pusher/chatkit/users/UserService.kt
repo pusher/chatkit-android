@@ -36,6 +36,12 @@ class UserService(
             it.firstOrNull().orElse { userNotFound(userId) }.asPromise()
         }
 
+    fun userFor(userAware: HasUser): UserPromiseResult =
+        fetchUserBy(userAware.userId)
+
+    fun usersFor(userAware: List<HasUser>): UserListResultPromise =
+        fetchUsersBy(userAware.map { it.userId }.toSet())
+
     internal fun populateUserStore(userIds: Set<String>) {
         fetchUsersBy(userIds)
     }
@@ -54,4 +60,8 @@ class UserService(
     private fun getLocalUser(id: String) =
         chatManager.userStore[id]
 
+}
+
+interface HasUser {
+    val userId: String
 }
