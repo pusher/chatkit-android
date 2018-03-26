@@ -64,7 +64,7 @@ class RoomFragment : Fragment() {
                 if (messageText.isNotBlank()) {
                     stateMachine.state.let { state ->
                         when(state) {
-                            is Loaded -> state.addMessage(messageText)
+                            is Ready -> state.addMessage(messageText)
                             else -> TODO()
                         }
                     }
@@ -89,7 +89,7 @@ class RoomFragment : Fragment() {
         is Idle -> renderIdle()
         is NoMembership -> renderNoMembership()
         is RoomLoaded -> renderLoadedRoom(room)
-        is Loaded -> renderLoadedCompletely(room, items)
+        is Ready -> renderLoadedCompletely(room, items)
         is Failed -> renderFailed(error)
     }
 

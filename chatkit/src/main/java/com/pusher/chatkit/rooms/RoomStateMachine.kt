@@ -70,9 +70,9 @@ class RoomStateMachine internal constructor(
         active = false
     }
 
-    internal fun whenLoaded(block: RoomState.Loaded.() -> RoomState) = { state: RoomState ->
+    internal fun whenLoaded(block: RoomState.Ready.() -> RoomState) = { state: RoomState ->
         when (state) {
-            is RoomState.Loaded -> block(state)
+            is RoomState.Ready -> block(state)
         // TODO: replace with soft failure
             else -> RoomState.Failed(::handleAction, Errors.other("Can't add message with state: $state"))
         }
@@ -166,8 +166,8 @@ private class LoadMessagesTask(
             .mapResult { userName -> Item.Details(userName, text ?: "") }
 
     private operator fun RoomState.plus(item: Item): RoomState = when (this) {
-        is RoomState.RoomLoaded -> RoomState.Loaded(machine::handleAction, room, listOf(item))
-        is RoomState.Loaded -> copy(items = listOf(item) + items)
+        is RoomState.RoomLoaded -> RoomState.Ready(machine::handleAction, room, listOf(item))
+        is RoomState.Ready -> copy(items = listOf(item) + items)
         else -> RoomState.Failed(machine::handleAction, prematureMessageError())
     }
 
@@ -254,7 +254,7 @@ sealed class RoomState(val type: Type) {
         fun loadMessages() = handle(RoomAction.LoadMessages(room))
     }
 
-    data class Loaded internal constructor(
+    data class Ready internal constructor(
         private val handle: Actor,
         val room: Room,
         val items: List<Item>
