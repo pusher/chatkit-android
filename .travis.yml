@@ -17,9 +17,6 @@ cache:
     - ${TRAVIS_BUILD_DIR}/gradle/wrapper/dists/
     - ${TRAVIS_BUILD_DIR}/android-sdk/extras/
 
-env:
- - pusher_platform_local=platform
-
 before_script:
   - mkdir platform
   - git clone https://github.com/pusher/pusher-platform-android.git --branch=master --single-branch  platform
