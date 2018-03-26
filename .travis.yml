@@ -19,7 +19,7 @@ env:
 
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/platform
-  - git clone --branch=master https://github.com/pusher/pusher-platform-android.git $TRAVIS_BUILD_DIR/platform
+  - git clone https://github.com/pusher/pusher-platform-android.git --branch=master --single-branch  $TRAVIS_BUILD_DIR/platform
 
 script: ./gradlew build
 
