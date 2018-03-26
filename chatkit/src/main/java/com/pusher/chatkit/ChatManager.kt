@@ -42,10 +42,12 @@ class ChatManager @JvmOverloads constructor(
     val instanceLocator: String,
     val userId: String,
     context: Context,
-    val tokenProvider: TokenProvider,
+    tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams? = null,
     logLevel: LogLevel = LogLevel.DEBUG
 ) {
+
+    val tokenProvider: TokenProvider = DebounceTokenProvider(tokenProvider)
 
     companion object {
         val GSON: Gson = GsonBuilder()
@@ -229,3 +231,20 @@ data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) :
 data class UserJoinedRoom(val user: User, val room: Room) : ChatManagerEvent()
 data class UserLeftRoom(val user: User, val room: Room) : ChatManagerEvent()
 object NoEvent : ChatManagerEvent()
+
+private class DebounceTokenProvider(
+    val original: TokenProvider
+) : TokenProvider {
+
+    private var pending: Promise<Result<String, Error>>? = null
+
+    override fun fetchToken(tokenParams: Any?): Promise<Result<String, Error>> = synchronized(this) {
+        pending ?: original.fetchToken(tokenParams).also { pending = it }
+    }
+
+    override fun clearToken(token: String?) = synchronized(this) {
+        original.clearToken(token)
+        pending = null
+    }
+
+}
