@@ -43,7 +43,7 @@ class UserSubscription(
     val tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams?,
     val logger: Logger,
-    consumeEvent: (ChatKitEvent) -> Unit
+    consumeEvent: (ChatManagerEvent) -> Unit
 ) : Subscription {
 
     private val apiInstance get() = chatManager.apiInstance
@@ -56,7 +56,7 @@ class UserSubscription(
     }
     private val subscription: Subscription
 
-    private val broadcast = { event: ChatKitEvent ->
+    private val broadcast = { event: ChatManagerEvent ->
         launch {
             consumeEvent(event)
         }
@@ -125,12 +125,12 @@ class UserSubscription(
     private fun handleUserJoined(userId: String, roomId: Int) {
         chatManager.userService().fetchUserBy(userId)
             .fold({ error ->
-                ChatKitEvent.onError(error)
+                ChatManagerEvent.onError(error)
             }, { user ->
                 val room = chatManager.roomStore[roomId]
                 when (room) {
-                    null -> ChatKitEvent.onError(OtherError("Could not find room with id: $roomId"))
-                    else -> ChatKitEvent.onUserJoinedRoom(user, room)
+                    null -> ChatManagerEvent.onError(OtherError("Could not find room with id: $roomId"))
+                    else -> ChatManagerEvent.onUserJoinedRoom(user, room)
                 }
             })
             .onReady { event ->
@@ -209,7 +209,7 @@ class UserSubscription(
             combinedRoomUserIds.isNotEmpty() -> fetchDetailsForUsers(combinedRoomUserIds)
                 .mapResult { updateExistingRooms(initialState.rooms) }
                 .mapResult { listOf(CurrentUserReceived(user)) + it }
-            else -> listOf(CurrentUserReceived(user)).asSuccess<List<ChatKitEvent>, elements.Error>().asPromise()
+            else -> listOf(CurrentUserReceived(user)).asSuccess<List<ChatManagerEvent>, elements.Error>().asPromise()
         }
         promisedEvents
             .recover { listOf(ErrorOccurred(it)) }
@@ -229,7 +229,7 @@ class UserSubscription(
     private fun fetchDetailsForUsers(userIds: Set<String>): Promise<Result<List<User>, elements.Error>> =
         chatManager.userService().fetchUsersBy(userIds)
 
-    private fun updateExistingRooms(roomsForConnection: List<Room>): List<ChatKitEvent> =
+    private fun updateExistingRooms(roomsForConnection: List<Room>): List<ChatManagerEvent> =
         chatManager.roomStore.rooms.minus(roomsForConnection)
             .map { CurrentUserRemovedFromRoom(it.id) }
 

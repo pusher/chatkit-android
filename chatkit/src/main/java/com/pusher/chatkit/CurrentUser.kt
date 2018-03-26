@@ -167,7 +167,7 @@ class CurrentUser(
     private fun leaveRoomPath(roomId: Int) =
         HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/leave").build().encodedPath()
 
-    val presenceEvents: SubscriptionReceiveChannel<ChatKitEvent>
+    val presenceEvents: SubscriptionReceiveChannel<ChatManagerEvent>
         get() = presenceSubscription.openSubscription()
 
 }
