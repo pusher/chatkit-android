@@ -20,16 +20,25 @@ fun <A> dataAdapterFor(
 )
 
 sealed class DataAdapter<A> : RecyclerView.Adapter<DataViewHolder<A>>() {
-    abstract var data: List<A>
-    abstract fun append(item: A)
+
+    var data: List<A> by Delegates.observable(emptyList()) { _, _, _ ->
+        notifyDataSetChanged()
+    }
+
+    @JvmOverloads
+    fun insert(item: A, index: Int = 0) {
+        data = data.subList(0, index) + item + data.subList(index, data.size)
+    }
 
     operator fun plusAssign(item: A) =
-        append(item)
+        insert(item)
 }
 
 sealed class DataViewHolder<in A>(itemView: View) : RecyclerView.ViewHolder(itemView) {
     abstract fun bind(data: A)
 }
+
+typealias ViewHolderFactory<A> = (A) -> DataViewHolder<A>
 
 /**
  * Generalised [RecyclerView.Adapter] for lists of simple items using android extensions for the binding.
@@ -38,14 +47,6 @@ private class SimpleDataAdapter<A>(
     @LayoutRes private val layoutRes: Int,
     private val onBind: LayoutContainer.(A) -> Unit
 ) : DataAdapter<A>() {
-
-    override var data: List<A> by Delegates.observable(emptyList()) { _, _, _ ->
-        notifyDataSetChanged()
-    }
-
-    override fun append(item: A) {
-        data = listOf(item) + data
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         BindDataViewHolder(parent, layoutRes, onBind)
@@ -78,14 +79,6 @@ private class MultiDataAdapter<A>(
     private val adapterMap: Map<(A) -> Boolean, IndexedAdapter<A>>
 ) : DataAdapter<A>() {
 
-    override var data: List<A> by Delegates.observable(emptyList()) { _, _, _ ->
-        notifyDataSetChanged()
-    }
-
-    override fun append(item: A) {
-        data = listOf(item) + data
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DataViewHolder<A> =
         adapterMap.values.first { it.viewType == viewType }.adapter.invoke(parent)
 
@@ -102,7 +95,6 @@ private class MultiDataAdapter<A>(
 }
 
 private data class IndexedAdapter<in A>(val viewType: Int, val adapter: (parent: ViewGroup) -> DataViewHolder<A>)
-
 
 sealed class DataAdapterContext<A> {
     abstract fun on(accept: (A) -> Boolean, @LayoutRes layoutRes: Int, onBind: LayoutContainer.(A) -> Unit)
