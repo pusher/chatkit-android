@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import com.pusher.SdkInfo
 import com.pusher.annotations.UsesCoroutines
 import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
@@ -41,7 +42,7 @@ private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 class ChatManager @JvmOverloads constructor(
     val instanceLocator: String,
     val userId: String,
-    context: Context,
+    private val context: Context,
     tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams? = null,
     logLevel: LogLevel = LogLevel.DEBUG
@@ -56,28 +57,6 @@ class ChatManager @JvmOverloads constructor(
     }
 
     internal val logger = AndroidLogger(logLevel)
-
-    private val cluster by lazy {
-        val splitInstanceLocator = instanceLocator.split(":")
-        check(splitInstanceLocator.size == 3) {
-            "Locator \'$instanceLocator\' must have the format \'version:cluster:instanceId\'"
-        }
-        splitInstanceLocator.drop(1).first()
-    }
-    private val connectivityHelper = AndroidConnectivityHelper(context)
-    private val mediaTypeResolver = AndroidMediaTypeResolver()
-    private val scheduler = BackgroundScheduler()
-    private val mainScheduler = ForegroundScheduler()
-    private val baseClient: BaseClient by lazy {
-        BaseClient(
-            host = "$cluster.pusherplatform.io",
-            logger = logger,
-            connectivityHelper = connectivityHelper,
-            mediaTypeResolver = mediaTypeResolver,
-            scheduler = scheduler,
-            mainScheduler = mainScheduler
-        )
-    }
 
     // TODO: report when relevant error occurs (i.e.: failed to connect)
     private var currentUserPromiseContext: PromiseContext<Result<CurrentUser, Error>> by Delegates.notNull()
@@ -146,12 +125,15 @@ class ChatManager @JvmOverloads constructor(
             locator = instanceLocator,
             serviceName = serviceName,
             serviceVersion = serviceVersion,
-            logger = logger,
-            baseClient = baseClient,
-            connectivityHelper = connectivityHelper,
-            scheduler = scheduler,
-            mainThreadScheduler = mainScheduler,
-            mediatypeResolver = mediaTypeResolver
+            dependencies = AndroidDependencies(
+                context,
+                SdkInfo(
+                    product = "Chatkit",
+                    sdkVersion = BuildConfig.VERSION_NAME,
+                    platform = "Android",
+                    language = "Kotlin/Java"
+                )
+            )
         )
     }
 
