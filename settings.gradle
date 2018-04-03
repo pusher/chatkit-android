@@ -3,7 +3,7 @@ include ':demos:kotlin-app'
 
 def injectProject = { projectName, projectPath ->
     include "$projectName"
-    project("$projectName").projectDir = new File(settingsDir, projectPath)
+    project("$projectName").projectDir = new File(projectPath)
 }
 
 // set pusher_platform_local for local development
