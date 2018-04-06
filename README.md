@@ -59,10 +59,10 @@ Connect to the ChatManager and implement the `UserSubscriptionListeners`:
 
 ```java
 chatManager.connect(
-    new UserSubscriptionListeners(
+    new UserSubscriptionListener(
         new CurrentUserListener() {
             @Override
-            public void currentUserReceived(@NonNull CurrentUser user) {
+            public void onCurrentUser(@NonNull CurrentUser user) {
                 Log.d(TAG, "currentUserReceived");
                 currentUser = user;
 
@@ -88,7 +88,7 @@ chatManager.connect(
 ### Features breakdown
 
 Most operations are performed on the `CurrentUser` instance.
-It has the following params, with `CustomData` being an a Map of any extra params it might have set:
+It has the following params, with `CustomData` being a Map of any extra params it might have set:
 
 ```kotlin
 class CurrentUser(
@@ -180,12 +180,12 @@ user.createRoom("roomName",
 ```
 
 
-Send message:
+Send message without attachments:
 
 ```java
 currentUser.sendMessage(
     room.getId(),
-    "Hey there!",
+    "Hey there!", null,
     new MessageSentListener() {
         @Override
         public void onMessage(int messageId) {
