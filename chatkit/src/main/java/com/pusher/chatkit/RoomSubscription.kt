@@ -1,31 +1,34 @@
 package com.pusher.chatkit
 
-import android.os.Handler
-import android.os.Looper
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.util.Result
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
 import elements.Error
+import elements.Errors
 import elements.Headers
 import elements.SubscriptionEvent
 import java.net.URL
-import java.net.URLDecoder
-import java.util.*
 
 
-class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalUserStore, val listeners: RoomSubscriptionListeners) {
-
-    val mainThread: Handler = Handler(Looper.getMainLooper())
+class RoomSubscription(
+    val room: Room,
+    private val userStore: GlobalUserStore,
+    private val onEvent: (Result<Message, Error>) -> Unit,
+    private val chatManager: ChatManager
+) {
 
     val subscriptionListeners = SubscriptionListeners(
-            onOpen = { handleOpen(it) },
-            onEvent = { handleMessage(it) },
-            onError = { handleError(it) }
+        onOpen = { handleOpen(it) },
+        onEvent = { handleMessage(it) },
+        onError = { handleError(it) }
     )
 
-    fun handleOpen(headers: Headers) {
+    private fun handleOpen(headers: Headers) {
         //TODO("Not handled currently.")
     }
 
-    fun handleMessage(event: SubscriptionEvent) {
+    private fun handleMessage(event: SubscriptionEvent) {
 
         val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
 
@@ -47,26 +50,16 @@ class RoomSubscription(user: CurrentUser, val room: Room, val userStore: GlobalU
                 }
             }
 
-            message.room = room
-            userStore.fetchUsersWithIds(
-                    userIds = setOf(message.userId),
-                    onComplete = UsersListener { users ->
-                        if (users.isNotEmpty())
-                            message.user = users[0]
-                        mainThread.post { listeners.onNewMessage(message) }
-
-                    },
-                    onFailure = ErrorListener {
-                        mainThread.post { listeners.onNewMessage(message) }
-                    })
+            onEvent(message.asSuccess())
         } else {
-            TODO("Some weird shit has happened. Event received is of the wrong type ${chatEvent.eventName}")
+            onEvent(Errors.other("Wrong event type: ${chatEvent.eventName}").asFailure())
         }
 
     }
 
-    fun handleError(error: Error) {
-        mainThread.post { listeners.onError(error) }
+    private fun handleError(error: Error) {
+        onEvent(error.asFailure())
     }
 
 }
+

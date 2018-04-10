@@ -20,6 +20,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            testCoverageEnabled true
+        }
     }
 }
 
@@ -30,13 +33,13 @@ kotlin {
 }
 
 dependencies {
-    implementation 'com.android.support:appcompat-v7:27.0.2'
+    implementation 'com.android.support:appcompat-v7:27.1.0'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.1"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.22.1"
 
-    if (rootProject.properties.containsKey("pusher_platfomr_local")) {
+    if (rootProject.properties.containsKey("pusher_platform_local")) {
         api project(':pusher-platform-local')
     } else {
         api 'com.pusher:pusher-platform-android:0.3.0'

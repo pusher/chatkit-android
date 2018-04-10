@@ -1,32 +1,29 @@
 package com.pusher.chatkit
 
+import com.google.gson.annotations.SerializedName
+
 data class Room(
-        val id: Int,
-        val createdById: String,
-        var name: String,
-        var isPrivate: Boolean,
-        val createdAt: String,
-        var updatedAt: String,
-        var deletedAt: String,
-        var memberUserIds: MutableList<String>,
-        private var userStore: UserStore?
-){
+    val id: Int,
+    val createdById: String,
+    var name: String,
+    var isPrivate: Boolean,
+    val createdAt: String,
+    var updatedAt: String,
+    var deletedAt: String
+) {
 
-    fun userStore(): UserStore {
-        if(userStore == null) userStore = UserStore()
-        return userStore!!
+    @SerializedName("member_user_ids") private var _memberUserIds: MutableSet<String>? = null
+    val memberUserIds: Set<String>
+        get() = memberUserIds()
+
+    internal fun memberUserIds(): MutableSet<String> = _memberUserIds
+        ?: mutableSetOf<String>().also { _memberUserIds = it }
+
+    fun removeUser(userId: String) {
+        memberUserIds() -= userId
     }
 
-    fun removeUser(userId: String){
-        memberUserIds.remove(userId)
-        userStore().remove(userId)
-    }
-
-    fun updateWithPropertiesOfRoom(updatedRoom: Room){
-        name = updatedRoom.name
-        isPrivate = updatedRoom.isPrivate
-        updatedAt = updatedRoom.updatedAt
-        deletedAt = updatedRoom.deletedAt
-        memberUserIds = updatedRoom.memberUserIds
+    fun addUser(userId: String) {
+        memberUserIds() += userId
     }
 }

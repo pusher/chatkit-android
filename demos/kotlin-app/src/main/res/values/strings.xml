@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">ChatKit Demo</string>
+    <string name="title_activity_entry">EntryActivity</string>
+    <string name="continue_to_main">continue</string>
+    <string name="logging_you_in">Logging you in</string>
+    <string name="generic_error_message">Oops! Something went wrong</string>
+    <string name="retry">retry</string>
+    <string name="loading">Loading…</string>
+
+</resources>

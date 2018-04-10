@@ -1,18 +1,29 @@
 package com.pusher.chatkit
 
-import com.pusher.platform.Instance
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class RoomStore(val instance: Instance, val rooms: ConcurrentMap<Int, Room>) {
+class RoomStore(private val roomsMap: ConcurrentMap<Int, Room> = ConcurrentHashMap()) {
 
-    fun setOfRooms(): Set<Room>  = rooms.values.toSet()
+    val rooms : List<Room>
+        get() = roomsMap.values.toList()
 
-    fun addOrMerge(room: Room) {
-        if (rooms[room.id] != null){
-            rooms[room.id]!!.updateWithPropertiesOfRoom(room)
-        }
-        else{
-            rooms.put(room.id, room)
-        }
+    operator fun get(id: Int): Room? =
+        roomsMap[id]
+
+    operator fun plusAssign(room: Room) {
+        roomsMap += (room.id to room)
     }
+
+    operator fun plusAssign(rooms: List<Room>) {
+        roomsMap += rooms.map { it.id to it }.toMap()
+    }
+
+    operator fun minusAssign(room: Room) =
+        minusAssign(room.id)
+
+    operator fun minusAssign(roomId: Int) {
+        roomsMap.remove(roomId)
+    }
+
 }
