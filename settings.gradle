@@ -11,4 +11,5 @@ if (properties.containsKey("pusher_platform_local")) {
     def localPath = properties["pusher_platform_local"]
     injectProject(':pusher-platform-local', "$localPath/library")
     injectProject(':library-core', "$localPath/library-core")
+    injectProject(':test-common', "$localPath/test-common")
 }
