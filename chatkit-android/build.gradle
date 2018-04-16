@@ -40,7 +40,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 
     if (rootProject.properties.containsKey("pusher_platform_local")) {
-        api project(':pusher-platform-local')
+        api project(':pusher-platform-android')
     } else {
         api "com.pusher:pusher-platform-android:$pusher_platform_version"
     }
