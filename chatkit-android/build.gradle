@@ -38,12 +38,13 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
-
     if (rootProject.properties.containsKey("pusher_platform_local")) {
         api project(':pusher-platform-local')
     } else {
         api "com.pusher:pusher-platform-android:$pusher_platform_version"
     }
+    api project(':chatkit-core')
+
 
     testImplementation "junit:junit:$junit_legacy_version"
     androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {

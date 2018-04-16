@@ -45,12 +45,14 @@ To include it in your application, create it with your details, as such:
 
 ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
 
-ChatManager chatManager = new ChatManager.Builder()
-                        .instanceLocator(INSTANCE_LOCATOR)
-                        .userId(USER_NAME)
-                        .context(getApplicationContext())
-                        .tokenProvider(tokenProvider)
-                        .build();
+ChatManager chatManager = new ChatManager(
+    INSTANCE_LOCATOR, 
+    USER_NAME,
+    new AndroidChatkitDependencies(
+        getApplicationContext(),
+        tokenProvider
+    )
+);
 
 ```
 

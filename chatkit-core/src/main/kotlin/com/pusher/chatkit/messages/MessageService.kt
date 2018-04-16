@@ -21,7 +21,7 @@ class MessageService(
 ) {
 
     private val tokenProvider get() = chatManager.tokenProvider
-    private val tokenParams get() = chatManager.tokenParams
+    private val tokenParams get() = chatManager.dependencies.tokenParams
     private val filesInstance get() = chatManager.filesInstance
 
     @JvmOverloads
@@ -35,7 +35,7 @@ class MessageService(
             chatManager.apiInstance.subscribeResuming(
                 path = path,
                 tokenProvider = chatManager.tokenProvider,
-                tokenParams = chatManager.tokenParams,
+                tokenParams = chatManager.dependencies.tokenParams,
                 listeners = roomSubscription.subscriptionListeners
             )
         }
