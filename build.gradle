@@ -2,7 +2,17 @@
 
 buildscript {
     ext {
-        kotlin_version = '1.2.30'
+        kotlin_version = '1.2.31'
+        coroutines_version = '0.22.1'
+        android_gradle_version = '3.1.1'
+        android_support_version = '27.1.1'
+        android_arch_version = '1.1.1'
+        mockito_version = '2.10.0'
+        constraints_layout_version = '1.1.0'
+        espresso_version = '3.0.1'
+        espresso_runner_version = '1.0.1'
+        junit_legacy_version = '4.12'
+        pusher_platform_version = '0.3.0'
     }
     repositories {
         google()
@@ -10,9 +20,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.0'
+        classpath "com.android.tools.build:gradle:$android_gradle_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.novoda:bintray-release:0.8.0'
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.1.0'
+        classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.0.31'
     }
 }
 
