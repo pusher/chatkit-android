@@ -1,6 +1,5 @@
 package com.pusher.chatkit
 
-import android.content.Context
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -16,9 +15,6 @@ import com.pusher.chatkit.rooms.RoomStateMachine
 import com.pusher.chatkit.users.HasUser
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
-import com.pusher.platform.logger.AndroidLogger
-import com.pusher.platform.logger.LogLevel
-import com.pusher.platform.network.AndroidConnectivityHelper
 import com.pusher.platform.network.OkHttpResponsePromise
 import com.pusher.platform.network.Promise
 import com.pusher.platform.network.Promise.PromiseContext
@@ -39,16 +35,13 @@ private const val SERVICE_VERSION = "v1"
 private const val FILES_SERVICE_NAME = "chatkit_files"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 
-class ChatManager @JvmOverloads constructor(
-    val instanceLocator: String,
-    val userId: String,
-    private val context: Context,
-    tokenProvider: TokenProvider,
-    val tokenParams: ChatkitTokenParams? = null,
-    logLevel: LogLevel = LogLevel.DEBUG
+class ChatManager constructor(
+    private val instanceLocator: String,
+    private val userId: String,
+    internal val dependencies: ChatkitDependencies
 ) {
 
-    val tokenProvider: TokenProvider = DebounceTokenProvider(tokenProvider)
+    val tokenProvider: TokenProvider = DebounceTokenProvider(dependencies.tokenProvider)
 
     companion object {
         val GSON: Gson = GsonBuilder()
@@ -56,7 +49,7 @@ class ChatManager @JvmOverloads constructor(
             .create()
     }
 
-    internal val logger = AndroidLogger(logLevel)
+    internal val logger = dependencies.logger
 
     // TODO: report when relevant error occurs (i.e.: failed to connect)
     private var currentUserPromiseContext: PromiseContext<Result<CurrentUser, Error>> by Delegates.notNull()
@@ -118,22 +111,14 @@ class ChatManager @JvmOverloads constructor(
         UserService(this)
 
     fun roomStateMachine() : RoomStateMachine =
-        RoomStateMachine(BackgroundScheduler(), this)
+        RoomStateMachine(dependencies.scheduler, this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         Instance(
             locator = instanceLocator,
             serviceName = serviceName,
             serviceVersion = serviceVersion,
-            dependencies = AndroidDependencies(
-                context,
-                SdkInfo(
-                    product = "Chatkit",
-                    sdkVersion = BuildConfig.VERSION_NAME,
-                    platform = "Android",
-                    language = "Kotlin/Java"
-                )
-            )
+            dependencies = dependencies
         )
     }
 
@@ -152,7 +137,7 @@ class ChatManager @JvmOverloads constructor(
                 body = body
             ),
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams
+            tokenParams = dependencies.tokenParams
         )
 
 }

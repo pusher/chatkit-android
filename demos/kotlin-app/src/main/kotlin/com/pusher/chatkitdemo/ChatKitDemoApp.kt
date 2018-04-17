@@ -16,7 +16,6 @@ import com.pusher.platform.network.await
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
-import com.pusher.util.mapResult
 import elements.Error
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
@@ -59,9 +58,10 @@ class ChatKitDemoApp : Application() {
         ChatManager(
             instanceLocator = INSTANCE_LOCATOR,
             userId = userPreferences.userId ?: USER_ID,
-            context = applicationContext,
-            tokenProvider = tokenProvider,
-            logLevel = LogLevel.VERBOSE
+            dependencies = AndroidChatkitDependencies(
+                context = applicationContext,
+                tokenProvider = tokenProvider
+            )
         )
     }
 

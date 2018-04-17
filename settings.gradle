@@ -1,4 +1,5 @@
-include ':chatkit'
+rootProject.name = 'chatkit-parent'
+include ':chatkit-android', ':chatkit-core'
 include ':demos:kotlin-app'
 
 def injectProject = { projectName, projectPath ->
@@ -9,7 +10,7 @@ def injectProject = { projectName, projectPath ->
 // set pusher_platform_local for local development
 if (properties.containsKey("pusher_platform_local")) {
     def localPath = properties["pusher_platform_local"]
-    injectProject(':pusher-platform-local', "$localPath/library")
-    injectProject(':library-core', "$localPath/library-core")
+    injectProject(':pusher-platform-android', "$localPath/pusher-platform-android")
+    injectProject(':pusher-platform-core', "$localPath/pusher-platform-core")
     injectProject(':test-common', "$localPath/test-common")
 }
