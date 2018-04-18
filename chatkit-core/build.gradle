@@ -25,6 +25,7 @@ dependencies {
     testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
     testImplementation 'org.junit.platform:junit-platform-runner:1.1.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.3'
+    testImplementation "com.auth0:java-jwt:3.3.0"
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.0.3'
 }
