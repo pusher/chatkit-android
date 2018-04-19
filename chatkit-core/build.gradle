@@ -53,6 +53,6 @@ junitPlatform {
 afterEvaluate {
     // adds properties for tests
     def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
-    junitPlatformTestTask.systemProperties = rootProject.properties.findAll { it.value instanceof String }
-    junitPlatformTestTask.systemProperties = System.properties
+    junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
+    junitPlatformTestTask.systemProperties += System.properties
 }

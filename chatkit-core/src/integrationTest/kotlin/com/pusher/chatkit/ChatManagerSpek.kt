@@ -9,6 +9,9 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import elements.Error as ElementsError
 
+/**
+ * These should be added in ~/.gradle/gradle.properties or as a system property. If running them on the IDE, they must be a system property.
+ */
 private val INSTANCE_LOCATOR: String = System.getProperty("chatkit_integration_locator") ?: "Missing gradle/system property 'chatkit_integration_locator'"
 private val INSTANCE_ID = INSTANCE_LOCATOR.split(":").getOrNull(2) ?: "Missing instance id in locator (property 'chatkit_integration_locator')"
 private val USER_NAME: String = System.getProperty("chatkit_integration_username") ?: "Missing gradle/system property 'chatkit_integration_username'"
