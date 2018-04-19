@@ -1,5 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'de.mannodermaus.android-junit5'
+
+apply from: "$projectDir/../gradle/jacoco-android.gradle"
 apply from: 'maven-push.gradle'
 
 android {
@@ -24,6 +27,13 @@ android {
             testCoverageEnabled true
         }
     }
+
+    testOptions {
+        junitPlatform {
+            details "tree"
+        }
+    }
+
 }
 
 kotlin {
@@ -47,6 +57,10 @@ dependencies {
     api project(':chatkit-core')
 
     testImplementation "junit:junit:$junit_legacy_version"
+    testImplementation junit5.unitTests()
+    testCompileOnly junit5.unitTestsRuntime()
+    testImplementation junit5.parameterized()
+
     androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {
         exclude group: 'com.android.support', module: 'support-annotations'
     })

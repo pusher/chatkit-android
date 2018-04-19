@@ -15,7 +15,6 @@ dependencies {
     if (rootProject.properties.containsKey("pusher_platform_local")) {
         api project(':pusher-platform-core')
     } else {
-        // TODO: should work after platform is deployed
         api "com.pusher:pusher-platform-core:$pusher_platform_version"
     }
 
@@ -49,4 +48,10 @@ junitPlatform {
             include 'junit-jupiter', 'spek'
         }
     }
+}
+
+afterEvaluate {
+    // adds properties for tests
+    def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
+    junitPlatformTestTask.systemProperties = rootProject.properties.findAll { it.value instanceof String }
 }
