@@ -23,8 +23,9 @@ before_script:
 
 script:
   - ./gradlew build -Ppusher_platform_local=platform
-  - ./gradlew :chatkit-android:assembleDebug :chatkit-android:junitPlatformTestDebug :chatkit-android:lintDebug :chatkit-android:jacocoTestReportDebug -Ppusher_platform_local=platform
-  - ./gradlew :chatkit-core:assemble :chatkit-core:test -Ppusher_platform_local=platform
+  - ./gradlew :chatkit-android:assembleDebug :chatkit-android:junitPlatformTestDebug :chatkit-android:lintDebug :chatkit-android:jacocoTestReportDebug -Ppusher_platform_local=platform --stacktrace
+  - ./gradlew :chatkit-core:assemble :chatkit-core:test -Ppusher_platform_local=platform --stacktrace
+  - ./gradlew codeCoverageReport
 
 after_success:
   # report coverage
