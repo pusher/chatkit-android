@@ -25,7 +25,7 @@ class ChatManagerSpek : Spek({
             )
         )
 
-        will("load current user", Timeout.None) {
+        will("load current user") {
             var sub by FutureValue<Subscription>()
             sub = manager.connect { event ->
                 done {
