@@ -15,6 +15,13 @@ import elements.Error as ElementsError
 private val INSTANCE_LOCATOR: String = System.getProperty("chatkit_integration_locator") ?: "Missing gradle/system property 'chatkit_integration_locator'"
 private val INSTANCE_ID = INSTANCE_LOCATOR.split(":").getOrNull(2) ?: "Missing instance id in locator (property 'chatkit_integration_locator')"
 private val USER_NAME: String = System.getProperty("chatkit_integration_username") ?: "Missing gradle/system property 'chatkit_integration_username'"
+private val TIMEOUT = (System.getProperty("chatkit_integration_timeout") ?: "-1").toLongOrNull().let {
+    when(it) {
+        null -> Timeout.Some(5000)
+        0L -> Timeout.None
+        else -> Timeout.Some(it)
+    }
+}
 
 class ChatManagerSpek : Spek({
 
@@ -28,7 +35,7 @@ class ChatManagerSpek : Spek({
             )
         )
 
-        will("load current user") {
+        will("load current user", TIMEOUT) {
             var sub by FutureValue<Subscription>()
             sub = manager.connect { event ->
                 done {
