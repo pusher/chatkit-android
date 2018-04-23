@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth
+import com.google.common.truth.Truth.*
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.Timeout
 import com.pusher.chatkit.test.will
@@ -42,13 +43,14 @@ class ChatManagerSpek : Spek({
         )
 
         will("load current user", TIMEOUT) {
-            var sub by FutureValue<Subscription>()
-            sub = manager.connect { event ->
-                done {
-                    val currentUser = event.let { it as? CurrentUserReceived }?.currentUser
-                    Truth.assertThat(currentUser?.id).isEqualTo(USER_NAME)
-                    sub.unsubscribe()
-                }
+            var user by FutureValue<CurrentUser?>()
+            val sub = manager.connect { event ->
+                user = event.let { it as? CurrentUserReceived }?.currentUser
+            }
+
+            done {
+                assertThat(user?.id).isEqualTo(USER_NAME)
+                sub.unsubscribe()
             }
         }
 
