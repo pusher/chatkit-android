@@ -9,12 +9,18 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import elements.Error as ElementsError
 
+private fun systemProperty(name: String) =
+    System.getProperty(name) ?: "Missing gradle/system property '$name'"
+
 /**
  * These should be added in ~/.gradle/gradle.properties or as a system property. If running them on the IDE, they must be a system property.
  */
-private val INSTANCE_LOCATOR: String = System.getProperty("chatkit_integration_locator") ?: "Missing gradle/system property 'chatkit_integration_locator'"
+private val INSTANCE_LOCATOR: String = systemProperty("chatkit_integration_locator")
 private val INSTANCE_ID = INSTANCE_LOCATOR.split(":").getOrNull(2) ?: "Missing instance id in locator (property 'chatkit_integration_locator')"
-private val USER_NAME: String = System.getProperty("chatkit_integration_username") ?: "Missing gradle/system property 'chatkit_integration_username'"
+private val USER_NAME: String = systemProperty("chatkit_integration_username")
+private val AUTH_KEY: String = systemProperty("chatkit_integration_key")
+private val AUTH_KEY_ID: String = AUTH_KEY.split(":")[0]
+private val AUTH_KEY_SECRET: String = AUTH_KEY.split(":")[1]
 private val TIMEOUT = (System.getProperty("chatkit_integration_timeout") ?: "-1").toLongOrNull().let { timeout ->
     when {
         timeout == null -> Timeout.Some(5000)
@@ -31,7 +37,7 @@ class ChatManagerSpek : Spek({
             instanceLocator = INSTANCE_LOCATOR,
             userId = USER_NAME,
             dependencies = TestChatkitDependencies(
-                tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME)
+                tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
             )
         )
 

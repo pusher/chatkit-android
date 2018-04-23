@@ -12,8 +12,8 @@ import java.util.*
 class TestTokenProvider(
     private val instanceId: String,
     private val userId: String,
-    private val keyId: String = "6b47021e-baad-4380-bc9f-5ca43c0dff2a",
-    private val secret: String = "JALixNRZLgLeFDowYLRhGeuwJD8xCR8zUOC3YtV9eJI=",
+    private val keyId: String,
+    private val secret: String,
     private val su: Boolean = false
 ) : TokenProvider {
     override fun fetchToken(tokenParams: Any?): Promise<Result<String, Error>> = Promise.now(
