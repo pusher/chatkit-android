@@ -9,6 +9,7 @@ import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.ConnectivityHelper
 import com.pusher.platform.tokenProvider.TokenProvider
 import mokitox.stub
+import okhttp3.OkHttpClient
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
@@ -37,8 +38,8 @@ class TestChatkitDependencies(
     platformDependencies: PlatformDependencies = TestDependencies()
 ) : ChatkitDependencies, PlatformDependencies by platformDependencies {
     override val tokenParams: ChatkitTokenParams? = null
-    override val okHttpClient = insecureOkHttpClient.newBuilder().apply {
-        this.addInterceptor { chain ->
+    override val okHttpClient: OkHttpClient = insecureOkHttpClient.newBuilder().apply {
+        addInterceptor { chain ->
             chain.proceed(chain.request().newBuilder().addHeader("Connection", "close").build())
         }
     }.build()
