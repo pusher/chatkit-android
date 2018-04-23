@@ -66,6 +66,7 @@ dependencies {
     testImplementation junit5.unitTests()
     testCompileOnly junit5.unitTestsRuntime()
     testImplementation junit5.parameterized()
+    testImplementation "org.mockito:mockito-inline:$mockito_version"
     testImplementation "com.google.truth:truth:0.40"
 
     androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {
