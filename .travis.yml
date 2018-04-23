@@ -1,4 +1,5 @@
 language: android
+jdk: oraclejdk8
 
 # https://stackoverflow.com/a/47726910/458365
 before_install:
