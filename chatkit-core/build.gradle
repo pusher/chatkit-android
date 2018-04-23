@@ -4,11 +4,12 @@ plugins {
     id 'org.junit.platform.gradle.plugin'
 }
 
+apply from: "$projectDir/../gradle/jacoco.gradle"
 
 dependencies {
     implementation "com.android.support:appcompat-v7:$android_support_version"
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 
@@ -54,6 +55,5 @@ afterEvaluate {
     // adds properties for tests
     def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
     junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
-    junitPlatformTestTask.systemProperties += System.properties
     junitPlatformTestTask.systemProperties += System.env
 }
