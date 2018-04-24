@@ -191,6 +191,10 @@ class CurrentUser(
     fun sendMessage(room: Room, messageText: String, attachment: GenericAttachment = NoAttachment): MessageIdPromiseResult =
         chatManager.messageService(room).sendMessage(id, messageText, attachment)
 
+    fun close() {
+        roomSubscriptions.forEach { it.unsubscribe() }
+    }
+
     val presenceEvents: SubscriptionReceiveChannel<ChatManagerEvent>
         get() = presenceSubscription.openSubscription()
 

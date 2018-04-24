@@ -66,6 +66,8 @@ class ChatManager constructor(
     internal val userStore by lazy { GlobalUserStore() }
     internal val roomStore by lazy { RoomStore() }
 
+    private val subscriptions = mutableListOf<Subscription>()
+
     init {
         if (tokenProvider is ChatkitTokenProvider) {
             tokenProvider.userId = userId
@@ -84,7 +86,9 @@ class ChatManager constructor(
             event.handleEvent()
             consumer(event)
         }
-    )
+    ).also {
+        subscriptions += it
+    }
 
     private fun ChatManagerEvent.handleEvent() {
         when (this) {
@@ -142,6 +146,14 @@ class ChatManager constructor(
             tokenProvider = tokenProvider,
             tokenParams = dependencies.tokenParams
         )
+
+    /**
+     * Tries to close all pending subscriptions and resources
+     */
+    fun close() {
+        subscriptions.forEach { it.unsubscribe() }
+        currentUser.mapResult { it.close() }.cancel()
+    }
 
 }
 
