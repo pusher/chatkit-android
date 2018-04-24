@@ -3,6 +3,8 @@ package com.pusher.chatkit.test
 import okhttp3.OkHttpClient
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.util.logging.Level
+import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -20,4 +22,6 @@ val sslContext: SSLContext = SSLContext.getInstance("SSL").apply {
 
 val insecureOkHttpClient: OkHttpClient = OkHttpClient.Builder().apply {
     sslSocketFactory(sslContext.socketFactory, trustyCertificate)
-}.build()
+}.build().also {
+    Logger.getLogger(OkHttpClient::class.java.name).level = Level.FINE
+}

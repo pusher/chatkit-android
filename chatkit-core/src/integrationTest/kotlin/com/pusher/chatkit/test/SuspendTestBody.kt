@@ -34,8 +34,9 @@ class SuspendedTestBody(body: SuspendedTestBody.() -> Unit) : TestBody {
     /**
      * signals the test to stop with an action that could fail. This will run on the original thread.
      */
-    fun done(action: () -> Unit = {}) =
+    fun done(action: () -> Unit = {}) {
         completeChannel.offer(action)
+    }
 
     /**
      * Signals the test to fail with the provided [cause]

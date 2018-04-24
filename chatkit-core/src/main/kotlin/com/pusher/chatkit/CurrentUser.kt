@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
+import com.pusher.chatkit.messages.MessageIdPromiseResult
 import com.pusher.chatkit.users.UserListResultPromise
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
@@ -10,6 +11,7 @@ import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Promise
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
+import com.pusher.util.flatMapResult
 import com.pusher.util.mapResult
 import elements.Error
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
@@ -42,6 +44,11 @@ class CurrentUser(
         .flatMap { it.memberUserIds }
         .toSet()
         .let { ids -> chatManager.userService().fetchUsersBy(ids) }
+
+    val roomSubscriptions: List<RoomSubscription>
+        get() = _roomSubscriptions
+
+    private val _roomSubscriptions = mutableListOf<RoomSubscription>()
 
     fun updateWithPropertiesOf(newUser: User) {
         updatedAt = newUser.updatedAt
@@ -174,6 +181,15 @@ class CurrentUser(
     // TODO(pga): investigate why is this scaped this way
     private fun leaveRoomPath(roomId: Int) =
         HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$id/rooms/$roomId/leave").build().encodedPath()
+
+    @JvmOverloads
+    fun subscribeToRoom(room: Room, listeners: RoomSubscriptionListeners, messageLimit : Int = 10) {
+        _roomSubscriptions += RoomSubscription(room, id, listeners, chatManager, messageLimit)
+    }
+
+    @JvmOverloads
+    fun sendMessage(room: Room, messageText: String, attachment: GenericAttachment = NoAttachment): MessageIdPromiseResult =
+        chatManager.messageService(room).sendMessage(id, messageText, attachment)
 
     val presenceEvents: SubscriptionReceiveChannel<ChatManagerEvent>
         get() = presenceSubscription.openSubscription()

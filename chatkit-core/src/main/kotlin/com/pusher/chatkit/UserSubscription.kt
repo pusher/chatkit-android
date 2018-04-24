@@ -78,8 +78,10 @@ class UserSubscription(
         )
     }
 
-    override fun unsubscribe() =
+    override fun unsubscribe() {
         subscription.unsubscribe()
+        currentUser?.roomSubscriptions?.forEach(RoomSubscription::unsubscribe)
+    }
 
     private fun getCursors(): Promise<Result<Map<Int, Cursor>, elements.Error>> = cursorsInstance.request(
         options = RequestOptions(

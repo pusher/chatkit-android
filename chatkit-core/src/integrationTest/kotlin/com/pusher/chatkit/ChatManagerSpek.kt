@@ -29,13 +29,13 @@ class ChatManagerSpek : Spek({
         will("load current user", TIMEOUT) {
             setUpInstanceWith(newUser(USER_NAME))
 
-            var user by FutureValue<CurrentUser?>()
+            var user by FutureValue<CurrentUser>()
             val sub = manager.connect(onCurrentUserReceived { currentUser ->
-                currentUser.users.onReady { user = currentUser }
+                user = currentUser
             })
 
             done {
-                assertThat(user?.id).isEqualTo(USER_NAME)
+                assertThat(user.id).isEqualTo(USER_NAME)
                 sub.unsubscribe()
             }
         }
@@ -66,7 +66,49 @@ class ChatManagerSpek : Spek({
                 assertThat(users?.map { it.id }).containsExactly("alice", USER_NAME)
                 sub.unsubscribe()
             }
+        }
 
+        will("subscribe to a room and receive message from alice", TIMEOUT) {
+            setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
+
+            val aliceChat = ChatManager(
+                instanceLocator = INSTANCE_LOCATOR,
+                userId = "alice",
+                dependencies = TestChatkitDependencies(
+                    tokenProvider = TestTokenProvider(INSTANCE_ID, "alice", AUTH_KEY_ID, AUTH_KEY_SECRET)
+                )
+            )
+
+            var user by FutureValue<CurrentUser>()
+            var alice by FutureValue<CurrentUser>()
+
+            val sub = manager.connect(onCurrentUserReceived { currentUser -> user = currentUser })
+
+            val aliceSub = aliceChat.connect(onCurrentUserReceived { currentUser -> alice = currentUser })
+
+            var messageReceived by FutureValue<Message?>()
+
+            val pusherino = user
+
+            val sharedRoom = pusherino.rooms.find { it.name == "general" } ?: error("Could not find room general")
+
+            pusherino.subscribeToRoom(sharedRoom, object: RoomSubscriptionListeners {
+                override fun onNewMessage(message: Message) {
+                    messageReceived = message
+                }
+
+                override fun onError(error: elements.Error): Unit =
+                    fail("room subscription error: $error")
+
+            })
+
+            alice.sendMessage(sharedRoom, "message text", NoAttachment)
+
+            done {
+                assertThat(messageReceived?.text).isEqualTo("message text")
+                sub.unsubscribe()
+                aliceSub.unsubscribe()
+            }
         }
 
     }

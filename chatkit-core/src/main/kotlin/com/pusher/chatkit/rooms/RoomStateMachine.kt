@@ -134,20 +134,7 @@ private class LoadMessagesTask(
 
     private var subscription: Subscription? = null
 
-    override fun invoke() {
-        machine.chatManager.messageService(room)
-            .messageEvents { event ->
-                event.map { message -> processNewMessage(message) }
-                    .map {
-                        it.mapResult { item ->
-                            machine.update(machine.whenLoaded { copy(items = listOf<Item>(item) + items) })
-                        }
-                    }
-            }.onReady { result ->
-                result.map { subscription = it }
-                    .recover { error -> machine.update { RoomState.Failed(machine::handleAction, error) } }
-            }
-    }
+    override fun invoke() = TODO()
 
     fun processNewMessage(message: Message): Promise<Result<Item.Loaded, Error>> =
         message.asDetails().mapResult { details -> Item.Loaded(details) }
@@ -189,19 +176,7 @@ private class AddMessageTask(machine: RoomStateMachine, val room: Room, val mess
     var pendingPromise: Promise<Any>? = null
 
     override fun invoke() {
-        pendingPromise = machine.chatManager.currentUser
-            .mapResult { currentUser -> currentUser.name ?: "???" }
-            .mapResult { userName -> Item.Pending(Item.Details(userName, messageText)) as Item }
-            .recover { error -> Item.Failed(Item.Details(messageText, "Could not find name"), error) }
-            .flatMap { item ->
-                machine.update(machine.whenLoaded { copy(items = listOf(item) + items) })
-                machine.chatManager.messageService(room).sendMessage(messageText)
-                    .mapResult { machine.whenLoaded { copy(items = items - item) } }
-                    .recover { error ->
-                        machine.whenLoaded { copy(items = listOf(Item.Failed(item.details, error)) + items - item) }
-                    }
-            }
-            .onReady { update -> machine.update(update) }
+        TODO()
     }
 
     override fun onCancel() {
