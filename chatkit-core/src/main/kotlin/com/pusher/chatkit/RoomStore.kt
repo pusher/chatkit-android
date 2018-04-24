@@ -3,10 +3,10 @@ package com.pusher.chatkit
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class RoomStore(private val roomsMap: ConcurrentMap<Int, Room> = ConcurrentHashMap()) {
+class RoomStore(private val roomsMap: MutableMap<Int, Room> = ConcurrentHashMap()) {
 
-    val rooms : List<Room>
-        get() = roomsMap.values.toList()
+    fun toList() : List<Room> =
+        roomsMap.values.toList()
 
     operator fun get(id: Int): Room? =
         roomsMap[id]
@@ -19,11 +19,16 @@ class RoomStore(private val roomsMap: ConcurrentMap<Int, Room> = ConcurrentHashM
         roomsMap += rooms.map { it.id to it }.toMap()
     }
 
-    operator fun minusAssign(room: Room) =
-        minusAssign(room.id)
+    operator fun minusAssign(room: Room) {
+        roomsMap -= room.id
+    }
+
+    operator fun minusAssign(rooms: List<Room>) {
+        roomsMap -= rooms.map { it.id }
+    }
 
     operator fun minusAssign(roomId: Int) {
-        roomsMap.remove(roomId)
+        roomsMap -= roomId
     }
 
 }

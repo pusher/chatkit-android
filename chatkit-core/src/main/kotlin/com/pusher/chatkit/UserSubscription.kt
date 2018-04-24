@@ -231,7 +231,7 @@ class UserSubscription(
         chatManager.userService().fetchUsersBy(userIds)
 
     private fun updateExistingRooms(roomsForConnection: List<Room>): List<ChatManagerEvent> =
-        chatManager.roomStore.rooms.minus(roomsForConnection)
+        (chatManager.roomStore.toList() - roomsForConnection)
             .map { CurrentUserRemovedFromRoom(it.id) }
 
 

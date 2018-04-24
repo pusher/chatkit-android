@@ -6,6 +6,7 @@ import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceSupervisor
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstance
 import com.pusher.chatkit.test.will
+import com.pusher.platform.network.await
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import elements.Error as ElementsError
@@ -63,6 +64,29 @@ class ChatManagerSpek : Spek({
                 assertThat(rooms?.map { it.name }).containsExactly("general")
                 sub.unsubscribe()
             }
+        }
+
+        will("load users related to current user", TIMEOUT) {
+            setUpInstance(
+                CreateUser(USER_NAME),
+                CreateUser("alice"),
+                CreateRoom("general", listOf(USER_NAME, "alice"))
+            )
+
+            var users by FutureValue<List<User>?>()
+            val sub = manager.connect { event ->
+                when(event) {
+                    is ErrorOccurred -> fail(event.error.reason)
+                    is CurrentUserReceived -> event.currentUser.users.onReady { users = it.recover { emptyList() } }
+                    else -> println(event)
+                }
+            }
+
+            done {
+                assertThat(users?.map { it.id }).containsExactly("alice", USER_NAME)
+                sub.unsubscribe()
+            }
+
         }
 
     }

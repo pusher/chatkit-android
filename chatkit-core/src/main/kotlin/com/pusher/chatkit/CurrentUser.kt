@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
+import com.pusher.chatkit.users.UserListResultPromise
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
@@ -35,7 +36,12 @@ class CurrentUser(
     private val chatManager: ChatManager
 ) {
 
-    val rooms get() = chatManager.roomStore.rooms
+    val rooms: List<Room> get() = chatManager.roomStore.toList()
+        .filter { it.memberUserIds.contains(id) }
+    val users: UserListResultPromise get() = rooms
+        .flatMap { it.memberUserIds }
+        .toSet()
+        .let { ids -> chatManager.userService().fetchUsersBy(ids) }
 
     fun updateWithPropertiesOf(newUser: User) {
         updatedAt = newUser.updatedAt
