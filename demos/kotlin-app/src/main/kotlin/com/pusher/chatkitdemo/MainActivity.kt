@@ -46,9 +46,9 @@ class MainActivity : AppCompatActivity() {
         state = State.Idle
 
         launch {
-            state = app.roomService()
-                .flatMap { it.fetchUserRooms().await() }
-                .map {rooms -> rooms.filter { it.memberUserIds.size < 100 } }
+            state = app.currentUser()
+                .flatMap { app.roomService().fetchUserRooms(it.id).await() }
+                .map { rooms -> rooms.filter { it.memberUserIds.size < 100 } }
                 .fold(::Failed, ::Loaded)
         }
     }

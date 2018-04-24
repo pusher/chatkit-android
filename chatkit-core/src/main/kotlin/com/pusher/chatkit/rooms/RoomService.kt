@@ -15,19 +15,15 @@ typealias RoomResult = Result<Room, Error>
 typealias RoomListResultPromise = Promise<RoomListResult>
 typealias RoomPromiseResult = Promise<RoomResult>
 
-class RoomService(
-    // TODO: remove dependency to current user
-    private val currentUser: CurrentUser,
-    private val chatManager: ChatManager
-) {
+class RoomService(private val chatManager: ChatManager) {
 
-    fun fetchRoomBy(id: Int): RoomPromiseResult =
+    fun fetchRoomBy(userId: String, id: Int): RoomPromiseResult =
         getLocalRoom(id).recover {
             chatManager.doGet("/rooms/$id")
                 .parseResponseWhenReady()
         }.flatMapResult { room ->
             when {
-                room.memberUserIds.contains(currentUser.id) -> room.asSuccess()
+                room.memberUserIds.contains(userId) -> room.asSuccess()
                 else -> NoRoomMembershipError(room).asFailure<Room, Error>()
             }.asPromise()
         }
@@ -37,27 +33,28 @@ class RoomService(
             .orElse { OtherError("User not found locally") }
 
     @JvmOverloads
-    fun fetchUserRooms(onlyJoinable: Boolean = false): RoomListResultPromise =
-        chatManager.doGet("/users/${currentUser.id}/rooms?joinable=$onlyJoinable")
+    fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): RoomListResultPromise =
+        chatManager.doGet("/users/$userId/rooms?joinable=$onlyJoinable")
             .parseResponseWhenReady<List<Room>>().onReady { result ->
                 chatManager.roomStore += result.recover { emptyList() }
             }
 
 
-    fun joinRoom(room: Room): RoomPromiseResult =
-        joinRoom(room.id)
+    fun joinRoom(userId: String, room: Room): RoomPromiseResult =
+        joinRoom(userId, room.id)
 
-    fun joinRoom(roomId: Int): RoomPromiseResult =
-        chatManager.doPost(roomIdJoinPath(roomId))
+    fun joinRoom(userId: String, roomId: Int): RoomPromiseResult =
+        chatManager.doPost(roomIdJoinPath(userId, roomId))
             .parseResponseWhenReady<Room>()
             .updateStoreWhenReady()
 
-    private fun roomIdJoinPath(roomId: Int) =
-        HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/${currentUser.id}/rooms/$roomId/join").build().encodedPath()
+    private fun roomIdJoinPath(userId: String, roomId: Int) =
+        HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$userId/rooms/$roomId/join").build().encodedPath()
 
 
     @JvmOverloads
     fun createRoom(
+        creatorId: String,
         name: String,
         isPrivate: Boolean = false,
         userIds: List<String> = emptyList()
@@ -65,7 +62,7 @@ class RoomService(
         RoomCreateRequest(
             name = name,
             private = isPrivate,
-            createdById = currentUser.id,
+            createdById = creatorId,
             userIds = userIds
         ).toJson()
             .map { body -> chatManager.doPost("/rooms", body) }
@@ -75,8 +72,8 @@ class RoomService(
             )
             .updateStoreWhenReady()
 
-    fun roomFor(roomAware: HasRoom) =
-        fetchRoomBy(roomAware.roomId)
+    fun roomFor(userId: String, roomAware: HasRoom) =
+        fetchRoomBy(userId, roomAware.roomId)
 
     private fun RoomPromiseResult.updateStoreWhenReady() = onReady {
         it.map { room ->

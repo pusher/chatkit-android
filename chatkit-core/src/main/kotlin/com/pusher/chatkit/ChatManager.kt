@@ -104,8 +104,8 @@ class ChatManager constructor(
     fun messageService(room: Room): MessageService =
         MessageService(room, this)
 
-    fun roomService(): Promise<Result<RoomService, Error>> =
-        currentUser.mapResult { user -> RoomService(user, this) }
+    fun roomService(): RoomService =
+        RoomService(this)
 
     fun userService(): UserService =
         UserService(this)

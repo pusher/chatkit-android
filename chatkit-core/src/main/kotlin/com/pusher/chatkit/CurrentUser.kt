@@ -35,6 +35,8 @@ class CurrentUser(
     private val chatManager: ChatManager
 ) {
 
+    val rooms get() = chatManager.roomStore.rooms
+
     fun updateWithPropertiesOf(newUser: User) {
         updatedAt = newUser.updatedAt
         name = newUser.name

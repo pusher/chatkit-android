@@ -113,8 +113,7 @@ private class LoadRoomTask(
     }
 
     private fun loadRoom(user: CurrentUser, roomId: Int): Promise<Result<RoomState, Error>> =
-        machine.chatManager.roomService()
-            .flatMapResult { roomService -> roomService.fetchRoomBy(roomId) }
+        machine.chatManager.roomService().fetchRoomBy(user.id, roomId)
             .mapResult { room -> validateMembership(room, user.id) }
 
     private fun validateMembership(room: Room, userId: String) = when {

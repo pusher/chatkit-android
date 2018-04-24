@@ -82,8 +82,8 @@ class ChatKitDemoApp : Application() {
     suspend fun currentUser(): Result<CurrentUser, Error> =
         currentUserBroadcast.await()
 
-    suspend fun roomService(): Result<RoomService, Error> =
-        chat.roomService().await()
+    fun roomService(): RoomService =
+        chat.roomService()
 
     fun messageServiceFor(room: Room): MessageService =
         chat.messageService(room)

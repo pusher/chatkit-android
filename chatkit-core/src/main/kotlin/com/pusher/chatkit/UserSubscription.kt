@@ -165,6 +165,7 @@ class UserSubscription(
 
     private fun handleInitialState(initialState: InitialState) = launch {
         logger.verbose("Initial state received $initialState")
+        chatManager.roomStore += initialState.rooms
         getCursors().mapResult { cursors ->
             with(currentUser) {
                 when (this) {
