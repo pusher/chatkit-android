@@ -17,12 +17,12 @@ object InstanceSupervisor {
     /**
      * Calls set up without actions
      */
-    fun tearDown() = setUp()
+    fun tearDownInstance() = setUpInstance()
 
     /**
      * Tear downs the instance and runs the provided actions.
      */
-    fun setUp(vararg actions: Action) = (listOf(Action.TearDown) + actions)
+    fun setUpInstance(vararg actions: Action) = (listOf(Action.TearDown) + actions)
         .map { it.runAcync() }
         .forEach { onSuccess(it) { it.assertIsSuccessful() } }
 
@@ -34,7 +34,7 @@ private fun Response.assertIsSuccessful() =
 
 private val sudoTokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET, true)
 
-private val userInstance = Instance(
+private val chatkitInstance = Instance(
     locator = INSTANCE_LOCATOR,
     serviceName = "chatkit",
     serviceVersion = "v1",
@@ -44,7 +44,7 @@ private val userInstance = Instance(
 sealed class Action(val run: () -> OkHttpResponsePromise) {
 
     data class CreateUser(val userName: String) : Action({
-        userInstance.request(
+        chatkitInstance.request(
             options = RequestOptions(
                 path = "/users",
                 method = "POST",
@@ -61,8 +61,24 @@ sealed class Action(val run: () -> OkHttpResponsePromise) {
 
     })
 
+    data class CreateRoom(val roomName: String, val userNames: List<String>) : Action({
+        chatkitInstance.request(
+            options = RequestOptions(
+                path = "/rooms",
+                method = "POST",
+                body = """
+                    {
+                        "name": "$roomName",
+                        "user_ids": ${userNames.toJsonString()}
+                    }
+                """.trimIndent()
+            ),
+            tokenProvider = sudoTokenProvider
+        )
+    })
+
     object TearDown : Action({
-        userInstance.request(
+        chatkitInstance.request(
             options = RequestOptions(
                 path = "/resources",
                 method = "DELETE"
@@ -78,3 +94,10 @@ sealed class Action(val run: () -> OkHttpResponsePromise) {
     }
 
 }
+
+private fun List<String>.toJsonString() =
+    joinToString(
+        separator = ", ",
+        prefix = "[",
+        postfix = "]"
+    ) { "\"$it\"" }
