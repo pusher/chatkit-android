@@ -8,6 +8,7 @@ import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
+import org.junit.runner.notification.Failure
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
@@ -71,7 +72,7 @@ class ChatManagerSpek : Spek({
         will("subscribe to a room and receive message from alice", TIMEOUT) {
             setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
 
-            val aliceChat = ChatManager(
+            val aliceManager = ChatManager(
                 instanceLocator = INSTANCE_LOCATOR,
                 userId = "alice",
                 dependencies = TestChatkitDependencies(
@@ -79,16 +80,10 @@ class ChatManagerSpek : Spek({
                 )
             )
 
-            var user by FutureValue<CurrentUser>()
-            var alice by FutureValue<CurrentUser>()
-
-            val sub = manager.connect(onCurrentUserReceived { currentUser -> user = currentUser })
-
-            val aliceSub = aliceChat.connect(onCurrentUserReceived { currentUser -> alice = currentUser })
+            val pusherino = waitForUserOnConnect(manager)
+            val alice = waitForUserOnConnect(aliceManager)
 
             var messageReceived by FutureValue<Message?>()
-
-            val pusherino = user
 
             val sharedRoom = pusherino.rooms.find { it.name == "general" } ?: error("Could not find room general")
 
@@ -102,12 +97,15 @@ class ChatManagerSpek : Spek({
 
             })
 
-            alice.sendMessage(sharedRoom, "message text", NoAttachment)
+            alice.sendMessage(sharedRoom, "message text").onReady {
+                if (it is Failure) fail(it.exception)
+            }
 
             done {
-                assertThat(messageReceived?.text).isEqualTo("message text")
-                sub.unsubscribe()
-                aliceSub.unsubscribe()
+                val message = messageReceived
+                assertThat(message?.text).isEqualTo("message text")
+                manager.close()
+                aliceManager.close()
             }
         }
 
@@ -115,6 +113,11 @@ class ChatManagerSpek : Spek({
 
 })
 
+private fun SuspendedTestBody.waitForUserOnConnect(manager: ChatManager): CurrentUser {
+    var user by FutureValue<CurrentUser>()
+    manager.connect(onCurrentUserReceived { currentUser -> user = currentUser })
+    return user
+}
 
 private fun SuspendedTestBody.onCurrentUserReceived(
     block: (CurrentUser) -> Unit
