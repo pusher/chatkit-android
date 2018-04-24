@@ -17,13 +17,13 @@ object InstanceSupervisor {
     /**
      * Calls set up without actions
      */
-    fun tearDownInstance() = setUpInstance()
+    fun tearDownInstance() = setUpInstanceWith()
 
     /**
      * Tear downs the instance and runs the provided actions.
      */
-    fun setUpInstance(vararg actions: Action) = (listOf(Action.TearDown) + actions)
-        .map { it.runAcync() }
+    fun setUpInstanceWith(vararg actions: InstanceAction) = (listOf(InstanceActions.tearDown()) + actions)
+        .map { it.blockfor() }
         .forEach { onSuccess(it) { it.assertIsSuccessful() } }
 
 }
@@ -41,43 +41,58 @@ private val chatkitInstance = Instance(
     dependencies = TestDependencies()
 )
 
-sealed class Action(val run: () -> OkHttpResponsePromise) {
+typealias InstanceAction = () -> OkHttpResponsePromise
 
-    data class CreateUser(val userName: String) : Action({
+private fun InstanceAction.blockfor(): OkHttpResponseResult {
+    var result by FutureValue<OkHttpResponseResult>()
+    this().onReady { result = it }
+    return result
+}
+
+object InstanceActions {
+
+    fun newUser(name: String): InstanceAction {
+
+        return {
+            chatkitInstance.request(
+                options = RequestOptions(
+                    path = "/users",
+                    method = "POST",
+                    body = name.toUserRequestBody()
+                ),
+                tokenProvider = sudoTokenProvider
+            )
+        }
+    }
+
+    fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request(
             options = RequestOptions(
-                path = "/users",
+                path = "/batch_users",
                 method = "POST",
-                body = """
-                    {
-                      "name": "Pusher Ino",
-                      "id": "$userName",
-                      "avatar_url": "https://gravatar.com/img/2124"
-                    }
-                """.trimIndent()
+                body = mapOf("users" to names.toList().toJsonString { it.toUserRequestBody() }).toJsonObject()
             ),
             tokenProvider = sudoTokenProvider
         )
+    }
 
-    })
-
-    data class CreateRoom(val roomName: String, val userNames: List<String>) : Action({
+    fun newRoom(name: String, vararg userNames: String) = {
         chatkitInstance.request(
             options = RequestOptions(
                 path = "/rooms",
                 method = "POST",
                 body = """
                     {
-                        "name": "$roomName",
-                        "user_ids": ${userNames.toJsonString()}
+                        "name": "$name",
+                        "user_ids": ${userNames.toList().toJsonString { "\"$it\"" } }
                     }
                 """.trimIndent()
             ),
             tokenProvider = sudoTokenProvider
         )
-    })
+    }
 
-    object TearDown : Action({
+    fun tearDown(): InstanceAction = {
         chatkitInstance.request(
             options = RequestOptions(
                 path = "/resources",
@@ -85,19 +100,21 @@ sealed class Action(val run: () -> OkHttpResponsePromise) {
             ),
             tokenProvider = sudoTokenProvider
         )
-    })
-
-    fun runAcync(): OkHttpResponseResult {
-        var result by FutureValue<OkHttpResponseResult>()
-        run().onReady { result = it }
-        return result
     }
 
 }
 
-private fun List<String>.toJsonString() =
-    joinToString(
-        separator = ", ",
-        prefix = "[",
-        postfix = "]"
-    ) { "\"$it\"" }
+fun String.toUserRequestBody() =
+    """
+        {
+          "name": "No name",
+          "id": "$this",
+          "avatar_url": "https://gravatar.com/img/2124"
+        }
+    """
+
+private fun Iterable<String>.toJsonString(block: (String) -> CharSequence) =
+    joinToString(", ","[","]", transform = block)
+
+private fun Map<String, Any>.toJsonObject() =
+    entries.joinToString(", ", "{", "}") { (key, value) -> "\"$key\" : $value" }

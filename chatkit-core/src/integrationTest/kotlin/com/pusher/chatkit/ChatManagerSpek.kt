@@ -1,12 +1,11 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.test.Action.*
-import com.pusher.chatkit.test.FutureValue
-import com.pusher.chatkit.test.InstanceSupervisor
-import com.pusher.chatkit.test.InstanceSupervisor.setUpInstance
-import com.pusher.chatkit.test.will
-import com.pusher.platform.network.await
+import com.pusher.chatkit.test.*
+import com.pusher.chatkit.test.InstanceActions.newRoom
+import com.pusher.chatkit.test.InstanceActions.newUser
+import com.pusher.chatkit.test.InstanceActions.newUsers
+import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import elements.Error as ElementsError
@@ -28,16 +27,12 @@ class ChatManagerSpek : Spek({
         }
 
         will("load current user", TIMEOUT) {
-            setUpInstance(CreateUser(USER_NAME))
+            setUpInstanceWith(newUser(USER_NAME))
 
             var user by FutureValue<CurrentUser?>()
-            val sub = manager.connect { event ->
-                    when(event) {
-                        is ErrorOccurred -> fail(event.error.reason)
-                        is CurrentUserReceived ->  user = event.currentUser
-                        else -> println(event)
-                    }
-            }
+            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+                currentUser.users.onReady { user = currentUser }
+            })
 
             done {
                 assertThat(user?.id).isEqualTo(USER_NAME)
@@ -46,19 +41,12 @@ class ChatManagerSpek : Spek({
         }
 
         will("load user rooms", TIMEOUT) {
-            setUpInstance(
-                CreateUser(USER_NAME),
-                CreateRoom("general", listOf(USER_NAME))
-            )
+            setUpInstanceWith(newUser(USER_NAME), newRoom("general", USER_NAME))
 
             var rooms by FutureValue<List<Room>?>()
-            val sub = manager.connect { event ->
-                when(event) {
-                    is ErrorOccurred -> fail(event.error.reason)
-                    is CurrentUserReceived -> rooms = event.currentUser.rooms
-                    else -> println(event)
-                }
-            }
+            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+                currentUser.users.onReady { rooms = currentUser.rooms }
+            })
 
             done {
                 assertThat(rooms?.map { it.name }).containsExactly("general")
@@ -67,20 +55,12 @@ class ChatManagerSpek : Spek({
         }
 
         will("load users related to current user", TIMEOUT) {
-            setUpInstance(
-                CreateUser(USER_NAME),
-                CreateUser("alice"),
-                CreateRoom("general", listOf(USER_NAME, "alice"))
-            )
+            setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
 
             var users by FutureValue<List<User>?>()
-            val sub = manager.connect { event ->
-                when(event) {
-                    is ErrorOccurred -> fail(event.error.reason)
-                    is CurrentUserReceived -> event.currentUser.users.onReady { users = it.recover { emptyList() } }
-                    else -> println(event)
-                }
-            }
+            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+                currentUser.users.onReady { users = it.recover { emptyList() } }
+            })
 
             done {
                 assertThat(users?.map { it.id }).containsExactly("alice", USER_NAME)
@@ -93,3 +73,13 @@ class ChatManagerSpek : Spek({
 
 })
 
+
+private fun SuspendedTestBody.onCurrentUserReceived(
+    block: (CurrentUser) -> Unit
+): (ChatManagerEvent) -> Unit = { event: ChatManagerEvent ->
+    when(event) {
+        is ErrorOccurred -> fail(event.error.reason)
+        is CurrentUserReceived -> block(event.currentUser)
+        else -> println(event)
+    }
+}
