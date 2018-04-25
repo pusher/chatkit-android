@@ -17,57 +17,57 @@ class ChatManagerSpek : Spek({
 
     describe("ChatManager with valid instance") {
 
-        val manager by memoized {
-            ChatManager(
-                instanceLocator = INSTANCE_LOCATOR,
-                userId = "pusherino",
-                dependencies = TestChatkitDependencies(
-                    tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
-                )
-            )
-        }
-
-        will("load current user", TIMEOUT) {
-            setUpInstanceWith(newUser(USER_NAME))
-
-            var user by FutureValue<CurrentUser>()
-            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-                user = currentUser
-            })
-
-            done {
-                assertThat(user.id).isEqualTo(USER_NAME)
-                sub.unsubscribe()
-            }
-        }
-
-        will("load user rooms", TIMEOUT) {
-            setUpInstanceWith(newUser(USER_NAME), newRoom("general", USER_NAME))
-
-            var rooms by FutureValue<List<Room>?>()
-            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-                currentUser.users.onReady { rooms = currentUser.rooms }
-            })
-
-            done {
-                assertThat(rooms?.map { it.name }).containsExactly("general")
-                sub.unsubscribe()
-            }
-        }
-
-        will("load users related to current user", TIMEOUT) {
-            setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
-
-            var users by FutureValue<List<User>?>()
-            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-                currentUser.users.onReady { users = it.recover { emptyList() } }
-            })
-
-            done {
-                assertThat(users?.map { it.id }).containsExactly("alice", USER_NAME)
-                sub.unsubscribe()
-            }
-        }
+//        val manager by memoized {
+//            ChatManager(
+//                instanceLocator = INSTANCE_LOCATOR,
+//                userId = USER_NAME,
+//                dependencies = TestChatkitDependencies(
+//                    tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
+//                )
+//            )
+//        }
+//
+//        will("load current user", TIMEOUT) {
+//            setUpInstanceWith(newUser(USER_NAME))
+//
+//            var user by FutureValue<CurrentUser>()
+//            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+//                user = currentUser
+//            })
+//
+//            done {
+//                assertThat(user.id).isEqualTo(USER_NAME)
+//                sub.unsubscribe()
+//            }
+//        }
+//
+//        will("load user rooms", TIMEOUT) {
+//            setUpInstanceWith(newUser(USER_NAME), newRoom("general", USER_NAME))
+//
+//            var rooms by FutureValue<List<Room>?>()
+//            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+//                currentUser.users.onReady { rooms = currentUser.rooms }
+//            })
+//
+//            done {
+//                assertThat(rooms?.map { it.name }).containsExactly("general")
+//                sub.unsubscribe()
+//            }
+//        }
+//
+//        will("load users related to current user", TIMEOUT) {
+//            setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
+//
+//            var users by FutureValue<List<User>?>()
+//            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+//                currentUser.users.onReady { users = it.recover { emptyList() } }
+//            })
+//
+//            done {
+//                assertThat(users?.map { it.id }).containsExactly("alice", USER_NAME)
+//                sub.unsubscribe()
+//            }
+//        }
 
         will("subscribe to a room and receive message from alice", TIMEOUT) {
             setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
@@ -82,7 +82,7 @@ class ChatManagerSpek : Spek({
 
             val manager = ChatManager(
                 instanceLocator = INSTANCE_LOCATOR,
-                userId = "pusherino",
+                userId = USER_NAME,
                 dependencies = TestChatkitDependencies(
                     tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
                 )
