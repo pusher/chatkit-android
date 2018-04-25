@@ -73,13 +73,13 @@ class ChatManagerSpek : Spek({
         will("subscribe to a room and receive message from alice", TIMEOUT) {
             setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
 
-            val aliceManager = ChatManager(
-                instanceLocator = INSTANCE_LOCATOR,
-                userId = "alice",
-                dependencies = TestChatkitDependencies(
-                    tokenProvider = TestTokenProvider(INSTANCE_ID, "alice", AUTH_KEY_ID, AUTH_KEY_SECRET)
-                )
-            )
+//            val aliceManager = ChatManager(
+//                instanceLocator = INSTANCE_LOCATOR,
+//                userId = "alice",
+//                dependencies = TestChatkitDependencies(
+//                    tokenProvider = TestTokenProvider(INSTANCE_ID, "alice", AUTH_KEY_ID, AUTH_KEY_SECRET)
+//                )
+//            )
 
             val pusherino = waitForUserOnConnect(manager)
 //            val alice = waitForUserOnConnect(aliceManager)
@@ -109,7 +109,7 @@ class ChatManagerSpek : Spek({
 //                val message = messageReceived
 //                assertThat(message?.text).isEqualTo("message text")
                 manager.close()
-                aliceManager.close()
+//                aliceManager.close()
             }
         }
 
