@@ -86,7 +86,7 @@ class ChatManagerSpek : Spek({
 
 //            var messageReceived by FutureValue<Message?>()
 
-            val sharedRoom = pusherino.rooms.find { it.name == "general" } ?: error("Could not find room general")
+//            val sharedRoom = pusherino.rooms.find { it.name == "general" } ?: error("Could not find room general")
 
 //            pusherino.subscribeToRoom(sharedRoom, object: RoomSubscriptionListeners {
 //                override fun onNewMessage(message: Message) {
@@ -105,7 +105,7 @@ class ChatManagerSpek : Spek({
             done {
                 assertThat(pusherino.id).isEqualTo("pusherino")
 //                assertThat(alice.id).isEqualTo("alice")
-                assertThat(sharedRoom.name).isEqualTo("general")
+//                assertThat(sharedRoom.name).isEqualTo("general")
 //                val message = messageReceived
 //                assertThat(message?.text).isEqualTo("message text")
                 manager.close()
