@@ -9,7 +9,7 @@ import com.pusher.util.asSuccess
 import elements.Error
 import java.util.*
 
-class TestTokenProvider(
+data class TestTokenProvider(
     private val instanceId: String,
     private val userId: String,
     private val keyId: String,

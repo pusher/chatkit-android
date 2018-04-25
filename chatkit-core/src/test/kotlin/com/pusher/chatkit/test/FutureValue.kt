@@ -5,7 +5,7 @@ import java.util.concurrent.SynchronousQueue
 import kotlin.reflect.KProperty
 
 class FutureValue<A> {
-    private val queue: BlockingQueue<Value<A>> = SynchronousQueue(true)
+    private val queue: BlockingQueue<Value<A>> = SynchronousQueue<Value<A>>(true)
     operator fun getValue(thisRef: Nothing?, property: KProperty<*>): A = queue.take().value
     operator fun setValue(thisRef: Nothing?, property: KProperty<*>, value: A) = queue.put(Value(value))
 }

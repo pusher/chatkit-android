@@ -1,14 +1,18 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.test.*
+import com.pusher.chatkit.Users.ALICE
+import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
+import com.pusher.chatkit.test.ResultAssertions.assertSuccess
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
+import org.jetbrains.spek.api.dsl.it
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
@@ -17,129 +21,91 @@ class ChatManagerSpek : Spek({
 
     describe("ChatManager with valid instance") {
 
-//        val manager by memoized {
-//            ChatManager(
-//                instanceLocator = INSTANCE_LOCATOR,
-//                userId = USER_NAME,
-//                dependencies = TestChatkitDependencies(
-//                    tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
-//                )
-//            )
-//        }
-//
-//        will("load current user", TIMEOUT) {
-//            setUpInstanceWith(newUser(USER_NAME))
-//
-//            var user by FutureValue<CurrentUser>()
-//            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-//                user = currentUser
-//            })
-//
-//            done {
-//                assertThat(user.id).isEqualTo(USER_NAME)
-//                sub.unsubscribe()
-//            }
-//        }
-//
-//        will("load user rooms", TIMEOUT) {
-//            setUpInstanceWith(newUser(USER_NAME), newRoom("general", USER_NAME))
-//
-//            var rooms by FutureValue<List<Room>?>()
-//            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-//                currentUser.users.onReady { rooms = currentUser.rooms }
-//            })
-//
-//            done {
-//                assertThat(rooms?.map { it.name }).containsExactly("general")
-//                sub.unsubscribe()
-//            }
-//        }
-//
-//        will("load users related to current user", TIMEOUT) {
-//            setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
-//
-//            var users by FutureValue<List<User>?>()
-//            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-//                currentUser.users.onReady { users = it.recover { emptyList() } }
-//            })
-//
-//            done {
-//                assertThat(users?.map { it.id }).containsExactly("alice", USER_NAME)
-//                sub.unsubscribe()
-//            }
-//        }
+        it("load current user") {
+            setUpInstanceWith(newUser(PUSHERINO))
+            val chat = chatFor(PUSHERINO)
+            var userId by FutureValue<String>()
 
-        will("subscribe to a room and receive message from alice", TIMEOUT) {
-            setUpInstanceWith(newUsers(USER_NAME, "alice"), newRoom("general", USER_NAME, "alice"))
-
-//            val aliceManager = ChatManager(
-//                instanceLocator = INSTANCE_LOCATOR,
-//                userId = "alice",
-//                dependencies = TestChatkitDependencies(
-//                    tokenProvider = TestTokenProvider(INSTANCE_ID, "alice", AUTH_KEY_ID, AUTH_KEY_SECRET)
-//                )
-//            )
-
-            val manager = ChatManager(
-                instanceLocator = INSTANCE_LOCATOR,
-                userId = USER_NAME,
-                dependencies = TestChatkitDependencies(
-                    tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
-                )
-            )
-
-            var user by FutureValue<CurrentUser>()
-            val sub = manager.connect(onCurrentUserReceived { currentUser ->
-                user = currentUser
+            chat.connect(onCurrentUserReceived { currentUser ->
+                userId = currentUser.id
             })
-//            val pusherino = user
-//            val alice = waitForUserOnConnect(aliceManager)
 
-//            var messageReceived by FutureValue<Message?>()
+            assertThat(userId).isEqualTo(PUSHERINO)
+            chat.close()
+        }
 
-//            val sharedRoom = pusherino.rooms.find { it.name == "general" } ?: error("Could not find room general")
+        it("load user rooms") {
+            setUpInstanceWith(newUser(PUSHERINO), newRoom("general", PUSHERINO))
+            val chat = chatFor(PUSHERINO)
+            var roomNames by FutureValue<List<String>>()
 
-//            pusherino.subscribeToRoom(sharedRoom, object: RoomSubscriptionListeners {
-//                override fun onNewMessage(message: Message) {
-//                    messageReceived = message
-//                }
-//
-//                override fun onError(error: elements.Error): Unit =
-//                    fail("room subscription error: $error")
-//
-//            })
-//
-//            alice.sendMessage(sharedRoom, "message text").onReady {
-//                if (it is Failure) fail(it.exception)
-//            }
+            chat.connect(onCurrentUserReceived { currentUser ->
+                roomNames = currentUser.rooms.map { it.name }
+            })
 
-            done {
-                assertThat(user.id).isEqualTo("pusherino")
-//                assertThat(alice.id).isEqualTo("alice")
-//                assertThat(sharedRoom.name).isEqualTo("general")
-//                val message = messageReceived
-//                assertThat(message?.text).isEqualTo("message text")
-//                manager.close()
-//                aliceManager.close()
-                sub.unsubscribe()
-            }
+            assertThat(roomNames).containsExactly("general")
+            chat.close()
+        }
+
+        it("load users related to current user") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
+            val chat = chatFor(PUSHERINO)
+            var relatedUserIds by FutureValue<List<String>>()
+
+            chat.connect(onCurrentUserReceived { currentUser ->
+                currentUser.users.onReady {
+                    relatedUserIds =it.recover { emptyList() }.map { it.id }
+                }
+            })
+
+            assertThat(relatedUserIds).containsAllOf("alice", PUSHERINO)
+            chat.close()
+        }
+
+        it("subscribe to a room and receive message from alice") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
+            val chat = chatFor(PUSHERINO)
+            val aliceChat = chatFor(ALICE)
+
+            var messageReceived by FutureValue<Message>()
+
+            chat.connect(onCurrentUserReceived { pusherino ->
+                pusherino.subscribeToRoom(pusherino.generalRoom, object : RoomSubscriptionListeners {
+                    override fun onNewMessage(message: Message) { messageReceived = message }
+                    override fun onError(error: elements.Error) = error("room subscription error: $error")
+                })
+            })
+
+            aliceChat.connect(onCurrentUserReceived { alice ->
+                alice.sendMessage(alice.generalRoom, "message text")
+                    .onReady { assertSuccess(it) }
+            })
+
+            assertThat(messageReceived.text).isEqualTo("message text")
+            chat.close()
+            aliceChat.close()
         }
 
     }
 
 })
 
-private fun SuspendedTestBody.waitForUserOnConnect(manager: ChatManager): CurrentUser {
-    var user by FutureValue<CurrentUser>()
-    manager.connect(onCurrentUserReceived { currentUser -> user = currentUser })
-    return user
-}
+private val CurrentUser.generalRoom
+    get() = rooms.find { it.name == "general" } ?: error("Could not find room general")
 
-private fun SuspendedTestBody.onCurrentUserReceived(
+private fun chatFor(userName: String) = ChatManager(
+    instanceLocator = INSTANCE_LOCATOR,
+    userId = userName,
+    dependencies = TestChatkitDependencies(
+        tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
+    )
+)
+
+private fun onCurrentUserReceived(
     block: (CurrentUser) -> Unit
 ): (ChatManagerEvent) -> Unit = { event: ChatManagerEvent ->
-    when(event) {
-        is ErrorOccurred -> fail(event.error.reason)
+    when (event) {
+        is ErrorOccurred -> error(event.error.reason)
         is CurrentUserReceived -> block(event.currentUser)
         else -> println(event)
     }

@@ -10,7 +10,7 @@ private fun systemProperty(name: String) =
  */
 val INSTANCE_LOCATOR: String = systemProperty("chatkit_integration_locator")
 val INSTANCE_ID = INSTANCE_LOCATOR.split(":").getOrNull(2) ?: "Missing instance id in locator (property 'chatkit_integration_locator')"
-val USER_NAME: String = "pusherino"
+
 val AUTH_KEY: String = systemProperty("chatkit_integration_key")
 val AUTH_KEY_ID: String = AUTH_KEY.split(":")[0]
 val AUTH_KEY_SECRET: String = AUTH_KEY.split(":")[1]
@@ -20,4 +20,10 @@ val TIMEOUT = (System.getProperty("chatkit_integration_timeout") ?: "-1").toLong
         timeout <= 0 -> Timeout.None
         else -> Timeout.Some(timeout)
     }
+}
+
+object Users {
+    const val SUPER_USER = "super-user" // sudo access
+    const val PUSHERINO = "pusherino"
+    const val ALICE = "alice"
 }

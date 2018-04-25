@@ -153,6 +153,7 @@ class ChatManager constructor(
     fun close() {
         subscriptions.forEach { it.unsubscribe() }
         currentUser.mapResult { it.close() }.cancel()
+        dependencies.okHttpClient?.connectionPool()?.evictAll()
     }
 
 }
