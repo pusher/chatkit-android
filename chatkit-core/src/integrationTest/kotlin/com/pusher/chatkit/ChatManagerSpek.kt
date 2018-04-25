@@ -82,7 +82,7 @@ class ChatManagerSpek : Spek({
             )
 
             val pusherino = waitForUserOnConnect(manager)
-            val alice = waitForUserOnConnect(aliceManager)
+//            val alice = waitForUserOnConnect(aliceManager)
 
 //            var messageReceived by FutureValue<Message?>()
 
@@ -104,7 +104,7 @@ class ChatManagerSpek : Spek({
 
             done {
                 assertThat(pusherino.id).isEqualTo("pusherino")
-                assertThat(alice.id).isEqualTo("alice")
+//                assertThat(alice.id).isEqualTo("alice")
                 assertThat(sharedRoom.name).isEqualTo("general")
 //                val message = messageReceived
 //                assertThat(message?.text).isEqualTo("message text")
