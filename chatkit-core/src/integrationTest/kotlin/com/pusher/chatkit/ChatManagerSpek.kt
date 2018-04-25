@@ -81,7 +81,9 @@ class ChatManagerSpek : Spek({
 //                )
 //            )
 
-            val pusherino = waitForUserOnConnect(manager)
+            var user by FutureValue<CurrentUser>()
+            val sub = manager.connect(onCurrentUserReceived { currentUser -> user = currentUser })
+            val pusherino = user
 //            val alice = waitForUserOnConnect(aliceManager)
 
 //            var messageReceived by FutureValue<Message?>()
@@ -110,6 +112,7 @@ class ChatManagerSpek : Spek({
 //                assertThat(message?.text).isEqualTo("message text")
 //                manager.close()
 //                aliceManager.close()
+                sub.unsubscribe()
             }
         }
 

@@ -23,7 +23,7 @@ object InstanceSupervisor {
      * Tear downs the instance and runs the provided actions.
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) = (listOf(InstanceActions.tearDown()) + actions)
-        .map { it.blockfor() }
+        .map { it.blockFor() }
         .forEach { onSuccess(it) { it.assertIsSuccessful() } }
 
 }
@@ -43,7 +43,7 @@ private val chatkitInstance = Instance(
 
 typealias InstanceAction = () -> OkHttpResponsePromise
 
-private fun InstanceAction.blockfor(): OkHttpResponseResult {
+private fun InstanceAction.blockFor(): OkHttpResponseResult {
     var result by FutureValue<OkHttpResponseResult>()
     this().onReady { result = it }
     return result
