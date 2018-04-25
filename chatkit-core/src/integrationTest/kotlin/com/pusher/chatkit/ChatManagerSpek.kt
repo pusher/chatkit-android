@@ -21,7 +21,7 @@ class ChatManagerSpek : Spek({
 
     describe("ChatManager with valid instance") {
 
-        it("load current user") {
+        it("loads current user") {
             setUpInstanceWith(newUser(PUSHERINO))
             val chat = chatFor(PUSHERINO)
             var userId by FutureValue<String>()
@@ -34,7 +34,7 @@ class ChatManagerSpek : Spek({
             chat.close()
         }
 
-        it("load user rooms") {
+        it("loads user rooms") {
             setUpInstanceWith(newUser(PUSHERINO), newRoom("general", PUSHERINO))
             val chat = chatFor(PUSHERINO)
             var roomNames by FutureValue<List<String>>()
@@ -47,7 +47,7 @@ class ChatManagerSpek : Spek({
             chat.close()
         }
 
-        it("load users related to current user") {
+        it("loads users related to current user") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
             var relatedUserIds by FutureValue<List<String>>()
@@ -62,7 +62,7 @@ class ChatManagerSpek : Spek({
             chat.close()
         }
 
-        it("subscribe to a room and receive message from alice") {
+        it("subscribes to a room and receives message from alice") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
             val aliceChat = chatFor(ALICE)
