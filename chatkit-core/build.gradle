@@ -57,3 +57,9 @@ afterEvaluate {
     junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
     junitPlatformTestTask.systemProperties += System.env
 }
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
