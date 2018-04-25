@@ -108,7 +108,7 @@ class ChatManagerSpek : Spek({
 //                assertThat(sharedRoom.name).isEqualTo("general")
 //                val message = messageReceived
 //                assertThat(message?.text).isEqualTo("message text")
-                manager.close()
+//                manager.close()
 //                aliceManager.close()
             }
         }
