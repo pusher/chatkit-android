@@ -8,8 +8,8 @@ import com.pusher.platform.*
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.ConnectivityHelper
 import com.pusher.platform.tokenProvider.TokenProvider
-import mokitox.stub
 import okhttp3.OkHttpClient
+import java.io.File
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
@@ -21,7 +21,9 @@ class TestDependencies : PlatformDependencies {
         private fun log(type: String, message: String, error: Error?) =
             println("$type: $message ${error?.let { "\n" + it } ?: ""}")
     }
-    override val mediaTypeResolver: MediaTypeResolver = stub()
+    override val mediaTypeResolver: MediaTypeResolver = object : MediaTypeResolver {
+        override fun fileMediaType(file: File): String? = "image/jif"
+    }
     override val connectivityHelper: ConnectivityHelper = AlwaysOnlineConnectivityHelper
     override val sdkInfo: SdkInfo = SdkInfo(
         product = "ChatManager Integration Tests",
