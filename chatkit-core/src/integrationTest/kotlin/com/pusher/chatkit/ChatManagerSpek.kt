@@ -9,7 +9,6 @@ import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
-import org.junit.runner.notification.Failure
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
@@ -81,8 +80,18 @@ class ChatManagerSpek : Spek({
 //                )
 //            )
 
+            val manager = ChatManager(
+                instanceLocator = INSTANCE_LOCATOR,
+                userId = "pusherino",
+                dependencies = TestChatkitDependencies(
+                    tokenProvider = TestTokenProvider(INSTANCE_ID, USER_NAME, AUTH_KEY_ID, AUTH_KEY_SECRET)
+                )
+            )
+
             var user by FutureValue<CurrentUser>()
-            val sub = manager.connect(onCurrentUserReceived { currentUser -> user = currentUser })
+            val sub = manager.connect(onCurrentUserReceived { currentUser ->
+                user = currentUser
+            })
             val pusherino = user
 //            val alice = waitForUserOnConnect(aliceManager)
 
