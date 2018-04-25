@@ -1,0 +1,26 @@
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = '0.8.0'
+    applyTo(junitPlatformTest)
+}
+
+task codeCoverageReport(type: JacocoReport, dependsOn: ['junitPlatformTest']) {
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+
+    sourceSets project.sourceSets.main
+
+    reports {
+        xml.enabled true
+        xml.destination file("${buildDir}/reports/jacoco/report.xml")
+        html.enabled false
+        csv.enabled false
+    }
+
+}
+
+junitPlatformTest {
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/test.exec")
+    }
+}

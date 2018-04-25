@@ -4,18 +4,18 @@ plugins {
     id 'org.junit.platform.gradle.plugin'
 }
 
+apply from: "$projectDir/../gradle/jacoco.gradle"
 
 dependencies {
     implementation "com.android.support:appcompat-v7:$android_support_version"
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 
     if (rootProject.properties.containsKey("pusher_platform_local")) {
         api project(':pusher-platform-core')
     } else {
-        // TODO: should work after platform is deployed
         api "com.pusher:pusher-platform-core:$pusher_platform_version"
     }
 
@@ -25,6 +25,7 @@ dependencies {
     testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
     testImplementation 'org.junit.platform:junit-platform-runner:1.1.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.3'
+    testImplementation "com.auth0:java-jwt:3.3.0"
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.0.3'
 }
@@ -48,4 +49,11 @@ junitPlatform {
             include 'junit-jupiter', 'spek'
         }
     }
+}
+
+afterEvaluate {
+    // adds properties for tests
+    def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
+    junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
+    junitPlatformTestTask.systemProperties += System.env
 }
