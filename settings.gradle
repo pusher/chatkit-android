@@ -1,6 +1,6 @@
 rootProject.name = 'chatkit-parent'
-include ':chatkit-android', ':chatkit-core'
-include ':demos:kotlin-app'
+include ':chatkit-core'
+include ':chatkit-android'
 
 def injectProject = { projectName, projectPath ->
     include "$projectName"
