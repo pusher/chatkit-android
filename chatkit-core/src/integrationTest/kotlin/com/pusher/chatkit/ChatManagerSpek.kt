@@ -10,6 +10,8 @@ import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.ResultAssertions.assertSuccess
+import com.pusher.util.Result
+import junit.framework.TestCase
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -24,11 +26,9 @@ class ChatManagerSpek : Spek({
         it("loads current user") {
             setUpInstanceWith(newUser(PUSHERINO))
             val chat = chatFor(PUSHERINO)
-            var userId by FutureValue<String>()
 
-            chat.connect(onCurrentUserReceived { currentUser ->
-                userId = currentUser.id
-            })
+            val user by chat.connect()
+            val userId = user.assumeSuccess().id
 
             assertThat(userId).isEqualTo(PUSHERINO)
             chat.close()
@@ -37,11 +37,9 @@ class ChatManagerSpek : Spek({
         it("loads user rooms") {
             setUpInstanceWith(newUser(PUSHERINO), newRoom("general", PUSHERINO))
             val chat = chatFor(PUSHERINO)
-            var roomNames by FutureValue<List<String>>()
 
-            chat.connect(onCurrentUserReceived { currentUser ->
-                roomNames = currentUser.rooms.map { it.name }
-            })
+            val user by chat.connect()
+            val roomNames = user.assumeSuccess().rooms.map { it.name }
 
             assertThat(roomNames).containsExactly("general")
             chat.close()
@@ -50,13 +48,11 @@ class ChatManagerSpek : Spek({
         it("loads users related to current user") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
-            var relatedUserIds by FutureValue<List<String>>()
 
-            chat.connect(onCurrentUserReceived { currentUser ->
-                currentUser.users.onReady {
-                    relatedUserIds =it.recover { emptyList() }.map { it.id }
-                }
-            })
+            val user by chat.connect()
+            val users by user.assumeSuccess().users.toFuture()
+
+            val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
             assertThat(relatedUserIds).containsAllOf("alice", PUSHERINO)
             chat.close()
@@ -69,18 +65,19 @@ class ChatManagerSpek : Spek({
 
             var messageReceived by FutureValue<Message>()
 
-            chat.connect(onCurrentUserReceived { pusherino ->
-                pusherino.subscribeToRoom(pusherino.generalRoom, object : RoomSubscriptionListeners {
-                    override fun onNewMessage(message: Message) { messageReceived = message }
-                    override fun onError(error: elements.Error) = error("room subscription error: $error")
-                })
+            val pusherino by chat.connect()
+            val alice by aliceChat.connect()
+
+            val room = pusherino.assumeSuccess().generalRoom
+
+            pusherino.assumeSuccess().subscribeToRoom(room, object : RoomSubscriptionListeners {
+                override fun onNewMessage(message: Message) { messageReceived = message }
+                override fun onError(error: elements.Error) = error("room subscription error: $error")
             })
 
-            aliceChat.connect(onCurrentUserReceived { alice ->
-                alice.sendMessage(alice.generalRoom, "message text")
-                    .onReady { assertSuccess(it) }
-            })
+            val messageResult by alice.assumeSuccess().sendMessage(room, "message text").toFuture()
 
+            check(messageResult is Result.Success)
             assertThat(messageReceived.text).isEqualTo("message text")
             chat.close()
             aliceChat.close()
@@ -89,6 +86,11 @@ class ChatManagerSpek : Spek({
     }
 
 })
+
+private fun <A> Result<A, elements.Error>.assumeSuccess(): A = when(this) {
+    is Result.Success -> value
+    is Result.Failure -> error("Failure: $error")
+}
 
 private val CurrentUser.generalRoom
     get() = rooms.find { it.name == "general" } ?: error("Could not find room general")

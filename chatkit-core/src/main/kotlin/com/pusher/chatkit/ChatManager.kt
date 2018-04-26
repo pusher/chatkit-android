@@ -5,9 +5,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.pusher.SdkInfo
-import com.pusher.annotations.UsesCoroutines
-import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.rooms.RoomService
@@ -20,12 +17,13 @@ import com.pusher.platform.network.Promise
 import com.pusher.platform.network.Promise.PromiseContext
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
+import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import elements.asSystemError
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import java.util.concurrent.Future
 import kotlin.properties.Delegates
 
 private const val USERS_PATH = "users"
@@ -74,20 +72,29 @@ class ChatManager constructor(
         }
     }
 
-    fun connect(consumer: (ChatManagerEvent) -> Unit): Subscription = UserSubscription(
-        userId = userId,
-        chatManager = this,
-        path = USERS_PATH,
-        userStore = userStore,
-        tokenProvider = tokenProvider,
-        tokenParams = null,
-        logger = logger,
-        consumeEvent = { event ->
-            event.handleEvent()
-            consumer(event)
-        }
-    ).also {
-        subscriptions += it
+    fun connect(consumer: (ChatManagerEvent) -> Unit = {}): Future<Result<CurrentUser, Error>> = AsyncFuture {
+        val consumers = listOf(
+            consumer,
+            { it.handleEvent() },
+            { event ->
+                if (!isComplete) {
+                    when (event) {
+                        is CurrentUserReceived -> complete(event.currentUser.asSuccess())
+                        is ErrorOccurred -> complete(event.error.asFailure())
+                    }
+                }
+            }
+        )
+        subscriptions += UserSubscription(
+            userId = userId,
+            chatManager = this@ChatManager,
+            path = USERS_PATH,
+            userStore = userStore,
+            tokenProvider = tokenProvider,
+            tokenParams = dependencies.tokenParams,
+            logger = logger,
+            consumeEvent = { event -> consumers.forEach { it(event) } }
+        )
     }
 
     private fun ChatManagerEvent.handleEvent() {
@@ -157,10 +164,6 @@ class ChatManager constructor(
     }
 
 }
-
-@UsesCoroutines
-fun ChatManager.connectAsync(): ReceiveChannel<ChatManagerEvent> =
-    broadcast { connect { event -> offer(event) } }
 
 data class Message(
     val id: Int,

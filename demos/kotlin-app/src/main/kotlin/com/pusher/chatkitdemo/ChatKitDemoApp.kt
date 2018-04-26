@@ -17,6 +17,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
+import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 
@@ -65,7 +66,7 @@ class ChatKitDemoApp : Application() {
         )
     }
 
-    val events by lazy { chat.connectAsync() }
+    val events: Channel<ChatManagerEvent> by lazy { TODO() }
 
     private val currentUserBroadcast: Promise<Result<CurrentUser, Error>> by lazy {
         Promise.promise<Result<CurrentUser, Error>> {
