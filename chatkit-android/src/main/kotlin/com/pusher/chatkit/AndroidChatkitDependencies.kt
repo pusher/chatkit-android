@@ -5,6 +5,7 @@ import com.pusher.SdkInfo
 import com.pusher.platform.AndroidDependencies
 import com.pusher.platform.PlatformDependencies
 import com.pusher.platform.tokenProvider.TokenProvider
+import okhttp3.OkHttpClient
 
 /**
  * [ChatkitDependencies] implementation for Android.
@@ -12,6 +13,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 data class AndroidChatkitDependencies constructor(
     override val tokenProvider: TokenProvider,
     override val tokenParams: ChatkitTokenParams?,
+    override val okHttpClient: OkHttpClient?,
     private val platformDependencies: PlatformDependencies
 ) : ChatkitDependencies, PlatformDependencies by platformDependencies {
 
@@ -19,8 +21,9 @@ data class AndroidChatkitDependencies constructor(
     constructor(
         context: Context,
         tokenProvider: TokenProvider,
-        tokenParams: ChatkitTokenParams? = null
-    ) : this(tokenProvider, tokenParams, context.androidChatkitDependencies)
+        tokenParams: ChatkitTokenParams? = null,
+        okHttpClient: OkHttpClient? = null
+    ) : this(tokenProvider, tokenParams, okHttpClient, context.androidChatkitDependencies)
 
 }
 

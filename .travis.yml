@@ -1,4 +1,5 @@
 language: android
+jdk: oraclejdk8
 
 # https://stackoverflow.com/a/47726910/458365
 before_install:
@@ -21,7 +22,13 @@ before_script:
   - mkdir platform
   - git clone https://github.com/pusher/pusher-platform-android.git --branch=master --single-branch platform
 
-script: ./gradlew build -Ppusher_platform_local=platform --stacktrace
+script:
+  - ./gradlew :chatkit-android:assembleDebug :chatkit-android:junitPlatformTestDebug :chatkit-android:lintDebug :chatkit-android:codeCoverageReport -Ppusher_platform_local=platform --stacktrace
+  - ./gradlew :chatkit-core:assemble :chatkit-core:test -Ppusher_platform_local=platform :chatkit-core:codeCoverageReport --stacktrace
+
+after_success:
+  # report coverage
+  - bash <(curl -s https://codecov.io/bash)
 
 android:
   components:

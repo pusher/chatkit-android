@@ -114,12 +114,15 @@ class ChatManager constructor(
         RoomStateMachine(dependencies.scheduler, this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
-        Instance(
+        val instance = Instance(
             locator = instanceLocator,
             serviceName = serviceName,
             serviceVersion = serviceVersion,
             dependencies = dependencies
         )
+        dependencies.okHttpClient?.let { client ->
+            instance.copy(baseClient = instance.baseClient.copy(client = client))
+        } ?: instance
     }
 
     @JvmOverloads
