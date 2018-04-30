@@ -121,9 +121,6 @@ class ChatManager constructor(
     fun userService(): UserService =
         UserService(this)
 
-    fun roomStateMachine() : RoomStateMachine =
-        RoomStateMachine(dependencies.scheduler, this)
-
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         val instance = Instance(
             locator = instanceLocator,
