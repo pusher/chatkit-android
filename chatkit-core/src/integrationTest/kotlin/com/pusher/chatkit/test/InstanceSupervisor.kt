@@ -1,15 +1,18 @@
 package com.pusher.chatkit.test
 
+import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.tearDown
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
-import com.pusher.platform.network.OkHttpResponsePromise
-import com.pusher.platform.network.OkHttpResponseResult
+import com.pusher.platform.network.wait
 import com.pusher.util.Result
+import elements.Error
 import junit.framework.TestCase
+import okhttp3.Response
+import java.util.concurrent.Future
 
 /**
  * In charge of setting the right state of an intance for a test
@@ -26,14 +29,9 @@ object InstanceSupervisor {
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) =
         (listOf(tearDown(), newUser(SUPER_USER)) + actions)
-            .map { it.name to it.blockFor() }
+            .map { action -> action.name to action().wait() }
             .forEach { (name, result) ->
-                when (result) {
-                    is Result.Success -> result.value.let { response ->
-                        check(response.isSuccessful) { "Expected '$name' to success. Request was: $response" }
-                    }
-                    is Result.Failure -> TestCase.fail("Expected '$name' to success. Result was: $result")
-                }
+                check(result is Result.Success) { "Expected '$name' to success. Result was: $result" }
             }
 
 }
@@ -48,7 +46,7 @@ private val chatkitInstance = Instance(
     dependencies = TestDependencies()
 )
 
-typealias InstanceAction = () -> OkHttpResponsePromise
+typealias InstanceAction = () -> Future<Result<JsonElement, Error>>
 
 class NamedInstanceAction(val name: String, instanceAction: InstanceAction) : InstanceAction by instanceAction
 
@@ -60,16 +58,10 @@ val InstanceAction.name: String
         else -> "No name"
     }
 
-private fun InstanceAction.blockFor(): OkHttpResponseResult {
-    var result by FutureValue<OkHttpResponseResult>()
-    this().onReady { result = it }
-    return result
-}
-
 object InstanceActions {
 
     fun newUser(name: String): InstanceAction = {
-        chatkitInstance.request(
+        chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/users",
                 method = "POST",
@@ -80,7 +72,7 @@ object InstanceActions {
     }.withName("Create new user: $name")
 
     fun newUsers(vararg names: String): InstanceAction = {
-        chatkitInstance.request(
+        chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/batch_users",
                 method = "POST",
@@ -91,7 +83,7 @@ object InstanceActions {
     }.withName("Create new users: ${names.joinToString(", ")}")
 
     fun newRoom(name: String, vararg userNames: String) = {
-        chatkitInstance.request(
+        chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/rooms",
                 method = "POST",
@@ -107,7 +99,7 @@ object InstanceActions {
     }.withName("Create new room: $name for users: ${userNames.joinToString(", ")}")
 
     fun tearDown(): InstanceAction = {
-        chatkitInstance.request(
+        chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/resources",
                 method = "DELETE"
