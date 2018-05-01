@@ -23,8 +23,7 @@ before_script:
   - git clone https://github.com/pusher/pusher-platform-android.git --branch=master --single-branch platform
 
 script:
-  - ./gradlew :chatkit-core:assemble :chatkit-core:test -Ppusher_platform_local=platform :chatkit-core:codeCoverageReport --stacktrace
-  - ./gradlew :chatkit-android:assembleDebug :chatkit-android:junitPlatformTestDebug :chatkit-android:lintDebug :chatkit-android:codeCoverageReport -Ppusher_platform_local=platform --stacktrace
+  - ./gradlew ciBuild -Ppusher_platform_local=platform --stacktrace
 
 after_success:
   # report coverage
