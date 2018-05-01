@@ -6,25 +6,21 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.network.typeToken
 import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.rooms.RoomStateMachine
 import com.pusher.chatkit.users.HasUser
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
-import com.pusher.platform.network.OkHttpResponsePromise
-import com.pusher.platform.network.Promise
-import com.pusher.platform.network.Promise.PromiseContext
+import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
-import elements.asSystemError
 import java.util.concurrent.Future
-import kotlin.properties.Delegates
+import java.util.concurrent.SynchronousQueue
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -47,14 +43,7 @@ class ChatManager constructor(
             .create()
     }
 
-    internal val logger = dependencies.logger
-
-    // TODO: report when relevant error occurs (i.e.: failed to connect)
-    private var currentUserPromiseContext: PromiseContext<Result<CurrentUser, Error>> by Delegates.notNull()
-
-    val currentUser: Promise<Result<CurrentUser, Error>> = Promise.promise {
-        currentUserPromiseContext = this
-    }
+    private val logger = dependencies.logger
 
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
@@ -72,19 +61,9 @@ class ChatManager constructor(
         }
     }
 
-    fun connect(consumer: (ChatManagerEvent) -> Unit = {}): Future<Result<CurrentUser, Error>> = AsyncFuture {
-        val consumers = listOf(
-            consumer,
-            { it.handleEvent() },
-            { event ->
-                if (!isComplete) {
-                    when (event) {
-                        is CurrentUserReceived -> complete(event.currentUser.asSuccess())
-                        is ErrorOccurred -> complete(event.error.asFailure())
-                    }
-                }
-            }
-        )
+    fun connect(consumer: (ChatManagerEvent) -> Unit = {}): Future<Result<CurrentUser, Error>> = Futures.schedule {
+        val queue = SynchronousQueue<Result<CurrentUser, Error>>()
+        var waitingForUser = true
         subscriptions += UserSubscription(
             userId = userId,
             chatManager = this@ChatManager,
@@ -93,22 +72,18 @@ class ChatManager constructor(
             tokenProvider = tokenProvider,
             tokenParams = dependencies.tokenParams,
             logger = logger,
-            consumeEvent = { event -> consumers.forEach { it(event) } }
+            consumeEvent = { event ->
+                consumer(event)
+                if (waitingForUser) {
+                    when (event) {
+                        is CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
+                        is ErrorOccurred -> queue.put(event.error.asFailure())
+                    }
+                }
+            }
         )
-    }
-
-    private fun ChatManagerEvent.handleEvent() {
-        when (this) {
-            is CurrentUserReceived -> currentUserPromiseContext.report(currentUser.asSuccess())
-            is ErrorOccurred -> logger.error(error.reason, error.asSystemError())
-            is RoomDeleted -> roomStore -= roomId
-            is RoomUpdated -> roomStore += room
-            is CurrentUserRemovedFromRoom -> currentUser.onReady { result ->
-                result.map { currentUser -> roomStore[roomId]?.removeUser(currentUser.id) }
-            }
-            is CurrentUserAddedToRoom -> currentUser.onReady { result ->
-                result.map { currentUser -> room.addUser(currentUser.id) }
-            }
+        queue.take().also {
+            waitingForUser = false
         }
     }
 
@@ -133,14 +108,13 @@ class ChatManager constructor(
         } ?: instance
     }
 
-    @JvmOverloads
-    internal fun doPost(path: String, body: String = ""): OkHttpResponsePromise =
+    internal inline fun <reified A> doPost(path: String, body: String = ""): Future<Result<A, Error>> =
         doRequest("POST", path, body)
 
-    internal fun doGet(path: String): OkHttpResponsePromise =
+    internal inline fun <reified A> doGet(path: String): Future<Result<A, Error>> =
         doRequest("GET", path, null)
 
-    private fun doRequest(method: String, path: String, body: String?): OkHttpResponsePromise =
+    private inline fun <reified A> doRequest(method: String, path: String, body: String?): Future<Result<A, Error>> =
         apiInstance.request(
             options = RequestOptions(
                 method = method,
@@ -148,7 +122,8 @@ class ChatManager constructor(
                 body = body
             ),
             tokenProvider = tokenProvider,
-            tokenParams = dependencies.tokenParams
+            tokenParams = dependencies.tokenParams,
+            type = typeToken<A>()
         )
 
     /**
@@ -156,7 +131,6 @@ class ChatManager constructor(
      */
     fun close() {
         subscriptions.forEach { it.unsubscribe() }
-        currentUser.mapResult { it.close() }.cancel()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
     }
 
@@ -219,9 +193,9 @@ private class DebounceTokenProvider(
     val original: TokenProvider
 ) : TokenProvider {
 
-    private var pending: Promise<Result<String, Error>>? = null
+    private var pending: Future<Result<String, Error>>? = null
 
-    override fun fetchToken(tokenParams: Any?): Promise<Result<String, Error>> = synchronized(this) {
+    override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = synchronized(this) {
         pending ?: original.fetchToken(tokenParams).also { pending = it }
     }
 

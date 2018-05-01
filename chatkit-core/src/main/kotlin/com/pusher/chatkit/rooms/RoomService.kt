@@ -1,56 +1,40 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.chatkit.network.toJson
-import com.pusher.platform.network.Promise
-import com.pusher.platform.network.asPromise
+import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
-import elements.OtherError
-import okhttp3.HttpUrl
-
-typealias RoomListResult = Result<List<Room>, Error>
-typealias RoomResult = Result<Room, Error>
-typealias RoomListResultPromise = Promise<RoomListResult>
-typealias RoomPromiseResult = Promise<RoomResult>
+import elements.Errors
+import java.util.concurrent.Future
 
 class RoomService(private val chatManager: ChatManager) {
 
-    fun fetchRoomBy(userId: String, id: Int): RoomPromiseResult =
-        getLocalRoom(id).recover {
-            chatManager.doGet("/rooms/$id")
-                .parseResponseWhenReady()
-        }.flatMapResult { room ->
-            when {
-                room.memberUserIds.contains(userId) -> room.asSuccess()
-                else -> NoRoomMembershipError(room).asFailure<Room, Error>()
-            }.asPromise()
-        }
-
-    private fun getLocalRoom(id: Int) =
-        chatManager.roomStore[id]?.asSuccess<Room, Error>()?.asPromise()
-            .orElse { OtherError("User not found locally") }
-
-    @JvmOverloads
-    fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): RoomListResultPromise =
-        chatManager.doGet("/users/$userId/rooms?joinable=$onlyJoinable")
-            .parseResponseWhenReady<List<Room>>().onReady { result ->
-                chatManager.roomStore += result.recover { emptyList() }
+    fun fetchRoomBy(userId: String, id: Int): Future<Result<Room, Error>> =
+        getLocalRoom(id).toFuture()
+            .recoverFutureResult { chatManager.doGet("/rooms/$id") }
+            .flatMapResult { room ->
+                when {
+                    room.memberUserIds.contains(userId) -> room.asSuccess()
+                    else -> NoRoomMembershipError(room).asFailure<Room, Error>()
+                }
             }
 
+    private fun getLocalRoom(id: Int): Result<Room, Error> =
+        chatManager.roomStore[id]
+            .orElse { Errors.other("User not found locally") }
 
-    fun joinRoom(userId: String, room: Room): RoomPromiseResult =
+    @JvmOverloads
+    fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): Future<Result<List<Room>, Error>> =
+        chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$onlyJoinable")
+            .mapResult { rooms -> rooms.also { chatManager.roomStore += it } }
+
+    fun joinRoom(userId: String, room: Room): Future<Result<Room, Error>> =
         joinRoom(userId, room.id)
 
-    fun joinRoom(userId: String, roomId: Int): RoomPromiseResult =
-        chatManager.doPost(roomIdJoinPath(userId, roomId))
-            .parseResponseWhenReady<Room>()
+    fun joinRoom(userId: String, roomId: Int): Future<Result<Room, Error>> =
+        chatManager.doPost<Room>("/users/$userId/rooms/$roomId/join")
             .updateStoreWhenReady()
-
-    private fun roomIdJoinPath(userId: String, roomId: Int) =
-        HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/$userId/rooms/$roomId/join").build().encodedPath()
-
 
     @JvmOverloads
     fun createRoom(
@@ -58,25 +42,22 @@ class RoomService(private val chatManager: ChatManager) {
         name: String,
         isPrivate: Boolean = false,
         userIds: List<String> = emptyList()
-    ): RoomPromiseResult =
+    ): Future<Result<Room, Error>> =
         RoomCreateRequest(
             name = name,
             private = isPrivate,
             createdById = creatorId,
             userIds = userIds
         ).toJson()
-            .map { body -> chatManager.doPost("/rooms", body) }
-            .fold(
-                { error -> error.asFailure<Room, Error>().asPromise() },
-                { promise -> promise.parseResponseWhenReady() }
-            )
+            .toFuture()
+            .flatMapFutureResult { body -> chatManager.doPost<Room>("/rooms", body) }
             .updateStoreWhenReady()
 
     fun roomFor(userId: String, roomAware: HasRoom) =
         fetchRoomBy(userId, roomAware.roomId)
 
-    private fun RoomPromiseResult.updateStoreWhenReady() = onReady {
-        it.map { room ->
+    private fun Future<Result<Room, Error>>.updateStoreWhenReady() = mapResult {
+        it.also { room ->
             chatManager.roomStore += room
             populateRoomUserStore(room)
         }

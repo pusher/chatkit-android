@@ -1,14 +1,14 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.network.parseAs
-import com.pusher.platform.network.Promise
+import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
 import elements.Errors
 import okhttp3.*
-import java.io.IOException
 import java.util.*
+import java.util.concurrent.Future
 
 /**
  * Simple token provider for Chatkit. Uses an in-memory cache for storing token.
@@ -27,11 +27,11 @@ class ChatkitTokenProvider
 
 ) : TokenProvider {
 
-    override fun fetchToken(tokenParams: Any?): Promise<Result<String, Error>> {
+    override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> {
         val cachedToken = tokenCache.getTokenFromCache()
         return when (cachedToken) {
             null -> fetchTokenFromEndpoint(tokenParams)
-            else -> Promise.now(cachedToken.asSuccess())
+            else -> Futures.now(cachedToken.asSuccess())
         }
     }
 
@@ -39,7 +39,7 @@ class ChatkitTokenProvider
         tokenCache.clearCache()
     }
 
-    private fun fetchTokenFromEndpoint(tokenParams: Any?): Promise<Result<String, Error>> {
+    private fun fetchTokenFromEndpoint(tokenParams: Any?): Future<Result<String, Error>> {
         val urlBuilder = HttpUrl.parse(endpoint)!!
             .newBuilder()
         urlBuilder.addQueryParameter("user_id", userId)
@@ -68,18 +68,12 @@ class ChatkitTokenProvider
 
         val call = client.newCall(request)
 
-        return Promise.promise {
-            call.enqueue(object : Callback {
-                override fun onFailure(call: Call?, e: IOException?) =
-                    report(Errors.network("Failed to load token: $e").asFailure())
-
-                override fun onResponse(call: Call?, response: Response?) {
-                    report(when (response?.code()) {
-                        200 -> parseTokenResponse(response)
-                        else -> response.asError().asFailure()
-                    })
-                }
-            })
+        return Futures.schedule {
+            val response = call.execute()
+            when {
+                response.isSuccessful && response.code() in 200..299 -> parseTokenResponse(response)
+                else -> response.asError().asFailure()
+            }
         }
     }
 

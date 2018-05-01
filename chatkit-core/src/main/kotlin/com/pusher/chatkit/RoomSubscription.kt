@@ -1,6 +1,8 @@
 package com.pusher.chatkit
 
+import com.pusher.chatkit.network.typeToken
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
 import elements.Subscription
@@ -25,16 +27,17 @@ class RoomSubscription internal constructor(
             onOpen = { }, //TODO("Not handled currently.")
             onEvent = ::handleMessage,
             onError = ::handleError
-        )
+        ),
+        typeResolver = { typeToken<ChatEvent>().asSuccess() }
     )
 
     init {
         check(messageLimit > 0) { "messageLimit should be greater than 0" }
     }
 
-    private fun handleMessage(event: SubscriptionEvent) {
+    private fun handleMessage(event: SubscriptionEvent<ChatEvent>) {
 
-        val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
+        val chatEvent = event.body
 
         if (chatEvent.eventName == "new_message") {
 

@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.pusher.platform.SubscriptionListeners
 import elements.Error
+import elements.Errors
 import elements.Headers
 import elements.SubscriptionEvent
 
@@ -12,7 +13,7 @@ class CursorsSubscription(
     private val onEvent: (Event) -> Unit
 ) {
 
-    val subscriptionListeners = SubscriptionListeners(
+    private val subscriptionListeners = SubscriptionListeners<ChatEvent>(
         onOpen = { handleOpen(it) },
         onEvent = { handleCursor(it) },
         onError = { handleError(it) }
@@ -22,21 +23,27 @@ class CursorsSubscription(
         //TODO("Not handled currently.")
     }
 
-    fun handleCursor(event: SubscriptionEvent) {
-        val chatEvent = ChatManager.GSON.fromJson<ChatEvent>(event.body, ChatEvent::class.java)
-        if (chatEvent.eventName != "cursor_set") {
-            TODO("Event received is of the wrong type ${chatEvent.eventName}")
+    fun handleCursor(event: SubscriptionEvent<ChatEvent>) {
+        val chatEvent = event.body
+        when(chatEvent.eventName) {
+            "curso_set" -> {
+                val event = chatEvent.cursor
+                    .also(::handleCursorSetInternal)
+                    .let { Event.OnCursorSet(it) }
+                onEvent(event)
+            }
+            else -> subscriptionListeners.onError(Errors.other("Event received is of the wrong type ${chatEvent.eventName}"))
         }
-        val cursor = ChatManager.GSON.fromJson<Cursor>(chatEvent.data, Cursor::class.java)
-        handleCursorSetInternal(cursor)
-        chatManager.userService().fetchUserBy(cursor.userId)
-        onEvent(Event.OnCursorSet(cursor))
     }
+
+    private val ChatEvent.cursor
+        get() = ChatManager.GSON.fromJson<Cursor>(data, Cursor::class.java)
 
     private fun handleCursorSetInternal(cursor: Cursor) {
         if (cursor.userId == user.id) {
             user.cursors[cursor.roomId] = cursor
         }
+        chatManager.userService().fetchUserBy(cursor.userId)
     }
 
     fun handleError(error: Error) {

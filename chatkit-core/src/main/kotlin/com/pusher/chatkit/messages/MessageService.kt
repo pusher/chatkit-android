@@ -1,16 +1,11 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.chatkit.network.toJson
-import com.pusher.platform.network.Promise
-import com.pusher.platform.network.asPromise
+import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.Error
-
-typealias MessagesPromiseResult = Promise<Result<List<Message>, Error>>
-typealias MessageIdPromiseResult = Promise<Result<Int, Error>>
-typealias AttachmentPromiseResult = Promise<Result<AttachmentBody, Error>>
+import java.util.concurrent.Future
 
 class MessageService(
     room: Room,
@@ -23,46 +18,47 @@ class MessageService(
     private val tokenParams get() = chatManager.dependencies.tokenParams
     private val filesInstance get() = chatManager.filesInstance
 
-    fun fetchMessages(limit: Int = -1): MessagesPromiseResult =
+    fun fetchMessages(limit: Int = -1): Future<Result<List<Message>, Error>> =
         chatManager.doGet(when {
             limit > 0 -> "/rooms/$roomId/messages?limit=$limit"
             else -> "/rooms/$roomId/messages"
-        }).parseResponseWhenReady()
+        })
 
     @JvmOverloads
     fun sendMessage(
         userId: String,
         text: CharSequence = "",
         attachment: GenericAttachment = NoAttachment
-    ): MessageIdPromiseResult =
-        attachment.asAttachmentBody().flatMapResult { body -> sendMessage(userId, text, body) }
+    ): Future<Result<Int, Error>> =
+        attachment.asAttachmentBody()
+            .flatMapFutureResult { sendMessage(userId, text, it) }
 
-    private fun GenericAttachment.asAttachmentBody(): AttachmentPromiseResult = when (this) {
+
+    private fun GenericAttachment.asAttachmentBody(): Future<Result<AttachmentBody, Error>> = when (this) {
         is DataAttachment -> uploadFile(this, roomId)
-        is LinkAttachment -> AttachmentBody.Resource(link, type).asSuccess<AttachmentBody, elements.Error>().asPromise()
-        is NoAttachment -> AttachmentBody.None.asSuccess<AttachmentBody, Error>().asPromise()
+        is LinkAttachment -> Futures.now(AttachmentBody.Resource(link, type).asSuccess<AttachmentBody, elements.Error>())
+        is NoAttachment -> Futures.now(AttachmentBody.None.asSuccess<AttachmentBody, Error>())
     }
 
     private fun uploadFile(
         attachment: DataAttachment,
         roomId: Int
-    ): AttachmentPromiseResult = filesInstance.upload(
+    ): Future<Result<AttachmentBody, Error>> = filesInstance.upload(
         path = "/rooms/$roomId/files/${attachment.name}",
         file = attachment.file,
         tokenProvider = tokenProvider,
         tokenParams = tokenParams
-    ).parseResponseWhenReady()
+    )
 
     private fun sendMessage(
         userId: String,
         text: CharSequence = "",
         attachment: AttachmentBody
-    ): MessageIdPromiseResult =
+    ) : Future<Result<Int, Error>> =
         MessageRequest(text.toString(), userId, attachment.takeIf { it !== AttachmentBody.None })
             .toJson()
-            .map { body -> chatManager.doPost("/rooms/$roomId/messages", body) }
-            .map { it.parseResponseWhenReady<MessageSendingResponse>() }
-            .recover { error -> error.asFailure<MessageSendingResponse, Error>().asPromise() }
+            .toFuture()
+            .flatMapFutureResult { body -> chatManager.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body) }
             .mapResult { it.messageId }
 
 }
