@@ -22,7 +22,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$android_gradle_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.novoda:bintray-release:0.8.0'
+        classpath 'com.novoda:bintray-release:0.8.1'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.1.0'
         classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.0.31'
     }
@@ -39,3 +39,14 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+static def tasksFor(project, tasks) {
+    tasks.collect { ":$project:$it".toString() }
+}
+
+task ciBuild(type: GradleBuild) {
+    tasks = tasksFor('chatkit-core', ['assemble', 'test']) +
+        tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug', 'jacocoTestReportDebug']) +
+        'codeCoverageReport'
+}
+
