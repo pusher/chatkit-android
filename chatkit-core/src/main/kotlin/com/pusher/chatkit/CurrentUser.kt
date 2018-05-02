@@ -10,7 +10,6 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.mapResult
 import elements.Error
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import java.util.concurrent.Future
 
 class CurrentUser(
@@ -48,17 +47,18 @@ class CurrentUser(
         updatedAt = newUser.updatedAt
         name = newUser.name
         customData = newUser.customData
+        // TODO reopen subscriptions
     }
 
-    val presenceSubscription: PresenceSubscription by lazy {
-        PresenceSubscription(
-            instance = presenceInstance,
-            path = "/users/$id/presence",
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
-            chatManager = chatManager
-        )
-    }
+    // TODO: move to chatManager and provide access via Roomsub and Main connection
+    fun presence(consumeEvent: (ChatManagerEvent) -> Unit) = PresenceSubscription(
+        instance = presenceInstance,
+        path = "/users/$id/presence",
+        tokenProvider = tokenProvider,
+        tokenParams = tokenParams,
+        chatManager = chatManager,
+        consumeEvent = consumeEvent
+    )
 
     fun setCursor(
         position: Int,
@@ -174,9 +174,6 @@ class CurrentUser(
     fun close() {
         roomSubscriptions.forEach { it.unsubscribe() }
     }
-
-    val presenceEvents: SubscriptionReceiveChannel<ChatManagerEvent>
-        get() = presenceSubscription.openSubscription()
 
 }
 

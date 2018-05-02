@@ -26,6 +26,9 @@ internal inline fun <reified A> JsonElement.parseAs(): Result<A, Error> = safePa
     GSON.fromJson<A>(this, typeToken<A>())
 }
 
+internal inline fun <reified A> String.parseAs(): Result<A, Error> =
+    safeParse { GSON.fromJson<A>(this, typeToken<A>()) }
+
 internal fun <A> A.toJson(): Result<String, Error> = safeParse {
     GSON.toJson(this)
 }

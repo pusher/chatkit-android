@@ -123,7 +123,7 @@ class ChatManager constructor(
             ),
             tokenProvider = tokenProvider,
             tokenParams = dependencies.tokenParams,
-            type = typeToken<A>()
+            responseType = typeToken<A>()
         )
 
     /**

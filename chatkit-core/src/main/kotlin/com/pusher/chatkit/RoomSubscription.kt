@@ -1,5 +1,6 @@
 package com.pusher.chatkit
 
+import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.typeToken
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.asSuccess
@@ -28,7 +29,7 @@ class RoomSubscription internal constructor(
             onEvent = ::handleMessage,
             onError = ::handleError
         ),
-        typeResolver = { typeToken<ChatEvent>().asSuccess() }
+        bodyParser = { it.parseAs() }
     )
 
     init {
