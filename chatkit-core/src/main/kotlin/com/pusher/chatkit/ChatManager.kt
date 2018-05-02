@@ -13,6 +13,7 @@ import com.pusher.chatkit.users.HasUser
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
 import com.pusher.platform.network.Futures
+import com.pusher.platform.network.wait
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
@@ -20,6 +21,7 @@ import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.SynchronousQueue
 
 private const val USERS_PATH = "users"
@@ -61,7 +63,7 @@ class ChatManager constructor(
         }
     }
 
-    fun connect(consumer: (ChatManagerEvent) -> Unit = {}): Future<Result<CurrentUser, Error>> = Futures.schedule {
+    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> = Futures.schedule {
         val queue = SynchronousQueue<Result<CurrentUser, Error>>()
         var waitingForUser = true
         subscriptions += UserSubscription(
@@ -76,8 +78,8 @@ class ChatManager constructor(
                 consumer(event)
                 if (waitingForUser) {
                     when (event) {
-                        is CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
-                        is ErrorOccurred -> queue.put(event.error.asFailure())
+                        is ChatManagerEvent.CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
+                        is ChatManagerEvent.ErrorOccurred -> queue.put(event.error.asFailure())
                     }
                 }
             }
@@ -87,13 +89,16 @@ class ChatManager constructor(
         }
     }
 
-    fun messageService(room: Room): MessageService =
+    fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
+        connect(listeners.toCallback())
+
+    internal fun messageService(room: Room): MessageService =
         MessageService(room, this)
 
-    fun roomService(): RoomService =
+    internal fun roomService(): RoomService =
         RoomService(this)
 
-    fun userService(): UserService =
+    internal fun userService(): UserService =
         UserService(this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
@@ -169,26 +174,9 @@ data class ChatEvent(
 
 typealias CustomData = MutableMap<String, String>
 
-sealed class ChatManagerEvent {
-
-    companion object {
-        fun onError(error: Error): ChatManagerEvent = ErrorOccurred(error)
-        fun onUserJoinedRoom(user: User, room: Room): ChatManagerEvent = UserJoinedRoom(user, room)
-    }
-
-}
-
-data class CurrentUserReceived(val currentUser: CurrentUser) : ChatManagerEvent()
-data class ErrorOccurred(val error: elements.Error) : ChatManagerEvent()
-data class CurrentUserAddedToRoom(val room: Room) : ChatManagerEvent()
-data class CurrentUserRemovedFromRoom(val roomId: Int) : ChatManagerEvent()
-data class RoomDeleted(val roomId: Int) : ChatManagerEvent()
-data class RoomUpdated(val room: Room) : ChatManagerEvent()
-data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatManagerEvent()
-data class UserJoinedRoom(val user: User, val room: Room) : ChatManagerEvent()
-data class UserLeftRoom(val user: User, val room: Room) : ChatManagerEvent()
-object NoEvent : ChatManagerEvent()
-
+/**
+ * Used to avoid multiple requests to the tokenProvider if one is pending
+ */
 private class DebounceTokenProvider(
     val original: TokenProvider
 ) : TokenProvider {

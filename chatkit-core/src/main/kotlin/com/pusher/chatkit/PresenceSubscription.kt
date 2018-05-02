@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.User.Presence.Offline
-import com.pusher.chatkit.User.Presence.Online
+import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
@@ -50,19 +49,13 @@ class PresenceSubscription(
     private fun eventForPresence(userId: String, presence: UserPresence): Future<ChatManagerEvent> =
         chatManager.userService().fetchUserBy(userId)
             .mapResult { user ->
-                when {
-                    user.online != presence.isOnline() -> {
-                        user.online = presence.isOnline() // TODO: solve mutability
-                        UserPresenceUpdated(user, presence.toUserPresence())
-                    }
-                    else -> NoEvent
-                }
+                user.takeIf { it.online != presence.isOnline() }
+                    ?.also { it.online = presence.isOnline() }
+                    ?.let { if (it.online) UserCameOnline(it) else UserWentOffline(it) }
+                    ?: NoEvent
             }
             .map { it.recover { error -> ErrorOccurred(error) } }
 
-
-    private fun UserPresence.toUserPresence(): User.Presence =
-        if (isOnline()) Online else Offline
 
     override fun unsubscribe() {
         subscription.unsubscribe()

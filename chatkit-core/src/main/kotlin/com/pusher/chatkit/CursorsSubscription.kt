@@ -1,10 +1,7 @@
 package com.pusher.chatkit
 
 import com.pusher.platform.SubscriptionListeners
-import elements.Error
-import elements.Errors
-import elements.Headers
-import elements.SubscriptionEvent
+import elements.*
 
 class CursorsSubscription(
     val user: CurrentUser,
@@ -13,25 +10,19 @@ class CursorsSubscription(
     private val onEvent: (Event) -> Unit
 ) {
 
-    private val subscriptionListeners = SubscriptionListeners<ChatEvent>(
-        onOpen = { handleOpen(it) },
-        onEvent = { handleCursor(it) },
-        onError = { handleError(it) }
+    private val subscriptionListeners = SubscriptionListeners(
+        onOpen = { },
+        onEvent = ::handleCursor,
+        onError = ::handleError
     )
 
-    fun handleOpen(headers: Headers) {
-        //TODO("Not handled currently.")
-    }
-
-    fun handleCursor(event: SubscriptionEvent<ChatEvent>) {
+    private fun handleCursor(event: SubscriptionEvent<ChatEvent>) {
         val chatEvent = event.body
         when(chatEvent.eventName) {
-            "curso_set" -> {
-                val event = chatEvent.cursor
-                    .also(::handleCursorSetInternal)
-                    .let { Event.OnCursorSet(it) }
-                onEvent(event)
-            }
+            "curso_set" -> chatEvent.cursor
+                .also(::handleCursorSetInternal)
+                .let { Event.OnCursorSet(it) }
+                .let(onEvent)
             else -> subscriptionListeners.onError(Errors.other("Event received is of the wrong type ${chatEvent.eventName}"))
         }
     }
@@ -46,7 +37,7 @@ class CursorsSubscription(
         chatManager.userService().fetchUserBy(cursor.userId)
     }
 
-    fun handleError(error: Error) {
+    private fun handleError(error: Error) {
         onEvent(Event.OnError(error))
     }
 

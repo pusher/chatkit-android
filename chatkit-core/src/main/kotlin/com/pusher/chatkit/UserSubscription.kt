@@ -1,5 +1,6 @@
 package com.pusher.chatkit
 
+import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
