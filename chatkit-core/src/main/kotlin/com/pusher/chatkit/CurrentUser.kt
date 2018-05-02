@@ -103,6 +103,18 @@ class CurrentUser(
         tokenParams = tokenParams
     ).mapResult { true }
 
+    @JvmOverloads
+    fun createRoom(
+        name: String,
+        isPrivate: Boolean = false,
+        userIds: List<String> = emptyList()
+    ): Future<Result<Room, Error>> = chatManager.roomService().createRoom(
+        creatorId = id,
+        name = name,
+        isPrivate = isPrivate,
+        userIds = userIds
+    )
+
     /**
      * Update a room
      * */

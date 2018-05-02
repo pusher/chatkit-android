@@ -8,7 +8,7 @@ import elements.Error
 import elements.Errors
 import java.util.concurrent.Future
 
-class RoomService(private val chatManager: ChatManager) {
+internal class RoomService(private val chatManager: ChatManager) {
 
     fun fetchRoomBy(userId: String, id: Int): Future<Result<Room, Error>> =
         getLocalRoom(id).toFuture()
@@ -36,12 +36,11 @@ class RoomService(private val chatManager: ChatManager) {
         chatManager.doPost<Room>("/users/$userId/rooms/$roomId/join")
             .updateStoreWhenReady()
 
-    @JvmOverloads
     fun createRoom(
         creatorId: String,
         name: String,
-        isPrivate: Boolean = false,
-        userIds: List<String> = emptyList()
+        isPrivate: Boolean,
+        userIds: List<String>
     ): Future<Result<Room, Error>> =
         RoomCreateRequest(
             name = name,
