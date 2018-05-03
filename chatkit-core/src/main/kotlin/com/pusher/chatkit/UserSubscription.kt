@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
@@ -64,7 +65,7 @@ class UserSubscription(
             onRetrying = { logger.verbose("Subscription lost. Trying again.") },
             onEnd = { error -> logger.verbose("Subscription ended with: $error") }
         ),
-        bodyParser = UserSubscriptionEventParser,
+        messageParser = UserSubscriptionEventParser,
         tokenProvider = tokenProvider,
         tokenParams = tokenParams
     )
@@ -155,7 +156,8 @@ class UserSubscription(
                 path = "/cursors/0/users/$userId"
             ),
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams
+            tokenParams = tokenParams,
+            responseParser = { it.parseAs<List<Cursor>>() }
         )
 
 }

@@ -7,14 +7,14 @@ import com.pusher.chatkit.network.asObject
 import com.pusher.chatkit.network.asString
 import com.pusher.chatkit.network.getValue
 import com.pusher.chatkit.network.parseAs
-import com.pusher.platform.subscription.SubscriptionBodyParser
+import com.pusher.platform.network.DataParser
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 
-internal object UserSubscriptionEventParser : SubscriptionBodyParser<UserSubscriptionEvent> {
+internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> {
 
     override fun invoke(body: String): Result<UserSubscriptionEvent, Error> =
         body.parseAs<JsonElement>()

@@ -37,7 +37,7 @@ class PresenceSubscription(
             },
             onError = { error -> consumeEvent(ErrorOccurred(error)) }
         ),
-        bodyParser = { it.parseAs() }
+        messageParser = { it.parseAs() }
     )
 
     private fun ChatEvent.toUserPreferences() = when (eventName) {

@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
+import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
@@ -70,7 +71,8 @@ class CurrentUser(
             body = GSON.toJson(SetCursorRequest(position))
         ),
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenParams = tokenParams,
+        responseParser = { it.parseAs() }
     ).mapResult { true }
 
     fun fetchAttachment(attachmentUrl: String) = filesInstance.request<FetchedAttachment>(
@@ -79,8 +81,8 @@ class CurrentUser(
             destination = RequestDestination.Absolute(attachmentUrl)
         ),
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams
-
+        tokenParams = tokenParams,
+        responseParser = { it.parseAs() }
     )
 
     fun addUsers(roomId: Int, users: Array<User>) = addUsers(roomId, users.map { id }.toTypedArray())
@@ -100,7 +102,8 @@ class CurrentUser(
             body = GSON.toJson(object { val userIds = userIds })
         ),
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenParams = tokenParams,
+        responseParser = { it.parseAs() }
     ).mapResult { true }
 
     @JvmOverloads
@@ -136,7 +139,8 @@ class CurrentUser(
                 body = GSON.toJson(data)
             ),
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams
+            tokenParams = tokenParams,
+            responseParser = { it.parseAs() }
         ).mapResult { true }
     }
 
@@ -155,7 +159,8 @@ class CurrentUser(
             body = ""
         ),
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenParams = tokenParams,
+        responseParser = { it.parseAs() }
     ).mapResult { true }
 
     /**
@@ -171,7 +176,8 @@ class CurrentUser(
             body = "" //TODO: this is a horrible OKHTTP hack - POST is required to have a body.
         ),
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenParams = tokenParams,
+        responseParser = { it.parseAs() }
     ).mapResult { true }
 
     @JvmOverloads

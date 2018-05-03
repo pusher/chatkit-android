@@ -29,7 +29,7 @@ class RoomSubscription internal constructor(
             onEvent = ::handleMessage,
             onError = ::handleError
         ),
-        bodyParser = { it.parseAs() }
+        messageParser = { it.parseAs() }
     )
 
     init {

@@ -1,6 +1,7 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.*
+import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.toJson
 import com.pusher.platform.network.*
 import com.pusher.util.*
@@ -47,7 +48,8 @@ class MessageService(
         path = "/rooms/$roomId/files/${attachment.name}",
         file = attachment.file,
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenParams = tokenParams,
+        responseParser = { it.parseAs<AttachmentBody>() }
     )
 
     private fun sendMessage(

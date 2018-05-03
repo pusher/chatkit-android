@@ -3,6 +3,7 @@ package com.pusher.chatkit.test
 import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
+import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.tearDown
 import com.pusher.platform.Instance
@@ -67,7 +68,8 @@ object InstanceActions {
                 method = "POST",
                 body = name.toUserRequestBody()
             ),
-            tokenProvider = sudoTokenProvider
+            tokenProvider = sudoTokenProvider,
+            responseParser = { it.parseAs() }
         )
     }.withName("Create new user: $name")
 
@@ -78,7 +80,8 @@ object InstanceActions {
                 method = "POST",
                 body = mapOf("users" to names.toList().toJsonString { it.toUserRequestBody() }).toJsonObject()
             ),
-            tokenProvider = sudoTokenProvider
+            tokenProvider = sudoTokenProvider,
+            responseParser = { it.parseAs() }
         )
     }.withName("Create new users: ${names.joinToString(", ")}")
 
@@ -94,7 +97,8 @@ object InstanceActions {
                     }
                 """.trimIndent()
             ),
-            tokenProvider = sudoTokenProvider
+            tokenProvider = sudoTokenProvider,
+            responseParser = { it.parseAs() }
         )
     }.withName("Create new room: $name for users: ${userNames.joinToString(", ")}")
 
@@ -104,7 +108,8 @@ object InstanceActions {
                 path = "/resources",
                 method = "DELETE"
             ),
-            tokenProvider = sudoTokenProvider
+            tokenProvider = sudoTokenProvider,
+            responseParser = { it.parseAs() }
         )
     }.withName("Tear down")
 

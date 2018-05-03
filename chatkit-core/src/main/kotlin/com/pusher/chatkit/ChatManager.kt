@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.typeToken
 import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.rooms.RoomService
@@ -128,7 +129,7 @@ class ChatManager constructor(
             ),
             tokenProvider = tokenProvider,
             tokenParams = dependencies.tokenParams,
-            responseType = typeToken<A>()
+            responseParser = { it.parseAs<A>() }
         )
 
     /**
