@@ -13,19 +13,18 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 
 ## Index:
 
- - [Features](#Features)
- - [Setup](#Setup)
-   - [Include it in project](#include-it-in-project)
- - [Usage](#usage)
-   - [Instantiate Chatkit](#instantiate-chatkit)
-   - [Connecting](#connecting)
-   - [Chat Events](#chat-events)
-   - [Termination](#termination)
- - [CurrentUser](#currentuser)
- - [Rooms](#rooms)
-   - [Creating a room](#creating-a-room)
-   
- - [Development Build](#development-build)
+ * [Features](#Features)
+ * [Setup](#Setup)
+   * [Include it in project](#include-it-in-project)
+ * [Usage](#usage)
+   * [Instantiate Chatkit](#instantiate-chatkit)
+   * [Connecting](#connecting)
+   * [Chat Events](#chat-events)
+   * [Termination](#termination)
+ * [CurrentUser](#currentuser)
+ * [Rooms](#rooms)
+   * [Creating a room](#creating-a-room)
+ * [Development Build](#development-build)
  
 
 ## Features
