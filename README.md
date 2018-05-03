@@ -11,6 +11,23 @@ For more information on the Chatkit service, see [here](http://pusher.com/chatki
 
 The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
 
+## Index:
+
+ - [Features](#Features)
+ - [Setup](#Setup)
+   - [Include it in project](#include-it-in-project)
+ - [Usage](#usage)
+   - [Instantiate Chatkit](#instantiate-chatkit)
+   - [Connecting](#connecting)
+   - [Chat Events](#chat-events)
+   - [Termination](#termination)
+ - [CurrentUser](#currentuser)
+ - [Rooms](#rooms)
+   - [Creating a room](#creating-a-room)
+   
+ - [Development Build](#development-build)
+ 
+
 ## Features
 
 - Creating, joining, and deleting rooms
@@ -28,15 +45,15 @@ You can install the SDK via Gradle. First add this to your $PROJECT_ROOT/app/bui
 ```groovy
 dependencies {
     // ...
-
-    api 'com.pusher:chatkit-android:0.1.0'
+    implementation 'com.pusher:chatkit-android:$chatkit-version'
 }
 ```
 
 ## Usage
 
-### Initialise Chatkit
+### Instantiate Chatkit
 
+To get started with Chatkit you will need to instantiate both a `ChatManager` instance as well as a `TokenProvider` instance to authenticate users. The example below uses demo credentials.
 
 Builder pattern
 
@@ -46,336 +63,223 @@ We provide you with a sample token provider implementation. You can enable / dis
 To include it in your application, create it with your details, as such:
 
 
-```java
-
-ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
-
-ChatManager chatManager = new ChatManager(
-    INSTANCE_LOCATOR, 
-    USER_NAME,
-    new AndroidChatkitDependencies(
-        getApplicationContext(),
-        tokenProvider
-    )
-);
-
-```
-
-
-Connect to the ChatManager and implement the `UserSubscriptionListeners`:
-
-```java
-chatManager.connect(
-    new UserSubscriptionListeners(
-        new CurrentUserListener() {
-            @Override
-            public void currentUserReceived(@NonNull CurrentUser user) {
-                Log.d(TAG, "currentUserReceived");
-                currentUser = user;
-
-                joinOrCreateRoom();
-            }
-        },
-        new ErrorListener() {
-            @Override
-            public void onError(Error error) {
-                Log.d(TAG, "onError");
-            }
-        },
-        new RemovedFromRoomListener() {
-            @Override
-            public void removedFromRoom(Room room) {
-                Log.d(TAG, "removed from room");
-            }
-        }
-    )
-);
-```
-
-### Features breakdown
-
-Most operations are performed on the `CurrentUser` instance.
-It has the following params, with `CustomData` being an a Map of any extra params it might have set:
-
 ```kotlin
-class CurrentUser(
-    val id: String,
-    val createdAt: String,
-    var updatedAt: String,
-    var name: String?,
-    var avatarURL: String?,
-    var cursors: Map<Int, Cursor>
-    var customData: CustomData?
+
+const val INSTANCE_LOCATOR = "v1:us1:80215247-1df3-4956-8ba8-9744ffd12161"
+const val TOKEN_PROVIDER_ENDPOINT = "your.auth.url"
+const val USER_ID = "sarah"
+
+val chatManager = ChatManager(
+    instanceLocator = INSTANCE_LOCATOR, 
+    userId = USER_ID,
+    dependencies = AndroidChatkitDependencies(
+        context = getApplicationContext(),
+        tokenProvider = ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT)
+    )
 )
 
-typealias CustomData = MutableMap<String, String>
 ```
 
-List all joined rooms:
+This is how we do it on our demo app: [ChatkitDemoApp](https://github.com/pusher/android-slack-clone/blob/master/app/src/main/kotlin/com/pusher/chatkitdemo/ChatKitDemoApp.kt#L47)
 
-```java
-Set<Room> rooms = user.rooms();
-```
+ - `instanceLocator`: You can find this in the "Keys" section of our dashboard: https://dash.pusher.com/
 
-Where `Room` is a Kotlin data class with the following parameters:
+ - `userId`: Used to identify the user that will be connected with this `ChatManager` instance.
+
+ - `dependencies`: Contains some requirements needed for `ChatManager`. We provide a ready made type for `ChatkitDependencies` for android, so all you have to do is provide a `Context` and a `TokenProvider`. 
+
+We also have available an implementation for `tokenProvider` which just needs the url to authorize users. If you have enabled testing on the `Settings` section of our dashboard, you can get a test url for this purpose in there. For production applications you have to create your own server side. More information about this can be found here: https://docs.pusher.com/chatkit/reference/server-node.
+
+### Connecting
+
+The simplest way to connect returns a `Future` which will provide either a `CurrentUser` or an `Error`. 
 
 ```kotlin
-data class Room(
-    val id: Int,
-    val createdById: String,
-    var name: String,
-    var isPrivate: Boolean,
-    val createdAt: String,
-    var updatedAt: String,
-    var deletedAt: String,
-    var memberUserIds: MutableList<String>,
-    private var userStore: UserStore?
-){
-    fun userStore(): UserStore {
-        if(userStore == null) userStore = UserStore()
-        return userStore!!
-    }
+val futureUser: Future<Result<CurrentUser, Error>> = chatManager.connect()
 
-    fun removeUser(userId: String){
-        memberUserIds.remove(userId)
-        userStore().remove(userId)
+```
+
+You can observe the result from your favourite threading tool. We also provide a convenience extension that makes it more semantic to wait for the results of the future:
+
+```kotlin
+val userResult = futureUser.wait() // waits 10 seconds by default
+//or
+val userResult = futureUser.wait(For(30, SECONDS))
+
+```
+
+> Note: both `get()` and `wait()` will block the current thread so make sure that you are on a background thread.
+
+To consume the result we can do this:
+
+```kotlin
+chatManager.connect().wait().let { result ->
+    when(result) {
+      is Result.Success -> toast("User received: ${result.value.name})")
+      is Result.Failure -> toast("Oops: ${result.error})")
     }
+  }
+```
+
+Alternatively, we have included a `fold` method too:
+
+```kotlin
+chatManager.connect().wait().fold(
+  onSuccess = { user -> toast("User received: ${user.name})") },
+  onFailure = { error -> toast("Oops: ${result.error})") }
+)
+```
+
+If you are using coroutines this can be wrapped into a suspending method like this:
+
+```kotlin
+suspend fun ChatManager.connectForUser(): Result<CurrentUser, Error> = 
+  suspendCoroutine{ c -> c.resume(connect().wait()) }
+  
+// or, if want to treat error as an exception:
+
+suspend fun ChatManager.connectForUser(): CurrentUser = suspendCoroutine { c ->
+  connect().wait().let { result ->
+    when(result) {
+      is Result.Success -> c.resume(result.value)
+      is Result.Failure -> c.resumeWithException(RuntimeException(result.error.reason))
+    }
+  }
 }
 ```
 
-Get a room:
+If you use `RxJava` you can wrap this inside a Single:
 
-```java
-Room room = currentUser.getRoom(roomId);
-```
-
-Join a room:
-
-```java
-currentUser.joinRoom(
-    roomId,
-    new RoomListener() {
-        @Override
-        public void onRoom(Room room) {
-
-        }
-    }, new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
+```kotlin
+fun ChatManager.connectForUser(): Single<CurrentUser> = Single.create { emitter ->
+  connect().wait().let { result ->
+    when(result) {
+      is Result.Success -> emitter.onSuccess(result.value)
+      is Result.Failure -> emitter.onError(RuntimeException(result.error.reason))
     }
-);
-```
-
-Create a room:
-
-```java
-user.createRoom("roomName",
-    new RoomListener() {
-        @Override
-        public void onRoom(Room room) {
-
-        }
-    }, new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-
-Send message:
-
-```java
-currentUser.sendMessage(
-    room.getId(),
-    "Hey there!",
-    new MessageSentListener() {
-        @Override
-        public void onMessage(int messageId) {
-
-        }
-    }, new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-You can also send messages with attachments. In the following example we assume that `getAttachmentFile` is a function that returns a `File` object.
-
-```java
-File myAttachment = getAttachmentFile();
-String chosenFilename = "testing.png";
-
-currentUser.sendMessage(
-    room.getId(),
-    "Hey there!",
-    new DataAttachment(myFile, chosenFilename),
-    new MessageSentListener() {
-        @Override
-        public void onMessage(int messageId) {
-
-        }
-    }, new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-There are currently 2 different types of attachment supported:
-
-* `DataAttachment(val file: File, val name: String)`: Use this if you have your file as a `File` and you want it to be stored by the Chatkit servers. The `name` parameter is the name that the file will be given when it is stored by our servers.
-* `LinkAttachment(val link: String, val type: String)`: Use this if you have a file stored elsewhere that you would like to attach to a message without it being uploaded to and stored by the Chatkit servers. The `type` `parameter` currently needs to be one of `"image"`, `"video"`, `"audio"`, or `"file"`. This will likely eventually be encoded in an `enum` but for now we're leaving it as just a `String` while we finalise the API.
-
-Here's an example of using a `LinkAttachment`:
-
-```java
-currentUser.sendMessage(
-    myRoom.getId(),
-    "Hey there",
-    new LinkAttachment("https://i.giphy.com/PYEGoZXABBMuk.gif", "image"),
-    new MessageSentListener() {
-        @Override
-        public void onMessage(int messageId) {
-
-        }
-    }, new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-Subscribe to receive messages in a room:
-
-```java
- currentUser.subscribeToRoom(room, new RoomSubscriptionListenersAdapter(){
-    @Override
-    public void onNewMessage(Message message) {
-
-    }
-
-    @Override
-    public void onError(Error error) {
-
-    }
-});
-```
-
-Or subscribe both to messages and to cursors:
-
-```java
-
-currentUser.subscribeToRoom(
-    room,
-    20,
-    new RoomSubscriptionListenersAdapter() {
-        @Override
-        public void onNewMessage(Message message) {
-
-        }
-
-        @Override
-        public void onError(Error error) {
-
-        }
-    },
-    new CursorsSubscriptionListenersAdapter() {
-        @Override
-        public void onCursorSet(Cursor cursor) {
-
-        }
-
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-Set your cursor in a room:
-
-```java
-currentUser.setCursor(
-    someMessage.getId(),
-    room,
-    new SetCursorListener() {
-        @Override
-        public void onSetCursor() {
-
-        }
-    },
-    new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-Get all your cursors (as a map, indexed by room ID):
-
-```java
-currentUser.getCursors();
-```
-
-Add others to a room:
-
-```java
-currentUser.addUsers(
-    room.getId(),
-    new String[]{"zan", "ham", "vivan"},
-    new OnCompleteListener() {
-        @Override
-        public void onComplete() {
-
-        }
-    },
-    new ErrorListener() {
-        @Override
-        public void onError(Error error) {
-
-        }
-    }
-);
-```
-
-### Implementing a Token Provider
-
-In a non-testing application you will need to implement your own Token Provider endpoint, and provide it to the `ChatkitTokenProvider` constructor.
-You can read more about how authentication flow works on the documentation site for it: https://docs.pusher.com/chatkit/authentication/#the-authentication-flow
-
-The core interface to implement on the client is this:
-
-```java
-ChatkitTokenProvider tokenProvider = new ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT);
-```
-
-### Who's Online
-
-You will get informed of who is currently online by attaching listeners to the `ChatManager` object.
-
-The methods to implement are defined in `PresenceSubscriptionListeners`:
-
-```java
-public interface PresenceSubscriptionListeners {
-    void userCameOnline(User user);
-    void userWentOffline(User user);
+  }
 }
 ```
+
+#### Result
+
+We've been referring this `Result` without any explanation. It it nothing more than a rename of the functional pattern called `Either`. It a bit like Schrodinger's cat it can either have a success or a failure. If you want to learn more about this we go into details [here](/docs/Result.md)
+
+### Chat events
+
+When connecting to `ChatManager` we can also register for global events.
+
+If you only care about a number of events you can provide a `ChatManagerListeners` implementation with the events you want:
+
+```kotlin
+
+val user = chatManager.connect(ChatManagerListeners(
+      onUserCameOnline = { user -> toast("${user.name} came online") },
+      onUserWentOffline = { user -> toast("${user.name} went ofline") }
+))
+
+``` 
+
+Alternatively you can listen to all events with a single listener:
+
+```kotlin
+val user = chatManager.connect { event ->
+  when(event) {
+    is UserCameOnline -> toast("${event.user.name} came online")
+    is UserWentOffline -> toast("${event.user.name} went ofline")
+  }
+}
+```
+
+The available events are:
+
+ | Event                      | Properties     | Description                                                       |
+ |----------------------------|----------------|-------------------------------------------------------------------|
+ | CurrentUserReceived        | CurrentUser    | Happens when the logged user is available or updated              |
+ | UserStartedTyping          | User           | User has started typing                                           |
+ | UserStoppedTyping          | User           | User has stopped typing                                           |
+ | UserJoinedRoom             | User, Room     | User has joined the provided room                                 |
+ | UserLeftRoom               | User, Room     | User has left the provided room                                   |
+ | UserCameOnline             | User           | User is now online                                                |
+ | UsersUpdated               | Nothing        | User is now offline                                               |
+ | CurrentUserAddedToRoom     | Room           | Current user was added to a room                                  |
+ | CurrentUserRemovedFromRoom | Int (room id)  | Current user was removed from a room with the given id            |
+ | RoomUpdated                | Room           | Happens when the logged user is available or updated              |
+ | RoomDeleted                | Int (room id)  | Happens when the logged user is available or updated              |
+ | ErrorOccurred              | (Pusher)Error  | An error occurred, it does not mean the subscription has finished |
+ 
+Each of the events have a relevant listener that can be set on `ChatManagerListeners`
+
+### Termination
+
+When you are done using the `ChatkitManager` you can call the `close` function which will try to terminate any pending requests and/or subscriptions.
+
+```kotlin
+chatManager.close()
+```
+
+## CurrentUser
+
+When an initial connection is successfully made to Chatkit the client will receive a `CurrentUser` object. The `CurrentUser` object is the primary means of interacting with Chatkit.
+
+ | Property         | Type                             | Description                                                            |
+ |------------------|----------------------------------|------------------------------------------------------------------------|
+ | rooms            | List<Room>                       | The rooms that the connected user is a member of.                      |
+ | users            | Future<Result<List<User>, Error> | The users that share a common room membership with the connected user. |
+ 
+The `users` property is a `Future` because it may not have all the required information for all the users so it must go get it, which in turn may fail.
+
+## Rooms
+
+There are a few important things to remember about Chatkit rooms; they are either public or private, users that are members of a room can change over time, all chat messages belong to a room.
+
+ | Property      | Type           | Description                                                         |
+ |---------------|----------------|---------------------------------------------------------------------|
+ | id            | Int            | The global identifier for the room on the instance.                 |
+ | createdById   | Int            | The id of the user that created this room                           |
+ | name          | String         | The human readable name of the room (this needn’t be unique!)       |
+ | memberUserIds | Set<String>    | A set of ids for everyone on the room                               |
+ | isPrivate     | Boolean        | If true the room is private, otherwise the room is public.          |
+
+### Creating a room
+
+All that you need to provide when creating a room is a name. The user that creates the room will automatically be added as a member of the room.
+
+The following code will create a public room called `"my room name"`. Note that a room name must be no longer than 60 characters.
+
+```kotlin
+val newRoom: Future<Result<Room, Error>> = currentUser.createRoom("my room name")
+```
+
+Same as before, the result can be consumed (inside a background thread) like:
+
+``` kotlin
+currentUser.createRoom("my room name").wait().fold(
+  onSuccess = { room -> toast("Hurra! room created: ${room.name})") },
+  onFailure = { error -> toast("Oops: ${result.error})") }
+)
+```
+
+If you want to make a private room ir can be done:
+
+```kotlin
+currentUser.createRoom(
+  name = "my room name",
+  private = true  
+)
+```
+
+Also, you may choose to provide an initial number of users to be part of that room (i.e. one-to-one conversations), in which case you can also provide it with a list of users:
+
+```kotlin
+currentUser.createRoom(
+  name = "my room name",
+  userIds = listOf("sarah", "pusherino")
+)
+```
+
+
+
 
 ### Development build
 
