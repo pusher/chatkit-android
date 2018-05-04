@@ -11,9 +11,6 @@ internal class AndroidChatkitDependenciesTest {
     @Test
     fun `sdkInfo is injected`() {
         val dependencies = AndroidChatkitDependencies(
-            context = stub {
-                applicationContext returns stub()
-            },
             tokenProvider = stub()
         )
 

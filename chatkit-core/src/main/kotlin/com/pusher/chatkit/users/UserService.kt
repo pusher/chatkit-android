@@ -5,6 +5,7 @@ import com.pusher.chatkit.User
 import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.Error
+import elements.Errors
 import java.util.concurrent.Future
 
 class UserService(
@@ -12,8 +13,8 @@ class UserService(
 ) {
 
     fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {
-        val users = userIds.map { id -> getLocalUser(id).orElse { MissingLocalUser(id) } }
-        val missingUserIds = Result.failuresOf(users).map { it.id }
+        val users = userIds.map { id -> getLocalUser(id).orElse { id } }
+        val missingUserIds = Result.failuresOf(users).map { it }
         val localUsers = Result.successesOf(users)
         return when {
             missingUserIds.isEmpty() -> Futures.now(localUsers.asSuccess())
@@ -39,17 +40,6 @@ class UserService(
         fetchUsersBy(userIds)
     }
 
-    data class MissingLocalUser(val id: String) : Error {
-        override val reason = "Missing user locally: $id"
-    }
-
-    private fun userNotFound(id: String): Error =
-        UserNotFound(id)
-
-    data class UserNotFound internal constructor(val id: String) : Error {
-        override val reason: String = "Could not load user with id: $id"
-    }
-
     private fun getLocalUser(id: String) =
         chatManager.userStore[id]
 
@@ -58,3 +48,6 @@ class UserService(
 interface HasUser {
     val userId: String
 }
+
+private fun userNotFound(id: String): Error =
+    Errors.other("Could not load user with id: $id")

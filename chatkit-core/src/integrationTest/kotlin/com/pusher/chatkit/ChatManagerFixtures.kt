@@ -1,12 +1,9 @@
 package com.pusher.chatkit
 
 import com.pusher.SdkInfo
-import com.pusher.chatkit.test.AlwaysOnlineConnectivityHelper
-import com.pusher.chatkit.test.AsyncScheduler
 import com.pusher.chatkit.test.insecureOkHttpClient
 import com.pusher.platform.*
 import com.pusher.platform.logger.Logger
-import com.pusher.platform.network.ConnectivityHelper
 import com.pusher.platform.tokenProvider.TokenProvider
 import okhttp3.OkHttpClient
 import java.io.File
@@ -24,15 +21,12 @@ class TestDependencies : PlatformDependencies {
     override val mediaTypeResolver: MediaTypeResolver = object : MediaTypeResolver {
         override fun fileMediaType(file: File): String? = "image/jif"
     }
-    override val connectivityHelper: ConnectivityHelper = AlwaysOnlineConnectivityHelper
     override val sdkInfo: SdkInfo = SdkInfo(
         product = "ChatManager Integration Tests",
         language = "Spek",
         platform = "JUnit",
         sdkVersion = "test"
     )
-    override val scheduler: Scheduler = AsyncScheduler()
-    override val mainScheduler: MainThreadScheduler = AsyncScheduler()
 }
 
 class TestChatkitDependencies(

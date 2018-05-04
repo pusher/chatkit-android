@@ -16,7 +16,7 @@ internal class RoomService(private val chatManager: ChatManager) {
             .flatMapResult { room ->
                 when {
                     room.memberUserIds.contains(userId) -> room.asSuccess()
-                    else -> NoRoomMembershipError(room).asFailure<Room, Error>()
+                    else -> noRoomMembershipError(room).asFailure<Room, Error>()
                 }
             }
 
@@ -72,6 +72,5 @@ interface HasRoom {
     val roomId: Int
 }
 
-data class NoRoomMembershipError(val room: Room) : Error {
-    override val reason: String = "User is not a member of ${room.name}"
-}
+private fun noRoomMembershipError(room: Room) : Error =
+    Errors.other("User is not a member of ${room.name}")

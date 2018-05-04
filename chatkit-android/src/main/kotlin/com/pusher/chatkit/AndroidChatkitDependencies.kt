@@ -1,36 +1,33 @@
 package com.pusher.chatkit
 
-import android.content.Context
 import com.pusher.SdkInfo
 import com.pusher.platform.AndroidDependencies
+import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.PlatformDependencies
+import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
 import okhttp3.OkHttpClient
 
 /**
- * [ChatkitDependencies] implementation for Android.
+ * [ChatkitDependencies] implementation for Android using [AndroidDependencies] to fulfil [PlatformDependencies].
  */
-data class AndroidChatkitDependencies constructor(
+data class AndroidChatkitDependencies @JvmOverloads constructor(
     override val tokenProvider: TokenProvider,
-    override val tokenParams: ChatkitTokenParams?,
-    override val okHttpClient: OkHttpClient?,
-    private val platformDependencies: PlatformDependencies
-) : ChatkitDependencies, PlatformDependencies by platformDependencies {
+    override val tokenParams: ChatkitTokenParams? = null,
+    override val okHttpClient: OkHttpClient? = null
+) : ChatkitDependencies {
 
-    @JvmOverloads
-    constructor(
-        context: Context,
-        tokenProvider: TokenProvider,
-        tokenParams: ChatkitTokenParams? = null,
-        okHttpClient: OkHttpClient? = null
-    ) : this(tokenProvider, tokenParams, okHttpClient, context.androidChatkitDependencies)
+    private val androidPlatformDependencies = AndroidDependencies(chatkitSdkInfo)
+
+    override val logger: Logger = androidPlatformDependencies.logger
+    override val mediaTypeResolver: MediaTypeResolver = androidPlatformDependencies.mediaTypeResolver
+    override val sdkInfo: SdkInfo = chatkitSdkInfo
 
 }
 
-private val Context.androidChatkitDependencies
-    get() = AndroidDependencies(applicationContext, SdkInfo(
-        product = "Chatkit",
-        sdkVersion = BuildConfig.VERSION_NAME,
-        platform = "Android",
-        language = "Kotlin/Java"
-    ))
+private val chatkitSdkInfo get() = SdkInfo(
+    product = "Chatkit",
+    sdkVersion = BuildConfig.VERSION_NAME,
+    platform = "Android",
+    language = "Kotlin/Java"
+)
