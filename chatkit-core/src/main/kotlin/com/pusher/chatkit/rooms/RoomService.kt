@@ -1,85 +1,62 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.network.parseResponseWhenReady
 import com.pusher.chatkit.network.toJson
-import com.pusher.platform.network.Promise
-import com.pusher.platform.network.asPromise
+import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
-import elements.OtherError
-import okhttp3.HttpUrl
+import elements.Errors
+import java.util.concurrent.Future
 
-typealias RoomListResult = Result<List<Room>, Error>
-typealias RoomResult = Result<Room, Error>
-typealias RoomListResultPromise = Promise<RoomListResult>
-typealias RoomPromiseResult = Promise<RoomResult>
+internal class RoomService(private val chatManager: ChatManager) {
 
-class RoomService(
-    // TODO: remove dependency to current user
-    private val currentUser: CurrentUser,
-    private val chatManager: ChatManager
-) {
-
-    fun fetchRoomBy(id: Int): RoomPromiseResult =
-        getLocalRoom(id).recover {
-            chatManager.doGet("/rooms/$id")
-                .parseResponseWhenReady()
-        }.flatMapResult { room ->
-            when {
-                room.memberUserIds.contains(currentUser.id) -> room.asSuccess()
-                else -> NoRoomMembershipError(room).asFailure<Room, Error>()
-            }.asPromise()
-        }
-
-    private fun getLocalRoom(id: Int) =
-        chatManager.roomStore[id]?.asSuccess<Room, Error>()?.asPromise()
-            .orElse { OtherError("User not found locally") }
-
-    @JvmOverloads
-    fun fetchUserRooms(onlyJoinable: Boolean = false): RoomListResultPromise =
-        chatManager.doGet("/users/${currentUser.id}/rooms?joinable=$onlyJoinable")
-            .parseResponseWhenReady<List<Room>>().onReady { result ->
-                chatManager.roomStore += result.recover { emptyList() }
+    fun fetchRoomBy(userId: String, id: Int): Future<Result<Room, Error>> =
+        getLocalRoom(id).toFuture()
+            .recoverFutureResult { chatManager.doGet("/rooms/$id") }
+            .flatMapResult { room ->
+                when {
+                    room.memberUserIds.contains(userId) -> room.asSuccess()
+                    else -> noRoomMembershipError(room).asFailure<Room, Error>()
+                }
             }
 
-
-    fun joinRoom(room: Room): RoomPromiseResult =
-        joinRoom(room.id)
-
-    fun joinRoom(roomId: Int): RoomPromiseResult =
-        chatManager.doPost(roomIdJoinPath(roomId))
-            .parseResponseWhenReady<Room>()
-            .updateStoreWhenReady()
-
-    private fun roomIdJoinPath(roomId: Int) =
-        HttpUrl.parse("https://pusherplatform.io")!!.newBuilder().addPathSegments("/users/${currentUser.id}/rooms/$roomId/join").build().encodedPath()
-
+    private fun getLocalRoom(id: Int): Result<Room, Error> =
+        chatManager.roomStore[id]
+            .orElse { Errors.other("User not found locally") }
 
     @JvmOverloads
+    fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): Future<Result<List<Room>, Error>> =
+        chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$onlyJoinable")
+            .mapResult { rooms -> rooms.also { chatManager.roomStore += it } }
+
+    fun joinRoom(userId: String, room: Room): Future<Result<Room, Error>> =
+        joinRoom(userId, room.id)
+
+    fun joinRoom(userId: String, roomId: Int): Future<Result<Room, Error>> =
+        chatManager.doPost<Room>("/users/$userId/rooms/$roomId/join")
+            .updateStoreWhenReady()
+
     fun createRoom(
+        creatorId: String,
         name: String,
-        isPrivate: Boolean = false,
-        userIds: List<String> = emptyList()
-    ): RoomPromiseResult =
+        isPrivate: Boolean,
+        userIds: List<String>
+    ): Future<Result<Room, Error>> =
         RoomCreateRequest(
             name = name,
             private = isPrivate,
-            createdById = currentUser.id,
+            createdById = creatorId,
             userIds = userIds
         ).toJson()
-            .map { body -> chatManager.doPost("/rooms", body) }
-            .fold(
-                { error -> error.asFailure<Room, Error>().asPromise() },
-                { promise -> promise.parseResponseWhenReady() }
-            )
+            .toFuture()
+            .flatMapFutureResult { body -> chatManager.doPost<Room>("/rooms", body) }
             .updateStoreWhenReady()
 
-    fun roomFor(roomAware: HasRoom) =
-        fetchRoomBy(roomAware.roomId)
+    fun roomFor(userId: String, roomAware: HasRoom) =
+        fetchRoomBy(userId, roomAware.roomId)
 
-    private fun RoomPromiseResult.updateStoreWhenReady() = onReady {
-        it.map { room ->
+    private fun Future<Result<Room, Error>>.updateStoreWhenReady() = mapResult {
+        it.also { room ->
             chatManager.roomStore += room
             populateRoomUserStore(room)
         }
@@ -95,6 +72,5 @@ interface HasRoom {
     val roomId: Int
 }
 
-data class NoRoomMembershipError(val room: Room) : Error {
-    override val reason: String = "User is not a member of ${room.name}"
-}
+private fun noRoomMembershipError(room: Room) : Error =
+    Errors.other("User is not a member of ${room.name}")

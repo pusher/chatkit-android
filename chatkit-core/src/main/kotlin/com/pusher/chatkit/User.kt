@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-class User(
+data class User(
     val id: String,
     val createdAt: String,
     var updatedAt: String,

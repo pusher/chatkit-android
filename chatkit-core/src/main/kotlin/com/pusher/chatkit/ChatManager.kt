@@ -5,28 +5,25 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.pusher.SdkInfo
-import com.pusher.annotations.UsesCoroutines
-import com.pusher.chatkit.channels.broadcast
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.network.typeToken
 import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.rooms.RoomStateMachine
 import com.pusher.chatkit.users.HasUser
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.*
-import com.pusher.platform.network.OkHttpResponsePromise
-import com.pusher.platform.network.Promise
-import com.pusher.platform.network.Promise.PromiseContext
+import com.pusher.platform.network.Futures
+import com.pusher.platform.network.wait
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
+import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
-import elements.asSystemError
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlin.properties.Delegates
+import java.util.concurrent.Future
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.SynchronousQueue
 
 private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
@@ -49,14 +46,7 @@ class ChatManager constructor(
             .create()
     }
 
-    internal val logger = dependencies.logger
-
-    // TODO: report when relevant error occurs (i.e.: failed to connect)
-    private var currentUserPromiseContext: PromiseContext<Result<CurrentUser, Error>> by Delegates.notNull()
-
-    val currentUser: Promise<Result<CurrentUser, Error>> = Promise.promise {
-        currentUserPromiseContext = this
-    }
+    private val logger = dependencies.logger
 
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
@@ -66,52 +56,51 @@ class ChatManager constructor(
     internal val userStore by lazy { GlobalUserStore() }
     internal val roomStore by lazy { RoomStore() }
 
+    private val subscriptions = mutableListOf<Subscription>()
+
     init {
         if (tokenProvider is ChatkitTokenProvider) {
             tokenProvider.userId = userId
         }
     }
 
-    fun connect(consumer: (ChatManagerEvent) -> Unit): Subscription = UserSubscription(
-        userId = userId,
-        chatManager = this,
-        path = USERS_PATH,
-        userStore = userStore,
-        tokenProvider = tokenProvider,
-        tokenParams = null,
-        logger = logger,
-        consumeEvent = { event ->
-            event.handleEvent()
-            consumer(event)
-        }
-    )
-
-    private fun ChatManagerEvent.handleEvent() {
-        when (this) {
-            is CurrentUserReceived -> currentUserPromiseContext.report(currentUser.asSuccess())
-            is ErrorOccurred -> logger.error(error.reason, error.asSystemError())
-            is RoomDeleted -> roomStore -= roomId
-            is RoomUpdated -> roomStore += room
-            is CurrentUserRemovedFromRoom -> currentUser.onReady { result ->
-                result.map { currentUser -> roomStore[roomId]?.removeUser(currentUser.id) }
+    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> = Futures.schedule {
+        val queue = SynchronousQueue<Result<CurrentUser, Error>>()
+        var waitingForUser = true
+        subscriptions += UserSubscription(
+            userId = userId,
+            chatManager = this@ChatManager,
+            path = USERS_PATH,
+            userStore = userStore,
+            tokenProvider = tokenProvider,
+            tokenParams = dependencies.tokenParams,
+            logger = logger,
+            consumeEvent = { event ->
+                consumer(event)
+                if (waitingForUser) {
+                    when (event) {
+                        is ChatManagerEvent.CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
+                        is ChatManagerEvent.ErrorOccurred -> queue.put(event.error.asFailure())
+                    }
+                }
             }
-            is CurrentUserAddedToRoom -> currentUser.onReady { result ->
-                result.map { currentUser -> room.addUser(currentUser.id) }
-            }
+        )
+        queue.take().also {
+            waitingForUser = false
         }
     }
 
-    fun messageService(room: Room): MessageService =
+    fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
+        connect(listeners.toCallback())
+
+    internal fun messageService(room: Room): MessageService =
         MessageService(room, this)
 
-    fun roomService(): Promise<Result<RoomService, Error>> =
-        currentUser.mapResult { user -> RoomService(user, this) }
+    internal fun roomService(): RoomService =
+        RoomService(this)
 
-    fun userService(): UserService =
+    internal fun userService(): UserService =
         UserService(this)
-
-    fun roomStateMachine() : RoomStateMachine =
-        RoomStateMachine(dependencies.scheduler, this)
 
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         val instance = Instance(
@@ -125,14 +114,13 @@ class ChatManager constructor(
         } ?: instance
     }
 
-    @JvmOverloads
-    internal fun doPost(path: String, body: String = ""): OkHttpResponsePromise =
+    internal inline fun <reified A> doPost(path: String, body: String = ""): Future<Result<A, Error>> =
         doRequest("POST", path, body)
 
-    internal fun doGet(path: String): OkHttpResponsePromise =
+    internal inline fun <reified A> doGet(path: String): Future<Result<A, Error>> =
         doRequest("GET", path, null)
 
-    private fun doRequest(method: String, path: String, body: String?): OkHttpResponsePromise =
+    private inline fun <reified A> doRequest(method: String, path: String, body: String?): Future<Result<A, Error>> =
         apiInstance.request(
             options = RequestOptions(
                 method = method,
@@ -140,14 +128,19 @@ class ChatManager constructor(
                 body = body
             ),
             tokenProvider = tokenProvider,
-            tokenParams = dependencies.tokenParams
+            tokenParams = dependencies.tokenParams,
+            responseParser = { it.parseAs<A>() }
         )
 
-}
+    /**
+     * Tries to close all pending subscriptions and resources
+     */
+    fun close() {
+        subscriptions.forEach { it.unsubscribe() }
+        dependencies.okHttpClient?.connectionPool()?.evictAll()
+    }
 
-@UsesCoroutines
-fun ChatManager.connectAsync(): ReceiveChannel<ChatManagerEvent> =
-    broadcast { connect { event -> offer(event) } }
+}
 
 data class Message(
     val id: Int,
@@ -182,33 +175,16 @@ data class ChatEvent(
 
 typealias CustomData = MutableMap<String, String>
 
-sealed class ChatManagerEvent {
-
-    companion object {
-        fun onError(error: Error): ChatManagerEvent = ErrorOccurred(error)
-        fun onUserJoinedRoom(user: User, room: Room): ChatManagerEvent = UserJoinedRoom(user, room)
-    }
-
-}
-
-data class CurrentUserReceived(val currentUser: CurrentUser) : ChatManagerEvent()
-data class ErrorOccurred(val error: elements.Error) : ChatManagerEvent()
-data class CurrentUserAddedToRoom(val room: Room) : ChatManagerEvent()
-data class CurrentUserRemovedFromRoom(val roomId: Int) : ChatManagerEvent()
-data class RoomDeleted(val roomId: Int) : ChatManagerEvent()
-data class RoomUpdated(val room: Room) : ChatManagerEvent()
-data class UserPresenceUpdated(val user: User, val newPresence: User.Presence) : ChatManagerEvent()
-data class UserJoinedRoom(val user: User, val room: Room) : ChatManagerEvent()
-data class UserLeftRoom(val user: User, val room: Room) : ChatManagerEvent()
-object NoEvent : ChatManagerEvent()
-
+/**
+ * Used to avoid multiple requests to the tokenProvider if one is pending
+ */
 private class DebounceTokenProvider(
     val original: TokenProvider
 ) : TokenProvider {
 
-    private var pending: Promise<Result<String, Error>>? = null
+    private var pending: Future<Result<String, Error>>? = null
 
-    override fun fetchToken(tokenParams: Any?): Promise<Result<String, Error>> = synchronized(this) {
+    override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = synchronized(this) {
         pending ?: original.fetchToken(tokenParams).also { pending = it }
     }
 

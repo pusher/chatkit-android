@@ -22,23 +22,16 @@ internal inline fun <reified A> Reader.parseAs(): Result<A, Error> = safeParse {
     GSON.fromJson<A>(this, typeToken<A>())
 }
 
-internal inline fun <reified A> String.parseAs(): Result<A, Error> = safeParse {
-    GSON.fromJson<A>(this, typeToken<A>())
-}
-
 internal inline fun <reified A> JsonElement.parseAs(): Result<A, Error> = safeParse {
     GSON.fromJson<A>(this, typeToken<A>())
 }
 
+internal inline fun <reified A> String.parseAs(): Result<A, Error> =
+    safeParse { GSON.fromJson<A>(this, typeToken<A>()) }
+
 internal fun <A> A.toJson(): Result<String, Error> = safeParse {
     GSON.toJson(this)
 }
-
-internal inline fun <reified A> Reader?.parseOr(f: () -> A): Result<A, Error> =
-    this?.parseAs() ?: f().asSuccess()
-
-internal inline fun <reified A> JsonElement?.parseOr(f: () -> A): Result<A, Error> =
-    this?.parseAs() ?: f().asSuccess()
 
 
 private fun <A> safeParse(block: () -> A): Result<A, Error> = try {
