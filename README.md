@@ -436,6 +436,7 @@ currentUser.deleteRoom(
 
 All other connected members of the room will [receive an event](#chat-events) that informs them that the room has been deleted. Any attempts to interact with a deleted room will result in an error. Note that the current user must have the `room:delete` [permission](https://docs.pusher.com/chatkit/reference/roles-and-permissions) to use this method.
 
+**Note:** Deleting a room will delete all the associated messages too.
 
 ## Subscriptions
 
