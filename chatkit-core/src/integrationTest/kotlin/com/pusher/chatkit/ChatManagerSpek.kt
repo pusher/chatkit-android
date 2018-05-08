@@ -10,18 +10,12 @@ import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.platform.network.Wait
-import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
-import elements.asSystemError
-import okhttp3.OkHttpClient
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.*
-import java.util.logging.Level
-import java.util.logging.Logger
+import java.util.concurrent.TimeUnit.SECONDS
 import elements.Error as ElementsError
 
 private val forTenSeconds = Wait.For(10, SECONDS)

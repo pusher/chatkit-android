@@ -114,6 +114,9 @@ class ChatManager constructor(
         eventConsumers += consumer
     }
 
+    internal fun messageService(room: Room): MessageService =
+        MessageService(room.id, this)
+
     internal fun roomService(): RoomService =
         RoomService(this)
 

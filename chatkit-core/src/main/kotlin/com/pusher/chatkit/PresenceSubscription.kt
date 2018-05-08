@@ -30,7 +30,7 @@ class PresenceSubscription(
         listeners = SubscriptionListeners(
             onEvent = { event ->
                 event.body
-                    .toUserPreferences()
+                    .toUserPresences()
                     .map { presences: List<UserPresence> -> presences.map { eventForPresence(it.userId, it) } }
                     .recover { error -> listOf((ErrorOccurred(error) as ChatManagerEvent).toFuture()) }
                     .forEach { consumeEvent(it.wait()) }
@@ -40,7 +40,7 @@ class PresenceSubscription(
         messageParser = { it.parseAs() }
     )
 
-    private fun ChatEvent.toUserPreferences() = when (eventName) {
+    private fun ChatEvent.toUserPresences() = when (eventName) {
         "presence_update" -> data.parseAs<UserPresence>().map { listOf(it) }
         "initial_state", "join_room_presence_update" -> data.parseAs<UserPresences>().map { it.userStates }
         else -> Errors.network("Not a valid eventName for ChatEvent: $eventName").asFailure()

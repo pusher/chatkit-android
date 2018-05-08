@@ -19,7 +19,7 @@ class CursorsSubscription(
     private fun handleCursor(event: SubscriptionEvent<ChatEvent>) {
         val chatEvent = event.body
         when(chatEvent.eventName) {
-            "curso_set" -> chatEvent.cursor
+            "cursor_set" -> chatEvent.cursor
                 .also(::handleCursorSetInternal)
                 .let { Event.OnCursorSet(it) }
                 .let(onEvent)
