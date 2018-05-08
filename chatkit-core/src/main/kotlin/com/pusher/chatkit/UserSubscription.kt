@@ -72,7 +72,7 @@ class UserSubscription(
 
     override fun unsubscribe() {
         subscription.unsubscribe()
-        currentUser?.roomSubscriptions?.forEach(RoomSubscription::unsubscribe)
+        currentUser?.roomSubscriptions?.forEach(Subscription::unsubscribe)
     }
 
     private fun getCursors(): Future<Result<Map<Int, Cursor>, Error>> =
