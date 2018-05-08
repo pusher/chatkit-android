@@ -19,6 +19,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
@@ -57,6 +58,7 @@ class ChatManager constructor(
     internal val roomStore by lazy { RoomStore() }
 
     private val subscriptions = mutableListOf<Subscription>()
+    private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {
@@ -64,37 +66,56 @@ class ChatManager constructor(
         }
     }
 
-    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> = Futures.schedule {
+    @JvmOverloads
+    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> =
+        CurrentUserConsumer()
+            .also { currentUserConsumer ->
+                eventConsumers += currentUserConsumer
+                eventConsumers += consumer
+                subscriptions += openSubscription()
+            }
+            .get()
+
+    private fun openSubscription() = UserSubscription(
+        userId = userId,
+        chatManager = this@ChatManager,
+        path = USERS_PATH,
+        userStore = userStore,
+        tokenProvider = tokenProvider,
+        tokenParams = dependencies.tokenParams,
+        logger = logger,
+        consumeEvent = { event -> eventConsumers.forEach { it(event) } }
+    )
+
+    private class CurrentUserConsumer: ChatManagerEventConsumer {
+
         val queue = SynchronousQueue<Result<CurrentUser, Error>>()
         var waitingForUser = true
-        subscriptions += UserSubscription(
-            userId = userId,
-            chatManager = this@ChatManager,
-            path = USERS_PATH,
-            userStore = userStore,
-            tokenProvider = tokenProvider,
-            tokenParams = dependencies.tokenParams,
-            logger = logger,
-            consumeEvent = { event ->
-                consumer(event)
-                if (waitingForUser) {
-                    when (event) {
-                        is ChatManagerEvent.CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
-                        is ChatManagerEvent.ErrorOccurred -> queue.put(event.error.asFailure())
-                    }
+
+        override fun invoke(event: ChatManagerEvent) {
+            if (waitingForUser) {
+                when (event) {
+                    is ChatManagerEvent.CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
+                    is ChatManagerEvent.ErrorOccurred -> queue.put(event.error.asFailure())
                 }
             }
-        )
-        queue.take().also {
-            waitingForUser = false
         }
+
+        fun get() = Futures.schedule {
+            queue.take().also { waitingForUser = false }
+        }
+
     }
 
     fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
         connect(listeners.toCallback())
 
+    internal fun observerEvents(consumer: ChatManagerEventConsumer) {
+        eventConsumers += consumer
+    }
+
     internal fun messageService(room: Room): MessageService =
-        MessageService(room, this)
+        MessageService(room.id, this)
 
     internal fun roomService(): RoomService =
         RoomService(this)
@@ -117,8 +138,14 @@ class ChatManager constructor(
     internal inline fun <reified A> doPost(path: String, body: String = ""): Future<Result<A, Error>> =
         doRequest("POST", path, body)
 
+    internal inline fun <reified A> doPut(path: String, body: String = ""): Future<Result<A, Error>> =
+        doRequest("PUT", path, body)
+
     internal inline fun <reified A> doGet(path: String): Future<Result<A, Error>> =
         doRequest("GET", path, null)
+
+    internal inline fun <reified A> doDelete(path: String): Future<Result<A, Error>> =
+        doRequest("DELETE", path, null)
 
     private inline fun <reified A> doRequest(method: String, path: String, body: String?): Future<Result<A, Error>> =
         apiInstance.request(
@@ -138,6 +165,26 @@ class ChatManager constructor(
     fun close() {
         subscriptions.forEach { it.unsubscribe() }
         dependencies.okHttpClient?.connectionPool()?.evictAll()
+        eventConsumers.clear()
+    }
+
+
+
+}
+
+internal interface HasChat {
+
+    val chatManager: ChatManager
+
+    fun Future<Result<Room, Error>>.updateStoreWhenReady() = mapResult {
+        it.also { room ->
+            chatManager.roomStore += room
+            populateRoomUserStore(room)
+        }
+    }
+
+    fun populateRoomUserStore(room: Room) {
+        chatManager.userService().populateUserStore(room.memberUserIds)
     }
 
 }
@@ -166,7 +213,7 @@ data class Cursor(
     val updatedAt: String
 ) : HasUser, HasRoom
 
-data class ChatEvent(
+internal data class ChatEvent(
     val eventName: String,
     override val userId: String = "",
     val timestamp: String,
