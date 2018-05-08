@@ -36,6 +36,19 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
    * [Room subscription events](#room-subscription-events)
    * [Cancel a subscription](#cancel-a-subscription)
  * [Users](#users)
+ * [Messages](#messages)
+   * [Sending a message](#sending-a-message)
+ * [Attachment](#attachment)
+   * [Fetching an attachment](#fetching-an-attachment)
+ * [Typing indicators](#typing-indicators)
+   * [Trigger a typing event](#trigger-a-typing-event)
+   * [Receive typing indicators](#receive-typing-indicators)
+ * [User presence](#user-presence)
+ * [Cursors](#cursors)
+   * [Setting a cursor](#setting-a-cursor)
+   * [Getting a cursor](#getting-a-cursor)
+   * [Access other user's cursor](#access-other-user's-cursors)
+ * [Logger](#logger)
  * [Development Build](#development-build)
  
 
@@ -518,9 +531,38 @@ Rooms contain a list of user ids, to resolve these you can use this:
 currentUser.usersforRoom(someRoom)
 ```
  
- ## Messages
+## Messages
  
- 
+### Message properties
+
+### Sending a message
+
+## Attachment
+
+### Attachment properties
+
+### Fetching an attachment
+
+## Typing indicators
+
+### Trigger a typing event
+
+### Receive typing indicators
+
+## User presence
+
+## Cursors
+
+### Cursor properties
+
+### Setting a cursor
+
+### Getting a cursor
+
+### Access other user's cursors
+
+## Logger
+
 
 
 ## Development build
