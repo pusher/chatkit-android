@@ -16,7 +16,7 @@ data class Room(
     val memberUserIds: Set<String>
         get() = memberUserIds()
 
-    internal fun memberUserIds(): MutableSet<String> = _memberUserIds
+    private fun memberUserIds(): MutableSet<String> = _memberUserIds
         ?: mutableSetOf<String>().also { _memberUserIds = it }
 
     fun removeUser(userId: String) {

@@ -180,11 +180,14 @@ class CurrentUser(
     ): Future<Result<Int, Error>> =
         chatManager.messageService(roomId).sendMessage(id, messageText, attachment)
 
-    fun getJoinablerooms() =
+    fun getJoinablerooms(): Future<Result<List<Room>, Error>> =
         chatManager.roomService().fetchUserRooms(
             userId = id,
             onlyJoinable = true
         )
+
+    fun usersForRoom(room: Room): Future<Result<List<User>, Error>> =
+        chatManager.userService().fetchUsersBy(room.memberUserIds)
 
     fun close() {
         roomSubscriptions.forEach { it.unsubscribe() }

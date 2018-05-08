@@ -34,6 +34,8 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
    * [Delete a Room](#delete-a-room)
  * [Subscriptions](#subscriptions)
    * [Room subscription events](#room-subscription-events)
+   * [Cancel a subscription](#cancel-a-subscription)
+ * [Users](#users)
  * [Development Build](#development-build)
  
 
@@ -491,13 +493,35 @@ This is the full list of available events from a room subscription:
  
 Each of the events have a relevant listener that can be set on `RoomSubscriptionListeners`
  
-### Cancel Subscription
+### Cancel a subscription
 
 The `subscribeToRoom` function returns a `Subscription` that can be cancelled by calling `subscription.unsubscribe()` when the subscription is no longer needed.
 
 Alternatively, it is possible to close all active subscriptions by calling `chatManager.cancel()`, which will close all these subscriptions.
 
 ## Users
+
+User objects can be found in various places: globally under `currentUser.users` or returned as the argument to some callbacks.
+
+### User properties
+
+ | Property  | Type     | Description                                                                             |
+ |-----------|----------|-----------------------------------------------------------------------------------------|
+ | id        | String   | The unique identifier for the user on the instance.                                     |
+ | name      | String   | The human readable name of the user. This is not required to be unique.                 |
+ | avatarUrl | String   | The location (url) of an avatar for the user.                                           |
+ | presence  | Presence | An object containing information regarding the users presence state. See user presence. |
+ 
+Rooms contain a list of user ids, to resolve these you can use this:
+
+```kotlin
+currentUser.usersforRoom(someRoom)
+```
+ 
+ ## Messages
+ 
+ 
+
 
 ## Development build
 
