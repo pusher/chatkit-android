@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.users.userService
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
@@ -31,7 +32,7 @@ class PresenceSubscription(
             onEvent = { event ->
                 event.body
                     .toUserPresences()
-                    .map { presences: List<UserPresence> -> presences.map { eventForPresence(it.userId, it) } }
+                    .map { presences: List<UserPresence> -> presences.map { eventForPresence(it.userId, it.presence) } }
                     .recover { error -> listOf((ErrorOccurred(error) as ChatManagerEvent).toFuture()) }
                     .forEach { consumeEvent(it.wait()) }
             },
@@ -46,13 +47,19 @@ class PresenceSubscription(
         else -> Errors.network("Not a valid eventName for ChatEvent: $eventName").asFailure()
     }
 
-    private fun eventForPresence(userId: String, presence: UserPresence): Future<ChatManagerEvent> =
+    private fun eventForPresence(userId: String, presence: User.Presence): Future<ChatManagerEvent> =
         chatManager.userService().fetchUserBy(userId)
             .mapResult { user ->
-                user.takeIf { it.online != presence.isOnline() }
-                    ?.also { it.online = presence.isOnline() }
-                    ?.let { if (it.online) UserCameOnline(it) else UserWentOffline(it) }
-                    ?: NoEvent
+                user.takeIf { it.presence != presence }
+                    ?.also { it.presence = presence }
+                    ?.presence
+                    .let { userPresence ->
+                        when (userPresence) {
+                            User.Presence.Online -> UserCameOnline(user)
+                            User.Presence.Offline -> UserWentOffline(user)
+                            null -> NoEvent
+                        }
+                    }
             }
             .map { it.recover { error -> ErrorOccurred(error) } }
 
@@ -62,8 +69,20 @@ class PresenceSubscription(
     }
 }
 
-data class UserPresence(val state: String, val lastSeenAt: String, val userId: String) {
+data class UserPresence(
+    private val state: String,
+    val lastSeenAt: String,
+    val userId: String
+) {
+
+    val presence: User.Presence
+        get() = when(state) {
+            "online" -> User.Presence.Online
+            else -> User.Presence.Offline
+        }
+
     fun isOnline(): Boolean = state.equals(other = "online", ignoreCase = true)
+
 }
 
 data class UserPresences(val userStates: List<UserPresence>)

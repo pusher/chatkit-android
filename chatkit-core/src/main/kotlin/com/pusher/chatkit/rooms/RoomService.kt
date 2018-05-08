@@ -9,6 +9,9 @@ import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
+internal fun ChatManager.roomService(): RoomService =
+    RoomService(this)
+
 internal class RoomService(override val chatManager: ChatManager) : HasChat {
 
     fun fetchRoomBy(userId: String, id: Int): Future<Result<Room, Error>> =

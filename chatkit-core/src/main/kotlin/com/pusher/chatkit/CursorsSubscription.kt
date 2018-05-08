@@ -1,5 +1,6 @@
 package com.pusher.chatkit
 
+import com.pusher.chatkit.users.userService
 import com.pusher.platform.SubscriptionListeners
 import elements.*
 

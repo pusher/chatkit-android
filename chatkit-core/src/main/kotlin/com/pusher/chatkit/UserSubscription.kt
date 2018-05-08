@@ -3,6 +3,7 @@ package com.pusher.chatkit
 import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.users.UserSubscriptionEventParser
+import com.pusher.chatkit.users.userService
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger

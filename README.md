@@ -344,11 +344,11 @@ currentUser.addUsersToRoom(
   userIds = listOf("keith"),
   room = someRoom
 ).wait().let { result -> 
-   when(result) { // Result<Unit, Error>
-     is Result.Success -> toast("Successfully added users.")
-     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
-   }
- }
+  when(result) { // Result<Unit, Error>
+    is Result.Success -> toast("Successfully added users.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
 ```
 
 ### Remove user from a Room
@@ -360,11 +360,11 @@ currentUser.removeUsersFromRoom(
   userIds = listOf("keith"),
   room = someRoom
 ).wait().let { result -> 
-   when(result) { // Result<Unit, Error>
-     is Result.Success -> toast("Successfully removed users.")
-     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
-   }
- }
+  when(result) { // Result<Unit, Error>
+    is Result.Success -> toast("Successfully removed users.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
 ```
 
 ### Get joinable Rooms
@@ -395,7 +395,7 @@ currentUser.joinRoom(
     is Result.Success -> toast("CurrentUser joined room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
- }
+}
 ```
 
 ### Leaving a Room
@@ -410,7 +410,7 @@ currentUser.leaveRoom(
     is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
- }
+}
 ```
 
 
@@ -424,11 +424,11 @@ currentUser.updateRoom(
   name = "Some updated name",
   private = false // Optional
 ).let { result -> 
-   when(result) { // Result<Unit, Error>
-     is Result.Success -> toast("Updated room.")
-     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
-   }
+  when(result) { // Result<Unit, Error>
+    is Result.Success -> toast("Updated room.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
+}
 ```
 
 All other connected members of the room will [receive an event](#chat-events) that informs them that the room has been updated. Note that the current user must have the `room:update` [permission](https://docs.pusher.com/chatkit/reference/roles-and-permissions) to use this method.
@@ -443,11 +443,11 @@ Delete a room with ID `someRoomId`:
 currentUser.deleteRoom(
   roomId = someRoomId
 ).let { result -> 
-    when(result) { // Result<Unit, Error>
-      is Result.Success -> toast("Updated room.")
-      is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
-    }
-   }
+  when(result) { // Result<Unit, Error>
+    is Result.Success -> toast("Updated room.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
 ```
 
 All other connected members of the room will [receive an event](#chat-events) that informs them that the room has been deleted. Any attempts to interact with a deleted room will result in an error. Note that the current user must have the `room:delete` [permission](https://docs.pusher.com/chatkit/reference/roles-and-permissions) to use this method.
@@ -466,7 +466,7 @@ currentUser.subscribeToRoom(
   listeners = Roomsubscription(
     onNewMesage = { message -> toast("${message.userId} says: ${message.text}") },
     onErrorOccurred = { error -> toast("Oops something bad happened: $error") }
-  )
+  ),
   messageLimit = 10 // Optional, 10 by default
 )
 ```
@@ -533,37 +533,252 @@ currentUser.usersforRoom(someRoom)
  
 ## Messages
  
+Every message belongs to a [Room](#rooms) and has an associated sender, which is represented by a [User](#users) object. Files can be sent along with a messages by specifying an [Attachment](#attachment) property.
+ 
 ### Message properties
+
+ | Property   | Type       | Description                                            |
+ |------------|------------|--------------------------------------------------------|
+ | id         | Int        | The Id assigned to the message by the Chatkit servers. |
+ | text       | String     | The text content of the message if present.            |
+ | attachment | Attachment | The message’s attachment if present.                   |                      
+ | sender     | User       | The user who sent the message.                         |
+ | room       | Room       | The room to which the message belongs.                 |
+ | createdAt  | String     | The timestamp at which the message was created.        |
+ | updatedAt  | String     | The timestamp at which the message was last updated.   |
 
 ### Sending a message
 
+To send a message:
+
+```kotlin
+currentUser.sendMessage(
+  room = someRoom, // also available as roomId: Int
+  messageTest = "Hi there! 👋",
+  attachment = NoAttachment // Optional, NoAttachment by default
+).wait().let { result -> 
+  when(result) { // Result<Int, Error>, either the new message id or an error
+    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
+An attachment can be added when you send a message. This can be done in one of two ways:
+
+1. Provide some data (of type [File], most likely) along with a name for the data that will be used as the name of the file that is stored by the Chatkit servers.
+
+This is how you send a message with an attachment of this kind:
+
+```kotlin
+currentUser.sendMessage(
+  room = someRoom,
+  messageTest = "Hi there! 👋",
+  attachment = DataAttachment(
+    file = File("file/path.jpg"),
+    name = "file-name" // optional, "file" by default
+  )
+).wait().let { result -> 
+  when(result) { // Result<Int, Error>, either the new message id or an error
+    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
+
+Note that the resulting type will be inferred automatically by Chatkit servers. If the type of the file is unable to be determined then it will be given a type of `file`.
+
+2. Provide a link along with a type that describes the attachment. As above, this would be one of `image`, `video`, `audio`, or `file`.
+
+This is how you send a message with an attachment of this kind:
+
+```kotlin
+currentUser.sendMessage(
+  room = someRoom,
+  messageTest = "Hi there! 👋",
+  attachment = LinkAttachment(
+    link = File("file/path.jpg"),
+    type = AttachmentType.IMAGE
+  )
+).wait().let { result -> 
+  when(result) { // Result<Int, Error>, either the new message id or an error
+    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
+
 ## Attachment
+
+It is possible for users to attach files to messages. If a message has an attachment you will most likely have to fetch it before you can use it. This will give you the actual URL of the resource.
 
 ### Attachment properties
 
+ | Property      | Type            | Description                                                                                   |
+ |---------------|-----------------|-----------------------------------------------------------------------------------------------|
+ | link          | String          | The link representing the location of the attachment.                                         |
+ | type          | AttachmentType  | The type of the attachment; one of image, video, audio, or file.                              |
+ | fetchRequired | Boolean         | If the attachment link needs to be fetched from the Chatkit servers; see Fetch an Attachment. |
+
 ### Fetching an attachment
+
+If a message contains an attachment with the `fetchRequired` property set to `true`, then `attachment.link` cannot be used directly. We must first fetch the URL of the attachment itself using `fetchAttachment`.
+
+```kotlin
+currentUser.fetchAttachment(
+  attachmentUrl = message.link
+).wait().let { result -> // Future<Result<FetchedAttachment, Error>>
+  when(result) { // Result<Int, Error>, either the new message id or an error
+    is Result.Success -> toast("Loaded attachment: ${result.value.link}.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
 
 ## Typing indicators
 
+Sometimes it’s useful to be able to see if another user is typing. You can use Chatkit to let all the connected members of a room know when another user is typing.
+
 ### Trigger a typing event
+
+To send typing indicator events call `isTypingIn` with the id of the room the current user is typing in.
+
+```kotlin
+currentUser.isTypingIn(
+  roomId = room.id
+).wait().let { result -> // Future<Result<FetchedAttachment, Error>>
+   when(result) { // Result<Int, Error>, either the new message id or an error
+     is Result.Success -> toast("Success!")
+     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+   }
+ }
+```
 
 ### Receive typing indicators
 
+To be notified when a user starts or stops typing in a room, provide a `onUserStartedTyping` and a `onUserStoppedTyping` function as part of the room subscription listener.
+
+```kotlin
+RoomSubscription(
+  onUserStartedTyping = { user -> toast("User ${user.name} started typing") },
+  onUserStoppedTyping = { user -> toast("User ${user.name} stopped typing") }
+)
+```
+
+Alternatively, if you are using an event callback:
+
+```kotlin
+{ event -> 
+  when(event) {
+    is UserStartedTyping -> toast("User ${event.user.name} started typing")
+    is UserStoppedTyping -> toast("User ${event.user.name} stopped typing")
+  
+  } 
+}
+```
+
 ## User presence
+
+If a user has at least one active connection to the Chatkit service then they are considered online. When a user has no active connections they are considered offline. Each [user object](#users) keeps track of whether a user is online or offline via the presence property.
+
+```kotlin
+if(user.presence is User.Presence.Online) {
+  // The user is online! Show an online badge or something...
+}
+```
+
+Additionally, to be notified when a user comes online or goes offline, you can provide the `onUserCameOnline` and `onUserWentOffline` listeners or match the `UserCameOnline` and `UserWentOffline` events. Either at the [room level](#room-subscription-events) – fires whenever a member of that room goes on or off line, or at the [connection level](#connecting) – fires whenever any users sharing a common room membership go on or offline.
+
+```kotlin
+chatManager.connect { event ->
+  when(event) {
+    is UserCameOnline -> toast("User ${event.user.name} came online.")
+    is UserVentOffline -> toast("User ${event.user.name} went offline.")
+  } 
+}
+```
 
 ## Cursors
 
+Read cursors track how far a user has read through the messages in a room. Each read cursor belongs to a user and a room – represented by a `Cursor` object.
+
 ### Cursor properties
+
+
+ | Property  | Type             | Description                                                                     |
+ |-----------|------------------|---------------------------------------------------------------------------------|
+ | position  | String           | The [message](#messages) ID that the user has read up to.                       |
+ | updatedAt | String           | The timestamp when the cursor was last set.                                     |
+ | room      | Int (room id)    | The [room](#rooms) that the cursor refers to.                                   |
+ | user      | String (user id) | The [user](#users) that the cursor belongs to.                                  |
+ | type      | Int              | The type of the cursor object, currently always 0 (representing a read cursor). |
 
 ### Setting a cursor
 
+When you are confident that the current user has “read” a message, call `setReadCursor` with a `roomId` and a `position` (the id of the newest message that has been “read”).
+
+```kotlin
+currentUser.setReadCursor(
+  roomId = someRoomId,
+  position = someMessageId
+).wait().let { result -> // Future<Result<Boolean, Error>>
+  when(result) { // Result<Int, Error>, either the new message id or an error
+    is Result.Success -> toast("Cursor set!")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
+
 ### Getting a cursor
+
+The current user’s read cursors are available immediately upon connecting. Access any existing cursors with the `readCursor` function. (A cursor that hasn’t been set yet is undefined.)
+
+```kotlin
+currentUser.readCursor(
+  roomId: romroomId
+)
+```
+
+**Note:** To be notified when any of the current user’s read cursors are changed, supply an `onNewReadCursor` listener on connection or match for `NewReadCursor` events.
 
 ### Access other user's cursors
 
+After subscribing to a room, read cursors for members of that room can be accessed by supplying a `userId` as the second parameter to the `readCursor` method.
+
+```kotlin
+currentUser.readCursor(
+  roomId: romroomId,
+  userId: "alice"
+).wait().let { result -> // Future<Result<Boolean, Error>>
+  when(result) { // Result<Int, Error>, either the new message id or an error
+    is Result.Success -> toast("Cursor set!")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
+
+To be notified when any member of the room changes their read cursor, supply an `onNewReadCursor` listener [when subscribing to the room](#room-subscription-events) or match the `NewReadCursor` event.
+
 ## Logger
 
+As part of `ChatManager` dependencies a custom logger can be provided:
 
+```kotlin
+val chatManager = ChatManager(
+    instanceLocator = INSTANCE_LOCATOR, 
+    userId = USER_ID,
+    dependencies = AndroidChatkitDependencies(
+        context = getApplicationContext(),
+        tokenProvider = ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT),
+        logger = object : Logger {
+          fun verbose(message: String, error: Error? = null) = println("V: $message")
+          fun debug(message: String, error: Error? = null) = println("D: $message")
+          fun info(message: String, error: Error? = null) = println("I: $message")
+          fun warn(message: String, error: Error? = null) = println("W: $message")
+          fun error(message: String, error: Error? = null) = println("E: $message")
+        }
+    )
+)
+```
 
 ## Development build
 

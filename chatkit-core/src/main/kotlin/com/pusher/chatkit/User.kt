@@ -8,8 +8,12 @@ data class User(
     var name: String?,
     var avatarURL: String?,
     var customData: CustomData?,
-    var online: Boolean = false
+    private var online: Boolean = false
 ) {
+
+    var presence: User.Presence
+        get() = if(online) Presence.Online else Presence.Offline
+        set(value) { online = value === Presence.Online }
 
     sealed class Presence {
         object Online : Presence()

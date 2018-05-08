@@ -5,16 +5,13 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.network.typeToken
 import com.pusher.chatkit.rooms.HasRoom
-import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.HasUser
-import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.userService
 import com.pusher.platform.*
+import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
-import com.pusher.platform.network.wait
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
@@ -23,7 +20,6 @@ import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
-import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.SynchronousQueue
 
 private const val USERS_PATH = "users"
@@ -114,15 +110,6 @@ class ChatManager constructor(
         eventConsumers += consumer
     }
 
-    internal fun messageService(room: Room): MessageService =
-        MessageService(room.id, this)
-
-    internal fun roomService(): RoomService =
-        RoomService(this)
-
-    internal fun userService(): UserService =
-        UserService(this)
-
     private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         val instance = Instance(
             locator = instanceLocator,
@@ -135,19 +122,38 @@ class ChatManager constructor(
         } ?: instance
     }
 
-    internal inline fun <reified A> doPost(path: String, body: String = ""): Future<Result<A, Error>> =
-        doRequest("POST", path, body)
+    internal inline fun <reified A> doPost(
+        path: String,
+        body: String = "",
+        noinline responseParser: DataParser<A> = { it.parseAs() }
+    ): Future<Result<A, Error>> =
+        doRequest("POST", path, body, responseParser)
 
-    internal inline fun <reified A> doPut(path: String, body: String = ""): Future<Result<A, Error>> =
-        doRequest("PUT", path, body)
+    internal inline fun <reified A> doPut(
+        path: String,
+        body: String = "",
+        noinline responseParser: DataParser<A> = { it.parseAs() }
+    ): Future<Result<A, Error>> =
+        doRequest("PUT", path, body, responseParser)
 
-    internal inline fun <reified A> doGet(path: String): Future<Result<A, Error>> =
-        doRequest("GET", path, null)
+    internal inline fun <reified A> doGet(
+        path: String,
+        noinline responseParser: DataParser<A> = { it.parseAs() }
+    ): Future<Result<A, Error>> =
+        doRequest("GET", path, null, responseParser)
 
-    internal inline fun <reified A> doDelete(path: String): Future<Result<A, Error>> =
-        doRequest("DELETE", path, null)
+    internal inline fun <reified A> doDelete(
+        path: String,
+        noinline responseParser: DataParser<A> = { it.parseAs() }
+    ): Future<Result<A, Error>> =
+        doRequest("DELETE", path, null, responseParser)
 
-    private inline fun <reified A> doRequest(method: String, path: String, body: String?): Future<Result<A, Error>> =
+    private fun <A> doRequest(
+        method: String,
+        path: String,
+        body: String?,
+        responseParser: DataParser<A>
+    ): Future<Result<A, Error>> =
         apiInstance.request(
             options = RequestOptions(
                 method = method,
@@ -156,7 +162,7 @@ class ChatManager constructor(
             ),
             tokenProvider = tokenProvider,
             tokenParams = dependencies.tokenParams,
-            responseParser = { it.parseAs<A>() }
+            responseParser = responseParser
         )
 
     /**
@@ -167,8 +173,6 @@ class ChatManager constructor(
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
     }
-
-
 
 }
 

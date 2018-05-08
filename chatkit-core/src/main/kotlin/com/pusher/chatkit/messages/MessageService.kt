@@ -52,8 +52,12 @@ internal class MessageService(
 
     private fun GenericAttachment.asAttachmentBody(): Future<Result<AttachmentBody, Error>> = when (this) {
         is DataAttachment -> uploadFile(this, roomId)
-        is LinkAttachment -> Futures.now(AttachmentBody.Resource(link, type).asSuccess<AttachmentBody, elements.Error>())
-        is NoAttachment -> Futures.now(AttachmentBody.None.asSuccess<AttachmentBody, Error>())
+        is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
+            .asSuccess<AttachmentBody, elements.Error>()
+            .toFuture()
+        is NoAttachment -> AttachmentBody.None
+            .asSuccess<AttachmentBody, Error>()
+            .toFuture()
     }
 
     private fun uploadFile(

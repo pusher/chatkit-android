@@ -3,6 +3,7 @@ package com.pusher.chatkit
 import com.google.gson.JsonElement
 import com.pusher.chatkit.RoomSubscriptionEvent.*
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.rooms.roomService
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
 import com.pusher.platform.network.wait

@@ -2,16 +2,21 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
+import com.pusher.chatkit.cursors.cursorService
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.messageService
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.network.toJson
+import com.pusher.chatkit.rooms.roomService
+import com.pusher.chatkit.users.userService
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
+import com.pusher.platform.network.toFuture
 import com.pusher.platform.tokenProvider.TokenProvider
-import com.pusher.util.Result
-import com.pusher.util.mapResult
+import com.pusher.util.*
 import elements.Error
+import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
@@ -36,7 +41,10 @@ class CurrentUser(
         .flatMap { it.memberUserIds }
         .let { ids -> chatManager.userService().fetchUsersBy(ids.toSet()) }
 
-    private val roomSubscriptions = mutableListOf<Subscription>()
+    private val roomSubscriptions = mutableMapOf<Int, Subscription>()
+
+    internal fun isSubscribedToRoom(roomId: Int): Boolean =
+        roomSubscriptions.containsKey(roomId)
 
     fun updateWithPropertiesOf(newUser: User) {
         name = newUser.name
@@ -53,29 +61,34 @@ class CurrentUser(
         consumeEvent = consumeEvent
     )
 
-    fun setCursor(
-        position: Int,
-        room: Room
-    ): Future<Result<Boolean, Error>> = cursorsInstance.request<String>(
-        options = RequestOptions(
-            method = "PUT",
-            path = "/cursors/0/rooms/${room.id}/users/$id",
-            body = GSON.toJson(SetCursorRequest(position))
-        ),
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        responseParser = { it.parseAs() }
-    ).mapResult { true }
+    fun setReadCursor(
+        room: Room,
+        position: Int
+    ): Future<Result<Boolean, Error>> =
+        setReadCursor(room.id, position)
 
-    fun fetchAttachment(attachmentUrl: String) = filesInstance.request<FetchedAttachment>(
-        options = RequestOptions(
-            method = "GET",
-            destination = RequestDestination.Absolute(attachmentUrl)
-        ),
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        responseParser = { it.parseAs() }
-    )
+    fun setReadCursor(
+        roomId: Int,
+        position: Int
+    ): Future<Result<Boolean, Error>> =
+        chatManager.cursorService(this).setReadCursor(roomId, position)
+
+    fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
+        chatManager.cursorService(this).getReadCursor(roomId)
+
+    fun getReadCursor(room: Room) : Result<Cursor, Error> =
+        chatManager.cursorService(this).getReadCursor(room)
+
+    fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
+        filesInstance.request(
+            options = RequestOptions(
+                method = "GET",
+                destination = RequestDestination.Absolute(attachmentUrl)
+            ),
+            tokenProvider = tokenProvider,
+            tokenParams = tokenParams,
+            responseParser = { it.parseAs<FetchedAttachment>() }
+        )
 
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
         chatManager.userService().addUsersToRoom(roomId, userIds)
@@ -152,7 +165,7 @@ class CurrentUser(
         consumer: RoomSubscriptionConsumer
     ): Subscription =
         chatManager.roomService().subscribeToRoom(id, roomId, consumer, messageLimit)
-            .also { roomSubscriptions += it }
+            .also { roomSubscriptions += roomId to it }
 
     @JvmOverloads
     fun fetchMessages(
@@ -180,6 +193,27 @@ class CurrentUser(
     ): Future<Result<Int, Error>> =
         chatManager.messageService(roomId).sendMessage(id, messageText, attachment)
 
+    private var lastTypingEvent: Long = 0
+
+    private fun canSendTypingEvent() =
+        (System.currentTimeMillis() - lastTypingEvent) > TYPING_TIME_THRESHOLD
+
+    fun isTypingIn(room: Room): Future<Result<Unit, Error>> =
+        isTypingIn(room.id)
+
+    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> =
+        TypingIndicatorBody(id).toJson().toFuture()
+            .takeIf { canSendTypingEvent() }
+            ?.flatMapFutureResult { body ->
+                chatManager.doPost<Unit>("/rooms/$roomId/events", body)
+                    .also { lastTypingEvent = System.currentTimeMillis() }
+            } ?: Unit.asSuccess<Unit, Error>().toFuture()
+
+    internal data class TypingIndicatorBody(
+        val userId: String,
+        val name: String = "typing_start"
+    )
+
     fun getJoinablerooms(): Future<Result<List<Room>, Error>> =
         chatManager.roomService().fetchUserRooms(
             userId = id,
@@ -190,7 +224,8 @@ class CurrentUser(
         chatManager.userService().fetchUsersBy(room.memberUserIds)
 
     fun close() {
-        roomSubscriptions.forEach { it.unsubscribe() }
+        roomSubscriptions.values.forEach { it.unsubscribe() }
+        roomSubscriptions.clear()
     }
 
 }
@@ -219,3 +254,5 @@ data class FetchedAttachment(
 )
 
 data class FetchedAttachmentFile(val bytes: Int, val lastModified: Double, val name: String)
+
+private const val TYPING_TIME_THRESHOLD = 500

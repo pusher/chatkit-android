@@ -8,6 +8,10 @@ import elements.Error
 import elements.Errors
 import java.util.concurrent.Future
 
+
+internal fun ChatManager.userService(): UserService =
+    UserService(this)
+
 internal class UserService(
     override val chatManager: ChatManager
 ) : HasChat {
