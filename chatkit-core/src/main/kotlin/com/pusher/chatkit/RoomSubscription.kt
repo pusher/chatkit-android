@@ -10,15 +10,13 @@ import elements.Subscription
 import elements.SubscriptionEvent
 import java.net.URL
 
-class RoomSubscription internal constructor(
-    room: Room,
+internal class RoomSubscription(
+    roomId: Int,
     userId: String,
     private val listeners: RoomSubscriptionListeners,
     chatManager: ChatManager,
     messageLimit: Int
 ) : Subscription {
-
-    private val roomId = room.id
 
     private val subscription = chatManager.apiInstance.subscribeResuming(
         path = "/rooms/$roomId?user_id=$userId&message_limit=$messageLimit",

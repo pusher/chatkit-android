@@ -24,6 +24,15 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
  * [CurrentUser](#currentuser)
  * [Rooms](#rooms)
    * [Creating a room](#creating-a-room)
+   * [Fetching messages for a Room](#fetching-messages-for-a-room)
+   * [Add User to a Room](#add-user-to-a-room)
+   * [Remove user from a Room](#remove-user-from-a-room)
+   * [Get joinable Rooms](#get-joinable-rooms)
+   * [Joining a Room](#joining-a-room)
+   * [Leaving a Room](#leaving-a-room)
+   * [Update a Room](#update-a-room)
+   * [Delete a Room](#delete-a-room)
+ * [Subscriptions](#subscriptions)
  * [Development Build](#development-build)
  
 
@@ -113,7 +122,7 @@ To consume the result we can do this:
 
 ```kotlin
 chatManager.connect().wait().let { result ->
-    when(result) {
+    when(result) { // Result<CurrentUser, Error>
       is Result.Success -> toast("User received: ${result.value.name})")
       is Result.Failure -> toast("Oops: ${result.error})")
     }
@@ -139,7 +148,7 @@ suspend fun ChatManager.connectForUser(): Result<CurrentUser, Error> =
 
 suspend fun ChatManager.connectForUser(): CurrentUser = suspendCoroutine { c ->
   connect().wait().let { result ->
-    when(result) {
+    when(result) { // Result<CurrentUser, Error>
       is Result.Success -> c.resume(result.value)
       is Result.Failure -> c.resumeWithException(RuntimeException(result.error.reason))
     }
@@ -152,7 +161,7 @@ If you use `RxJava` you can wrap this inside a Single:
 ```kotlin
 fun ChatManager.connectForUser(): Single<CurrentUser> = Single.create { emitter ->
   connect().wait().let { result ->
-    when(result) {
+    when(result) { // Result<CurrentUser, Error>
       is Result.Success -> emitter.onSuccess(result.value)
       is Result.Failure -> emitter.onError(RuntimeException(result.error.reason))
     }
@@ -277,10 +286,162 @@ currentUser.createRoom(
 )
 ```
 
+### Fetching messages for a Room
+
+You can fetch up to the last 100 messages added to a room when you subscribe (Using `messageLimit`) but sometimes you’ll want to fetch older messages. For example, suppose you subscribe to a room and the oldest message you see has the ID 42. To see older messages, you can provide the initialId option to the fetchMessages method.
+
+```kotlin
+currentUser.fetchMessages(
+  room = someRoom,
+  initialId = 42, // Optional
+  direction = NEWER_FIRST, // Optional, OLDER_FIRST by default
+  limit = 20 // Optional, 10 by default
+).wait().let { result -> 
+  when(result) { // Result<List<Message>, Error>
+    is Result.Success -> toast("Mesages ${result.value} received.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+}
+```
+
+Instead of a room instance it is also possible to fetch messages using the room id.
+
+```kotlin
+currentUser.fetchMessages(roomId = 123)
+```
+
+The full set of options follows:
+
+ | Property    | Type                 | Description                                                                        |
+ |-------------|----------------------|------------------------------------------------------------------------------------|
+ | initialId   | Int (Optional)       | A message ID that defaults to the most recent message ID.                          |
+ | direction   | Direction (Optional) | Defaults to `OLDER_FIRST`, dictates the direction of the messages being returned.  |
+ | limit       | Int (Optional)       | Limits the number of messages that we get back, defaults to 10.                    |
+ 
+ 
+### Add User to a Room
+
+The current user can add users to rooms that they themselves are a member of.
+
+```kotlin
+currentUser.addUsersToRoom(
+  userIds = listOf("keith"),
+  room = someRoom
+).wait().let { result -> 
+   when(result) { // Result<Unit, Error>
+     is Result.Success -> toast("Successfully added users.")
+     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+   }
+ }
+```
+
+### Remove user from a Room
+
+The current user can remove users from rooms that they themselves are a member of.
+
+```kotlin
+currentUser.removeUsersFromRoom(
+  userIds = listOf("keith"),
+  room = someRoom
+).wait().let { result -> 
+   when(result) { // Result<Unit, Error>
+     is Result.Success -> toast("Successfully removed users.")
+     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+   }
+ }
+```
+
+### Get joinable Rooms
+
+To fetch a list of the rooms that a user is able to join (but isn’t yet a member of):
+
+
+```kotlin
+currentUser.getJoinableRooms().wait().let { result -> 
+ when(result) {  // Result<List<Room>, Error>
+   is Result.Success -> toast("The user can join ${result.value}.")
+   is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+ }
+}
+```
+
+The rooms returned will be a list of the public rooms which the `currentUser` is not a member of.
+
+### Joining a Room
+
+Join a room with ID `someRoomId`:
+
+```kotlin
+currentUser.joinRoom(
+  roomId = someRoomId
+).wait().let { result -> 
+  when(result) { // Result<Room, Error>
+    is Result.Success -> toast("CurrentUser joined room: ${result.value.name}.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+ }
+```
+
+### Leaving a Room
+
+Leave a room with ID `someRoomId`:
+
+```kotlin
+currentUser.leaveRoom(
+  roomId = someRoomId
+).wait().let { result -> 
+  when(result) { // Result<Int, Error>
+    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+  }
+ }
+```
+
+
+### Update a Room
+
+Change the name and or privacy of a room with Id `someRoomId`:
+
+```kotlin
+currentUser.updateRoom(
+  roomId = someRoomId,
+  name = "Some updated name",
+  private = false // Optional
+).let { result -> 
+   when(result) { // Result<Unit, Error>
+     is Result.Success -> toast("Updated room.")
+     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+   }
+  }
+```
+
+All other connected members of the room will [receive an event](#chat-events) that informs them that the room has been updated. Note that the current user must have the `room:update` [permission](https://docs.pusher.com/chatkit/reference/roles-and-permissions) to use this method.
+
+Note: This only returns whether the action is successful. To get the new room we have to handle the event that we get or fetch a new room.
+
+### Delete a Room
+
+Delete a room with ID `someRoomId`:
+
+```kotlin
+currentUser.deleteRoom(
+  roomId = someRoomId
+).let { result -> 
+    when(result) { // Result<Unit, Error>
+      is Result.Success -> toast("Updated room.")
+      is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
+    }
+   }
+```
+
+All other connected members of the room will [receive an event](#chat-events) that informs them that the room has been deleted. Any attempts to interact with a deleted room will result in an error. Note that the current user must have the `room:delete` [permission](https://docs.pusher.com/chatkit/reference/roles-and-permissions) to use this method.
+
+
+## Subscriptions
 
 
 
-### Development build
+## Development build
 
 When building this project, you may choose to use a local version of [`pusher-platform-android`](1). 
 

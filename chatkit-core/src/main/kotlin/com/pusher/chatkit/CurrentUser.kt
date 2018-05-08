@@ -2,15 +2,21 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.ChatManager.Companion.GSON
+import com.pusher.chatkit.messages.Direction
+import com.pusher.chatkit.messages.messageService
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.network.toJson
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.toFuture
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
+import com.pusher.util.flatMapFutureResult
 import com.pusher.util.mapResult
 import elements.Error
+import elements.Subscription
 import java.util.concurrent.Future
 
 class CurrentUser(
@@ -39,10 +45,10 @@ class CurrentUser(
         .flatMap { it.memberUserIds }
         .let { ids -> chatManager.userService().fetchUsersBy(ids.toSet()) }
 
-    val roomSubscriptions: List<RoomSubscription>
+    val roomSubscriptions: List<Subscription>
         get() = _roomSubscriptions
 
-    private val _roomSubscriptions = mutableListOf<RoomSubscription>()
+    private val _roomSubscriptions = mutableListOf<Subscription>()
 
     fun updateWithPropertiesOf(newUser: User) {
         updatedAt = newUser.updatedAt
@@ -51,7 +57,6 @@ class CurrentUser(
         // TODO reopen subscriptions
     }
 
-    // TODO: move to chatManager and provide access via Roomsub and Main connection
     fun presence(consumeEvent: (ChatManagerEvent) -> Unit) = PresenceSubscription(
         instance = presenceInstance,
         path = "/users/$id/presence",
@@ -85,26 +90,11 @@ class CurrentUser(
         responseParser = { it.parseAs() }
     )
 
-    fun addUsers(roomId: Int, users: Array<User>) = addUsers(roomId, users.map { id }.toTypedArray())
-    fun addUsers(roomId: Int, userIds: Array<String>) = addOrRemoveUsers("add", roomId, userIds)
+    fun addUsersToRoom(roomId: Int, userIds: List<String>) =
+        chatManager.userService().addUsersToRoom(roomId, userIds)
 
-    fun removeUsers(roomId: Int, users: Array<User>) = removeUsers(roomId, users.map { id }.toTypedArray())
-    fun removeUsers(roomId: Int, userIds: Array<String>) = addOrRemoveUsers("remove", roomId, userIds)
-
-    private fun addOrRemoveUsers(
-        operation: String,
-        roomId: Int,
-        userIds: Array<String>
-    ): Future<Result<Boolean, Error>> = apiInstance.request<String>(
-        options = RequestOptions(
-            method = "PUT",
-            path = "/rooms/$roomId/users/$operation",
-            body = GSON.toJson(object { val userIds = userIds })
-        ),
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        responseParser = { it.parseAs() }
-    ).mapResult { true }
+    fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
+        chatManager.userService().removeUsersFromRoom(roomId, userIds)
 
     @JvmOverloads
     fun createRoom(
@@ -118,76 +108,89 @@ class CurrentUser(
         userIds = userIds
     )
 
-    /**
-     * Update a room
-     * */
-    fun updateRoom(
-        room: Room,
-        name: String? = null,
-        isPrivate: Boolean? = null
-    ): Future<Result<Boolean, Error>> {
-        val path = "/rooms/${room.id}"
-        val data = UpdateRoomRequest(
-            name = name ?: room.name,
-            isPrivate = isPrivate ?: room.isPrivate
-        )
+    @JvmOverloads
+    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
+        updateRoom(room.id, name, isPrivate)
 
-        return apiInstance.request<String>(
-            options = RequestOptions(
-                method = "PUT",
-                path = path,
-                body = GSON.toJson(data)
-            ),
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
-            responseParser = { it.parseAs() }
-        ).mapResult { true }
-    }
+    @JvmOverloads
+    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
+        chatManager.roomService().updateRoom(roomId, name, isPrivate)
 
-    data class UpdateRoomRequest(val name: String, val isPrivate: Boolean)
-
-    /**
-     * Delete a room
-     * */
-    fun deleteRoom(room: Room): Future<Result<Boolean, Error>> =
+    fun deleteRoom(room: Room): Future<Result<String, Error>> =
         deleteRoom(room.id)
 
-    fun deleteRoom(roomId: Int): Future<Result<Boolean, Error>> = apiInstance.request<String>(
-        options = RequestOptions(
-            method = "DELETE",
-            path = "/rooms/$roomId",
-            body = ""
-        ),
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        responseParser = { it.parseAs() }
-    ).mapResult { true }
+    fun deleteRoom(roomId: Int): Future<Result<String, Error>> =
+        chatManager.roomService().deleteRoom(roomId)
 
-    /**
-     * Leave a room
-     * */
-    fun leaveRoom(room: Room): Future<Result<Boolean, Error>> =
+    fun leaveRoom(room: Room): Future<Result<Unit, Error>> =
         leaveRoom(room.id)
 
-    fun leaveRoom(roomId: Int): Future<Result<Boolean, Error>> = apiInstance.request<String>(
-        options = RequestOptions(
-            method = "POST",
-            path = "/users/$id/rooms/$roomId/leave",
-            body = "" //TODO: this is a horrible OKHTTP hack - POST is required to have a body.
-        ),
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        responseParser = { it.parseAs() }
-    ).mapResult { true }
+    fun leaveRoom(roomId: Int): Future<Result<Unit, Error>> =
+        chatManager.roomService().leaveRoom(id, roomId)
+
+    fun joinRoom(room: Room): Future<Result<Room, Error>> =
+        joinRoom(room.id)
+
+    fun joinRoom(roomId: Int): Future<Result<Room, Error>> =
+        chatManager.roomService().joinRoom(id, roomId)
 
     @JvmOverloads
-    fun subscribeToRoom(room: Room, listeners: RoomSubscriptionListeners, messageLimit : Int = 10) {
-        _roomSubscriptions += RoomSubscription(room, id, listeners, chatManager, messageLimit)
-    }
+    fun subscribeToRoom(
+        room: Room,
+        listeners: RoomSubscriptionListeners,
+        messageLimit : Int = 10
+    ): Subscription =
+        subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
-    fun sendMessage(room: Room, messageText: String, attachment: GenericAttachment = NoAttachment): Future<Result<Int, Error>> =
-        chatManager.messageService(room).sendMessage(id, messageText, attachment)
+    fun subscribeToRoom(
+        roomId: Int,
+        listeners: RoomSubscriptionListeners,
+        messageLimit : Int = 10
+    ): Subscription =
+        chatManager.roomService().subscribeToRoom(id, roomId, listeners, messageLimit)
+            .also { _roomSubscriptions += it }
+
+    @JvmOverloads
+    fun fetchMessages(
+        room: Room,
+        initialId: Int? = null,
+        direction: Direction = Direction.ORDER_FIRST,
+        limit: Int = 10
+    ): Future<Result<List<Message>, Error>> =
+        fetchMessages(room.id, initialId, direction, limit)
+
+    @JvmOverloads
+    fun fetchMessages(
+        roomId: Int,
+        initialId: Int? = null,
+        direction: Direction = Direction.ORDER_FIRST,
+        limit: Int = 10
+    ): Future<Result<List<Message>, Error>> = chatManager
+        .messageService(roomId)
+        .fetchMessages(limit, initialId, direction)
+
+    @JvmOverloads
+    fun sendMessage(
+        room: Room,
+        messageText: String,
+        attachment: GenericAttachment = NoAttachment
+    ): Future<Result<Int, Error>> =
+        sendMessage(room.id, messageText, attachment)
+
+    @JvmOverloads
+    fun sendMessage(
+        roomId: Int,
+        messageText: String,
+        attachment: GenericAttachment = NoAttachment
+    ): Future<Result<Int, Error>> =
+        chatManager.messageService(roomId).sendMessage(id, messageText, attachment)
+
+    fun getJoinablerooms() =
+        chatManager.roomService().fetchUserRooms(
+            userId = id,
+            onlyJoinable = true
+        )
 
     fun close() {
         roomSubscriptions.forEach { it.unsubscribe() }

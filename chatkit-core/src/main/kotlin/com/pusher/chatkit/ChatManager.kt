@@ -19,6 +19,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
@@ -93,9 +94,6 @@ class ChatManager constructor(
     fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
         connect(listeners.toCallback())
 
-    internal fun messageService(room: Room): MessageService =
-        MessageService(room, this)
-
     internal fun roomService(): RoomService =
         RoomService(this)
 
@@ -117,8 +115,14 @@ class ChatManager constructor(
     internal inline fun <reified A> doPost(path: String, body: String = ""): Future<Result<A, Error>> =
         doRequest("POST", path, body)
 
+    internal inline fun <reified A> doPut(path: String, body: String = ""): Future<Result<A, Error>> =
+        doRequest("PUT", path, body)
+
     internal inline fun <reified A> doGet(path: String): Future<Result<A, Error>> =
         doRequest("GET", path, null)
+
+    internal inline fun <reified A> doDelete(path: String): Future<Result<A, Error>> =
+        doRequest("DELETE", path, null)
 
     private inline fun <reified A> doRequest(method: String, path: String, body: String?): Future<Result<A, Error>> =
         apiInstance.request(
@@ -138,6 +142,25 @@ class ChatManager constructor(
     fun close() {
         subscriptions.forEach { it.unsubscribe() }
         dependencies.okHttpClient?.connectionPool()?.evictAll()
+    }
+
+
+
+}
+
+internal interface HasChat {
+
+    val chatManager: ChatManager
+
+    fun Future<Result<Room, Error>>.updateStoreWhenReady() = mapResult {
+        it.also { room ->
+            chatManager.roomStore += room
+            populateRoomUserStore(room)
+        }
+    }
+
+    fun populateRoomUserStore(room: Room) {
+        chatManager.userService().populateUserStore(room.memberUserIds)
     }
 
 }

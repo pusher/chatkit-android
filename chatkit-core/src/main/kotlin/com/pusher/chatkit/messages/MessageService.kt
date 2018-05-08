@@ -8,22 +8,37 @@ import com.pusher.util.*
 import elements.Error
 import java.util.concurrent.Future
 
-class MessageService(
-    room: Room,
+internal fun ChatManager.messageService(roomId: Int): MessageService =
+    MessageService(roomId, this)
+
+internal class MessageService(
+    private val roomId: Int,
     private val chatManager: ChatManager
 ) {
-
-    private val roomId = room.id
 
     private val tokenProvider get() = chatManager.tokenProvider
     private val tokenParams get() = chatManager.dependencies.tokenParams
     private val filesInstance get() = chatManager.filesInstance
 
-    fun fetchMessages(limit: Int = -1): Future<Result<List<Message>, Error>> =
-        chatManager.doGet(when {
-            limit > 0 -> "/rooms/$roomId/messages?limit=$limit"
-            else -> "/rooms/$roomId/messages"
-        })
+    fun fetchMessages(
+        limit: Int,
+        initialId: Int?,
+        direction: Direction
+    ): Future<Result<List<Message>, Error>> =
+        fetchMessagesParams(limit, initialId, direction)
+            .joinToString(separator = "&", prefix = "?") { (key, value) -> "$key=$value" }
+            .let { params -> chatManager.doGet("/rooms/$roomId/messages$params") }
+
+    private fun fetchMessagesParams(
+        limit: Int,
+        initialId: Int?,
+        direction: Direction
+    ) = listOfNotNull(
+        limit.takeIf { it > 0 }?.let { "limit" to it },
+        initialId?.let { "initialId" to it },
+        "direction" to direction
+    )
+
 
     @JvmOverloads
     fun sendMessage(
