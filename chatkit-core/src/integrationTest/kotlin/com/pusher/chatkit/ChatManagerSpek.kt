@@ -79,10 +79,10 @@ class ChatManagerSpek : Spek({
 
             var messageReceived by FutureValue<Message>()
 
-            pusherino.assumeSuccess().subscribeToRoom(room, object : RoomSubscriptionListeners {
-                override fun onNewMessage(message: Message) { messageReceived = message}
-                override fun onError(error: elements.Error) { kotlin.error("error: $error") }
-            })
+            pusherino.assumeSuccess().subscribeToRoom(room, RoomSubscriptionListeners(
+                onNewMessage = { message -> messageReceived = message},
+                onErrorOccurred = { e -> error("error: $e") }
+            ))
 
             val messageResult = alice.assumeSuccess().sendMessage(room, "message text").wait(forTenSeconds)
 

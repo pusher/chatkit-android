@@ -1,5 +1,52 @@
-package com.pusher.chatkit;
+package com.pusher.chatkit
 
-interface RoomSubscriptionListeners : ErrorListener {
-    fun onNewMessage(message: Message)
+import elements.Error
+
+/**
+ * Used in [CurrentUser] to register for room events.
+ */
+data class RoomSubscriptionListeners @JvmOverloads constructor(
+    val onNewMessage: (Message) -> Unit = {},
+    val onUserStartedTyping: (User) -> Unit = {},
+    val onUserStoppedTyping: (User) -> Unit = {},
+    val onUserJoined: (User) -> Unit = {},
+    val onUserLeft: (User) -> Unit = {},
+    val onUserCameOnline: (User) -> Unit = {},
+    val onUserWentOffline: (User) -> Unit = {},
+    val onErrorOccurred: (Error) -> Unit = {}
+)
+
+/**
+ * Used to consume instances of [RoomSubscriptionEvent]
+ */
+typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
+
+/**
+ * Transforms [RoomSubscriptionListeners] to [RoomSubscriptionConsumer]
+ */
+internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = { event ->
+    when(event) {
+        is RoomSubscriptionEvent.NewMessage -> onNewMessage(event.message)
+        is RoomSubscriptionEvent.UserStartedTyping -> onUserStartedTyping(event.user)
+        is RoomSubscriptionEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
+        is RoomSubscriptionEvent.UserJoined -> onUserJoined(event.user)
+        is RoomSubscriptionEvent.UserLeft -> onUserLeft(event.user)
+        is RoomSubscriptionEvent.UserCameOnline -> onUserCameOnline(event.user)
+        is RoomSubscriptionEvent.UserWentOffline -> onUserWentOffline(event.user)
+        is RoomSubscriptionEvent.ErrorOccurred -> onErrorOccurred(event.error)
+    }
+}
+
+/**
+ * Same as [RoomSubscriptionListeners] but using events instead of individual listeners.
+ */
+sealed class RoomSubscriptionEvent {
+    data class NewMessage(val message: Message) : RoomSubscriptionEvent()
+    data class UserStartedTyping(val user: User) : RoomSubscriptionEvent()
+    data class UserStoppedTyping(val user: User) : RoomSubscriptionEvent()
+    data class UserJoined(val user: User) : RoomSubscriptionEvent()
+    data class UserLeft(val user: User) : RoomSubscriptionEvent()
+    data class UserCameOnline(val user: User) : RoomSubscriptionEvent()
+    data class UserWentOffline(val user: User) : RoomSubscriptionEvent()
+    data class ErrorOccurred(val error: Error) : RoomSubscriptionEvent()
 }

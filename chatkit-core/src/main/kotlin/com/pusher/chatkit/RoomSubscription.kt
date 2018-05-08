@@ -1,47 +1,67 @@
 package com.pusher.chatkit
 
+import com.google.gson.JsonElement
+import com.pusher.chatkit.RoomSubscriptionEvent.*
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.network.typeToken
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.network.map
+import com.pusher.platform.network.wait
+import com.pusher.util.Result
 import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import elements.SubscriptionEvent
 import java.net.URL
 
 internal class RoomSubscription(
-    roomId: Int,
+    private val roomId: Int,
     userId: String,
-    private val listeners: RoomSubscriptionListeners,
-    chatManager: ChatManager,
+    private val consumeEvent: RoomSubscriptionConsumer,
+    private val chatManager: ChatManager,
     messageLimit: Int
 ) : Subscription {
+
+    private var active = true
 
     private val subscription = chatManager.apiInstance.subscribeResuming(
         path = "/rooms/$roomId?user_id=$userId&message_limit=$messageLimit",
         tokenProvider = chatManager.tokenProvider,
         tokenParams = chatManager.dependencies.tokenParams,
-        listeners = SubscriptionListeners(
+        listeners = SubscriptionListeners<ChatEvent>(
             onOpen = { }, //TODO("Not handled currently.")
-            onEvent = ::handleMessage,
-            onError = ::handleError
+            onEvent = { it.body.toRoomEvent().let(consumeEvent) },
+            onError = { consumeEvent(ErrorOccurred(it)) }
         ),
         messageParser = { it.parseAs() }
     )
 
     init {
         check(messageLimit > 0) { "messageLimit should be greater than 0" }
+        chatManager.observerEvents { if (active) it.consume() }
     }
 
-    private fun handleMessage(event: SubscriptionEvent<ChatEvent>) {
+    private fun ChatManagerEvent.consume() = when {
+        this is ChatManagerEvent.UserStartedTyping && user.isInRoom() -> UserStartedTyping(user)
+        this is ChatManagerEvent.UserStoppedTyping && user.isInRoom() -> UserStoppedTyping(user)
+        this is ChatManagerEvent.UserJoinedRoom && room.id == roomId -> UserJoined(user)
+        this is ChatManagerEvent.UserLeftRoom && room.id == roomId -> UserLeft(user)
+        this is ChatManagerEvent.UserCameOnline && user.isInRoom() -> UserCameOnline(user)
+        this is ChatManagerEvent.UserWentOffline && user.isInRoom() -> UserWentOffline(user)
+        else -> null
+    }?.let(consumeEvent)
 
-        val chatEvent = event.body
+    private fun User.isInRoom() = chatManager.roomService().fetchRoomBy(id, roomId).mapResult { true }.wait().recover { false }
 
-        if (chatEvent.eventName == "new_message") {
+    private fun ChatEvent.toRoomEvent() : RoomSubscriptionEvent = when(eventName) {
+        "new_message" -> data.toNewMessage()
+        else -> ErrorOccurred(Errors.other("Wrong event type: $eventName")).asSuccess<RoomSubscriptionEvent, Error>()
+    }.recover { error -> ErrorOccurred(error) }
 
-            val message = ChatManager.GSON.fromJson<Message>(chatEvent.data, Message::class.java)
 
+
+    private fun JsonElement.toNewMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
+        .map { message ->
             if (message.attachment != null) {
                 val attachmentURL = URL(message.attachment.link)
                 val queryParamsMap: MutableMap<String, String> = mutableMapOf()
@@ -55,19 +75,11 @@ internal class RoomSubscription(
                     message.attachment.fetchRequired = true
                 }
             }
-
-            listeners.onNewMessage(message)
-        } else {
-            listeners.onError(Errors.other("Wrong event type: ${chatEvent.eventName}"))
+            NewMessage(message)
         }
 
-    }
-
-    private fun handleError(error: Error) {
-        listeners.onError(error)
-    }
-
     override fun unsubscribe() {
+        active = false
         subscription.unsubscribe()
     }
 

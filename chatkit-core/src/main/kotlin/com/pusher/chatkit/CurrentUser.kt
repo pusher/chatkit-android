@@ -5,36 +5,27 @@ import com.pusher.chatkit.ChatManager.Companion.GSON
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.messageService
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.network.toJson
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
-import com.pusher.platform.logger.Logger
-import com.pusher.platform.network.toFuture
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
-import com.pusher.util.flatMapFutureResult
 import com.pusher.util.mapResult
 import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
 
 class CurrentUser(
-    val apiInstance: Instance,
-    val createdAt: String,
     val cursors: MutableMap<Int, Cursor>,
     val cursorsInstance: Instance,
     val id: String,
-    val logger: Logger,
     val filesInstance: Instance,
     val presenceInstance: Instance,
     val tokenParams: ChatkitTokenParams?,
     val tokenProvider: TokenProvider,
-    val userStore: GlobalUserStore,
     var avatarURL: String?,
     var customData: CustomData?,
     var name: String?,
-    var updatedAt: String,
     private val chatManager: ChatManager
 ) {
 
@@ -45,13 +36,9 @@ class CurrentUser(
         .flatMap { it.memberUserIds }
         .let { ids -> chatManager.userService().fetchUsersBy(ids.toSet()) }
 
-    val roomSubscriptions: List<Subscription>
-        get() = _roomSubscriptions
-
-    private val _roomSubscriptions = mutableListOf<Subscription>()
+    private val roomSubscriptions = mutableListOf<Subscription>()
 
     fun updateWithPropertiesOf(newUser: User) {
-        updatedAt = newUser.updatedAt
         name = newUser.name
         customData = newUser.customData
         // TODO reopen subscriptions
@@ -140,7 +127,7 @@ class CurrentUser(
         listeners: RoomSubscriptionListeners,
         messageLimit : Int = 10
     ): Subscription =
-        subscribeToRoom(room.id, listeners, messageLimit)
+        subscribeToRoom(room.id, messageLimit, listeners.toCallback())
 
     @JvmOverloads
     fun subscribeToRoom(
@@ -148,17 +135,24 @@ class CurrentUser(
         listeners: RoomSubscriptionListeners,
         messageLimit : Int = 10
     ): Subscription =
-        chatManager.roomService().subscribeToRoom(id, roomId, listeners, messageLimit)
-            .also { _roomSubscriptions += it }
+        subscribeToRoom(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
-    fun fetchMessages(
+    fun subscribeToRoom(
         room: Room,
-        initialId: Int? = null,
-        direction: Direction = Direction.ORDER_FIRST,
-        limit: Int = 10
-    ): Future<Result<List<Message>, Error>> =
-        fetchMessages(room.id, initialId, direction, limit)
+        messageLimit : Int = 10,
+        consumer: RoomSubscriptionConsumer
+    ): Subscription =
+        subscribeToRoom(room.id, messageLimit, consumer)
+
+    @JvmOverloads
+    fun subscribeToRoom(
+        roomId: Int,
+        messageLimit : Int = 10,
+        consumer: RoomSubscriptionConsumer
+    ): Subscription =
+        chatManager.roomService().subscribeToRoom(id, roomId, consumer, messageLimit)
+            .also { roomSubscriptions += it }
 
     @JvmOverloads
     fun fetchMessages(
@@ -198,17 +192,17 @@ class CurrentUser(
 
 }
 
-data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
+internal data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
 
-sealed class AttachmentBody {
+internal sealed class AttachmentBody {
     data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
     object None : AttachmentBody()
     data class Failed(val error: Error) : AttachmentBody()
 }
 
-data class SetCursorRequest(val position: Int)
+internal data class SetCursorRequest(val position: Int)
 
-data class RoomCreateRequest(
+internal data class RoomCreateRequest(
     val name: String,
     val private: Boolean,
     val createdById: String,

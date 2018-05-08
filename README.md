@@ -33,6 +33,7 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
    * [Update a Room](#update-a-room)
    * [Delete a Room](#delete-a-room)
  * [Subscriptions](#subscriptions)
+   * [Room subscription events](#room-subscription-events)
  * [Development Build](#development-build)
  
 
@@ -440,7 +441,63 @@ All other connected members of the room will [receive an event](#chat-events) th
 
 ## Subscriptions
 
+To be notified when new messages are added to a room, you’ll need to subscribe to it and provide a `RoomSubscriptionListeners` instance or a lambda to listen for `RoomSubscriptionEvent`. (Too see the full list of possible hooks see [Room Subscription Hooks](#room-subscription-hooks)). At most 100 recent messages can be retrieved on subscription, to fetch older messages see [Fetching Messages From a Room](#fetching-messages-for-a-room). To receive only new messages, set the `messageLimit` to 0.
 
+Using `RoomSubscriptionListeners`:
+
+```kotlin
+currentUser.subscribeToRoom(
+  roomId = someroomId,
+  listeners = Roomsubscription(
+    onNewMesage = { message -> toast("${message.userId} says: ${message.text}") },
+    onErrorOccurred = { error -> toast("Oops something bad happened: $error") }
+  )
+  messageLimit = 10 // Optional, 10 by default
+)
+```
+
+Using `RoomSubscriptionEvent`:
+
+```kotlin
+currentUser.subscribeToRoom(
+    roomId = someroomId,
+    messageLimit = 10 // Optional, 10 by default
+) { event ->
+  when(event) {
+    is NewMessage -> toast("${event.message.userId} says: ${event.message.text}")
+    is ErrorOccurred -> toast("Oops something bad happened: ${event.error}")
+  }
+}
+```
+
+**Note:** Subscribing implicitly joins a room if you aren’t already a member. Subscribing to the same room twice will cause the existing subscription to be cancelled and replaced by the new one.
+
+By default when you subscribe to a room you will receive up to the 10 most recent messages that have been added to the room. The number of recent messages to fetch can be configured by setting the `messageLimit` parameter`. These recent messages will be passed to the `onNewMessage` callback (or as `NewMessage` event) in the order they were sent, just as if they were being sent for the first time.
+
+### Room subscription events
+
+This is the full list of available events from a room subscription:
+
+ | Event             | Properties   | Description                                           |
+ |-------------------|--------------|-------------------------------------------------------|
+ | NewMessage        | Message      | A new message has been added to the room.             |
+ | UserStartedTyping | User         | User has started typing                               |
+ | UserStoppedTyping | User         | User has stopped typing                               |
+ | UserJoined        | Int (userId) | User has joined the room                              |
+ | UserLeft          | Int (userId) | User has left the room                                |
+ | UserCameOnline    | User         | User is now online                                    |
+ | UserWentOffline   | User         | User is now offline                                   |
+ | NewReadCursor     | Cursor       | A member of the room set a new read cursor.           |
+ 
+Each of the events have a relevant listener that can be set on `RoomSubscriptionListeners`
+ 
+### Cancel Subscription
+
+The `subscribeToRoom` function returns a `Subscription` that can be cancelled by calling `subscription.unsubscribe()` when the subscription is no longer needed.
+
+Alternatively, it is possible to close all active subscriptions by calling `chatManager.cancel()`, which will close all these subscriptions.
+
+## Users
 
 ## Development build
 

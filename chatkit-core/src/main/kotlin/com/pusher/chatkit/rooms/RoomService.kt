@@ -64,7 +64,7 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
     fun subscribeToRoom(
         userId: String,
         roomId: Int,
-        listeners: RoomSubscriptionListeners,
+        listeners: RoomSubscriptionConsumer,
         messageLimit : Int
     ): Subscription =
         RoomSubscription(roomId, userId, listeners, chatManager, messageLimit)

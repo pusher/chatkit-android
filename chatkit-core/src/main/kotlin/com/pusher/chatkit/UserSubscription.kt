@@ -72,7 +72,7 @@ class UserSubscription(
 
     override fun unsubscribe() {
         subscription.unsubscribe()
-        currentUser?.roomSubscriptions?.forEach(Subscription::unsubscribe)
+        currentUser?.close()
     }
 
     private fun getCursors(): Future<Result<Map<Int, Cursor>, Error>> =
@@ -101,21 +101,16 @@ class UserSubscription(
         initialState: InitialState,
         cursors: Map<Int, Cursor>
     ) = CurrentUser(
-        apiInstance = apiInstance,
-        createdAt = initialState.currentUser.createdAt,
         cursors = cursors.toMutableMap(),
         cursorsInstance = cursorsInstance,
         id = initialState.currentUser.id,
-        logger = logger,
         filesInstance = filesInstance,
         presenceInstance = presenceInstance,
         tokenParams = tokenParams,
         tokenProvider = tokenProvider,
-        userStore = userStore,
         avatarURL = initialState.currentUser.avatarURL,
         customData = initialState.currentUser.customData,
         name = initialState.currentUser.name,
-        updatedAt = initialState.currentUser.updatedAt,
         chatManager = chatManager
     )
 

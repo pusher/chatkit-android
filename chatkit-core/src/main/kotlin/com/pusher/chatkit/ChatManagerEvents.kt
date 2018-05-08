@@ -6,7 +6,7 @@ import elements.Error
 /**
  * Used along with [ChatManager] to observe global changes in the chat.
  */
-data class ChatManagerListeners(
+data class ChatManagerListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = { },
     val onUserStoppedTyping: (User) -> Unit = { },
