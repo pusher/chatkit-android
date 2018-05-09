@@ -48,7 +48,7 @@ class RoomEventsSpek : Spek({
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
 
-        xit("notifies when user leaves") {
+        it("notifies when user leaves") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userJoined by FutureValue<User>()
@@ -63,7 +63,7 @@ class RoomEventsSpek : Spek({
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
 
-        xit("notifies when room is updated") {
+        it("notifies when room is updated") {
             setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             var updatedRoom by FutureValue<Room>()
