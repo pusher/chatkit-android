@@ -1,6 +1,7 @@
 package com.pusher.chatkit.users
 
 import com.pusher.chatkit.CustomData
+import com.pusher.chatkit.presence.Presence
 
 data class User(
     val id: String,
@@ -16,10 +17,5 @@ data class User(
     var presence: Presence
         get() = if(online) Presence.Online else Presence.Offline
         set(value) { online = value === Presence.Online }
-
-    sealed class Presence {
-        object Online : Presence()
-        object Offline : Presence()
-    }
 
 }
