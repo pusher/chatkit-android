@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
+import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.messages.Message
@@ -38,18 +39,18 @@ class ChatManagerSpek : Spek({
         }
 
         it("loads user rooms") {
-            setUpInstanceWith(newUser(PUSHERINO), newRoom("general", PUSHERINO))
+            setUpInstanceWith(newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
             val chat = chatFor(PUSHERINO)
 
             val user = chat.connect().wait(forTenSeconds)
             val roomNames = user.assumeSuccess().rooms.map { it.name }
 
-            assertThat(roomNames).containsExactly("general")
+            assertThat(roomNames).containsExactly(GENERAL)
             chat.close()
         }
 
         it("loads users related to current user") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
 
             val user = chat.connect().wait(forTenSeconds)
@@ -57,12 +58,12 @@ class ChatManagerSpek : Spek({
 
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
-            assertThat(relatedUserIds).containsAllOf("alice", PUSHERINO)
+            assertThat(relatedUserIds).containsAllOf(ALICE, PUSHERINO)
             chat.close()
         }
 
         it("subscribes to a room and receives message from alice") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
             val aliceChat = chatFor(ALICE)
 
