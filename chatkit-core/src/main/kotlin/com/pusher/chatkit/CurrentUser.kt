@@ -1,13 +1,12 @@
 package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
-import com.pusher.chatkit.ChatManager.Companion.GSON
-import com.pusher.chatkit.cursors.cursorService
-import com.pusher.chatkit.messages.Direction
-import com.pusher.chatkit.messages.messageService
+import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.messages.*
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.toJson
-import com.pusher.chatkit.rooms.roomService
+import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.userService
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
@@ -16,16 +15,12 @@ import com.pusher.platform.network.toFuture
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
-import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
 class CurrentUser(
-    val cursors: MutableMap<Int, Cursor>,
-    val cursorsInstance: Instance,
     val id: String,
     val filesInstance: Instance,
-    val presenceInstance: Instance,
     val tokenParams: ChatkitTokenParams?,
     val tokenProvider: TokenProvider,
     var avatarURL: String?,
@@ -49,35 +44,19 @@ class CurrentUser(
     fun updateWithPropertiesOf(newUser: User) {
         name = newUser.name
         customData = newUser.customData
-        // TODO reopen subscriptions
     }
 
-    fun presence(consumeEvent: (ChatManagerEvent) -> Unit) = PresenceSubscription(
-        instance = presenceInstance,
-        path = "/users/$id/presence",
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        chatManager = chatManager,
-        consumeEvent = consumeEvent
-    )
-
-    fun setReadCursor(
-        room: Room,
-        position: Int
-    ): Future<Result<Boolean, Error>> =
+    fun setReadCursor(room: Room, position: Int): Future<Result<Boolean, Error>> =
         setReadCursor(room.id, position)
 
-    fun setReadCursor(
-        roomId: Int,
-        position: Int
-    ): Future<Result<Boolean, Error>> =
-        chatManager.cursorService(this).setReadCursor(roomId, position)
+    fun setReadCursor(roomId: Int, position: Int): Future<Result<Boolean, Error>> =
+        chatManager.cursorService.setReadCursor(id, roomId, position)
 
     fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
-        chatManager.cursorService(this).getReadCursor(roomId)
+        chatManager.cursorService.getReadCursor(id, roomId)
 
     fun getReadCursor(room: Room) : Result<Cursor, Error> =
-        chatManager.cursorService(this).getReadCursor(room)
+        getReadCursor(room.id)
 
     fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
         filesInstance.request(

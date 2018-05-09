@@ -230,6 +230,7 @@ The available events are:
  | CurrentUserRemovedFromRoom | Int (room id)  | Current user was removed from a room with the given id            |
  | RoomUpdated                | Room           | Happens when the logged user is available or updated              |
  | RoomDeleted                | Int (room id)  | Happens when the logged user is available or updated              |
+ | NewReadCursor              | Int (room id)  | Happens when a new cursor is set for `CurrentUser`                |
  | ErrorOccurred              | (Pusher)Error  | An error occurred, it does not mean the subscription has finished |
  
 Each of the events have a relevant listener that can be set on `ChatManagerListeners`

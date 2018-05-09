@@ -1,4 +1,4 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.messages
 
 import java.io.File
 
@@ -24,10 +24,10 @@ enum class AttachmentType {
     }
 
     override fun toString() = when(this) {
-        AttachmentType.IMAGE -> "image"
-        AttachmentType.VIDEO -> "video"
-        AttachmentType.AUDIO -> "audio"
-        AttachmentType.FILE -> "file"
+        IMAGE -> "image"
+        VIDEO -> "video"
+        AUDIO -> "audio"
+        FILE -> "file"
     }
 }
 

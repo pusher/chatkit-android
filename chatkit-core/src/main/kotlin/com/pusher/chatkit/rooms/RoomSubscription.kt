@@ -1,11 +1,13 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.rooms
 
 import com.google.gson.JsonElement
-import com.pusher.chatkit.RoomSubscriptionEvent.*
+import com.pusher.chatkit.*
+import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
+import com.pusher.chatkit.cursors.CursorSubscriptionEvent
+import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.rooms.roomService
+import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.network.map
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
@@ -30,12 +32,18 @@ internal class RoomSubscription(
         tokenProvider = chatManager.tokenProvider,
         tokenParams = chatManager.dependencies.tokenParams,
         listeners = SubscriptionListeners<ChatEvent>(
-            onOpen = { }, //TODO("Not handled currently.")
             onEvent = { it.body.toRoomEvent().let(consumeEvent) },
             onError = { consumeEvent(ErrorOccurred(it)) }
         ),
         messageParser = { it.parseAs() }
     )
+
+
+    private val cursorSubscription = chatManager.cursorService.subscribeToRoomCursors(roomId) { event ->
+        when(event) {
+            is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(RoomSubscriptionEvent.NewReadCursor(event.cursor))
+        }
+    }
 
     init {
         check(messageLimit > 0) { "messageLimit should be greater than 0" }
@@ -82,6 +90,7 @@ internal class RoomSubscription(
     override fun unsubscribe() {
         active = false
         subscription.unsubscribe()
+        cursorSubscription.unsubscribe()
     }
 
 }

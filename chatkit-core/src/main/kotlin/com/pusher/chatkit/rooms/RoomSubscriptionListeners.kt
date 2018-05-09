@@ -1,5 +1,8 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.rooms
 
+import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.users.User
 import elements.Error
 
 /**
@@ -13,6 +16,7 @@ data class RoomSubscriptionListeners @JvmOverloads constructor(
     val onUserLeft: (User) -> Unit = {},
     val onUserCameOnline: (User) -> Unit = {},
     val onUserWentOffline: (User) -> Unit = {},
+    val onNewReadCursor: (Cursor) -> Unit = {},
     val onErrorOccurred: (Error) -> Unit = {}
 )
 
@@ -33,6 +37,7 @@ internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = 
         is RoomSubscriptionEvent.UserLeft -> onUserLeft(event.user)
         is RoomSubscriptionEvent.UserCameOnline -> onUserCameOnline(event.user)
         is RoomSubscriptionEvent.UserWentOffline -> onUserWentOffline(event.user)
+        is RoomSubscriptionEvent.NewReadCursor -> onNewReadCursor(event.cursor)
         is RoomSubscriptionEvent.ErrorOccurred -> onErrorOccurred(event.error)
     }
 }
@@ -48,5 +53,6 @@ sealed class RoomSubscriptionEvent {
     data class UserLeft(val user: User) : RoomSubscriptionEvent()
     data class UserCameOnline(val user: User) : RoomSubscriptionEvent()
     data class UserWentOffline(val user: User) : RoomSubscriptionEvent()
+    data class NewReadCursor(val cursor: Cursor) : RoomSubscriptionEvent()
     data class ErrorOccurred(val error: Error) : RoomSubscriptionEvent()
 }

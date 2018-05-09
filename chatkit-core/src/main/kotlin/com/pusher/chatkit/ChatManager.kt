@@ -4,10 +4,13 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
-import com.google.gson.annotations.SerializedName
+import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.rooms.HasRoom
+import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.HasUser
+import com.pusher.chatkit.users.UserStore
+import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.userService
 import com.pusher.platform.*
 import com.pusher.platform.network.DataParser
@@ -50,11 +53,13 @@ class ChatManager constructor(
     internal val filesInstance by lazyInstance(FILES_SERVICE_NAME, SERVICE_VERSION)
     internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
 
-    internal val userStore by lazy { GlobalUserStore() }
+    internal val userStore by lazy { UserStore() }
     internal val roomStore by lazy { RoomStore() }
 
     private val subscriptions = mutableListOf<Subscription>()
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
+
+    internal val cursorService by lazy { CursorService(this) }
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {
@@ -192,30 +197,6 @@ internal interface HasChat {
     }
 
 }
-
-data class Message(
-    val id: Int,
-    override val userId: String,
-    override val roomId: Int,
-    val text: String? = null,
-    val attachment: Attachment? = null,
-    val createdAt: String,
-    val updatedAt: String
-) : HasRoom, HasUser
-
-data class Attachment(
-    @Transient var fetchRequired: Boolean = false,
-    @SerializedName("resource_link") val link: String,
-    val type: String
-)
-
-data class Cursor(
-    override val userId: String,
-    override val roomId: Int,
-    val type: Int,
-    val position: Int,
-    val updatedAt: String
-) : HasUser, HasRoom
 
 internal data class ChatEvent(
     val eventName: String,

@@ -1,5 +1,6 @@
 package com.pusher.chatkit.cursors
 
+import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.RequestOptions
@@ -11,42 +12,77 @@ import elements.Error
 import elements.Errors
 import java.util.concurrent.Future
 
-internal fun ChatManager.cursorService(currentUser: CurrentUser) =
-    CursorService(this, currentUser)
-
 internal class CursorService(
-    chatManager: ChatManager,
-    private val currentUser: CurrentUser // TODO: remove dependency to user
+    private val chatManager: ChatManager
 ) {
 
     private val cursorsInstance = chatManager.cursorsInstance
-    private val cursors = currentUser.cursors
     private val tokenProvider = chatManager.tokenProvider
     private val tokenParams = chatManager.dependencies.tokenParams
 
+    private val cursors = CursorsStore()
+
     fun setReadCursor(
+        userId: String,
         roomId: Int,
         position: Int
-    ): Future<Result<Boolean, Error>> = cursorsInstance.request<String>(
+    ): Future<Result<Boolean, Error>> = cursorsInstance.request<JsonElement>(
         options = RequestOptions(
             method = "PUT",
-            path = "/cursors/0/rooms/$roomId/users/${currentUser.id}",
+            path = "/cursors/0/rooms/$roomId/users/$userId",
             body = ChatManager.GSON.toJson(SetCursorRequest(position))
         ),
         tokenProvider = tokenProvider,
         tokenParams = tokenParams,
         responseParser = { it.parseAs() }
-    ).mapResult { true }
+    ).mapResult {
+        cursors[userId] += Cursor(
+            userId = userId,
+            roomId = roomId,
+            position = position
+        )
+        true
+    }
 
-    fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
-        roomId.cursor?.asSuccess() ?: notSubscrivedToRoom("$roomId").asFailure()
+    fun getReadCursor(userId: String, roomId: Int) : Result<Cursor, Error> =
+        cursors[userId][roomId]?.asSuccess() ?: notSubscribedToRoom("$roomId").asFailure()
 
-    fun getReadCursor(room: Room) : Result<Cursor, Error> =
-        room.id.cursor?.asSuccess() ?: notSubscrivedToRoom(room.name).asFailure()
+    internal fun subscribeToRoomCursors(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
+        CursorsSubscription.forRoom(chatManager, roomId) { event ->
+            if (event is CursorSubscriptionEvent.OnCursorSet) {
+                cursors[event.cursor.userId] += event.cursor
+            }
+            consumeEvent(event)
+        }
 
-    private val Int.cursor: Cursor?
-        get() = cursors.takeIf { currentUser.isSubscribedToRoom(this) }?.get(this)
+    internal fun subscribeToCursors(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
+        CursorsSubscription.forUser(chatManager, userId, consumeEvent)
 
-    private fun notSubscrivedToRoom(name: String) =
+    private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursors")
+}
+
+internal class CursorsStore {
+
+    private val map = mutableMapOf<String, UserCursorStore>()
+
+    operator fun get(userId: String) =
+        map[userId] ?: UserCursorStore().also { map[userId] = it }
+
+    operator fun set(userId: String, cursor: Cursor) {
+        get(userId) += cursor
+    }
+
+}
+
+internal class UserCursorStore {
+
+    private val cursors = mutableMapOf<Int, Cursor>()
+
+    operator fun plusAssign(cursor: Cursor) {
+        cursors[cursor.roomId] = cursor
+    }
+
+    operator fun get(roomId: Int) = cursors[roomId]
+
 }

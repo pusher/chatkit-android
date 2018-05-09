@@ -1,4 +1,4 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.rooms
 
 import com.google.gson.annotations.SerializedName
 

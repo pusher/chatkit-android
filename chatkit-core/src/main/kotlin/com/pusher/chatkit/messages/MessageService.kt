@@ -39,7 +39,6 @@ internal class MessageService(
         "direction" to direction
     )
 
-
     @JvmOverloads
     fun sendMessage(
         userId: String,
@@ -48,7 +47,6 @@ internal class MessageService(
     ): Future<Result<Int, Error>> =
         attachment.asAttachmentBody()
             .flatMapFutureResult { sendMessage(userId, text, it) }
-
 
     private fun GenericAttachment.asAttachmentBody(): Future<Result<AttachmentBody, Error>> = when (this) {
         is DataAttachment -> uploadFile(this, roomId)

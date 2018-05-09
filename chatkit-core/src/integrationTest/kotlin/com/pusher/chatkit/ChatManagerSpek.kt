@@ -3,6 +3,8 @@ package com.pusher.chatkit
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.rooms.RoomSubscriptionListeners
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
@@ -74,7 +76,7 @@ class ChatManagerSpek : Spek({
             var messageReceived by FutureValue<Message>()
 
             pusherino.assumeSuccess().subscribeToRoom(room, RoomSubscriptionListeners(
-                onNewMessage = { message -> messageReceived = message},
+                onNewMessage = { message -> messageReceived = message },
                 onErrorOccurred = { e -> error("error: $e") }
             ))
 

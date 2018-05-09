@@ -1,9 +1,11 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.users
 
+import com.pusher.chatkit.*
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.users.UserSubscriptionEventParser
-import com.pusher.chatkit.users.userService
+import com.pusher.chatkit.rooms.Room
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
@@ -30,7 +32,7 @@ class UserSubscription(
     val userId: String,
     private val chatManager: ChatManager,
     path: String,
-    val userStore: GlobalUserStore,
+    val userStore: UserStore,
     val tokenProvider: TokenProvider,
     val tokenParams: ChatkitTokenParams?,
     val logger: Logger,
@@ -71,8 +73,15 @@ class UserSubscription(
         tokenParams = tokenParams
     )
 
+    private val cursorSubscription = chatManager.cursorService.subscribeToCursors(userId) { event ->
+        when(event) {
+            is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(NewReadCursor(event.cursor))
+        }
+    }
+
     override fun unsubscribe() {
         subscription.unsubscribe()
+        cursorSubscription.unsubscribe()
         currentUser?.close()
     }
 
@@ -102,11 +111,8 @@ class UserSubscription(
         initialState: InitialState,
         cursors: Map<Int, Cursor>
     ) = CurrentUser(
-        cursors = cursors.toMutableMap(),
-        cursorsInstance = cursorsInstance,
         id = initialState.currentUser.id,
         filesInstance = filesInstance,
-        presenceInstance = presenceInstance,
         tokenParams = tokenParams,
         tokenProvider = tokenProvider,
         avatarURL = initialState.currentUser.avatarURL,
