@@ -20,16 +20,16 @@ import com.pusher.platform.network.wait
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.xdescribe
+import org.jetbrains.spek.api.dsl.xit
 
 class RoomEventsSpek : Spek({
 
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    xdescribe("Room") {
+    describe("Room") {
 
-        it("notifies when user joins") {
+        xit("notifies when user joins") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
 
             var userJoined by FutureValue<User>()
@@ -48,7 +48,7 @@ class RoomEventsSpek : Spek({
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
 
-        it("notifies when user leaves") {
+        xit("notifies when user leaves") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userJoined by FutureValue<User>()
@@ -63,7 +63,7 @@ class RoomEventsSpek : Spek({
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
 
-        it("notifies when room is updated") {
+        xit("notifies when room is updated") {
             setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             var updatedRoom by FutureValue<Room>()
