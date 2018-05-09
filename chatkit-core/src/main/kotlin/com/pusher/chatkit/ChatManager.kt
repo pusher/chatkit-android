@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.HasUser
@@ -25,7 +26,6 @@ import elements.Subscription
 import java.util.concurrent.Future
 import java.util.concurrent.SynchronousQueue
 
-private const val USERS_PATH = "users"
 private const val API_SERVICE_NAME = "chatkit"
 private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
 private const val SERVICE_VERSION = "v1"
@@ -60,6 +60,7 @@ class ChatManager constructor(
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
     internal val cursorService by lazy { CursorService(this) }
+    internal val presenceService by lazy { PresenceService(this) }
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {
@@ -80,11 +81,6 @@ class ChatManager constructor(
     private fun openSubscription() = UserSubscription(
         userId = userId,
         chatManager = this@ChatManager,
-        path = USERS_PATH,
-        userStore = userStore,
-        tokenProvider = tokenProvider,
-        tokenParams = dependencies.tokenParams,
-        logger = logger,
         consumeEvent = { event -> eventConsumers.forEach { it(event) } }
     )
 

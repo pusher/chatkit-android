@@ -8,11 +8,9 @@ import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.rooms.Room
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.waitOr
-import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.*
 import java.util.concurrent.Future
@@ -29,26 +27,26 @@ data class UserLeftEvent(val roomId: Int, val userId: String) : UserSubscription
 data class UserJoinedEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
 data class UserStartedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
 
+private const val USERS_PATH = "users"
+
 class UserSubscription(
     val userId: String,
     private val chatManager: ChatManager,
-    path: String,
-    val userStore: UserStore,
-    val tokenProvider: TokenProvider,
-    val tokenParams: ChatkitTokenParams?,
-    val logger: Logger,
     private val consumeEvent: (ChatManagerEvent) -> Unit
 ) : Subscription {
 
     private val apiInstance get() = chatManager.apiInstance
     private val cursorsInstance get() = chatManager.cursorsInstance
     private val filesInstance get() = chatManager.filesInstance
-    private val presenceInstance get() = chatManager.presenceInstance
+
+    private val tokenProvider = chatManager.tokenProvider
+    private val tokenParams = chatManager.dependencies.tokenParams
+    private val logger = chatManager.dependencies.logger
 
     private var headers: Headers = emptyHeaders()
 
     private val subscription = apiInstance.subscribeResuming(
-        path = path,
+        path = USERS_PATH,
         listeners = SubscriptionListeners(
             onOpen = { headers ->
                 logger.verbose("OnOpen $headers")
@@ -70,9 +68,11 @@ class UserSubscription(
             onEnd = { error -> logger.verbose("Subscription ended with: $error") }
         ),
         messageParser = UserSubscriptionEventParser,
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenProvider = this.tokenProvider,
+        tokenParams = this.tokenParams
     )
+
+    private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
 
     private val cursorSubscription = chatManager.cursorService.subscribeToCursors(userId) { event ->
         when(event) {
@@ -83,6 +83,7 @@ class UserSubscription(
     override fun unsubscribe() {
         subscription.unsubscribe()
         cursorSubscription.unsubscribe()
+        presenceSubscription.unsubscribe()
         currentUser?.close()
     }
 
