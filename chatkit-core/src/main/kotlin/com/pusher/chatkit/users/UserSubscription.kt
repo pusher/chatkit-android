@@ -27,6 +27,7 @@ data class RoomDeletedEvent(val roomId: Int) : UserSubscriptionEvent()
 data class RemovedFromRoomEvent(val roomId: Int) : UserSubscriptionEvent()
 data class UserLeftEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
 data class UserJoinedEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
+data class UserStartedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
 
 class UserSubscription(
     val userId: String,
@@ -108,8 +109,7 @@ class UserSubscription(
     }
 
     private fun createCurrentUser(
-        initialState: InitialState,
-        cursors: Map<Int, Cursor>
+        initialState: InitialState
     ) = CurrentUser(
         id = initialState.currentUser.id,
         filesInstance = filesInstance,
@@ -123,7 +123,8 @@ class UserSubscription(
 
     private fun UserSubscriptionEvent.toChatManagerEvent(): Future<Result<ChatManagerEvent, Error>> = when (this) {
         is InitialState -> getCursors().mapResult { cursors ->
-            CurrentUserReceived(createCurrentUser(this, cursors))
+            chatManager.cursorService.saveCursors(cursors)
+            CurrentUserReceived(createCurrentUser(this))
         }
         is AddedToRoomEvent -> CurrentUserAddedToRoom(room).toFutureSuccess()
         is RoomUpdatedEvent -> RoomUpdated(room).toFutureSuccess()
@@ -138,6 +139,9 @@ class UserSubscription(
             chatManager.roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
+        }
+        is UserStartedTyping -> chatManager.userService().fetchUserBy(userId).mapResult { user ->
+            ChatManagerEvent.UserStartedTyping(user) as ChatManagerEvent
         }
     }
 

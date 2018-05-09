@@ -52,7 +52,6 @@ internal class RoomSubscription(
 
     private fun ChatManagerEvent.consume() = when {
         this is ChatManagerEvent.UserStartedTyping && user.isInRoom() -> UserStartedTyping(user)
-        this is ChatManagerEvent.UserStoppedTyping && user.isInRoom() -> UserStoppedTyping(user)
         this is ChatManagerEvent.UserJoinedRoom && room.id == roomId -> UserJoined(user)
         this is ChatManagerEvent.UserLeftRoom && room.id == roomId -> UserLeft(user)
         this is ChatManagerEvent.UserCameOnline && user.isInRoom() -> UserCameOnline(user)

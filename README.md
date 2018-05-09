@@ -221,7 +221,6 @@ The available events are:
  |----------------------------|----------------|-------------------------------------------------------------------|
  | CurrentUserReceived        | CurrentUser    | Happens when the logged user is available or updated              |
  | UserStartedTyping          | User           | User has started typing                                           |
- | UserStoppedTyping          | User           | User has stopped typing                                           |
  | UserJoinedRoom             | User, Room     | User has joined the provided room                                 |
  | UserLeftRoom               | User, Room     | User has left the provided room                                   |
  | UserCameOnline             | User           | User is now online                                                |
@@ -498,7 +497,6 @@ This is the full list of available events from a room subscription:
  |-------------------|--------------|-------------------------------------------------------|
  | NewMessage        | Message      | A new message has been added to the room.             |
  | UserStartedTyping | User         | User has started typing                               |
- | UserStoppedTyping | User         | User has stopped typing                               |
  | UserJoined        | Int (userId) | User has joined the room                              |
  | UserLeft          | Int (userId) | User has left the room                                |
  | UserCameOnline    | User         | User is now online                                    |
@@ -641,12 +639,12 @@ Sometimes it’s useful to be able to see if another user is typing. You can use
 
 ### Trigger a typing event
 
-To send typing indicator events call `isTypingIn` with the id of the room the current user is typing in.
+To send typing indicator events call `startedTypingIn` with the id of the room the current user is typing in.
 
 ```kotlin
-currentUser.isTypingIn(
+currentUser.startedTypingIn(
   roomId = room.id
-).wait().let { result -> // Future<Result<FetchedAttachment, Error>>
+).wait().let { result -> // Future<Result<Unit, Error>>
    when(result) { // Result<Int, Error>, either the new message id or an error
      is Result.Success -> toast("Success!")
      is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -656,12 +654,11 @@ currentUser.isTypingIn(
 
 ### Receive typing indicators
 
-To be notified when a user starts or stops typing in a room, provide a `onUserStartedTyping` and a `onUserStoppedTyping` function as part of the room subscription listener.
+To be notified when a user starts or stops typing in a room, provide a `onUserStartedTyping` function as part of the room subscription listener.
 
 ```kotlin
 RoomSubscription(
-  onUserStartedTyping = { user -> toast("User ${user.name} started typing") },
-  onUserStoppedTyping = { user -> toast("User ${user.name} stopped typing") }
+  onUserStartedTyping = { user -> toast("User ${user.name} started typing") }
 )
 ```
 
@@ -671,8 +668,6 @@ Alternatively, if you are using an event callback:
 { event -> 
   when(event) {
     is UserStartedTyping -> toast("User ${event.user.name} started typing")
-    is UserStoppedTyping -> toast("User ${event.user.name} stopped typing")
-  
   } 
 }
 ```

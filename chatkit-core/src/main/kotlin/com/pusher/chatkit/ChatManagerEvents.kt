@@ -12,7 +12,6 @@ import elements.Error
 data class ChatManagerListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = { },
-    val onUserStoppedTyping: (User) -> Unit = { },
     val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserCameOnline: (User) -> Unit = { },
@@ -38,7 +37,6 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
     when (event) {
         is CurrentUserReceived -> onCurrentUserReceived(event.currentUser)
         is UserStartedTyping -> onUserStartedTyping(event.user)
-        is UserStoppedTyping -> onUserStoppedTyping(event.user)
         is UserJoinedRoom -> onUserJoinedRoom(event.user, event.room)
         is UserLeftRoom -> onUserLeftRoom(event.user, event.room)
         is UserCameOnline -> onUserCameOnline(event.user)
@@ -68,11 +66,6 @@ sealed class ChatManagerEvent {
      * @see [ChatManagerListeners.onUserStartedTyping]
      */
     data class UserStartedTyping internal constructor(val user: User) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onUserStoppedTyping]
-     */
-    data class UserStoppedTyping internal constructor(val user: User) : ChatManagerEvent()
 
     /**
      * @see [ChatManagerListeners.onUserJoinedRoom]

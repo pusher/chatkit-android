@@ -20,7 +20,7 @@ internal class CursorService(
     private val tokenProvider = chatManager.tokenProvider
     private val tokenParams = chatManager.dependencies.tokenParams
 
-    private val cursors = CursorsStore()
+    internal val cursors = CursorsStore()
 
     fun setReadCursor(
         userId: String,
@@ -60,6 +60,12 @@ internal class CursorService(
 
     private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursors")
+
+    fun saveCursors(cursors: Map<Int, Cursor>) {
+        cursors.forEach { _, cursor ->
+            this.cursors[cursor.userId] += cursor
+        }
+    }
 }
 
 internal class CursorsStore {

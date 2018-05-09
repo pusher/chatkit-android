@@ -20,8 +20,6 @@ import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.TimeUnit.SECONDS
 import elements.Error as ElementsError
 
-private val forTenSeconds = Wait.For(10, SECONDS)
-
 class ChatManagerSpek : Spek({
 
     afterEachTest(::tearDownInstance)
@@ -92,18 +90,3 @@ class ChatManagerSpek : Spek({
 
 })
 
-private fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
-    is Result.Success -> value
-    is Result.Failure -> error("Failure: $error")
-}
-
-private val CurrentUser.generalRoom
-    get() = rooms.find { it.name == "general" } ?: error("Could not find room general")
-
-private fun chatFor(userName: String) = ChatManager(
-    instanceLocator = INSTANCE_LOCATOR,
-    userId = userName,
-    dependencies = TestChatkitDependencies(
-        tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
-    )
-)
