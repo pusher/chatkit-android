@@ -20,13 +20,14 @@ import com.pusher.platform.network.wait
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import org.jetbrains.spek.api.dsl.xdescribe
 
 class RoomEventsSpek : Spek({
 
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("Room") {
+    xdescribe("Room") {
 
         it("notifies when user joins") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
