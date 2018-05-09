@@ -56,6 +56,8 @@ internal class RoomSubscription(
         this is ChatManagerEvent.UserLeftRoom && room.id == roomId -> UserLeft(user)
         this is ChatManagerEvent.UserCameOnline && user.isInRoom() -> UserCameOnline(user)
         this is ChatManagerEvent.UserWentOffline && user.isInRoom() -> UserWentOffline(user)
+        this is ChatManagerEvent.RoomUpdated && room.id == roomId -> RoomUpdated(room)
+        this is ChatManagerEvent.RoomDeleted && roomId == this.roomId -> RoomDeleted(roomId)
         else -> null
     }?.let(consumeEvent)
 

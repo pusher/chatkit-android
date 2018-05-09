@@ -47,7 +47,9 @@ class TestChatkitDependencies(
 val forTenSeconds = Wait.For(10, TimeUnit.SECONDS)
 
 val CurrentUser.generalRoom
-    get() = rooms.find { it.name == "general" } ?: error("Could not find room general")
+    get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
+
+private val managers = mutableListOf<ChatManager>()
 
 fun chatFor(userName: String) = ChatManager(
     instanceLocator = INSTANCE_LOCATOR,
@@ -55,7 +57,12 @@ fun chatFor(userName: String) = ChatManager(
     dependencies = TestChatkitDependencies(
         tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
     )
-)
+).also { managers += it }
+
+fun closeChatManagers() {
+    managers.forEach { it.close() }
+    managers.clear()
+}
 
 fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
     is Result.Success -> value

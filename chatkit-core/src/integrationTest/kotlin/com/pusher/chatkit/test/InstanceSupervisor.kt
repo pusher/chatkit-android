@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.tearDown
 import com.pusher.platform.Instance
@@ -11,8 +12,6 @@ import com.pusher.platform.RequestOptions
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
-import junit.framework.TestCase
-import okhttp3.Response
 import java.util.concurrent.Future
 
 /**
@@ -30,13 +29,8 @@ object InstanceSupervisor {
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) =
         (listOf(tearDown(), newUser(SUPER_USER)) + actions)
-            .map { action -> action.name to action().wait() }
-            .forEach { (name, result) ->
-                check(result is Result.Success) { "Expected '$name' to success. Result was: $result" }
-            }
-
+            .forEach { it.run() }
 }
-
 
 private val sudoTokenProvider = TestTokenProvider(INSTANCE_ID, SUPER_USER, AUTH_KEY_ID, AUTH_KEY_SECRET, true)
 
@@ -48,6 +42,10 @@ private val chatkitInstance = Instance(
 )
 
 typealias InstanceAction = () -> Future<Result<JsonElement, Error>>
+
+fun InstanceAction.run() = this().wait().let { result ->
+    check(result is Result.Success) { "Expected '$name' to success. Result was: $result" }
+}
 
 class NamedInstanceAction(val name: String, instanceAction: InstanceAction) : InstanceAction by instanceAction
 
@@ -73,6 +71,33 @@ object InstanceActions {
         )
     }.withName("Create new user: $name")
 
+    fun changeRoomName(room: Room, newName: String): InstanceAction = {
+        chatkitInstance.request<JsonElement>(
+            options = RequestOptions(
+                path = "/rooms/${room.id}",
+                method = "PUT",
+                body = """
+                    {
+                      "name" : "$newName"
+                    }
+                """.trimIndent()
+            ),
+            tokenProvider = sudoTokenProvider,
+            responseParser = { it.parseAs() }
+        )
+    }.withName("Changing name of room ${room.name} to $newName ")
+
+    fun deleteRoom(room: Room): InstanceAction = {
+        chatkitInstance.request<JsonElement>(
+            options = RequestOptions(
+                path = "/rooms/${room.id}",
+                method = "DELETE"
+            ),
+            tokenProvider = sudoTokenProvider,
+            responseParser = { it.parseAs() }
+        )
+    }.withName("Deleting room ${room.name} ")
+
     fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
             options = RequestOptions(
@@ -85,15 +110,16 @@ object InstanceActions {
         )
     }.withName("Create new users: ${names.joinToString(", ")}")
 
-    fun newRoom(name: String, vararg userNames: String) = {
+    fun newRoom(name: String, vararg userNames: String, isPrivate : Boolean = false) = {
         chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/rooms",
                 method = "POST",
                 body = """
                     {
-                        "name": "$name",
-                        "user_ids": ${userNames.toList().toJsonString { "\"$it\"" }}
+                        "name" : "$name",
+                        "user_ids" : ${userNames.toList().toJsonString { "\"$it\"" }},
+                        "private" : $isPrivate
                     }
                 """.trimIndent()
             ),

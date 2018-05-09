@@ -131,17 +131,17 @@ class UserSubscription(
         is RoomUpdatedEvent -> RoomUpdated(room).toFutureSuccess()
         is RoomDeletedEvent -> RoomDeleted(roomId).toFutureSuccess()
         is RemovedFromRoomEvent -> CurrentUserRemovedFromRoom(roomId).toFutureSuccess()
-        is UserLeftEvent -> chatManager.userService().fetchUserBy(userId).flatMapResult { user ->
+        is UserLeftEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
             chatManager.roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserLeftRoom(user, room) }
         }
-        is UserJoinedEvent -> chatManager.userService().fetchUserBy(userId).flatMapResult { user ->
+        is UserJoinedEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
             chatManager.roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
         }
-        is UserStartedTyping -> chatManager.userService().fetchUserBy(userId).mapResult { user ->
+        is UserStartedTyping -> chatManager.userService.fetchUserBy(userId).mapResult { user ->
             ChatManagerEvent.UserStartedTyping(user) as ChatManagerEvent
         }
     }

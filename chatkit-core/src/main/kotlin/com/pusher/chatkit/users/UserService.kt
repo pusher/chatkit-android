@@ -9,13 +9,11 @@ import elements.Error
 import elements.Errors
 import java.util.concurrent.Future
 
-
-internal fun ChatManager.userService(): UserService =
-    UserService(this)
-
 internal class UserService(
     override val chatManager: ChatManager
 ) : HasChat {
+
+    private val userStore by lazy { UserStore() }
 
     fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {
         val users = userIds.map { id -> getLocalUser(id).orElse { id } }
@@ -24,7 +22,12 @@ internal class UserService(
         return when {
             missingUserIds.isEmpty() -> Futures.now(localUsers.asSuccess())
             else -> chatManager.doGet<List<User>>("/users_by_ids?user_ids=${missingUserIds.joinToString(separator = ",")}")
-                .map { it.map { it + localUsers } }
+                .map { usersResult ->
+                    usersResult.map { loadedUsers ->
+                        userStore += loadedUsers
+                        loadedUsers + localUsers
+                    }
+                }
         }
     }
 
@@ -49,9 +52,6 @@ internal class UserService(
 
     internal data class UserIdsWrapper(val userIds: List<String>)
 
-    fun joinRoom(user: CurrentUser, room: Room): Future<Result<Room, Error>> =
-        joinRoom(user, room.id)
-
     fun joinRoom(user: CurrentUser, roomId: Int): Future<Result<Room, Error>> =
         chatManager.doPost<Room>("/users/${user.id}/rooms/$roomId/join")
             .updateStoreWhenReady()
@@ -67,7 +67,7 @@ internal class UserService(
     }
 
     private fun getLocalUser(id: String) =
-        chatManager.userStore[id]
+        userStore[id]
 
 }
 

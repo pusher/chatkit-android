@@ -9,10 +9,7 @@ import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomStore
-import com.pusher.chatkit.users.HasUser
-import com.pusher.chatkit.users.UserStore
-import com.pusher.chatkit.users.UserSubscription
-import com.pusher.chatkit.users.userService
+import com.pusher.chatkit.users.*
 import com.pusher.platform.*
 import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
@@ -46,14 +43,11 @@ class ChatManager constructor(
             .create()
     }
 
-    private val logger = dependencies.logger
-
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
     internal val filesInstance by lazyInstance(FILES_SERVICE_NAME, SERVICE_VERSION)
     internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
 
-    internal val userStore by lazy { UserStore() }
     internal val roomStore by lazy { RoomStore() }
 
     private val subscriptions = mutableListOf<Subscription>()
@@ -61,6 +55,7 @@ class ChatManager constructor(
 
     internal val cursorService by lazy { CursorService(this) }
     internal val presenceService by lazy { PresenceService(this) }
+    internal val userService by lazy { UserService(this) }
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {
@@ -189,7 +184,7 @@ internal interface HasChat {
     }
 
     fun populateRoomUserStore(room: Room) {
-        chatManager.userService().populateUserStore(room.memberUserIds)
+        chatManager.userService.populateUserStore(room.memberUserIds)
     }
 
 }

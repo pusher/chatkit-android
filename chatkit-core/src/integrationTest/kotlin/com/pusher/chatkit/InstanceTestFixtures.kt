@@ -26,4 +26,5 @@ object Users {
 
 object Rooms {
     val GENERAL = "$testId-general"
+    val NOT_GENERAL = "$testId-not-general"
 }

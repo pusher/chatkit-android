@@ -7,7 +7,6 @@ import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.toJson
 import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
-import com.pusher.chatkit.users.userService
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
@@ -34,7 +33,7 @@ class CurrentUser(
     val users: Future<Result<List<User>, Error>>
         get() = rooms
         .flatMap { it.memberUserIds }
-        .let { ids -> chatManager.userService().fetchUsersBy(ids.toSet()) }
+        .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
 
     private val roomSubscriptions = mutableMapOf<Int, Subscription>()
 
@@ -70,10 +69,10 @@ class CurrentUser(
         )
 
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
-        chatManager.userService().addUsersToRoom(roomId, userIds)
+        chatManager.userService.addUsersToRoom(roomId, userIds)
 
     fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
-        chatManager.userService().removeUsersFromRoom(roomId, userIds)
+        chatManager.userService.removeUsersFromRoom(roomId, userIds)
 
     @JvmOverloads
     fun createRoom(
@@ -200,7 +199,7 @@ class CurrentUser(
         )
 
     fun usersForRoom(room: Room): Future<Result<List<User>, Error>> =
-        chatManager.userService().fetchUsersBy(room.memberUserIds)
+        chatManager.userService.fetchUsersBy(room.memberUserIds)
 
     fun close() {
         roomSubscriptions.values.forEach { it.unsubscribe() }

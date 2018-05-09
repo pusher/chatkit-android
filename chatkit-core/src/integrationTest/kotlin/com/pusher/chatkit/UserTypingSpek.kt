@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
+import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
@@ -16,19 +17,17 @@ import org.jetbrains.spek.api.dsl.it
 class UserTypingSpek : Spek({
 
     afterEachTest(::tearDownInstance)
+    afterEachTest(::closeChatManagers)
 
     describe("ChatManager") {
 
         it("sends and receives typing indicator") {
-            setUpInstanceWith(newUsers(Users.PUSHERINO, Users.ALICE), newRoom("general", Users.PUSHERINO, Users.ALICE))
+            setUpInstanceWith(newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
             var typingUser by FutureValue<User>()
 
-            val pusherinoChat = chatFor(Users.PUSHERINO)
-            val aliceChat = chatFor(Users.ALICE)
-
-            val pusherino = pusherinoChat.connect().wait(forTenSeconds).assumeSuccess()
-            val alice = aliceChat.connect().wait(forTenSeconds).assumeSuccess()
+            val pusherino = chatFor(Users.PUSHERINO).connect().wait(forTenSeconds).assumeSuccess()
+            val alice = chatFor(Users.ALICE).connect().wait(forTenSeconds).assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
                 if (event is RoomSubscriptionEvent.UserStartedTyping) {
@@ -39,9 +38,6 @@ class UserTypingSpek : Spek({
             pusherino.isTypingIn(pusherino.generalRoom).wait(forTenSeconds).assumeSuccess()
 
             assertThat(typingUser.id).isEqualTo(pusherino.id)
-
-            pusherinoChat.close()
-            aliceChat.close()
         }
 
     }
