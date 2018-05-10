@@ -20,7 +20,6 @@ import com.pusher.platform.network.wait
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.xit
 
 class RoomEventsSpek : Spek({
 
@@ -29,7 +28,7 @@ class RoomEventsSpek : Spek({
 
     describe("Room") {
 
-        xit("notifies when user joins") {
+        it("notifies when user joins") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
 
             var userJoined by FutureValue<User>()
@@ -48,19 +47,19 @@ class RoomEventsSpek : Spek({
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
 
-        xit("notifies when user leaves") {
+        it("notifies when user leaves") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var userJoined by FutureValue<User>()
+            var userLeft by FutureValue<User>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserLeft) userJoined = event.user
+                if (event is RoomSubscriptionEvent.UserLeft) userLeft = event.user
             }
             pusherino.leaveRoom(alice.generalRoom.id).wait().assumeSuccess()
 
-            assertThat(userJoined.id).isEqualTo(pusherino.id)
+            assertThat(userLeft.id).isEqualTo(pusherino.id)
         }
 
         it("notifies when room is updated") {
