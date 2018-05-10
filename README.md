@@ -159,11 +159,11 @@ To consume the result we can do this:
 
 ```kotlin
 chatManager.connect().wait().let { result ->
-    when(result) { // Result<CurrentUser, Error>
-      is Result.Success -> toast("User received: ${result.value.name})")
-      is Result.Failure -> toast("Oops: ${result.error})")
-    }
+  when(result) { // Result<CurrentUser, Error>
+    is Result.Success -> toast("User received: ${result.value.name})")
+    is Result.Failure -> toast("Oops: ${result.error})")
   }
+}
 ```
 
 Alternatively, we have included a `fold` method too:
