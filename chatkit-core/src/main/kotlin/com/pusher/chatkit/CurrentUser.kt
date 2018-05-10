@@ -2,16 +2,13 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.files.GenericAttachment
+import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.toJson
 import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
-import com.pusher.platform.Instance
-import com.pusher.platform.RequestDestination
-import com.pusher.platform.RequestOptions
 import com.pusher.platform.network.toFuture
-import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
 import elements.Subscription
@@ -19,9 +16,6 @@ import java.util.concurrent.Future
 
 class CurrentUser(
     val id: String,
-    val filesInstance: Instance,
-    val tokenParams: ChatkitTokenParams?,
-    val tokenProvider: TokenProvider,
     var avatarURL: String?,
     var customData: CustomData?,
     var name: String?,
@@ -58,15 +52,7 @@ class CurrentUser(
         getReadCursor(room.id)
 
     fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
-        filesInstance.request(
-            options = RequestOptions(
-                method = "GET",
-                destination = RequestDestination.Absolute(attachmentUrl)
-            ),
-            tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
-            responseParser = { it.parseAs<FetchedAttachment>() }
-        )
+        chatManager.filesService.fetchAttachment(attachmentUrl)
 
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
         chatManager.userService.addUsersToRoom(roomId, userIds)
@@ -213,7 +199,6 @@ internal data class MessageRequest(val text: String? = null, val userId: String,
 internal sealed class AttachmentBody {
     data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
     object None : AttachmentBody()
-    data class Failed(val error: Error) : AttachmentBody()
 }
 
 internal data class SetCursorRequest(val position: Int)

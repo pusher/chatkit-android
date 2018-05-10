@@ -58,10 +58,7 @@ private fun isInstanceIdle(): Result<Boolean, Error> = chatkitInstance.request(
     options = RequestOptions("/users", "GET"),
     tokenProvider = sudoTokenProvider,
     responseParser = { it.parseAs<List<User>>() }
-).wait()
-    .map {
-        it.isEmpty()
-    }
+).wait().map { it.isEmpty() }
 
 private val sudoTokenProvider = TestTokenProvider(INSTANCE_ID, SUPER_USER, AUTH_KEY_ID, AUTH_KEY_SECRET, true)
 

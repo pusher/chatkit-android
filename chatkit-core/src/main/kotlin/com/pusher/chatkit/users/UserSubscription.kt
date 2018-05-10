@@ -37,7 +37,6 @@ class UserSubscription(
 
     private val apiInstance get() = chatManager.apiInstance
     private val cursorsInstance get() = chatManager.cursorsInstance
-    private val filesInstance get() = chatManager.filesInstance
 
     private val tokenProvider = chatManager.tokenProvider
     private val tokenParams = chatManager.dependencies.tokenParams
@@ -113,9 +112,6 @@ class UserSubscription(
         initialState: InitialState
     ) = CurrentUser(
         id = initialState.currentUser.id,
-        filesInstance = filesInstance,
-        tokenParams = tokenParams,
-        tokenProvider = tokenProvider,
         avatarURL = initialState.currentUser.avatarURL,
         customData = initialState.currentUser.customData,
         name = initialState.currentUser.name,

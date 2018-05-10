@@ -1,20 +1,17 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.files.DataAttachment
+import com.pusher.chatkit.files.GenericAttachment
+import com.pusher.chatkit.files.LinkAttachment
+import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.network.toJson
 import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.Error
 import java.util.concurrent.Future
 
-internal class MessageService(
-    private val chatManager: ChatManager
-) {
-
-    private val tokenProvider get() = chatManager.tokenProvider
-    private val tokenParams get() = chatManager.dependencies.tokenParams
-    private val filesInstance get() = chatManager.filesInstance
+internal class MessageService(private val chatManager: ChatManager) {
 
     fun fetchMessages(
         roomId: Int,
@@ -24,7 +21,9 @@ internal class MessageService(
     ): Future<Result<List<Message>, Error>> =
         fetchMessagesParams(limit, initialId, direction)
             .joinToString(separator = "&", prefix = "?") { (key, value) -> "$key=$value" }
-            .let { params -> chatManager.doGet("/rooms/$roomId/messages$params") }
+            .let { params ->
+                chatManager.doGet("/rooms/$roomId/messages$params")
+            }
 
     private fun fetchMessagesParams(
         limit: Int,
@@ -47,7 +46,7 @@ internal class MessageService(
             .flatMapFutureResult { sendMessage(roomId, userId, text, it) }
 
     private fun GenericAttachment.asAttachmentBody(roomId: Int): Future<Result<AttachmentBody, Error>> = when (this) {
-        is DataAttachment -> uploadFile(this, roomId)
+        is DataAttachment -> chatManager.filesService.uploadFile(this, roomId)
         is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
             .asSuccess<AttachmentBody, elements.Error>()
             .toFuture()
@@ -55,17 +54,6 @@ internal class MessageService(
             .asSuccess<AttachmentBody, Error>()
             .toFuture()
     }
-
-    private fun uploadFile(
-        attachment: DataAttachment,
-        roomId: Int
-    ): Future<Result<AttachmentBody, Error>> = filesInstance.upload(
-        path = "/rooms/$roomId/files/${attachment.name}",
-        file = attachment.file,
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
-        responseParser = { it.parseAs<AttachmentBody>() }
-    )
 
     private fun sendMessage(
         roomId: Int,
