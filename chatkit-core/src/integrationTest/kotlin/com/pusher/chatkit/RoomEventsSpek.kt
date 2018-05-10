@@ -37,9 +37,7 @@ class RoomEventsSpek : Spek({
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserJoined) {
-                    userJoined = event.user
-                }
+                if (event is RoomSubscriptionEvent.UserJoined) userJoined = event.user
             }
 
             pusherino.joinRoom(alice.generalRoom.id).wait().assumeSuccess()
