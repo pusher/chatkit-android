@@ -112,7 +112,7 @@ This is how we do it on our demo app: [ChatkitDemoApp](https://github.com/pusher
 
  - `dependencies`: Contains some requirements needed for `ChatManager`. We provide a ready made type for `ChatkitDependencies` for android, so all you have to do is provide a `Context` and a `TokenProvider`. 
 
-We also have available an implementation for `tokenProvider` which just needs the url to authorize users. If you have enabled testing on the `Settings` section of our dashboard, you can get a test url for this purpose in there. For production applications you have to create your own server side. More information about this can be found here: https://docs.pusher.com/chatkit/reference/server-node.
+We also have available an implementation for `tokenProvider` which just needs the url to authorize users. If you have enabled the test token provider on the `Settings` section of our dashboard, you can get a test url for this purpose in there. For production applications you have to create your own server side. More information about this can be found here: https://docs.pusher.com/chatkit/reference/server-node.
 
 ### Connecting
 
@@ -138,11 +138,11 @@ To consume the result we can do this:
 
 ```kotlin
 chatManager.connect().wait().let { result ->
-    when(result) { // Result<CurrentUser, Error>
-      is Result.Success -> toast("User received: ${result.value.name})")
-      is Result.Failure -> toast("Oops: ${result.error})")
-    }
+  when(result) { // Result<CurrentUser, Error>
+    is Result.Success -> toast("User received: ${result.value.name})")
+    is Result.Failure -> toast("Oops: ${result.error})")
   }
+}
 ```
 
 Alternatively, we have included a `fold` method too:
@@ -187,7 +187,7 @@ fun ChatManager.connectForUser(): Single<CurrentUser> = Single.create { emitter 
 
 #### Result
 
-We've been referring this `Result` without any explanation. It it nothing more than a rename of the functional pattern called `Either`. It a bit like Schrodinger's cat it can either have a success or a failure. If you want to learn more about this we go into details [here](/docs/Result.md)
+We've been referring to `Result` without any explanation. It is nothing more than a rename of the functional pattern called `Either`. A `Result` can either have a success or a failure. If you want to learn more about this we go into details [here](/docs/Result.md)
 
 ### Chat events
 
@@ -693,7 +693,7 @@ Additionally, to be notified when a user comes online or goes offline, you can p
 chatManager.connect { event ->
   when(event) {
     is UserCameOnline -> toast("User ${event.user.name} came online.")
-    is UserVentOffline -> toast("User ${event.user.name} went offline.")
+    is UserWentOffline -> toast("User ${event.user.name} went offline.")
   } 
 }
 ```
@@ -721,8 +721,8 @@ When you are confident that the current user has “read” a message, call `set
 currentUser.setReadCursor(
   roomId = someRoomId,
   position = someMessageId
-).wait().let { result -> // Future<Result<Boolean, Error>>
-  when(result) { // Result<Int, Error>, either the new message id or an error
+).wait().let { result -> // Future<Result<Int, Error>>
+  when(result) {
     is Result.Success -> toast("Cursor set!")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
@@ -735,7 +735,7 @@ The current user’s read cursors are available immediately upon connecting. Acc
 
 ```kotlin
 currentUser.readCursor(
-  roomId: romroomId
+  roomId: someRoomId
 )
 ```
 
@@ -746,12 +746,12 @@ currentUser.readCursor(
 After subscribing to a room, read cursors for members of that room can be accessed by supplying a `userId` as the second parameter to the `readCursor` method.
 
 ```kotlin
-currentUser.readCursor(
-  roomId: romroomId,
+currentUser.getReadCursor(
+  roomId: someRoomId,
   userId: "alice"
-).wait().let { result -> // Future<Result<Boolean, Error>>
-  when(result) { // Result<Int, Error>, either the new message id or an error
-    is Result.Success -> toast("Cursor set!")
+).wait().let { result -> // Future<Result<Cursor, Error>>
+  when(result) {
+    is Result.Success -> toast("Cursor: ${result.cursor}!")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
 }
