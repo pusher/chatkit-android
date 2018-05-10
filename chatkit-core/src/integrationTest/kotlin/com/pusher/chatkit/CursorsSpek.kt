@@ -1,6 +1,5 @@
 package com.pusher.chatkit
 
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.*
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
@@ -24,7 +23,7 @@ class CursorsSpek : Spek({
 
     describe("ChatManager with cursors") {
 
-        it("notifies when user reads messages") {
+        it("notifies when '$ALICE' reads messages") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var receivedCursor by FutureValue<Cursor>()
