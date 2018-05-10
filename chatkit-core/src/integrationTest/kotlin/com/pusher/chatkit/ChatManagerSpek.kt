@@ -8,7 +8,9 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.rooms.RoomSubscriptionListeners
+import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
@@ -83,16 +85,17 @@ class ChatManagerSpek : Spek({
 
     }
 
+    val currentUser = stub<CurrentUser>()
+    val user = stub<User>()
+    val room = stub<Room>()
+    val message = stub<Message>()
+    val cursor = stub<Cursor>()
+    val error = stub<elements.Error>()
+    val roomId = 123
+
     describe("ChatManagerListeners") {
 
         it("maps from callback to listeners") {
-
-            val currentUser = stub<CurrentUser>()
-            val user = stub<User>()
-            val room = stub<Room>()
-            val cursor = stub<Cursor>()
-            val error = stub<elements.Error>()
-            val roomId = 123
 
             val actual = mutableListOf<Any>()
 
@@ -138,6 +141,53 @@ class ChatManagerSpek : Spek({
                 "onUserLeftRoom" to user to room,
                 "onUserStartedTyping" to user,
                 "onUserWentOffline" to user
+            )
+
+        }
+
+    }
+
+    describe("RoomSubscriptionListener") {
+
+        it("maps from callback to listeners") {
+
+            val actual = mutableListOf<Any>()
+
+            val consume = RoomSubscriptionListeners(
+                onErrorOccurred = { actual += "onErrorOccurred" to it },
+                onNewReadCursor = { actual += "onNewReadCursor" to it },
+                onRoomDeleted = { actual += "onRoomDeleted" to it },
+                onRoomUpdated = { actual += "onRoomUpdated" to it },
+                onUserCameOnline = { actual += "onUserCameOnline" to it },
+                onUserStartedTyping = { actual += "onUserStartedTyping" to it },
+                onUserWentOffline = { actual += "onUserWentOffline" to it },
+                onNewMessage = { actual += "onNewMessage" to it },
+                onUserJoined = { actual += "onUserJoined" to it },
+                onUserLeft = { actual += "onUserLeft" to it }
+            ).toCallback()
+
+            consume(RoomSubscriptionEvent.UserStartedTyping(user))
+            consume(RoomSubscriptionEvent.UserJoined(user))
+            consume(RoomSubscriptionEvent.UserLeft(user))
+            consume(RoomSubscriptionEvent.UserCameOnline(user))
+            consume(RoomSubscriptionEvent.UserWentOffline(user))
+            consume(RoomSubscriptionEvent.RoomUpdated(room))
+            consume(RoomSubscriptionEvent.RoomDeleted(roomId))
+            consume(RoomSubscriptionEvent.NewReadCursor(cursor))
+            consume(RoomSubscriptionEvent.ErrorOccurred(error))
+            consume(RoomSubscriptionEvent.NewMessage(message))
+
+            assertThat(actual).containsExactly(
+                "onUserStartedTyping" to user,
+                "onUserJoined" to user,
+                "onUserLeft" to user,
+                "onUserCameOnline" to user,
+                "onUserWentOffline" to user,
+                "onRoomUpdated" to room,
+                "onRoomDeleted" to roomId,
+                "onNewReadCursor" to cursor,
+                "onErrorOccurred" to error,
+                
             )
 
         }
