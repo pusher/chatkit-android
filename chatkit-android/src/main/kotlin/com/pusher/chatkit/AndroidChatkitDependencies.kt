@@ -14,13 +14,12 @@ import okhttp3.OkHttpClient
 data class AndroidChatkitDependencies @JvmOverloads constructor(
     override val tokenProvider: TokenProvider,
     override val tokenParams: ChatkitTokenParams? = null,
-    override val okHttpClient: OkHttpClient? = null
+    override val okHttpClient: OkHttpClient? = null,
+    private val platformDependencies: PlatformDependencies = AndroidDependencies(),
+    override val logger: Logger = platformDependencies.logger
 ) : ChatkitDependencies {
 
-    private val androidPlatformDependencies = AndroidDependencies(chatkitSdkInfo)
-
-    override val logger: Logger = androidPlatformDependencies.logger
-    override val mediaTypeResolver: MediaTypeResolver = androidPlatformDependencies.mediaTypeResolver
+    override val mediaTypeResolver: MediaTypeResolver = platformDependencies.mediaTypeResolver
     override val sdkInfo: SdkInfo = chatkitSdkInfo
 
 }

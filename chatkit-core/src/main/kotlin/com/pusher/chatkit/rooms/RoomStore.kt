@@ -1,7 +1,6 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.rooms
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 class RoomStore(private val roomsMap: MutableMap<Int, Room> = ConcurrentHashMap()) {
 

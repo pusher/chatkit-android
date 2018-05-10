@@ -1,12 +1,15 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.users.User
 import elements.Error
 
 /**
  * Used along with [ChatManager] to observe global changes in the chat.
  */
-data class ChatManagerListeners(
+data class ChatManagerListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = { },
     val onUserStoppedTyping: (User) -> Unit = { },
@@ -19,6 +22,7 @@ data class ChatManagerListeners(
     val onCurrentUserRemovedFromRoom: (Int) -> Unit = { },
     val onRoomUpdated: (Room) -> Unit = { },
     val onRoomDeleted: (Int) -> Unit = { },
+    val onNewReadCursor: (Cursor) -> Unit = { },
     val onErrorOccurred: (Error) -> Unit = { }
 )
 
@@ -45,6 +49,7 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
         is RoomUpdated -> onRoomUpdated(event.room)
         is RoomDeleted -> onRoomDeleted(event.roomId)
         is ErrorOccurred -> onErrorOccurred(event.error)
+        is NewReadCursor -> onNewReadCursor(event.cursor)
         is NoEvent -> Unit // Ignore
     }
 }
@@ -115,9 +120,14 @@ sealed class ChatManagerEvent {
     data class RoomDeleted internal constructor(val roomId: Int) : ChatManagerEvent()
 
     /**
-     * Same as [ChatManagerListeners.onErrorOccurred]
+     * @see [ChatManagerListeners.onErrorOccurred]
      */
     data class ErrorOccurred internal constructor(val error: elements.Error) : ChatManagerEvent()
+
+    /**
+     * @see [ChatManagerListeners.onNewReadCursor]
+     */
+    data class NewReadCursor internal constructor(val cursor: Cursor) : ChatManagerEvent()
 
     /**
      * Used for control events, it can be ignored.

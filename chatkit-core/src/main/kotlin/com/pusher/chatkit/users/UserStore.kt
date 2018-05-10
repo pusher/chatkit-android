@@ -1,12 +1,9 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.users
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class GlobalUserStore(private val userMap : ConcurrentMap<String, User> = ConcurrentHashMap()) {
-
-    fun toList() : List<User> =
-        userMap.values.toList()
+class UserStore(private val userMap : ConcurrentMap<String, User> = ConcurrentHashMap()) {
 
     internal operator fun plusAssign(user: User) {
         userMap[user.id] = user

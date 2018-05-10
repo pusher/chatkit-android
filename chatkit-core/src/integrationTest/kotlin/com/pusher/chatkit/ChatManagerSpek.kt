@@ -1,8 +1,11 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
+import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.rooms.RoomSubscriptionListeners
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
@@ -10,18 +13,12 @@ import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.platform.network.Wait
-import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
-import elements.asSystemError
-import okhttp3.OkHttpClient
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.*
-import java.util.logging.Level
-import java.util.logging.Logger
+import java.util.concurrent.TimeUnit.SECONDS
 import elements.Error as ElementsError
 
 private val forTenSeconds = Wait.For(10, SECONDS)
@@ -44,18 +41,18 @@ class ChatManagerSpek : Spek({
         }
 
         it("loads user rooms") {
-            setUpInstanceWith(newUser(PUSHERINO), newRoom("general", PUSHERINO))
+            setUpInstanceWith(newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
             val chat = chatFor(PUSHERINO)
 
             val user = chat.connect().wait(forTenSeconds)
             val roomNames = user.assumeSuccess().rooms.map { it.name }
 
-            assertThat(roomNames).containsExactly("general")
+            assertThat(roomNames).containsExactly(GENERAL)
             chat.close()
         }
 
         it("loads users related to current user") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
 
             val user = chat.connect().wait(forTenSeconds)
@@ -63,12 +60,12 @@ class ChatManagerSpek : Spek({
 
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
-            assertThat(relatedUserIds).containsAllOf("alice", PUSHERINO)
+            assertThat(relatedUserIds).containsAllOf(ALICE, PUSHERINO)
             chat.close()
         }
 
         it("subscribes to a room and receives message from alice") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom("general", PUSHERINO, ALICE))
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
             val chat = chatFor(PUSHERINO)
             val aliceChat = chatFor(ALICE)
 
@@ -79,10 +76,10 @@ class ChatManagerSpek : Spek({
 
             var messageReceived by FutureValue<Message>()
 
-            pusherino.assumeSuccess().subscribeToRoom(room, object : RoomSubscriptionListeners {
-                override fun onNewMessage(message: Message) { messageReceived = message}
-                override fun onError(error: elements.Error) { kotlin.error("error: $error") }
-            })
+            pusherino.assumeSuccess().subscribeToRoom(room, RoomSubscriptionListeners(
+                onNewMessage = { message -> messageReceived = message },
+                onErrorOccurred = { e -> error("error: $e") }
+            ))
 
             val messageResult = alice.assumeSuccess().sendMessage(room, "message text").wait(forTenSeconds)
 
@@ -102,7 +99,7 @@ private fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
 }
 
 private val CurrentUser.generalRoom
-    get() = rooms.find { it.name == "general" } ?: error("Could not find room general")
+    get() = rooms.find { it.name == GENERAL } ?: error("Could not find room general")
 
 private fun chatFor(userName: String) = ChatManager(
     instanceLocator = INSTANCE_LOCATOR,

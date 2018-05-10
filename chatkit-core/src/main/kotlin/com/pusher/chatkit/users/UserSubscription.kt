@@ -1,15 +1,16 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.users
 
+import com.pusher.chatkit.*
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.users.UserSubscriptionEventParser
+import com.pusher.chatkit.rooms.Room
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.waitOr
-import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.*
 import java.util.concurrent.Future
@@ -25,26 +26,26 @@ data class RemovedFromRoomEvent(val roomId: Int) : UserSubscriptionEvent()
 data class UserLeftEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
 data class UserJoinedEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
 
+private const val USERS_PATH = "users"
+
 class UserSubscription(
     val userId: String,
     private val chatManager: ChatManager,
-    path: String,
-    val userStore: GlobalUserStore,
-    val tokenProvider: TokenProvider,
-    val tokenParams: ChatkitTokenParams?,
-    val logger: Logger,
     private val consumeEvent: (ChatManagerEvent) -> Unit
 ) : Subscription {
 
     private val apiInstance get() = chatManager.apiInstance
     private val cursorsInstance get() = chatManager.cursorsInstance
     private val filesInstance get() = chatManager.filesInstance
-    private val presenceInstance get() = chatManager.presenceInstance
+
+    private val tokenProvider = chatManager.tokenProvider
+    private val tokenParams = chatManager.dependencies.tokenParams
+    private val logger = chatManager.dependencies.logger
 
     private var headers: Headers = emptyHeaders()
 
     private val subscription = apiInstance.subscribeResuming(
-        path = path,
+        path = USERS_PATH,
         listeners = SubscriptionListeners(
             onOpen = { headers ->
                 logger.verbose("OnOpen $headers")
@@ -66,13 +67,23 @@ class UserSubscription(
             onEnd = { error -> logger.verbose("Subscription ended with: $error") }
         ),
         messageParser = UserSubscriptionEventParser,
-        tokenProvider = tokenProvider,
-        tokenParams = tokenParams
+        tokenProvider = this.tokenProvider,
+        tokenParams = this.tokenParams
     )
+
+    private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
+
+    private val cursorSubscription = chatManager.cursorService.subscribeToCursors(userId) { event ->
+        when(event) {
+            is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(NewReadCursor(event.cursor))
+        }
+    }
 
     override fun unsubscribe() {
         subscription.unsubscribe()
-        currentUser?.roomSubscriptions?.forEach(RoomSubscription::unsubscribe)
+        cursorSubscription.unsubscribe()
+        presenceSubscription.unsubscribe()
+        currentUser?.close()
     }
 
     private fun getCursors(): Future<Result<Map<Int, Cursor>, Error>> =
@@ -101,21 +112,13 @@ class UserSubscription(
         initialState: InitialState,
         cursors: Map<Int, Cursor>
     ) = CurrentUser(
-        apiInstance = apiInstance,
-        createdAt = initialState.currentUser.createdAt,
-        cursors = cursors.toMutableMap(),
-        cursorsInstance = cursorsInstance,
         id = initialState.currentUser.id,
-        logger = logger,
         filesInstance = filesInstance,
-        presenceInstance = presenceInstance,
         tokenParams = tokenParams,
         tokenProvider = tokenProvider,
-        userStore = userStore,
         avatarURL = initialState.currentUser.avatarURL,
         customData = initialState.currentUser.customData,
         name = initialState.currentUser.name,
-        updatedAt = initialState.currentUser.updatedAt,
         chatManager = chatManager
     )
 
