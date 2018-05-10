@@ -1,7 +1,5 @@
 package com.pusher.chatkit
 
-import java.util.*
-
 private fun systemProperty(name: String) =
     System.getProperty(name) ?: "Missing gradle/system property '$name'"
 
@@ -15,16 +13,14 @@ val AUTH_KEY: String = systemProperty("chatkit_integration_key")
 val AUTH_KEY_ID: String = AUTH_KEY.split(":")[0]
 val AUTH_KEY_SECRET: String = AUTH_KEY.split(":")[1]
 
-val testId = UUID.randomUUID().toString().take(6)
-
 object Users {
-    val SUPER_USER = "$testId-super-user" // sudo access
-    val PUSHERINO = "$testId-pusherino"
-    val ALICE = "$testId-alice"
+    const val SUPER_USER = "super-user" // sudo access
+    const val PUSHERINO = "pusherino"
+    const val ALICE = "alice"
 }
 
 
 object Rooms {
-    val GENERAL = "$testId-general"
-    val NOT_GENERAL = "$testId-not-general"
+    const val GENERAL = "general"
+    const val NOT_GENERAL = "not-general"
 }
