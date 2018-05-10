@@ -8,11 +8,7 @@ import com.pusher.util.*
 import elements.Error
 import java.util.concurrent.Future
 
-internal fun ChatManager.messageService(roomId: Int): MessageService =
-    MessageService(roomId, this)
-
 internal class MessageService(
-    private val roomId: Int,
     private val chatManager: ChatManager
 ) {
 
@@ -21,6 +17,7 @@ internal class MessageService(
     private val filesInstance get() = chatManager.filesInstance
 
     fun fetchMessages(
+        roomId: Int,
         limit: Int,
         initialId: Int?,
         direction: Direction
@@ -41,14 +38,15 @@ internal class MessageService(
 
     @JvmOverloads
     fun sendMessage(
+        roomId: Int,
         userId: String,
         text: CharSequence = "",
         attachment: GenericAttachment = NoAttachment
     ): Future<Result<Int, Error>> =
-        attachment.asAttachmentBody()
-            .flatMapFutureResult { sendMessage(userId, text, it) }
+        attachment.asAttachmentBody(roomId)
+            .flatMapFutureResult { sendMessage(roomId, userId, text, it) }
 
-    private fun GenericAttachment.asAttachmentBody(): Future<Result<AttachmentBody, Error>> = when (this) {
+    private fun GenericAttachment.asAttachmentBody(roomId: Int): Future<Result<AttachmentBody, Error>> = when (this) {
         is DataAttachment -> uploadFile(this, roomId)
         is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
             .asSuccess<AttachmentBody, elements.Error>()
@@ -70,6 +68,7 @@ internal class MessageService(
     )
 
     private fun sendMessage(
+        roomId: Int,
         userId: String,
         text: CharSequence = "",
         attachment: AttachmentBody

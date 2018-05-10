@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
@@ -58,6 +59,7 @@ class ChatManager constructor(
     internal val cursorService by lazy { CursorService(this) }
     internal val presenceService by lazy { PresenceService(this) }
     internal val userService by lazy { UserService(this) }
+    internal val messageService by lazy { MessageService(this) }
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {

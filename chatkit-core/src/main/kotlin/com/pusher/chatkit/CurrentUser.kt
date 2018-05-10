@@ -152,8 +152,8 @@ class CurrentUser(
         direction: Direction = Direction.ORDER_FIRST,
         limit: Int = 10
     ): Future<Result<List<Message>, Error>> = chatManager
-        .messageService(roomId)
-        .fetchMessages(limit, initialId, direction)
+        .messageService
+        .fetchMessages(roomId, limit, initialId, direction)
 
     @JvmOverloads
     fun sendMessage(
@@ -169,7 +169,7 @@ class CurrentUser(
         messageText: String,
         attachment: GenericAttachment = NoAttachment
     ): Future<Result<Int, Error>> =
-        chatManager.messageService(roomId).sendMessage(id, messageText, attachment)
+        chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
 
     private var lastTypingEvent: Long = 0
 
