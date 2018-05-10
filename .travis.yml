@@ -11,6 +11,8 @@ cache:
     - ${HOME}/.android/build-cache
     - ${HOME}/android-sdk-dl
     - ${HOME}/android-sdk
+    - ${TRAVIS_BUILD_DIR}/gradle/caches/
+    - ${TRAVIS_BUILD_DIR}/gradle/wrapper/dists/
     - ${TRAVIS_BUILD_DIR}/.gradle/caches/
     - ${TRAVIS_BUILD_DIR}/.gradle/wrapper/
     - ${TRAVIS_BUILD_DIR}/.gradle/wrapper/dists/

@@ -20,7 +20,7 @@ internal class CursorService(
     private val tokenProvider = chatManager.tokenProvider
     private val tokenParams = chatManager.dependencies.tokenParams
 
-    internal val cursors = CursorsStore()
+    private val cursors = CursorsStore()
 
     fun setReadCursor(
         userId: String,

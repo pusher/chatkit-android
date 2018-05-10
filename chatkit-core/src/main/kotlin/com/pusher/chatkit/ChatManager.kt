@@ -9,6 +9,7 @@ import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomStore
+import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.*
 import com.pusher.platform.*
 import com.pusher.platform.network.DataParser
@@ -199,8 +200,6 @@ internal data class ChatEvent(
     val timestamp: String,
     val data: JsonElement
 ) : HasUser
-
-typealias CustomData = MutableMap<String, String>
 
 /**
  * Used to avoid multiple requests to the tokenProvider if one is pending

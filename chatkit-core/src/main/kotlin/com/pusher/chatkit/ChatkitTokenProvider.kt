@@ -10,6 +10,8 @@ import okhttp3.*
 import java.util.*
 import java.util.concurrent.Future
 
+typealias CustomData = Map<String, String>
+
 /**
  * Simple token provider for Chatkit. Uses an in-memory cache for storing token.
  * @param endpoint location of this token provider.
@@ -20,8 +22,8 @@ import java.util.concurrent.Future
 class ChatkitTokenProvider
 @JvmOverloads constructor(
     private val endpoint: String,
-    var userId: String,
-    private val authData: CustomData = TreeMap(),
+    internal var userId: String,
+    private val authData: CustomData = emptyMap(),
     private val client: OkHttpClient = OkHttpClient(),
     private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 
