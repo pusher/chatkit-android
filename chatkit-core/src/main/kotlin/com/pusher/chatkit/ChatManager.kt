@@ -196,8 +196,6 @@ internal data class ChatEvent(
     val data: JsonElement
 ) : HasUser
 
-typealias CustomData = MutableMap<String, String>
-
 /**
  * Used to avoid multiple requests to the tokenProvider if one is pending
  */

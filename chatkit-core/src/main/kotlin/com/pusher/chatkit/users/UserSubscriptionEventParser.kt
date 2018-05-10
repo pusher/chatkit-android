@@ -2,7 +2,6 @@ package com.pusher.chatkit.users
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.network.asObject
 import com.pusher.chatkit.network.asString
 import com.pusher.chatkit.network.getValue

@@ -18,6 +18,7 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
    * [Include it in project](#include-it-in-project)
  * [Usage](#usage)
    * [Instantiate Chatkit](#instantiate-chatkit)
+   * [Token provider](#token-provider)
    * [Connecting](#connecting)
    * [Chat Events](#chat-events)
    * [Termination](#termination)
@@ -98,7 +99,7 @@ val chatManager = ChatManager(
     userId = USER_ID,
     dependencies = AndroidChatkitDependencies(
         context = getApplicationContext(),
-        tokenProvider = ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT)
+        tokenProvider = ChatkitTokenProvider(TOKEN_PROVIDER_ENDPOINT, USER_ID)
     )
 )
 
@@ -113,6 +114,26 @@ This is how we do it on our demo app: [ChatkitDemoApp](https://github.com/pusher
  - `dependencies`: Contains some requirements needed for `ChatManager`. We provide a ready made type for `ChatkitDependencies` for android, so all you have to do is provide a `Context` and a `TokenProvider`. 
 
 We also have available an implementation for `tokenProvider` which just needs the url to authorize users. If you have enabled testing on the `Settings` section of our dashboard, you can get a test url for this purpose in there. For production applications you have to create your own server side. More information about this can be found here: https://docs.pusher.com/chatkit/reference/server-node.
+
+## Token provider
+
+Although we provide a version of the `TokenProvider` that works with a url to a remove token provider (`ChatkitTokenProvider`), it is possible to create a custom one. These are the functions required by the `TokenProvider` interface:
+
+ | Function   | Params                      | Return                        | Description                                                               |
+ |------------|-----------------------------|-------------------------------|---------------------------------------------------------------------------|
+ | fetchToken | tokenParams (`Any, `Object`)| Future<Result<String, Error>> | Provides a string with the token or an error if failed (it can be cached) |
+ | clearToken | String                      | `Unit`, void                  | Called when chatkit requires a fresh token                                |
+
+The implementation of `ChatkitTokenProvider` has the following properties:
+
+
+ | Property   | Type                           | Description                                                          |
+ |------------|--------------------------------|----------------------------------------------------------------------|
+ | endpoint   | String                         | Url for the server that provides access tokens                       |
+ | userId     | String                         | Name of the user login in                                            |
+ | authData   | Map<String, String> (Optional) | `CustomData` sent to the server along with `TokenParams`             |
+ | client     | OkHttpClient (Optional)        | Used for networking (i.e. can modify to use proxy)                   |
+ | tokenCache | TokenCache (Optional)          | By default we use an in memory but can provide a custom `TokenCache` |
 
 ### Connecting
 
