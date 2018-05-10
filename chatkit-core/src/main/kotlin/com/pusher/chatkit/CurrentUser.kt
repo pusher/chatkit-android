@@ -22,7 +22,7 @@ class CurrentUser(
     private val chatManager: ChatManager
 ) {
 
-    val rooms: List<Room> get() = chatManager.roomStore.toList()
+    val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
         .filter { it.memberUserIds.contains(id) }
     val users: Future<Result<List<User>, Error>>
         get() = rooms
@@ -65,7 +65,7 @@ class CurrentUser(
         name: String,
         isPrivate: Boolean = false,
         userIds: List<String> = emptyList()
-    ): Future<Result<Room, Error>> = chatManager.roomService().createRoom(
+    ): Future<Result<Room, Error>> = chatManager.roomService.createRoom(
         creatorId = id,
         name = name,
         isPrivate = isPrivate,
@@ -78,25 +78,25 @@ class CurrentUser(
 
     @JvmOverloads
     fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
-        chatManager.roomService().updateRoom(roomId, name, isPrivate)
+        chatManager.roomService.updateRoom(roomId, name, isPrivate)
 
     fun deleteRoom(room: Room): Future<Result<String, Error>> =
         deleteRoom(room.id)
 
     fun deleteRoom(roomId: Int): Future<Result<String, Error>> =
-        chatManager.roomService().deleteRoom(roomId)
+        chatManager.roomService.deleteRoom(roomId)
 
     fun leaveRoom(room: Room): Future<Result<Unit, Error>> =
         leaveRoom(room.id)
 
     fun leaveRoom(roomId: Int): Future<Result<Unit, Error>> =
-        chatManager.roomService().leaveRoom(id, roomId)
+        chatManager.roomService.leaveRoom(id, roomId)
 
     fun joinRoom(room: Room): Future<Result<Room, Error>> =
         joinRoom(room.id)
 
     fun joinRoom(roomId: Int): Future<Result<Room, Error>> =
-        chatManager.roomService().joinRoom(id, roomId)
+        chatManager.roomService.joinRoom(id, roomId)
 
     @JvmOverloads
     fun subscribeToRoom(
@@ -128,7 +128,7 @@ class CurrentUser(
         messageLimit : Int = 10,
         consumer: RoomSubscriptionConsumer
     ): Subscription =
-        chatManager.roomService().subscribeToRoom(id, roomId, consumer, messageLimit)
+        chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
             .also { roomSubscriptions += roomId to it }
 
     @JvmOverloads
@@ -179,7 +179,7 @@ class CurrentUser(
     )
 
     fun getJoinablerooms(): Future<Result<List<Room>, Error>> =
-        chatManager.roomService().fetchUserRooms(
+        chatManager.roomService.fetchUserRooms(
             userId = id,
             onlyJoinable = true
         )

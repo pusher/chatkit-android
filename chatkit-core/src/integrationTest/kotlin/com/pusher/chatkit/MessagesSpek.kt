@@ -80,9 +80,11 @@ class MessagesSpek : Spek({
                 attachment = DataAttachment(file)
             ).wait().assumeSuccess()
 
-            val messages = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
+            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
 
-            assertThat(messages[0].attachment).isNotNull()
+            val fetchedAttachment = alice.fetchAttachment(firstMessage.attachment!!.link).wait().assumeSuccess()
+
+            assertThat(fetchedAttachment.file).isNotNull()
         }
 
     }
