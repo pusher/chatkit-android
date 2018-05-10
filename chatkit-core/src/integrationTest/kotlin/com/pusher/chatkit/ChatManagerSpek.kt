@@ -187,7 +187,7 @@ class ChatManagerSpek : Spek({
                 "onRoomDeleted" to roomId,
                 "onNewReadCursor" to cursor,
                 "onErrorOccurred" to error,
-
+                "onNewMessage" to message
             )
 
         }
