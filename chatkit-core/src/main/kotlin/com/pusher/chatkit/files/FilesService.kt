@@ -17,6 +17,7 @@ internal class FilesService(private val chatManager: ChatManager) {
 
     private val filesInstance by chatManager.lazyInstance(FILES_SERVICE_NAME, SERVICE_VERSION)
 
+    @Suppress("UNCHECKED_CAST")
     fun uploadFile(
         attachment: DataAttachment,
         roomId: Int
