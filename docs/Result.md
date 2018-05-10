@@ -1,6 +1,6 @@
 # Result<A, B>
 
-This data type follow the `Either` functional pattern to return one of two possibilities with some renames to add meaning and extensions to work with futures. All the endpoints that deliver results in the SDK user some type `A` and an `Error` (different from `kotlin.Error`) as associated types. 
+This data type follows the `Either` functional pattern to return one of two possibilities with some renames to add meaning and extensions to work with futures. All the endpoints that deliver results in the SDK user some type `A` and an `Error` (different from `kotlin.Error`) as associated types. 
 
 ## Creating a `Result`
 
