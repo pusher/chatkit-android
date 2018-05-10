@@ -81,8 +81,6 @@ private data class UserPresence(
             else -> Presence.Offline
         }
 
-    fun isOnline(): Boolean = state.equals(other = "online", ignoreCase = true)
-
 }
 
 private data class UserPresences(val userStates: List<UserPresence>)
