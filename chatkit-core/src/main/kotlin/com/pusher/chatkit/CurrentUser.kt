@@ -135,7 +135,7 @@ class CurrentUser(
     fun fetchMessages(
         roomId: Int,
         initialId: Int? = null,
-        direction: Direction = Direction.ORDER_FIRST,
+        direction: Direction = Direction.OLDER_FIRST,
         limit: Int = 10
     ): Future<Result<List<Message>, Error>> = chatManager
         .messageService

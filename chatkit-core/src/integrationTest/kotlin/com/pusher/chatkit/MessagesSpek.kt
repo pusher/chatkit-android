@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.*
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.files.DataAttachment
+import com.pusher.chatkit.messages.Direction
+import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
@@ -28,7 +30,7 @@ class MessagesSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
-            val sentMessages = (0..9).map { "message $it" }
+            val sentMessages = (0..4).map { "message $it" }
 
             alice.generalRoom.let { room ->
                 sentMessages.forEach { message ->
@@ -39,6 +41,28 @@ class MessagesSpek : Spek({
             val messages = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
 
             assertThat(messages.map { it.text }).containsAllIn(sentMessages)
+        }
+
+        it("retrieves old messages reversed") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(Rooms.GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            val sentMessages = (0..4).map { "message $it" }
+
+            alice.generalRoom.let { room ->
+                sentMessages.forEach { message ->
+                    alice.sendMessage(room, message).wait().assumeSuccess()
+                }
+            }
+
+            val messages = pusherino.fetchMessages(
+                roomId = pusherino.generalRoom.id,
+                direction = Direction.NEWER_FIRST
+            ).wait().assumeSuccess()
+
+            assertThat(messages).isOrdered( Comparator { a: Message, b: Message -> a.createdAt.compareTo(b.createdAt) } )
         }
 
         it("sends message with attachment") {
