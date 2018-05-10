@@ -26,9 +26,9 @@ class RoomEventsSpek : Spek({
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("Room") {
+    describe("Room subscription") {
 
-        it("notifies when user joins") {
+        it("notifies when '$PUSHERINO' joins room '$GENERAL'") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
 
             var userJoined by FutureValue<User>()
@@ -45,7 +45,7 @@ class RoomEventsSpek : Spek({
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
 
-        it("notifies when user leaves") {
+        it("notifies when '$PUSHERINO' leaves room '$GENERAL'") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userLeft by FutureValue<User>()
@@ -60,7 +60,7 @@ class RoomEventsSpek : Spek({
             assertThat(userLeft.id).isEqualTo(pusherino.id)
         }
 
-        it("notifies when room is updated") {
+        it("notifies '$ALICE' when room '$GENERAL' is updated") {
             setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             var updatedRoom by FutureValue<Room>()
@@ -74,7 +74,7 @@ class RoomEventsSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(NOT_GENERAL)
         }
 
-        it("notifies when room is deleted") {
+        it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var deletedRoomId by FutureValue<Int>()
@@ -89,7 +89,7 @@ class RoomEventsSpek : Spek({
             assertThat(deletedRoomId).isEqualTo(expectedRoomId)
         }
 
-        it("notifies when current user is invited") {
+        it("notifies when '$ALICE' is invited to '$GENERAL") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO))
 
             var roomJoined by FutureValue<Room>()
@@ -104,7 +104,7 @@ class RoomEventsSpek : Spek({
             assertThat(roomJoined.id).isEqualTo(pusherino.generalRoom.id)
         }
 
-        it("notifies when current user is removed") {
+        it("notifies when '$ALICE' is removed from '$GENERAL'") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var roomRemovedFromId by FutureValue<Int>()
