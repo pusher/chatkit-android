@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.*
+import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
@@ -22,8 +23,8 @@ class PresenceSpek : Spek({
 
     describe("Chatkit with presence") {
 
-        it("notifies when user comes online in room") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(Rooms.GENERAL, PUSHERINO, ALICE))
+        it("notifies when '$ALICE' comes online in room '$GENERAL'") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userCameOnline by FutureValue<User>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -37,8 +38,8 @@ class PresenceSpek : Spek({
             assertThat(userCameOnline.id).isEqualTo(ALICE)
         }
 
-        it("notifies when user comes online globally") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(Rooms.GENERAL, PUSHERINO, ALICE))
+        it("notifies when '$ALICE' comes online globally") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userCameOnline by FutureValue<User>()
             chatFor(PUSHERINO).connect{ event ->
@@ -50,8 +51,8 @@ class PresenceSpek : Spek({
             assertThat(userCameOnline.id).isEqualTo(ALICE)
         }
 
-        it("notifies when user goes offline in room") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(Rooms.GENERAL, PUSHERINO, ALICE))
+        it("notifies when '$ALICE' goes offline in room '$GENERAL'") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userWentOffline by FutureValue<User>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -67,8 +68,8 @@ class PresenceSpek : Spek({
             assertThat(userWentOffline.id).isEqualTo(ALICE)
         }
 
-        it("notifies when user goes offline globally") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(Rooms.GENERAL, PUSHERINO, ALICE))
+        it("notifies when '$ALICE' goes offline globally") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userWentOffline by FutureValue<User>()
             chatFor(PUSHERINO).connect{ event ->
