@@ -45,19 +45,24 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
         ).toJson()
             .toFuture()
             .flatMapFutureResult { body -> chatManager.doPost<Room>("/rooms", body) }
-            .updateStoreWhenReady()
+            .saveRoomWhenReady()
 
     fun roomFor(userId: String, roomAware: HasRoom) =
         fetchRoomBy(userId, roomAware.roomId)
 
-    fun deleteRoom(roomId: Int): Future<Result<String, Error>> =
-        chatManager.doDelete("/rooms/$roomId")
+    fun deleteRoom(roomId: Int): Future<Result<Unit, Error>> =
+        chatManager.doDelete<Unit>("/rooms/$roomId").also {
+            chatManager.roomService.roomStore -= roomId
+        }
 
-    fun leaveRoom(userId: String, roomId: Int): Future<Result<Unit, Error>> =
-        chatManager.doPost("/users/$userId/rooms/$roomId/leave")
+
+    fun leaveRoom(userId: String, roomId: Int): Future<Result<Int, Error>> =
+        chatManager.doPost<Int>("/users/$userId/rooms/$roomId/leave")
+            .removeRoomWhenReady()
 
     fun joinRoom(userId: String, roomId: Int): Future<Result<Room, Error>> =
-        chatManager.doPost("/users/$userId/rooms/$roomId/join")
+        chatManager.doPost<Room>("/users/$userId/rooms/$roomId/join")
+            .saveRoomWhenReady()
 
     fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
         UpdateRoomRequest(name,isPrivate).toJson().toFuture()

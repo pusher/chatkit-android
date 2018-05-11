@@ -184,10 +184,16 @@ internal interface HasChat {
 
     val chatManager: ChatManager
 
-    fun Future<Result<Room, Error>>.updateStoreWhenReady() = mapResult {
+    fun Future<Result<Room, Error>>.saveRoomWhenReady() = mapResult {
         it.also { room ->
             chatManager.roomService.roomStore += room
             populateRoomUserStore(room)
+        }
+    }
+
+    fun Future<Result<Int, Error>>.removeRoomWhenReady() = mapResult {
+        it.also { roomId ->
+            chatManager.roomService.roomStore -= roomId
         }
     }
 
