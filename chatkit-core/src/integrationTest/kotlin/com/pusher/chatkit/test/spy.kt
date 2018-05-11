@@ -18,6 +18,9 @@ inline fun <reified T> stub(f: T.() -> Unit): T =
 inline fun <reified T> stub(): T =
     mock(T::class.java, withSettings().stubOnly())
 
+inline fun <reified T> stub(name: String): T =
+    mock(T::class.java, withSettings().stubOnly().name(name))
+
 infix fun <T> T.returns(value: T) {
     given(this).willReturn(value)
 }

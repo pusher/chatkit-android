@@ -85,12 +85,12 @@ class ChatManagerSpek : Spek({
 
     }
 
-    val currentUser = stub<CurrentUser>()
-    val user = stub<User>()
-    val room = stub<Room>()
-    val message = stub<Message>()
-    val cursor = stub<Cursor>()
-    val error = stub<elements.Error>()
+    val currentUser = stub<CurrentUser>("currentUser")
+    val user = stub<User>("user")
+    val room = stub<Room>("room")
+    val message = stub<Message>("message")
+    val cursor = stub<Cursor>("cursor")
+    val error = stub<elements.Error>("error")
     val roomId = 123
 
     describe("ChatManagerListeners") {
@@ -110,8 +110,8 @@ class ChatManagerSpek : Spek({
                 onUserCameOnline = { actual += "onUserCameOnline" to it },
                 onUserJoinedRoom = { u, r -> actual += "onUserJoinedRoom" to u to r },
                 onUserLeftRoom = { u, r -> actual += "onUserLeftRoom" to u to r },
-                onUserStartedTyping = { u, r ->actual += "onUserStartedTyping" to u to r },
-                onUserStoppedTyping = { u, r -> "onUserStoppedTyping" to u to r },
+                onUserStartedTyping = { u, r -> actual += "onUserStartedTyping" to u to r },
+                onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r },
                 onUserWentOffline = { actual += "onUserWentOffline" to it }
             ).toCallback()
 
