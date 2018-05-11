@@ -6,7 +6,6 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.roomService
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.*
