@@ -11,7 +11,8 @@ import elements.Error
  */
 data class ChatManagerListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
-    val onUserStartedTyping: (User) -> Unit = { },
+    val onUserStartedTyping: (User, Room) -> Unit = { _, _ -> },
+    val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
     val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserCameOnline: (User) -> Unit = { },
@@ -35,7 +36,8 @@ typealias ChatManagerEventConsumer = (ChatManagerEvent) -> Unit
 internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { event ->
     when (event) {
         is CurrentUserReceived -> onCurrentUserReceived(event.currentUser)
-        is UserStartedTyping -> onUserStartedTyping(event.user)
+        is UserStartedTyping -> onUserStartedTyping(event.user, event.room)
+        is UserStoppedTyping -> onUserStoppedTyping(event.user, event.room)
         is UserJoinedRoom -> onUserJoinedRoom(event.user, event.room)
         is UserLeftRoom -> onUserLeftRoom(event.user, event.room)
         is UserCameOnline -> onUserCameOnline(event.user)
@@ -55,69 +57,19 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
  */
 sealed class ChatManagerEvent {
 
-    /**
-     * @see [ChatManagerListeners.onCurrentUserReceived]
-     */
     data class CurrentUserReceived internal constructor(val currentUser: CurrentUser) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onUserStartedTyping]
-     */
-    data class UserStartedTyping internal constructor(val user: User) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onUserJoinedRoom]
-     */
+    data class UserStartedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
+    data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onUserLeftRoom]
-     */
     data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onUserCameOnline]]
-     */
     data class UserCameOnline internal constructor(val user: User) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onUserWentOffline]]
-     */
     data class UserWentOffline internal constructor(val user: User) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onCurrentUserAddedToRoom]
-     */
     data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onCurrentUserRemovedFromRoom]
-     */
     data class CurrentUserRemovedFromRoom internal constructor(val roomId: Int) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onRoomUpdated]
-     */
     data class RoomUpdated internal constructor(val room: Room) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onRoomDeleted]
-     */
     data class RoomDeleted internal constructor(val roomId: Int) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onErrorOccurred]
-     */
     data class ErrorOccurred internal constructor(val error: elements.Error) : ChatManagerEvent()
-
-    /**
-     * @see [ChatManagerListeners.onNewReadCursor]
-     */
     data class NewReadCursor internal constructor(val cursor: Cursor) : ChatManagerEvent()
-
-    /**
-     * Used for control events, it can be ignored.
-     */
     object NoEvent : ChatManagerEvent()
 
 }

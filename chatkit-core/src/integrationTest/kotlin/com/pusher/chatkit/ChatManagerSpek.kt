@@ -110,12 +110,14 @@ class ChatManagerSpek : Spek({
                 onUserCameOnline = { actual += "onUserCameOnline" to it },
                 onUserJoinedRoom = { u, r -> actual += "onUserJoinedRoom" to u to r },
                 onUserLeftRoom = { u, r -> actual += "onUserLeftRoom" to u to r },
-                onUserStartedTyping = { actual += "onUserStartedTyping" to it },
+                onUserStartedTyping = { u, r ->actual += "onUserStartedTyping" to u to r },
+                onUserStoppedTyping = { u, r -> "onUserStoppedTyping" to u to r },
                 onUserWentOffline = { actual += "onUserWentOffline" to it }
             ).toCallback()
 
             consume(CurrentUserReceived(currentUser))
-            consume(UserStartedTyping(user))
+            consume(UserStartedTyping(user, room))
+            consume(UserStoppedTyping(user, room))
             consume(UserJoinedRoom(user, room))
             consume(UserLeftRoom(user, room))
             consume(UserCameOnline(user))
@@ -139,7 +141,8 @@ class ChatManagerSpek : Spek({
                 "onUserCameOnline" to user,
                 "onUserJoinedRoom" to user to room,
                 "onUserLeftRoom" to user to room,
-                "onUserStartedTyping" to user,
+                "onUserStartedTyping" to user to room,
+                "onUserStoppedTyping" to user to room,
                 "onUserWentOffline" to user
             )
 
