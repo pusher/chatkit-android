@@ -15,6 +15,7 @@ import com.pusher.platform.network.Wait
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -34,6 +35,7 @@ object InstanceSupervisor {
     fun setUpInstanceWith(vararg actions: InstanceAction) {
         waitForIdleInstance().wait(Wait.For(60, TimeUnit.SECONDS))
         tearDown().run()
+        setInstanceBusy()
         newUser(SUPER_USER).run()
         actions.forEach { it.run() }
     }
@@ -58,10 +60,14 @@ private fun isInstanceIdle(): Result<Boolean, Error> = chatkitInstance.request(
     options = RequestOptions("/users", "GET"),
     tokenProvider = sudoTokenProvider,
     responseParser = { it.parseAs<List<User>>() }
-).wait()
-    .map {
-        it.isEmpty()
-    }
+).wait().map { users ->
+    users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
+}
+
+private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
+    Date().time - created.time > millisecondsAgo
+
+private fun setInstanceBusy() = newUser(id = "lock").run()
 
 private val sudoTokenProvider = TestTokenProvider(INSTANCE_ID, SUPER_USER, AUTH_KEY_ID, AUTH_KEY_SECRET, true)
 
@@ -90,28 +96,32 @@ val InstanceAction.name: String
 
 object InstanceActions {
 
-    fun newUser(name: String): InstanceAction = {
+    fun newUser(
+        id: String,
+        name: String = "No name",
+        avatarUrl: String = "https://gravatar.com/img/2124"
+    ): InstanceAction = {
         chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/users",
                 method = "POST",
-                body = name.toUserRequestBody()
+                body = mapOf(
+                    "name" to name,
+                    "id" to id,
+                    "avatar_url" to avatarUrl
+                ).toJson()
             ),
             tokenProvider = sudoTokenProvider,
             responseParser = { it.parseAs() }
         )
-    }.withName("Create new user: $name")
+    }.withName("Create new user: $id")
 
     fun changeRoomName(room: Room, newName: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/rooms/${room.id}",
                 method = "PUT",
-                body = """
-                    {
-                      "name" : "$newName"
-                    }
-                """.trimIndent()
+                body = mapOf("name" to newName).toJson()
             ),
             tokenProvider = sudoTokenProvider,
             responseParser = { it.parseAs() }
@@ -134,7 +144,13 @@ object InstanceActions {
             options = RequestOptions(
                 path = "/batch_users",
                 method = "POST",
-                body = mapOf("users" to names.toList().toJsonString { it.toUserRequestBody() }).toJsonObject()
+                body = mapOf("users" to names.toList().map {
+                    mapOf(
+                        "name" to "No name",
+                        "id" to it,
+                        "avatar_url" to "https://gravatar.com/img/2124"
+                    )
+                }).toJson()
             ),
             tokenProvider = sudoTokenProvider,
             responseParser = { it.parseAs() }
@@ -146,13 +162,11 @@ object InstanceActions {
             options = RequestOptions(
                 path = "/rooms",
                 method = "POST",
-                body = """
-                    {
-                        "name" : "$name",
-                        "user_ids" : ${userNames.toList().toJsonString { "\"$it\"" }},
-                        "private" : $isPrivate
-                    }
-                """.trimIndent()
+                body = mapOf(
+                    "name" to name,
+                    "user_ids" to userNames,
+                    "private" to isPrivate
+                ).toJson()
             ),
             tokenProvider = sudoTokenProvider,
             responseParser = { it.parseAs() }
@@ -172,17 +186,21 @@ object InstanceActions {
 
 }
 
-fun String.toUserRequestBody() =
-    """
-        {
-          "name": "No name",
-          "id": "$this",
-          "avatar_url": "https://gravatar.com/img/2124"
-        }
-    """
+private fun <A> A.toJson(): String {
 
-private fun Iterable<String>.toJsonString(block: (String) -> CharSequence) =
-    joinToString(", ", "[", "]", transform = block)
+    fun <A> Iterable<A>.toJsonArray(): String =
+        joinToString(", ", "[", "]") { it.toJson() }
 
-private fun Map<String, Any>.toJsonObject() =
-    entries.joinToString(", ", "{", "}") { (key, value) -> "\"$key\" : $value" }
+    fun <A, B> Map<A, B>.toJsonObject() =
+        entries.joinToString(", ", "{", "}") { (key, value) -> "\"$key\" : ${value.toJson()}" }
+
+    return when(this) {
+        null -> "null"
+        is String -> "\"$this\""
+        is Array<*> -> this.toList().toJsonArray()
+        is Iterable<*> -> this.toJsonArray()
+        is Map<*, *> -> this.toJsonObject()
+        else -> toString()
+    }
+
+}

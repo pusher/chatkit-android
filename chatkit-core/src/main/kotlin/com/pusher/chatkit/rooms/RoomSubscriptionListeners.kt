@@ -6,11 +6,12 @@ import com.pusher.chatkit.users.User
 import elements.Error
 
 /**
- * Used in [CurrentUser] to register for room events.
+ * Used in [com.pusher.chatkit.CurrentUser] to register for room events.
  */
 data class RoomSubscriptionListeners @JvmOverloads constructor(
     val onNewMessage: (Message) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = {},
+    val onUserStoppedTyping: (User) -> Unit = {},
     val onUserJoined: (User) -> Unit = {},
     val onUserLeft: (User) -> Unit = {},
     val onUserCameOnline: (User) -> Unit = {},
@@ -33,6 +34,7 @@ internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = 
     when(event) {
         is RoomSubscriptionEvent.NewMessage -> onNewMessage(event.message)
         is RoomSubscriptionEvent.UserStartedTyping -> onUserStartedTyping(event.user)
+        is RoomSubscriptionEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
         is RoomSubscriptionEvent.UserJoined -> onUserJoined(event.user)
         is RoomSubscriptionEvent.UserLeft -> onUserLeft(event.user)
         is RoomSubscriptionEvent.UserCameOnline -> onUserCameOnline(event.user)
@@ -50,6 +52,7 @@ internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = 
 sealed class RoomSubscriptionEvent {
     data class NewMessage(val message: Message) : RoomSubscriptionEvent()
     data class UserStartedTyping(val user: User) : RoomSubscriptionEvent()
+    data class UserStoppedTyping(val user: User) : RoomSubscriptionEvent()
     data class UserJoined(val user: User) : RoomSubscriptionEvent()
     data class UserLeft(val user: User) : RoomSubscriptionEvent()
     data class UserCameOnline(val user: User) : RoomSubscriptionEvent()
