@@ -242,7 +242,7 @@ The available events are:
  |----------------------------|----------------|-------------------------------------------------------------------|
  | CurrentUserReceived        | CurrentUser    | Happens when the logged user is available or updated              |
  | UserStartedTyping          | User, Room     | User has started typing                                           |
- | UserStoppedTyping          | User, Room    | User has stopped typing                                           |
+ | UserStoppedTyping          | User, Room     | User has stopped typing                                           |
  | UserJoinedRoom             | User, Room     | User has joined the provided room                                 |
  | UserLeftRoom               | User, Room     | User has left the provided room                                   |
  | UserCameOnline             | User           | User is now online                                                |
@@ -677,7 +677,7 @@ currentUser.isTypingIn(
 
 ### Receive typing indicators
 
-To be notified when a user starts or stops typing in a room, provide a `onUserStartedTyping` function as part of the room subscription listener.
+To be notified when a user starts or stops typing in a room, provide a `onUserStartedTyping` and a `onUserStoppedTyping` function as part of the room subscription listener.
 
 ```kotlin
 RoomSubscription(
