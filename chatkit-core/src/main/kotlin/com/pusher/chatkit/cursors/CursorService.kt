@@ -60,6 +60,12 @@ internal class CursorService(
 
     private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursors")
+
+    fun saveCursors(cursors: Map<Int, Cursor>) {
+        cursors.forEach { _, cursor ->
+            this.cursors[cursor.userId] += cursor
+        }
+    }
 }
 
 internal class CursorsStore {

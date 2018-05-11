@@ -51,12 +51,14 @@ internal class RoomSubscription(
     }
 
     private fun ChatManagerEvent.consume() = when {
-        this is ChatManagerEvent.UserStartedTyping && user.isInRoom() -> UserStartedTyping(user)
-        this is ChatManagerEvent.UserStoppedTyping && user.isInRoom() -> UserStoppedTyping(user)
+        this is ChatManagerEvent.UserStartedTyping && room.id == roomId -> UserStartedTyping(user)
+        this is ChatManagerEvent.UserStoppedTyping && room.id == roomId -> UserStoppedTyping(user)
         this is ChatManagerEvent.UserJoinedRoom && room.id == roomId -> UserJoined(user)
         this is ChatManagerEvent.UserLeftRoom && room.id == roomId -> UserLeft(user)
         this is ChatManagerEvent.UserCameOnline && user.isInRoom() -> UserCameOnline(user)
         this is ChatManagerEvent.UserWentOffline && user.isInRoom() -> UserWentOffline(user)
+        this is ChatManagerEvent.RoomUpdated && room.id == roomId -> RoomUpdated(room)
+        this is ChatManagerEvent.RoomDeleted && roomId == this.roomId -> RoomDeleted(roomId)
         else -> null
     }?.let(consumeEvent)
 
@@ -66,8 +68,6 @@ internal class RoomSubscription(
         "new_message" -> data.toNewMessage()
         else -> ErrorOccurred(Errors.other("Wrong event type: $eventName")).asSuccess<RoomSubscriptionEvent, Error>()
     }.recover { error -> ErrorOccurred(error) }
-
-
 
     private fun JsonElement.toNewMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
         .map { message ->

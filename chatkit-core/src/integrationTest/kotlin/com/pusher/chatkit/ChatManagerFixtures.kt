@@ -4,9 +4,12 @@ import com.pusher.SdkInfo
 import com.pusher.chatkit.test.insecureOkHttpClient
 import com.pusher.platform.*
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.Wait
 import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.util.Result
 import okhttp3.OkHttpClient
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
@@ -41,3 +44,27 @@ class TestChatkitDependencies(
     }.build()
 }
 
+val forTenSeconds = Wait.For(10, TimeUnit.SECONDS)
+
+val CurrentUser.generalRoom
+    get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
+
+private val managers = mutableListOf<ChatManager>()
+
+fun chatFor(userName: String) = ChatManager(
+    instanceLocator = INSTANCE_LOCATOR,
+    userId = userName,
+    dependencies = TestChatkitDependencies(
+        tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
+    )
+).also { managers += it }
+
+fun closeChatManagers() {
+    managers.forEach { it.close() }
+    managers.clear()
+}
+
+fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
+    is Result.Success -> value
+    is Result.Failure -> error("Failure: $error")
+}

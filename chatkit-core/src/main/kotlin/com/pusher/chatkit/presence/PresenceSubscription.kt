@@ -6,7 +6,6 @@ import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.users.userService
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
 import com.pusher.platform.network.toFuture
@@ -23,7 +22,7 @@ internal class PresenceSubscription(
     private val consumeEvent: ChatManagerEventConsumer
 ) : Subscription {
 
-    private val userService = chatManager.userService()
+    private val userService = chatManager.userService
 
     private val subscription: Subscription = chatManager.presenceInstance.subscribeResuming<ChatEvent>(
         path = "/users/$userId/presence",
