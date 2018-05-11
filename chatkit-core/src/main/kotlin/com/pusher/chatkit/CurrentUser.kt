@@ -80,10 +80,10 @@ class CurrentUser(
     fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
         chatManager.roomService.updateRoom(roomId, name, isPrivate)
 
-    fun deleteRoom(room: Room): Future<Result<Unit, Error>> =
+    fun deleteRoom(room: Room): Future<Result<Int, Error>> =
         deleteRoom(room.id)
 
-    fun deleteRoom(roomId: Int): Future<Result<Unit, Error>> =
+    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
         chatManager.roomService.deleteRoom(roomId)
 
     fun leaveRoom(room: Room): Future<Result<Int, Error>> =

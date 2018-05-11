@@ -171,11 +171,12 @@ class RoomSpek : Spek({
             setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
             val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val generalRoom = pusherino.generalRoom
 
-            val room = pusherino.leaveRoom(pusherino.generalRoom).wait()
+            val room = pusherino.leaveRoom(generalRoom).wait()
 
             check(room is Success) { (room as? Failure)?.error as Any }
-            assertThat(pusherino.rooms).doesNotContain(pusherino.generalRoom)
+            assertThat(pusherino.rooms).doesNotContain(generalRoom)
         }
 
     }

@@ -2,6 +2,7 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.*
 import com.pusher.chatkit.network.toJson
+import com.pusher.platform.network.map
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
@@ -50,14 +51,15 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
     fun roomFor(userId: String, roomAware: HasRoom) =
         fetchRoomBy(userId, roomAware.roomId)
 
-    fun deleteRoom(roomId: Int): Future<Result<Unit, Error>> =
-        chatManager.doDelete<Unit>("/rooms/$roomId").also {
-            chatManager.roomService.roomStore -= roomId
-        }
+    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
+        chatManager.doDelete<Unit?>("/rooms/$roomId")
+            .mapResult { roomId }
+            .removeRoomWhenReady()
 
 
     fun leaveRoom(userId: String, roomId: Int): Future<Result<Int, Error>> =
-        chatManager.doPost<Int>("/users/$userId/rooms/$roomId/leave")
+        chatManager.doPost<Unit?>("/users/$userId/rooms/$roomId/leave")
+            .mapResult { roomId }
             .removeRoomWhenReady()
 
     fun joinRoom(userId: String, roomId: Int): Future<Result<Room, Error>> =
