@@ -20,6 +20,7 @@ import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
 import elements.Error
+import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 import java.util.concurrent.SynchronousQueue
@@ -165,10 +166,13 @@ class ChatManager constructor(
     /**
      * Tries to close all pending subscriptions and resources
      */
-    fun close() {
+    fun close(): Result<Unit, Error> = try {
         subscriptions.forEach { it.unsubscribe() }
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
+        Unit.asSuccess()
+    } catch (e: Throwable) {
+        Errors.other(e).asFailure()
     }
 
 }
