@@ -6,26 +6,27 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.roomService
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.network.Wait
-import com.pusher.platform.network.toFuture
-import com.pusher.platform.network.waitOr
+import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.*
+import java.lang.Thread.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.*
 
-sealed class UserSubscriptionEvent
+internal sealed class UserSubscriptionEvent
 
-data class InitialState(val rooms: List<Room>, val currentUser: User) : UserSubscriptionEvent()
-data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
-data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
-data class RoomDeletedEvent(val roomId: Int) : UserSubscriptionEvent()
-data class RemovedFromRoomEvent(val roomId: Int) : UserSubscriptionEvent()
-data class UserLeftEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
-data class UserJoinedEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
-data class UserStartedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
+internal data class InitialState(val rooms: List<Room>, val currentUser: User) : UserSubscriptionEvent()
+internal data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
+internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
+internal data class RoomDeletedEvent(val roomId: Int) : UserSubscriptionEvent()
+internal data class RemovedFromRoomEvent(val roomId: Int) : UserSubscriptionEvent()
+internal data class UserLeftEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
+internal data class UserJoinedEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
+internal data class UserStartedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
+internal data class UserStoppedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
 
 private const val USERS_PATH = "users"
 
@@ -91,22 +92,51 @@ class UserSubscription(
         cursorsRequest.mapResult { cursors -> cursors.map { it.roomId to it }.toMap() }
 
     private fun UserSubscriptionEvent.applySideEffects(): UserSubscriptionEvent = this.apply {
-            when (this) {
-                is InitialState -> {
-                    updateExistingRooms(rooms).forEach(consumeEvent)
-                    chatManager.roomStore += rooms
-                    this@UserSubscription.currentUser?.apply {
-                        close()
-                        updateWithPropertiesOf(currentUser)
-                    }
+        when (this) {
+            is InitialState -> {
+                updateExistingRooms(rooms).forEach(consumeEvent)
+                chatManager.roomStore += rooms
+                this@UserSubscription.currentUser?.apply {
+                    close()
+                    updateWithPropertiesOf(currentUser)
                 }
-                is AddedToRoomEvent -> chatManager.roomStore += room
-                is RoomUpdatedEvent -> chatManager.roomStore += room
-                is RoomDeletedEvent -> chatManager.roomStore -= roomId
-                is RemovedFromRoomEvent -> chatManager.roomStore -= roomId
-                is UserLeftEvent -> chatManager.roomStore[roomId]?.removeUser(userId)
-                is UserJoinedEvent -> chatManager.roomStore[roomId]?.addUser(userId)
             }
+            is AddedToRoomEvent -> chatManager.roomStore += room
+            is RoomUpdatedEvent -> chatManager.roomStore += room
+            is RoomDeletedEvent -> chatManager.roomStore -= roomId
+            is RemovedFromRoomEvent -> chatManager.roomStore -= roomId
+            is UserLeftEvent -> chatManager.roomStore[roomId]?.removeUser(userId)
+            is UserJoinedEvent -> chatManager.roomStore[roomId]?.addUser(userId)
+            is UserStartedTyping -> typingTimers
+                .firstOrNull { it.userId == userId && it.roomId == roomId }
+                ?: TypingTimer(userId, roomId).also { typingTimers += it }
+                    .triggerTyping()
+        }
+    }
+
+    private val typingTimers = mutableListOf<TypingTimer>()
+
+    inner class TypingTimer(val userId: String, val roomId: Int) {
+
+        private var job: Future<Unit>? = null
+
+        fun triggerTyping() {
+            if (job.isActive) job?.cancel()
+            job = scheduleStopTyping()
+        }
+
+        private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
+            sleep(1_500)
+            val event = UserStoppedTyping(userId, roomId)
+                .toChatManagerEvent()
+                .wait()
+                .recover { ErrorOccurred(it) }
+            consumeEvent(event)
+        }
+
+        private val <A> Future<A>?.isActive
+            get() = this != null && !isDone && !isCancelled
+
     }
 
     private fun createCurrentUser(
@@ -141,8 +171,15 @@ class UserSubscription(
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
         }
-        is UserStartedTyping -> chatManager.userService.fetchUserBy(userId).mapResult { user ->
-            ChatManagerEvent.UserStartedTyping(user) as ChatManagerEvent
+        is UserStartedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
+            chatManager.roomService().fetchRoomBy(user.id, roomId).mapResult { room ->
+                ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
+            }
+        }
+        is UserStoppedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
+            chatManager.roomService().fetchRoomBy(user.id, roomId).mapResult { room ->
+                ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
+            }
         }
     }
 
