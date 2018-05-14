@@ -136,22 +136,22 @@ class RoomSpek : Spek({
             assertThat(room.name).isEqualTo(GENERAL)
         }
 
-        xit("updates room name", reason = "Requires elevated access") {
+        it("updates room name") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val userUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
 
-            val room = pusherino.updateRoom(pusherino.generalRoom, NOT_GENERAL).wait()
+            val room = userUser.updateRoom(userUser.generalRoom, NOT_GENERAL).wait()
 
             check(room is Success) { (room as? Failure)?.error as Any }
         }
 
-        xit("deletes room", reason = "Requires elevated access") {
+        it("deletes room") {
             setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
-            val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
 
-            val room = pusherino.deleteRoom(pusherino.generalRoom).wait()
+            val room = superUser.deleteRoom(superUser.generalRoom).wait()
 
             check(room is Success) { (room as? Failure)?.error as Any }
         }
