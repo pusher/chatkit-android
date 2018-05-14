@@ -70,9 +70,18 @@ private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
 
 private fun setInstanceBusy() = newUser(id = "lock").run()
 
-private val sudoTokenProvider = TestTokenProvider(INSTANCE_ID, SUPER_USER, AUTH_KEY_ID, AUTH_KEY_SECRET, true)
+private val sudoTokenProvider by lazy {
+    TestTokenProvider(
+        instanceId = checkNotNull(INSTANCE_ID) { "Missing 'chatkit_integration_locator' property" },
+        userId = SUPER_USER,
+        keyId = AUTH_KEY_ID,
+        secret = AUTH_KEY_SECRET,
+        su = true
+    )
+}
 
-private val chatkitInstance = Instance(
+private val chatkitInstance by lazy {
+    Instance(
     locator = INSTANCE_LOCATOR,
     serviceName = "chatkit",
     serviceVersion = "v1",
