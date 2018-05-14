@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.network.Futures
+import com.pusher.platform.network.toFuture
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
@@ -19,7 +20,7 @@ typealias CustomData = Map<String, String>
  * @param client
  * @param tokenCache
  * */
-class ChatkitTokenProvider
+data class ChatkitTokenProvider
 @JvmOverloads constructor(
     private val endpoint: String,
     internal var userId: String,
@@ -41,56 +42,45 @@ class ChatkitTokenProvider
         tokenCache.clearCache()
     }
 
-    private fun fetchTokenFromEndpoint(tokenParams: Any?): Future<Result<String, Error>> {
-        val urlBuilder = HttpUrl.parse(endpoint)!!
-            .newBuilder()
-        urlBuilder.addQueryParameter("user_id", userId)
-
-        val requestBodyBuilder = FormBody.Builder()
-            .add("grant_type", "client_credentials")
-
-        //TODO: Maybe add to query params instead???
-        //Add any extras to the token provider's request.
-        if (tokenParams is ChatkitTokenParams) {
-            tokenParams.extras.keys.forEach { key ->
-                requestBodyBuilder.add(key, tokenParams.extras.getValue(key))
+    private fun fetchTokenFromEndpoint(tokenParams: Any?): Future<Result<String, Error>> =
+        httpUrl.toFuture().flatMapFutureResult { url ->
+            Futures.schedule {
+                val request = Request.Builder().apply {
+                    url(url)
+                    post(requestBody(tokenParams))
+                }.build()
+                val response = request.let { client.newCall(it).execute() }
+                when {
+                    response.isSuccessful && response.code() in 200..299 -> parseTokenResponse(response)
+                    else -> response.asError().asFailure()
+                }
             }
         }
-        //TODO: Maybe add to query params instead???
-        authData.keys.forEach { key ->
-            requestBodyBuilder.add(key, authData.getValue(key))
-        }
 
-        val requestBody = requestBodyBuilder.build()
+    private val httpUrl: Result<HttpUrl, Error>
+        get() = HttpUrl.parse(endpoint)?.newBuilder()?.apply {
+            addQueryParameter("user_id", userId)
+        }?.build().orElse { Errors.network("Incorrect endpoint: $endpoint") }
 
-        val request = Request.Builder()
-            .url(urlBuilder.build())
-            .post(requestBody)
-            .build()
+    //TODO: Maybe add auth data and params to query params instead of body?
+    private fun requestBody(tokenParams: Any?) = FormBody.Builder().apply {
+        add("grant_type", "client_credentials")
+        add(authData)
+        if (tokenParams is ChatkitTokenParams) add(tokenParams.extras)
+    }.build()
 
-        val call = client.newCall(request)
+    private fun FormBody.Builder.add(map: Map<String, String>) =
+        map.forEach { k, v -> add(k, v) }
 
-        return Futures.schedule {
-            val response = call.execute()
-            when {
-                response.isSuccessful && response.code() in 200..299 -> parseTokenResponse(response)
-                else -> response.asError().asFailure()
-            }
-        }
-    }
-
-    private fun Response?.asError(): Error = when (this) {
-        null -> Errors.network("No response available")
-        else -> Errors.response(
-            statusCode = code(),
-            headers = headers().toMultimap(),
-            error = body().toString()
-        )
-    }
+    private fun Response.asError(): Error = Errors.response(
+        statusCode = code(),
+        headers = headers().toMultimap(),
+        error = body()?.string() ?: ""
+    )
 
     private fun parseTokenResponse(response: Response): Result<String, Error> {
         return response.body()
-            ?.charStream()
+            ?.string()
             ?.parseAs<TokenResponse>()
             .orElse { Errors.network("Could not parse token from response: $response") }
             .flatten()
@@ -102,7 +92,6 @@ class ChatkitTokenProvider
 }
 
 data class TokenResponse(
-
     val accessToken: String,
     val tokenType: String,
     val expiresIn: String,
