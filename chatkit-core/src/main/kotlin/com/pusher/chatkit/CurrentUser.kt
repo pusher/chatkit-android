@@ -20,7 +20,6 @@ import java.util.concurrent.Future
 class CurrentUser(
     val id: String,
     val filesInstance: Instance,
-    val tokenParams: ChatkitTokenParams?,
     val tokenProvider: TokenProvider,
     var avatarURL: String?,
     var customData: CustomData?,
@@ -64,7 +63,6 @@ class CurrentUser(
                 destination = RequestDestination.Absolute(attachmentUrl)
             ),
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
             responseParser = { it.parseAs<FetchedAttachment>() }
         )
 

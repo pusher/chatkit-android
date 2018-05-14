@@ -36,7 +36,6 @@ class TestChatkitDependencies(
     override val tokenProvider: TokenProvider,
     platformDependencies: PlatformDependencies = TestDependencies()
 ) : ChatkitDependencies, PlatformDependencies by platformDependencies {
-    override val tokenParams: ChatkitTokenParams? = null
     override val okHttpClient: OkHttpClient = insecureOkHttpClient.newBuilder().apply {
         addInterceptor { chain ->
             chain.proceed(chain.request().newBuilder().addHeader("Connection", "close").build())

@@ -21,7 +21,6 @@ internal class CursorsSubscription private constructor(
     private val subscription = chatManager.cursorsInstance.subscribeResuming(
         path = path,
         tokenProvider = chatManager.tokenProvider,
-        tokenParams = chatManager.dependencies.tokenParams,
         listeners = SubscriptionListeners<ChatEvent>(
             onEvent = { it.toCursorEvent().let(consumeEvent) },
             onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }

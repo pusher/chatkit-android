@@ -39,9 +39,7 @@ class UserSubscription(
     private val apiInstance get() = chatManager.apiInstance
     private val cursorsInstance get() = chatManager.cursorsInstance
     private val filesInstance get() = chatManager.filesInstance
-
     private val tokenProvider = chatManager.tokenProvider
-    private val tokenParams = chatManager.dependencies.tokenParams
     private val logger = chatManager.dependencies.logger
 
     private var headers: Headers = emptyHeaders()
@@ -69,8 +67,7 @@ class UserSubscription(
             onEnd = { error -> logger.verbose("Subscription ended with: $error") }
         ),
         messageParser = UserSubscriptionEventParser,
-        tokenProvider = this.tokenProvider,
-        tokenParams = this.tokenParams
+        tokenProvider = this.tokenProvider
     )
 
     private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
@@ -144,7 +141,6 @@ class UserSubscription(
     ) = CurrentUser(
         id = initialState.currentUser.id,
         filesInstance = filesInstance,
-        tokenParams = tokenParams,
         tokenProvider = tokenProvider,
         avatarURL = initialState.currentUser.avatarURL,
         customData = initialState.currentUser.customData,
@@ -200,7 +196,6 @@ class UserSubscription(
                 path = "/cursors/0/users/$userId"
             ),
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
             responseParser = { it.parseAs<List<Cursor>>() }
         )
 

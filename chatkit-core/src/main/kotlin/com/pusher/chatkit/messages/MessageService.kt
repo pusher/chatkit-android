@@ -17,7 +17,6 @@ internal class MessageService(
 ) {
 
     private val tokenProvider get() = chatManager.tokenProvider
-    private val tokenParams get() = chatManager.dependencies.tokenParams
     private val filesInstance get() = chatManager.filesInstance
 
     fun fetchMessages(
@@ -65,7 +64,6 @@ internal class MessageService(
         path = "/rooms/$roomId/files/${attachment.name}",
         file = attachment.file,
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
         responseParser = { it.parseAs<AttachmentBody>() }
     )
 

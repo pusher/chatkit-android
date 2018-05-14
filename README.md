@@ -131,7 +131,7 @@ The implementation of `ChatkitTokenProvider` has the following properties:
  |------------|--------------------------------|----------------------------------------------------------------------|
  | endpoint   | String                         | Url for the server that provides access tokens                       |
  | userId     | String                         | Name of the user login in                                            |
- | authData   | Map<String, String> (Optional) | `CustomData` sent to the server along with `TokenParams`             |
+ | authData   | Map<String, String> (Optional) | `CustomData` sent to the server                                      |
  | client     | OkHttpClient (Optional)        | Used for networking (i.e. can modify to use proxy)                   |
  | tokenCache | TokenCache (Optional)          | By default we use an in memory but can provide a custom `TokenCache` |
 
