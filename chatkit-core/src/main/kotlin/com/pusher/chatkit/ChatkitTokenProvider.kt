@@ -62,7 +62,6 @@ data class ChatkitTokenProvider
             addQueryParameter("user_id", userId)
         }?.build().orElse { Errors.network("Incorrect endpoint: $endpoint") }
 
-    //TODO: Maybe add auth data and params to query params instead of body?
     private fun requestBody(tokenParams: Any?) = FormBody.Builder().apply {
         add("grant_type", "client_credentials")
         add(authData)
