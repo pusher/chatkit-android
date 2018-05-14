@@ -20,9 +20,10 @@ internal class FilesService(private val chatManager: ChatManager) {
     @Suppress("UNCHECKED_CAST")
     fun uploadFile(
         attachment: DataAttachment,
-        roomId: Int
+        roomId: Int,
+        userId: String
     ): Future<Result<AttachmentBody, Error>> = filesInstance.upload(
-        path = "/rooms/$roomId/files/${attachment.name}",
+        path = "/rooms/$roomId/users/$userId/files/${attachment.name}",
         file = attachment.file,
         tokenProvider = chatManager.tokenProvider,
         tokenParams = chatManager.dependencies.tokenParams,
