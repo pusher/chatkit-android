@@ -1,10 +1,11 @@
 package com.pusher.chatkit
 
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Rooms.NOT_GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
@@ -17,11 +18,12 @@ import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.wait
+import com.pusher.util.Result.*
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
-class RoomEventsSpek : Spek({
+class RoomSpek : Spek({
 
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
@@ -117,6 +119,63 @@ class RoomEventsSpek : Spek({
             pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(ALICE)).wait().assumeSuccess()
 
             assertThat(roomRemovedFromId).isEqualTo(pusherino.generalRoom.id)
+        }
+
+    }
+
+    describe("currentUser '$PUSHERINO'") {
+
+        it("creates room") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+
+            val room = pusherino.createRoom(GENERAL).wait().assumeSuccess()
+
+            assertThat(room.name).isEqualTo(GENERAL)
+        }
+
+        it("updates room name") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+
+            val room = superUser.updateRoom(superUser.generalRoom, NOT_GENERAL).wait()
+
+            check(room is Success) { (room as? Failure)?.error as Any }
+        }
+
+        it("deletes room") {
+            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+
+            val room = superUser.deleteRoom(superUser.generalRoom).wait()
+
+            check(room is Success) { (room as? Failure)?.error as Any }
+        }
+
+        it("joins room") {
+            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL))
+
+            val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+
+            val room = pusherino.joinRoom(pusherino.generalRoom).wait()
+
+            check(room is Success) { (room as? Failure)?.error as Any }
+            assertThat(pusherino.rooms).contains(pusherino.generalRoom)
+        }
+
+        it("leaves room") {
+            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val generalRoom = pusherino.generalRoom
+
+            val room = pusherino.leaveRoom(generalRoom).wait()
+
+            check(room is Success) { (room as? Failure)?.error as Any }
+            assertThat(pusherino.rooms).doesNotContain(generalRoom)
         }
 
     }

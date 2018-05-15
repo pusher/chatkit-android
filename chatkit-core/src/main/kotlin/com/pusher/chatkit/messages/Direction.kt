@@ -11,10 +11,10 @@ enum class Direction {
     /**
      * Shows older messages first.
      */
-    ORDER_FIRST;
+    OLDER_FIRST;
 
     override fun toString() = when(this) {
         NEWER_FIRST -> "newer"
-        ORDER_FIRST -> "older"
+        OLDER_FIRST -> "older"
     }
 }

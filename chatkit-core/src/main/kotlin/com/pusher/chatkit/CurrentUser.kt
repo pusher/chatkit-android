@@ -2,16 +2,13 @@ package com.pusher.chatkit
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.files.GenericAttachment
+import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.network.toJson
 import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
-import com.pusher.platform.Instance
-import com.pusher.platform.RequestDestination
-import com.pusher.platform.RequestOptions
 import com.pusher.platform.network.toFuture
-import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
 import elements.Subscription
@@ -19,15 +16,13 @@ import java.util.concurrent.Future
 
 class CurrentUser(
     val id: String,
-    val filesInstance: Instance,
-    val tokenProvider: TokenProvider,
     var avatarURL: String?,
     var customData: CustomData?,
     var name: String?,
     private val chatManager: ChatManager
 ) {
 
-    val rooms: List<Room> get() = chatManager.roomStore.toList()
+    val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
         .filter { it.memberUserIds.contains(id) }
     val users: Future<Result<List<User>, Error>>
         get() = rooms
@@ -57,14 +52,7 @@ class CurrentUser(
         getReadCursor(room.id)
 
     fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
-        filesInstance.request(
-            options = RequestOptions(
-                method = "GET",
-                destination = RequestDestination.Absolute(attachmentUrl)
-            ),
-            tokenProvider = tokenProvider,
-            responseParser = { it.parseAs<FetchedAttachment>() }
-        )
+        chatManager.filesService.fetchAttachment(attachmentUrl)
 
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
         chatManager.userService.addUsersToRoom(roomId, userIds)
@@ -77,7 +65,7 @@ class CurrentUser(
         name: String,
         isPrivate: Boolean = false,
         userIds: List<String> = emptyList()
-    ): Future<Result<Room, Error>> = chatManager.roomService().createRoom(
+    ): Future<Result<Room, Error>> = chatManager.roomService.createRoom(
         creatorId = id,
         name = name,
         isPrivate = isPrivate,
@@ -90,25 +78,25 @@ class CurrentUser(
 
     @JvmOverloads
     fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
-        chatManager.roomService().updateRoom(roomId, name, isPrivate)
+        chatManager.roomService.updateRoom(roomId, name, isPrivate)
 
-    fun deleteRoom(room: Room): Future<Result<String, Error>> =
+    fun deleteRoom(room: Room): Future<Result<Int, Error>> =
         deleteRoom(room.id)
 
-    fun deleteRoom(roomId: Int): Future<Result<String, Error>> =
-        chatManager.roomService().deleteRoom(roomId)
+    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
+        chatManager.roomService.deleteRoom(roomId)
 
-    fun leaveRoom(room: Room): Future<Result<Unit, Error>> =
+    fun leaveRoom(room: Room): Future<Result<Int, Error>> =
         leaveRoom(room.id)
 
-    fun leaveRoom(roomId: Int): Future<Result<Unit, Error>> =
-        chatManager.roomService().leaveRoom(id, roomId)
+    fun leaveRoom(roomId: Int): Future<Result<Int, Error>> =
+        chatManager.roomService.leaveRoom(id, roomId)
 
     fun joinRoom(room: Room): Future<Result<Room, Error>> =
         joinRoom(room.id)
 
     fun joinRoom(roomId: Int): Future<Result<Room, Error>> =
-        chatManager.roomService().joinRoom(id, roomId)
+        chatManager.roomService.joinRoom(id, roomId)
 
     @JvmOverloads
     fun subscribeToRoom(
@@ -140,18 +128,18 @@ class CurrentUser(
         messageLimit : Int = 10,
         consumer: RoomSubscriptionConsumer
     ): Subscription =
-        chatManager.roomService().subscribeToRoom(id, roomId, consumer, messageLimit)
+        chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
             .also { roomSubscriptions += roomId to it }
 
     @JvmOverloads
     fun fetchMessages(
         roomId: Int,
         initialId: Int? = null,
-        direction: Direction = Direction.ORDER_FIRST,
+        direction: Direction = Direction.OLDER_FIRST,
         limit: Int = 10
     ): Future<Result<List<Message>, Error>> = chatManager
-        .messageService(roomId)
-        .fetchMessages(limit, initialId, direction)
+        .messageService
+        .fetchMessages(roomId, limit, initialId, direction)
 
     @JvmOverloads
     fun sendMessage(
@@ -167,7 +155,7 @@ class CurrentUser(
         messageText: String,
         attachment: GenericAttachment = NoAttachment
     ): Future<Result<Int, Error>> =
-        chatManager.messageService(roomId).sendMessage(id, messageText, attachment)
+        chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
 
     private var lastTypingEvent: Long = 0
 
@@ -191,7 +179,7 @@ class CurrentUser(
     )
 
     fun getJoinablerooms(): Future<Result<List<Room>, Error>> =
-        chatManager.roomService().fetchUserRooms(
+        chatManager.roomService.fetchUserRooms(
             userId = id,
             onlyJoinable = true
         )
@@ -211,7 +199,6 @@ internal data class MessageRequest(val text: String? = null, val userId: String,
 internal sealed class AttachmentBody {
     data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
     object None : AttachmentBody()
-    data class Failed(val error: Error) : AttachmentBody()
 }
 
 internal data class SetCursorRequest(val position: Int)

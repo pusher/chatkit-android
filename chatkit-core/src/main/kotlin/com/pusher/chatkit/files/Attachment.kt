@@ -1,4 +1,4 @@
-package com.pusher.chatkit.messages
+package com.pusher.chatkit.files
 
 import com.google.gson.annotations.SerializedName
 

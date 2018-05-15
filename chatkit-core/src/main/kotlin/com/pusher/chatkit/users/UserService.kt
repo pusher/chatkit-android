@@ -54,7 +54,7 @@ internal class UserService(
 
     fun joinRoom(user: CurrentUser, roomId: Int): Future<Result<Room, Error>> =
         chatManager.doPost<Room>("/users/${user.id}/rooms/$roomId/join")
-            .updateStoreWhenReady()
+            .saveRoomWhenReady()
 
     fun userFor(userAware: HasUser): Future<Result<User, Error>> =
         fetchUserBy(userAware.userId)

@@ -61,7 +61,7 @@ internal class RoomSubscription(
         else -> null
     }?.let(consumeEvent)
 
-    private fun User.isInRoom() = chatManager.roomService().fetchRoomBy(id, roomId).mapResult { true }.wait().recover { false }
+    private fun User.isInRoom() = chatManager.roomService.fetchRoomBy(id, roomId).mapResult { true }.wait().recover { false }
 
     private fun ChatEvent.toRoomEvent() : RoomSubscriptionEvent = when(eventName) {
         "new_message" -> data.toNewMessage()

@@ -5,9 +5,12 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.files.FilesService
+import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.*
@@ -27,8 +30,7 @@ import java.util.concurrent.SynchronousQueue
 
 private const val API_SERVICE_NAME = "chatkit"
 private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
-private const val SERVICE_VERSION = "v1"
-private const val FILES_SERVICE_NAME = "chatkit_files"
+internal const val SERVICE_VERSION = "v1"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 
 class ChatManager constructor(
@@ -47,10 +49,8 @@ class ChatManager constructor(
 
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
     internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
-    internal val filesInstance by lazyInstance(FILES_SERVICE_NAME, SERVICE_VERSION)
     internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
 
-    internal val roomStore by lazy { RoomStore() }
 
     private val subscriptions = mutableListOf<Subscription>()
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
@@ -58,6 +58,9 @@ class ChatManager constructor(
     internal val cursorService by lazy { CursorService(this) }
     internal val presenceService by lazy { PresenceService(this) }
     internal val userService by lazy { UserService(this) }
+    internal val messageService by lazy { MessageService(this) }
+    internal val filesService by lazy { FilesService(this) }
+    internal val roomService by lazy { RoomService(this) }
 
     init {
         if (tokenProvider is ChatkitTokenProvider) {
@@ -108,7 +111,7 @@ class ChatManager constructor(
         eventConsumers += consumer
     }
 
-    private fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
+    internal fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
         val instance = Instance(
             locator = instanceLocator,
             serviceName = serviceName,
@@ -180,14 +183,20 @@ internal interface HasChat {
 
     val chatManager: ChatManager
 
-    fun Future<Result<Room, Error>>.updateStoreWhenReady() = mapResult {
+    fun Future<Result<Room, Error>>.saveRoomWhenReady() = mapResult {
         it.also { room ->
-            chatManager.roomStore += room
+            chatManager.roomService.roomStore += room
             populateRoomUserStore(room)
         }
     }
 
-    fun populateRoomUserStore(room: Room) {
+    fun Future<Result<Int, Error>>.removeRoomWhenReady() = mapResult {
+        it.also { roomId ->
+            chatManager.roomService.roomStore -= roomId
+        }
+    }
+
+    private fun populateRoomUserStore(room: Room) {
         chatManager.userService.populateUserStore(room.memberUserIds)
     }
 
