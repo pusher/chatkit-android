@@ -3,7 +3,6 @@ package com.pusher.chatkit
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
@@ -66,14 +65,13 @@ class ChatManager constructor(
     }
 
     @JvmOverloads
-    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> =
-        CurrentUserConsumer()
-            .also { currentUserConsumer ->
-                eventConsumers += currentUserConsumer
-                eventConsumers += consumer
-                subscriptions += openSubscription()
-            }
-            .get()
+    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
+        val futureCurrentUser = CurrentUserConsumer()
+        eventConsumers += futureCurrentUser
+        eventConsumers += consumer
+        subscriptions += openSubscription()
+        return futureCurrentUser.get()
+    }
 
     private fun openSubscription() = UserSubscription(
         userId = userId,
@@ -199,29 +197,3 @@ internal interface HasChat {
 
 }
 
-internal data class ChatEvent(
-    val eventName: String,
-    override val userId: String = "",
-    val timestamp: String,
-    val data: JsonElement
-) : HasUser
-
-/**
- * Used to avoid multiple requests to the tokenProvider if one is pending
- */
-private class DebounceTokenProvider(
-    val original: TokenProvider
-) : TokenProvider {
-
-    private var pending: Future<Result<String, Error>>? = null
-
-    override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = synchronized(this) {
-        pending ?: original.fetchToken(tokenParams).also { pending = it }
-    }
-
-    override fun clearToken(token: String?) = synchronized(this) {
-        original.clearToken(token)
-        pending = null
-    }
-
-}
