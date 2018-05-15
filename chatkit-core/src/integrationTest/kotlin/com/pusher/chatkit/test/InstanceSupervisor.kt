@@ -136,7 +136,7 @@ object InstanceActions {
     fun createSuperUser(): InstanceAction =
         compose(newUser(SUPER_USER), createAdminRole(), setUserRole(SUPER_USER, "admin") )
 
-    fun setUserRole(userId: String, role: String): InstanceAction = {
+    private fun setUserRole(userId: String, role: String): InstanceAction = {
         authorizerInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/users/$userId/roles",
@@ -148,7 +148,7 @@ object InstanceActions {
         )
     }.withName("Assign role $role to $userId")
 
-    fun createAdminRole(): InstanceAction = {
+    private fun createAdminRole(): InstanceAction = {
         authorizerInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/roles",

@@ -104,7 +104,7 @@ data class ChatkitTokenParams(
 /**
  * Default token expiry tolerance - 10 minutes
  * */
-val CACHE_EXPIRY_TOLERANCE = 10 * 60
+const val CACHE_EXPIRY_TOLERANCE = 10 * 60
 
 interface TokenCache {
     /**
