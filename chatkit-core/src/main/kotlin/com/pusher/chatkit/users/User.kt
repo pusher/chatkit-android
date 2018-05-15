@@ -3,6 +3,7 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.util.dateFormat
+import java.util.*
 
 data class User(
     val id: String,
@@ -19,7 +20,7 @@ data class User(
         get() = if(online) Presence.Online else Presence.Offline
         set(value) { online = value === Presence.Online }
 
-    val created by lazy { dateFormat.parse(createdAt) }
-    val updated by lazy { dateFormat.parse(updatedAt) }
+    val created: Date by lazy { dateFormat.parse(createdAt) }
+    val updated: Date by lazy { dateFormat.parse(updatedAt) }
 
 }
