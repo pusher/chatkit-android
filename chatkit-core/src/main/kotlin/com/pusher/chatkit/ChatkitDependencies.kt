@@ -7,7 +7,6 @@ import okhttp3.OkHttpClient
 interface ChatkitDependencies : PlatformDependencies {
 
     val tokenProvider: TokenProvider
-    val tokenParams: ChatkitTokenParams?
     val okHttpClient : OkHttpClient?
 
 }

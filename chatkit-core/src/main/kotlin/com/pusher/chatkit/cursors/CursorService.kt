@@ -18,7 +18,6 @@ internal class CursorService(
 
     private val cursorsInstance = chatManager.cursorsInstance
     private val tokenProvider = chatManager.tokenProvider
-    private val tokenParams = chatManager.dependencies.tokenParams
 
     private val cursors = CursorsStore()
 
@@ -33,7 +32,6 @@ internal class CursorService(
             body = ChatManager.GSON.toJson(SetCursorRequest(position))
         ),
         tokenProvider = tokenProvider,
-        tokenParams = tokenParams,
         responseParser = { it.parseAs() }
     ).mapResult {
         cursors[userId] += Cursor(
