@@ -63,24 +63,26 @@ internal class CursorService(private val chatManager: ChatManager) {
     fun subscribeForUser(userId: String,  consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         createSubscription("/cursors/0/users/$userId", consumeEvent)
 
-    private fun createSubscription(path: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
-        cursorsInstance.subscribeResuming(
-            path = path,
-            tokenProvider = chatManager.tokenProvider,
-            listeners = SubscriptionListeners<ChatEvent>(
-                onEvent = { event ->
-                    val cursorEvent = event.toCursorEvent()
-                        .recover { CursorSubscriptionEvent.OnError(it) }
-                    consumeEvent(cursorEvent)
-                    when(cursorEvent) {
-                        is CursorSubscriptionEvent.OnCursorSet ->  cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
-                        is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
-                    }
-                },
-                onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
-            ),
-            messageParser = { it.parseAs() }
-        )
+    private fun createSubscription(
+        path: String,
+        consumeEvent: (CursorSubscriptionEvent) -> Unit
+    ) = cursorsInstance.subscribeResuming(
+        path = path,
+        tokenProvider = chatManager.tokenProvider,
+        listeners = SubscriptionListeners<ChatEvent>(
+            onEvent = { event ->
+                val cursorEvent = event.toCursorEvent()
+                    .recover { CursorSubscriptionEvent.OnError(it) }
+                consumeEvent(cursorEvent)
+                when(cursorEvent) {
+                    is CursorSubscriptionEvent.OnCursorSet ->  cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
+                    is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
+                }
+            },
+            onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
+        ),
+        messageParser = { it.parseAs() }
+    )
 
 
     fun request(userId: String): Future<Result<List<Cursor>, Error>> = cursorsInstance.request(
