@@ -22,7 +22,6 @@ import com.pusher.util.Result.*
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.xit
 
 class RoomSpek : Spek({
 
@@ -139,9 +138,9 @@ class RoomSpek : Spek({
         it("updates room name") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val userUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
 
-            val room = userUser.updateRoom(userUser.generalRoom, NOT_GENERAL).wait()
+            val room = superUser.updateRoom(superUser.generalRoom, NOT_GENERAL).wait()
 
             check(room is Success) { (room as? Failure)?.error as Any }
         }
