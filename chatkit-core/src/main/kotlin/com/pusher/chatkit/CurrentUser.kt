@@ -201,8 +201,6 @@ internal sealed class AttachmentBody {
     object None : AttachmentBody()
 }
 
-internal data class SetCursorRequest(val position: Int)
-
 internal data class RoomCreateRequest(
     val name: String,
     val private: Boolean,
