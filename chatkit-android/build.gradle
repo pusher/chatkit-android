@@ -3,7 +3,6 @@ apply plugin: 'kotlin-android'
 apply plugin: 'de.mannodermaus.android-junit5'
 
 apply from: "$projectDir/../gradle/jacoco-android.gradle"
-apply from: 'maven-push.gradle'
 
 android {
     compileSdkVersion 27
