@@ -42,11 +42,11 @@ internal class MessageService(private val chatManager: ChatManager) {
         text: CharSequence = "",
         attachment: GenericAttachment = NoAttachment
     ): Future<Result<Int, Error>> =
-        attachment.asAttachmentBody(roomId)
+        attachment.asAttachmentBody(roomId, userId)
             .flatMapFutureResult { sendMessage(roomId, userId, text, it) }
 
-    private fun GenericAttachment.asAttachmentBody(roomId: Int): Future<Result<AttachmentBody, Error>> = when (this) {
-        is DataAttachment -> chatManager.filesService.uploadFile(this, roomId)
+    private fun GenericAttachment.asAttachmentBody(roomId: Int, userId: String): Future<Result<AttachmentBody, Error>> = when (this) {
+        is DataAttachment -> chatManager.filesService.uploadFile(this, roomId, userId)
         is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
             .asSuccess<AttachmentBody, elements.Error>()
             .toFuture()

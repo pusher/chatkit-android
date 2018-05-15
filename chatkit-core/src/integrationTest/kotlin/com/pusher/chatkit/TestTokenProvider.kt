@@ -22,7 +22,7 @@ data class TestTokenProvider(
             .withClaim("instance", instanceId)
             .withClaim("iss", "api_keys/$keyId")
             .withClaim("iat", Date())
-            .withClaim("exp", Date(Date().time + 3_600))
+            .withClaim("exp", Date(Date().time + 3_600_000))
             .withClaim("sub", userId)
             .withClaim("su", su)
             .sign(HMAC256(secret))

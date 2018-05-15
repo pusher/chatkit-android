@@ -22,6 +22,7 @@ import com.pusher.util.Result.*
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import org.jetbrains.spek.api.dsl.xit
 
 class RoomSpek : Spek({
 

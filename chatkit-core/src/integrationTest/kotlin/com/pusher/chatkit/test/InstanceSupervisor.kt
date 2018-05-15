@@ -22,6 +22,7 @@ import org.junit.runner.notification.Failure
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 /**
  * In charge of setting the right state of an intance for a test

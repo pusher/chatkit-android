@@ -1,12 +1,13 @@
 package com.pusher.chatkit.files
 
 import java.io.File
+import java.util.*
 
 sealed class GenericAttachment
 
 data class DataAttachment @JvmOverloads constructor(
     val file: File,
-    val name: String = "file"
+    val name: String = "${UUID.randomUUID()}"
 ): GenericAttachment()
 
 data class LinkAttachment(val link: String, val type: AttachmentType): GenericAttachment()

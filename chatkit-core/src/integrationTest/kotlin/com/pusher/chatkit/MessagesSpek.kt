@@ -3,7 +3,10 @@ package com.pusher.chatkit
 import com.google.common.truth.Truth.*
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.files.AttachmentType
+import com.pusher.chatkit.files.AttachmentType.*
 import com.pusher.chatkit.files.DataAttachment
+import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.test.InstanceActions.newRoom
@@ -76,7 +79,7 @@ class MessagesSpek : Spek({
 
             alice.sendMessage(
                 room = alice.generalRoom,
-                messageText = "Cats and dogs, libing together",
+                messageText = "Cats and dogs, living together",
                 attachment = DataAttachment(file)
             ).wait().assumeSuccess()
 
@@ -85,6 +88,23 @@ class MessagesSpek : Spek({
             val fetchedAttachment = alice.fetchAttachment(firstMessage.attachment!!.link).wait().assumeSuccess()
 
             assertThat(fetchedAttachment.file).isNotNull()
+        }
+
+        it("sends message with link attachment") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(Rooms.GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            alice.sendMessage(
+                room = alice.generalRoom,
+                messageText = "Cats and dogs, living together",
+                attachment = LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
+            ).wait().assumeSuccess()
+
+            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
+
+            assertThat(firstMessage.attachment?.link).isNotNull()
         }
 
     }
