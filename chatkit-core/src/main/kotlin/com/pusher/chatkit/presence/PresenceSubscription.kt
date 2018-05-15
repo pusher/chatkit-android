@@ -26,7 +26,6 @@ internal class PresenceSubscription(
 
     private val subscription: Subscription = chatManager.presenceInstance.subscribeResuming<ChatEvent>(
         path = "/users/$userId/presence",
-        tokenParams = chatManager.dependencies.tokenParams,
         tokenProvider = chatManager.tokenProvider,
         listeners = SubscriptionListeners(
             onEvent = { event ->

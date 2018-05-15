@@ -162,7 +162,6 @@ class ChatManager constructor(
                 body = body
             ),
             tokenProvider = tokenProvider,
-            tokenParams = dependencies.tokenParams,
             responseParser = responseParser
         )
 

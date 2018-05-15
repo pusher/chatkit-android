@@ -106,7 +106,7 @@ private fun compose(vararg actions: InstanceAction): CompoundAction = object : C
     override fun invoke(): Future<Result<JsonElement, Error>> {
         actions
             .map { it.name to it.invoke().wait() }
-            .firstOrNull { (name, result) -> result is Failure }
+            .firstOrNull { (_, result) -> result is Failure }
             ?.let { (name, result) ->
                 error("Expected '$name' to success. Result was: $result")
             }

@@ -25,7 +25,6 @@ internal class FilesService(private val chatManager: ChatManager) {
         path = "/rooms/$roomId/files/${attachment.name}",
         file = attachment.file,
         tokenProvider = chatManager.tokenProvider,
-        tokenParams = chatManager.dependencies.tokenParams,
         responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
     )
 
@@ -36,7 +35,6 @@ internal class FilesService(private val chatManager: ChatManager) {
                 destination = RequestDestination.Absolute(attachmentUrl)
             ),
             tokenProvider = chatManager.tokenProvider,
-            tokenParams = chatManager.dependencies.tokenParams,
             responseParser = { it.parseAs<FetchedAttachment>() }
         )
 

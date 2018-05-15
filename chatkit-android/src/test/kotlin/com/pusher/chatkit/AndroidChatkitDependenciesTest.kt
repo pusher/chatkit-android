@@ -2,7 +2,6 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.*
 import com.pusher.SdkInfo
-import mokitox.returns
 import mokitox.stub
 import org.junit.jupiter.api.Test
 
@@ -12,7 +11,6 @@ internal class AndroidChatkitDependenciesTest {
     fun `sdkInfo is injected`() {
         val dependencies = AndroidChatkitDependencies(
             tokenProvider = stub(),
-            tokenParams = stub(),
             okHttpClient = stub(),
             logger = stub(),
             platformDependencies = stub()

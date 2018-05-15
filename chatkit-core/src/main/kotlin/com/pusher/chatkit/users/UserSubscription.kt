@@ -39,7 +39,6 @@ class UserSubscription(
     private val cursorsInstance get() = chatManager.cursorsInstance
 
     private val tokenProvider = chatManager.tokenProvider
-    private val tokenParams = chatManager.dependencies.tokenParams
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
 
@@ -68,8 +67,7 @@ class UserSubscription(
             onEnd = { error -> logger.verbose("Subscription ended with: $error") }
         ),
         messageParser = UserSubscriptionEventParser,
-        tokenProvider = this.tokenProvider,
-        tokenParams = this.tokenParams
+        tokenProvider = this.tokenProvider
     )
 
     private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
@@ -197,7 +195,6 @@ class UserSubscription(
                 path = "/cursors/0/users/$userId"
             ),
             tokenProvider = tokenProvider,
-            tokenParams = tokenParams,
             responseParser = { it.parseAs<List<Cursor>>() }
         )
 
