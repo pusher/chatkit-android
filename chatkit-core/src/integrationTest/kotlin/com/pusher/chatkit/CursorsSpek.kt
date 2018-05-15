@@ -1,12 +1,10 @@
 package com.pusher.chatkit
 
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom

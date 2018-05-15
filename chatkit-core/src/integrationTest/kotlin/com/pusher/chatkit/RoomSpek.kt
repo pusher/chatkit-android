@@ -18,11 +18,11 @@ import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.wait
-import com.pusher.util.Result.*
+import com.pusher.util.Result.Failure
+import com.pusher.util.Result.Success
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.xit
 
 class RoomSpek : Spek({
 

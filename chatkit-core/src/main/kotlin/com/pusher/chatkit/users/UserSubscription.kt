@@ -1,19 +1,19 @@
 package com.pusher.chatkit.users
 
-import com.pusher.chatkit.*
+import com.pusher.chatkit.ChatManager
+import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.CurrentUser
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.rooms.Room
-import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.*
-import java.lang.Thread.*
+import java.lang.Thread.sleep
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit.*
+import java.util.concurrent.TimeUnit.SECONDS
 
 internal sealed class UserSubscriptionEvent
 

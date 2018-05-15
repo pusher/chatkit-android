@@ -16,13 +16,11 @@ import com.pusher.platform.network.Futures
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
-import com.pusher.util.flatMapFutureResult
 import elements.Error
 import org.junit.runner.notification.Failure
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KClass
 
 /**
  * In charge of setting the right state of an intance for a test

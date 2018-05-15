@@ -1,10 +1,9 @@
 package com.pusher.chatkit
 
-import com.google.common.truth.Truth.*
+import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
-import com.pusher.chatkit.files.AttachmentType
-import com.pusher.chatkit.files.AttachmentType.*
+import com.pusher.chatkit.files.AttachmentType.IMAGE
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
