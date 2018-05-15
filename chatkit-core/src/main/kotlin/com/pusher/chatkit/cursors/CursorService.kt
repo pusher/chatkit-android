@@ -3,6 +3,7 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.network.toJson
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.*
@@ -30,7 +31,7 @@ internal class CursorService(private val chatManager: ChatManager) {
             options = RequestOptions(
                 method = "PUT",
                 path = "/cursors/0/rooms/$roomId/users/$userId",
-                body = ChatManager.GSON.toJson(SetCursorRequest(position))
+                body = """{ "position" : $position }"""
             ),
             tokenProvider = tokenProvider,
             responseParser = { it.parseAs() }
@@ -127,4 +128,3 @@ private class UserCursorStore {
 
 }
 
-private data class SetCursorRequest(val position: Int)
