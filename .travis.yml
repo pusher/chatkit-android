@@ -1,5 +1,10 @@
 jdk: oraclejdk8
 
+# safelist
+branches:
+  only:
+  - master
+
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -34,7 +39,7 @@ env:
   - ANDROID_HOME=$HOME/android-sdk
 
 script:
-  - ./gradlew ciBuild --stacktrace
+  - travis_retry ./gradlew ciBuild --stacktrace
 
 after_success:
   # report coverage

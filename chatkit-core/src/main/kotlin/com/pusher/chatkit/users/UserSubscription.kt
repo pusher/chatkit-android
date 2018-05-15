@@ -6,7 +6,6 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.roomService
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.*
@@ -38,11 +37,11 @@ class UserSubscription(
 
     private val apiInstance get() = chatManager.apiInstance
     private val cursorsInstance get() = chatManager.cursorsInstance
-    private val filesInstance get() = chatManager.filesInstance
 
     private val tokenProvider = chatManager.tokenProvider
     private val tokenParams = chatManager.dependencies.tokenParams
     private val logger = chatManager.dependencies.logger
+    private val roomStore = chatManager.roomService.roomStore
 
     private var headers: Headers = emptyHeaders()
 
@@ -95,18 +94,18 @@ class UserSubscription(
         when (this) {
             is InitialState -> {
                 updateExistingRooms(rooms).forEach(consumeEvent)
-                chatManager.roomStore += rooms
+                roomStore += rooms
                 this@UserSubscription.currentUser?.apply {
                     close()
                     updateWithPropertiesOf(currentUser)
                 }
             }
-            is AddedToRoomEvent -> chatManager.roomStore += room
-            is RoomUpdatedEvent -> chatManager.roomStore += room
-            is RoomDeletedEvent -> chatManager.roomStore -= roomId
-            is RemovedFromRoomEvent -> chatManager.roomStore -= roomId
-            is UserLeftEvent -> chatManager.roomStore[roomId]?.removeUser(userId)
-            is UserJoinedEvent -> chatManager.roomStore[roomId]?.addUser(userId)
+            is AddedToRoomEvent -> roomStore += room
+            is RoomUpdatedEvent -> roomStore += room
+            is RoomDeletedEvent -> roomStore -= roomId
+            is RemovedFromRoomEvent -> roomStore -= roomId
+            is UserLeftEvent -> roomStore[roomId]?.removeUser(userId)
+            is UserJoinedEvent -> roomStore[roomId]?.addUser(userId)
             is UserStartedTyping -> typingTimers
                 .firstOrNull { it.userId == userId && it.roomId == roomId }
                 ?: TypingTimer(userId, roomId).also { typingTimers += it }
@@ -143,9 +142,6 @@ class UserSubscription(
         initialState: InitialState
     ) = CurrentUser(
         id = initialState.currentUser.id,
-        filesInstance = filesInstance,
-        tokenParams = tokenParams,
-        tokenProvider = tokenProvider,
         avatarURL = initialState.currentUser.avatarURL,
         customData = initialState.currentUser.customData,
         name = initialState.currentUser.name,
@@ -162,22 +158,22 @@ class UserSubscription(
         is RoomDeletedEvent -> RoomDeleted(roomId).toFutureSuccess()
         is RemovedFromRoomEvent -> CurrentUserRemovedFromRoom(roomId).toFutureSuccess()
         is UserLeftEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
-            chatManager.roomStore[roomId]
+            roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserLeftRoom(user, room) }
         }
         is UserJoinedEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
-            chatManager.roomStore[roomId]
+            roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
         }
         is UserStartedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
-            chatManager.roomService().fetchRoomBy(user.id, roomId).mapResult { room ->
+            chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
                 ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
             }
         }
         is UserStoppedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
-            chatManager.roomService().fetchRoomBy(user.id, roomId).mapResult { room ->
+            chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
                 ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
             }
         }
@@ -188,9 +184,10 @@ class UserSubscription(
 
     private var currentUser: CurrentUser? = null
 
-    private fun updateExistingRooms(roomsForConnection: List<Room>): List<ChatManagerEvent> =
-        (chatManager.roomStore.toList() - roomsForConnection)
+    private fun updateExistingRooms(roomsForConnection: List<Room>): List<ChatManagerEvent> {
+        return (roomStore.toList() - roomsForConnection)
             .map { CurrentUserRemovedFromRoom(it.id) }
+    }
 
 
     private val cursorsRequest: Future<Result<List<Cursor>, Error>>

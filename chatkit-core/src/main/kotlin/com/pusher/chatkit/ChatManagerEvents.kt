@@ -17,7 +17,6 @@ data class ChatManagerListeners @JvmOverloads constructor(
     val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserCameOnline: (User) -> Unit = { },
     val onUserWentOffline: (User) -> Unit = { },
-    val onUsersUpdated: () -> Unit = { },
     val onCurrentUserAddedToRoom: (Room) -> Unit = { },
     val onCurrentUserRemovedFromRoom: (Int) -> Unit = { },
     val onRoomUpdated: (Room) -> Unit = { },
@@ -43,7 +42,6 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
         is UserLeftRoom -> onUserLeftRoom(event.user, event.room)
         is UserCameOnline -> onUserCameOnline(event.user)
         is UserWentOffline -> onUserWentOffline(event.user)
-        is UsersUpdated -> onUsersUpdated()
         is CurrentUserAddedToRoom -> onCurrentUserAddedToRoom(event.room)
         is CurrentUserRemovedFromRoom -> onCurrentUserRemovedFromRoom(event.roomId)
         is RoomUpdated -> onRoomUpdated(event.room)
@@ -66,7 +64,6 @@ sealed class ChatManagerEvent {
     data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserCameOnline internal constructor(val user: User) : ChatManagerEvent()
     data class UserWentOffline internal constructor(val user: User) : ChatManagerEvent()
-    object UsersUpdated : ChatManagerEvent()
     data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatManagerEvent()
     data class CurrentUserRemovedFromRoom internal constructor(val roomId: Int) : ChatManagerEvent()
     data class RoomUpdated internal constructor(val room: Room) : ChatManagerEvent()

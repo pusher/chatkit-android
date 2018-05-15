@@ -1,5 +1,6 @@
 package com.pusher.chatkit.messages
 
+import com.pusher.chatkit.files.Attachment
 import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.users.HasUser
 

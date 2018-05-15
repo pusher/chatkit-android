@@ -2,6 +2,7 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.*
 import com.pusher.chatkit.network.toJson
+import com.pusher.platform.network.map
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
@@ -9,10 +10,9 @@ import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
-internal fun ChatManager.roomService(): RoomService =
-    RoomService(this)
-
 internal class RoomService(override val chatManager: ChatManager) : HasChat {
+
+    val roomStore by lazy { RoomStore() }
 
     fun fetchRoomBy(userId: String, id: Int): Future<Result<Room, Error>> =
         getLocalRoom(id).toFuture()
@@ -25,12 +25,12 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
             }
 
     private fun getLocalRoom(id: Int): Result<Room, Error> =
-        chatManager.roomStore[id]
+        roomStore[id]
             .orElse { Errors.other("User not found locally") }
 
     fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): Future<Result<List<Room>, Error>> =
         chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$onlyJoinable")
-            .mapResult { rooms -> rooms.also { chatManager.roomStore += it } }
+            .mapResult { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
         creatorId: String,
@@ -46,19 +46,25 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
         ).toJson()
             .toFuture()
             .flatMapFutureResult { body -> chatManager.doPost<Room>("/rooms", body) }
-            .updateStoreWhenReady()
+            .saveRoomWhenReady()
 
     fun roomFor(userId: String, roomAware: HasRoom) =
         fetchRoomBy(userId, roomAware.roomId)
 
-    fun deleteRoom(roomId: Int): Future<Result<String, Error>> =
-        chatManager.doDelete("/rooms/$roomId")
+    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
+        chatManager.doDelete<Unit?>("/rooms/$roomId")
+            .mapResult { roomId }
+            .removeRoomWhenReady()
 
-    fun leaveRoom(userId: String, roomId: Int): Future<Result<Unit, Error>> =
-        chatManager.doPost("/users/$userId/rooms/$roomId/leave")
+
+    fun leaveRoom(userId: String, roomId: Int): Future<Result<Int, Error>> =
+        chatManager.doPost<Unit?>("/users/$userId/rooms/$roomId/leave")
+            .mapResult { roomId }
+            .removeRoomWhenReady()
 
     fun joinRoom(userId: String, roomId: Int): Future<Result<Room, Error>> =
-        chatManager.doPost("/users/$userId/rooms/$roomId/join")
+        chatManager.doPost<Room>("/users/$userId/rooms/$roomId/join")
+            .saveRoomWhenReady()
 
     fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
         UpdateRoomRequest(name,isPrivate).toJson().toFuture()
