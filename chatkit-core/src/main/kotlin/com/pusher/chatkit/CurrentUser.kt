@@ -104,7 +104,7 @@ class CurrentUser(
         listeners: RoomSubscriptionListeners,
         messageLimit : Int = 10
     ): Subscription =
-        subscribeToRoom(room.id, messageLimit, listeners.toCallback())
+        subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
     fun subscribeToRoom(
