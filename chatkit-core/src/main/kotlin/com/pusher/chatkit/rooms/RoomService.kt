@@ -29,8 +29,8 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
         roomStore[id]
             .orElse { Errors.other("User not found locally") }
 
-    fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): Future<Result<List<Room>, Error>> =
-        chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$onlyJoinable")
+    fun fetchUserRooms(userId: String, joinable: Boolean = false): Future<Result<List<Room>, Error>> =
+        chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$joinable")
             .mapResult { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
