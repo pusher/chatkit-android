@@ -213,13 +213,6 @@ internal sealed class AttachmentBody {
     object None : AttachmentBody()
 }
 
-internal data class RoomCreateRequest(
-    val name: String,
-    val private: Boolean,
-    val createdById: String,
-    var userIds: List<String> = emptyList()
-)
-
 data class FetchedAttachment(
     val file: FetchedAttachmentFile,
     @SerializedName("resource_link") val link: String,

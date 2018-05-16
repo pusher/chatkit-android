@@ -2,7 +2,6 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.HasChat
-import com.pusher.chatkit.RoomCreateRequest
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
@@ -92,3 +91,10 @@ interface HasRoom {
 
 private fun noRoomMembershipError(room: Room) : Error =
     Errors.other("User is not a member of ${room.name}")
+
+private data class RoomCreateRequest(
+    val name: String,
+    val private: Boolean,
+    val createdById: String,
+    var userIds: List<String> = emptyList()
+)
