@@ -34,6 +34,9 @@ class CurrentUser(
     internal fun isSubscribedToRoom(roomId: Int): Boolean =
         roomSubscriptions.containsKey(roomId)
 
+    internal fun isSubscribedToRoom(room: Room): Boolean =
+        isSubscribedToRoom(room.id)
+
     fun updateWithPropertiesOf(newUser: User) {
         name = newUser.name
         customData = newUser.customData
@@ -129,7 +132,16 @@ class CurrentUser(
         consumer: RoomSubscriptionConsumer
     ): Subscription =
         chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
+            .autoRemove(roomId)
             .also { roomSubscriptions += roomId to it }
+
+    private fun Subscription.autoRemove(roomId: Int) = object : Subscription {
+        override fun unsubscribe() {
+            roomSubscriptions -= roomId
+            this@autoRemove.unsubscribe()
+        }
+
+    }
 
     @JvmOverloads
     fun fetchMessages(
@@ -178,10 +190,10 @@ class CurrentUser(
         val name: String = "typing_start"
     )
 
-    fun getJoinablerooms(): Future<Result<List<Room>, Error>> =
+    fun getJoinableRooms(): Future<Result<List<Room>, Error>> =
         chatManager.roomService.fetchUserRooms(
             userId = id,
-            onlyJoinable = true
+            joinable = true
         )
 
     fun usersForRoom(room: Room): Future<Result<List<User>, Error>> =
