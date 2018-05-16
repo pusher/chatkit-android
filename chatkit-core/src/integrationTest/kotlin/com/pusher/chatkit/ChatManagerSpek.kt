@@ -83,6 +83,16 @@ class ChatManagerSpek : Spek({
             assertThat(messageReceived.text).isEqualTo("message text")
         }
 
+
+        it("receives current user with listeners instead of callback") {
+            setUpInstanceWith(newUser(PUSHERINO))
+
+            val user = chatFor(PUSHERINO).connect(ChatManagerListeners()).wait(forTenSeconds)
+            val userId = user.assumeSuccess().id
+
+            assertThat(userId).isEqualTo(PUSHERINO)
+        }
+
     }
 
     val currentUser = stub<CurrentUser>("currentUser")
