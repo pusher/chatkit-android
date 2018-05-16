@@ -14,6 +14,7 @@ import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
 
+@Suppress("MemberVisibilityCanBePrivate") // Entry points
 class CurrentUser(
     val id: String,
     var avatarURL: String?,
@@ -31,10 +32,10 @@ class CurrentUser(
 
     private val roomSubscriptions = mutableMapOf<Int, Subscription>()
 
-    internal fun isSubscribedToRoom(roomId: Int): Boolean =
+    fun isSubscribedToRoom(roomId: Int): Boolean =
         roomSubscriptions.containsKey(roomId)
 
-    internal fun isSubscribedToRoom(room: Room): Boolean =
+    fun isSubscribedToRoom(room: Room): Boolean =
         isSubscribedToRoom(room.id)
 
     fun updateWithPropertiesOf(newUser: User) {
@@ -140,7 +141,6 @@ class CurrentUser(
             roomSubscriptions -= roomId
             this@autoRemove.unsubscribe()
         }
-
     }
 
     @JvmOverloads
