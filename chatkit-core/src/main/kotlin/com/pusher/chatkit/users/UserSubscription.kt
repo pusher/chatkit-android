@@ -36,7 +36,6 @@ class UserSubscription(
 ) : Subscription {
 
     private val apiInstance get() = chatManager.apiInstance
-    private val cursorsInstance get() = chatManager.cursorsInstance
 
     private val tokenProvider = chatManager.tokenProvider
     private val logger = chatManager.dependencies.logger
@@ -72,7 +71,7 @@ class UserSubscription(
 
     private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
 
-    private val cursorSubscription = chatManager.cursorService.subscribeToCursors(userId) { event ->
+    private val cursorSubscription = chatManager.cursorService.subscribeForUser(userId) { event ->
         when(event) {
             is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(NewReadCursor(event.cursor))
         }
@@ -86,7 +85,8 @@ class UserSubscription(
     }
 
     private fun getCursors(): Future<Result<Map<Int, Cursor>, Error>> =
-        cursorsRequest.mapResult { cursors -> cursors.map { it.roomId to it }.toMap() }
+        chatManager.cursorService.request(userId)
+            .mapResult { cursors -> cursors.map { it.roomId to it }.toMap() }
 
     private fun UserSubscriptionEvent.applySideEffects(): UserSubscriptionEvent = this.apply {
         when (this) {
@@ -186,16 +186,5 @@ class UserSubscription(
         return (roomStore.toList() - roomsForConnection)
             .map { CurrentUserRemovedFromRoom(it.id) }
     }
-
-
-    private val cursorsRequest: Future<Result<List<Cursor>, Error>>
-        get() = cursorsInstance.request(
-            options = RequestOptions(
-                method = "GET",
-                path = "/cursors/0/users/$userId"
-            ),
-            tokenProvider = tokenProvider,
-            responseParser = { it.parseAs<List<Cursor>>() }
-        )
 
 }

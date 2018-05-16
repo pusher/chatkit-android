@@ -57,6 +57,7 @@ sealed class RoomSubscriptionEvent {
     data class UserLeft(val user: User) : RoomSubscriptionEvent()
     data class UserCameOnline(val user: User) : RoomSubscriptionEvent()
     data class UserWentOffline(val user: User) : RoomSubscriptionEvent()
+    data class InitialReadCursors(val cursor: List<Cursor>) : RoomSubscriptionEvent()
     data class NewReadCursor(val cursor: Cursor) : RoomSubscriptionEvent()
     data class RoomUpdated(val room: Room) : RoomSubscriptionEvent()
     data class RoomDeleted(val roomId: Int) : RoomSubscriptionEvent()
