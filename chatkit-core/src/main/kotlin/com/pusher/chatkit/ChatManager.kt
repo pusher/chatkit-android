@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.pusher.chatkit.InstanceType.*
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.files.AttachmentBody
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService

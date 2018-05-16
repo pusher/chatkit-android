@@ -1,10 +1,7 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.files.DataAttachment
-import com.pusher.chatkit.files.GenericAttachment
-import com.pusher.chatkit.files.LinkAttachment
-import com.pusher.chatkit.files.NoAttachment
+import com.pusher.chatkit.files.*
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.*
 import com.pusher.util.*
@@ -39,7 +36,7 @@ internal class MessageService(private val chatManager: ChatManager) {
     fun sendMessage(
         roomId: Int,
         userId: String,
-        text: CharSequence = "",
+        text: String = "",
         attachment: GenericAttachment = NoAttachment
     ): Future<Result<Int, Error>> =
         attachment.asAttachmentBody(roomId, userId)
@@ -58,15 +55,19 @@ internal class MessageService(private val chatManager: ChatManager) {
     private fun sendMessage(
         roomId: Int,
         userId: String,
-        text: CharSequence = "",
+        text: String = "",
         attachment: AttachmentBody
     ) : Future<Result<Int, Error>> =
-        MessageRequest(text.toString(), userId, attachment.takeIf { it !== AttachmentBody.None })
+        MessageRequest(text, userId, attachment.takeIf { it !== AttachmentBody.None })
             .toJson()
             .toFuture()
-            .flatMapFutureResult { body -> chatManager.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body) }
+            .flatMapFutureResult { body ->
+                chatManager.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+            }
             .mapResult { it.messageId }
 
 }
 
 private data class MessageSendingResponse(val messageId: Int)
+
+private data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)

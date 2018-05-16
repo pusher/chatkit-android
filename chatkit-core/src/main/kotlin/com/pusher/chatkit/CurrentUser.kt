@@ -1,11 +1,10 @@
 package com.pusher.chatkit
 
-import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.files.FetchedAttachment
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.util.toJson
 import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.toFuture
@@ -200,20 +199,5 @@ class CurrentUser(
     }
 
 }
-
-internal data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
-
-internal sealed class AttachmentBody {
-    data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
-    object None : AttachmentBody()
-}
-
-data class FetchedAttachment(
-    val file: FetchedAttachmentFile,
-    @SerializedName("resource_link") val link: String,
-    val ttl: Double
-)
-
-data class FetchedAttachmentFile(val bytes: Int, val lastModified: Double, val name: String)
 
 private const val TYPING_TIME_THRESHOLD = 500

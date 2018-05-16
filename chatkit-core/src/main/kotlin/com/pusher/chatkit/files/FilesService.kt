@@ -1,8 +1,6 @@
 package com.pusher.chatkit.files
 
-import com.pusher.chatkit.AttachmentBody
 import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.FetchedAttachment
 import com.pusher.chatkit.InstanceType
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestDestination
