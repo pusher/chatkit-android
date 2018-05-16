@@ -27,9 +27,8 @@ internal class RoomSubscription(
 
     private var active = true
 
-    private val subscription = chatManager.apiInstance.subscribeResuming(
+    private val subscription = chatManager.subscribeResuming(
         path = "/rooms/$roomId?user_id=$userId&message_limit=$messageLimit",
-        tokenProvider = chatManager.tokenProvider,
         listeners = SubscriptionListeners<ChatEvent>(
             onEvent = { it.body.toRoomEvent().let(consumeEvent) },
             onError = { consumeEvent(ErrorOccurred(it)) }

@@ -1,8 +1,5 @@
 package com.pusher.chatkit
 
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
@@ -10,9 +7,11 @@ import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscription
-import com.pusher.chatkit.users.*
-import com.pusher.platform.*
+import com.pusher.platform.Instance
+import com.pusher.platform.RequestOptions
+import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
@@ -28,7 +27,6 @@ import java.util.concurrent.SynchronousQueue
 
 private const val API_SERVICE_NAME = "chatkit"
 internal const val SERVICE_VERSION = "v1"
-private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -36,20 +34,13 @@ class ChatManager constructor(
     internal val dependencies: ChatkitDependencies
 ) {
 
-    val tokenProvider: TokenProvider = DebounceTokenProvider(dependencies.tokenProvider)
-
-    companion object {
-        val GSON: Gson = GsonBuilder()
-            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .create()
-    }
-
-    internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
-    internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
-
+    val tokenProvider: TokenProvider = DebounceTokenProvider(
+        dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
+    )
 
     private val subscriptions = mutableListOf<Subscription>()
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
+    private val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
 
     internal val cursorService by lazy { CursorService(this) }
     internal val presenceService by lazy { PresenceService(this) }
@@ -57,12 +48,6 @@ class ChatManager constructor(
     internal val messageService by lazy { MessageService(this) }
     internal val filesService by lazy { FilesService(this) }
     internal val roomService by lazy { RoomService(this) }
-
-    init {
-        if (tokenProvider is ChatkitTokenProvider) {
-            tokenProvider.userId = userId
-        }
-    }
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
@@ -75,7 +60,7 @@ class ChatManager constructor(
 
     private fun openSubscription() = UserSubscription(
         userId = userId,
-        chatManager = this@ChatManager,
+        chatManager = this,
         consumeEvent = { event -> eventConsumers.forEach { it(event) } }
     )
 
@@ -159,6 +144,17 @@ class ChatManager constructor(
             tokenProvider = tokenProvider,
             responseParser = responseParser
         )
+
+    internal fun <A> subscribeResuming(
+        path: String,
+        listeners: SubscriptionListeners<A>,
+        messageParser: DataParser<A>
+    ) = apiInstance.subscribeResuming(
+        path = path,
+        tokenProvider = tokenProvider,
+        listeners = listeners,
+        messageParser = messageParser
+    )
 
     /**
      * Tries to close all pending subscriptions and resources

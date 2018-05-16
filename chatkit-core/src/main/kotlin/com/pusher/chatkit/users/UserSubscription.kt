@@ -35,15 +35,12 @@ class UserSubscription(
     private val consumeEvent: (ChatManagerEvent) -> Unit
 ) : Subscription {
 
-    private val apiInstance get() = chatManager.apiInstance
-
-    private val tokenProvider = chatManager.tokenProvider
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
 
     private var headers: Headers = emptyHeaders()
 
-    private val subscription = apiInstance.subscribeResuming(
+    private val subscription = chatManager.subscribeResuming(
         path = USERS_PATH,
         listeners = SubscriptionListeners(
             onOpen = { headers ->
@@ -65,8 +62,7 @@ class UserSubscription(
             onRetrying = { logger.verbose("Subscription lost. Trying again.") },
             onEnd = { error -> logger.verbose("Subscription ended with: $error") }
         ),
-        messageParser = UserSubscriptionEventParser,
-        tokenProvider = this.tokenProvider
+        messageParser = UserSubscriptionEventParser
     )
 
     private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
@@ -136,9 +132,7 @@ class UserSubscription(
 
     }
 
-    private fun createCurrentUser(
-        initialState: InitialState
-    ) = CurrentUser(
+    private fun createCurrentUser(initialState: InitialState) = CurrentUser(
         id = initialState.currentUser.id,
         avatarURL = initialState.currentUser.avatarURL,
         customData = initialState.currentUser.customData,
