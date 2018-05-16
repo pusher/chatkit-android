@@ -2,7 +2,7 @@ package com.pusher.chatkit.presence
 
 import com.pusher.chatkit.*
 import com.pusher.chatkit.InstanceType.*
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
 import com.pusher.platform.network.toFuture

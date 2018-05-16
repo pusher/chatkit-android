@@ -2,10 +2,10 @@ package com.pusher.chatkit.users
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.network.asObject
-import com.pusher.chatkit.network.asString
-import com.pusher.chatkit.network.getValue
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.asObject
+import com.pusher.chatkit.util.asString
+import com.pusher.chatkit.util.getValue
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.network.DataParser
 import com.pusher.util.Result
 import com.pusher.util.asFailure

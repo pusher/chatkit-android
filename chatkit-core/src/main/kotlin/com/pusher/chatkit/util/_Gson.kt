@@ -1,4 +1,4 @@
-package com.pusher.chatkit.network
+package com.pusher.chatkit.util
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject

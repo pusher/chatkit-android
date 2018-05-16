@@ -1,4 +1,4 @@
-package com.pusher.chatkit.network
+package com.pusher.chatkit.util
 
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder

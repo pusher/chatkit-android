@@ -8,7 +8,7 @@ import java.util.concurrent.Future
 /**
  * Used to avoid multiple requests to the tokenProvider if one is pending
  */
-internal class DebounceTokenProvider(val original: TokenProvider) : TokenProvider {
+internal class DebounceTokenProvider(private val original: TokenProvider) : TokenProvider {
 
     private var pending: Future<Result<String, Error>>? = null
 

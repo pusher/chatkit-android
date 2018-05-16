@@ -4,7 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy

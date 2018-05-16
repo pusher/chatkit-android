@@ -4,7 +4,7 @@ import com.pusher.chatkit.AttachmentBody
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.FetchedAttachment
 import com.pusher.chatkit.InstanceType
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
 import com.pusher.util.Result

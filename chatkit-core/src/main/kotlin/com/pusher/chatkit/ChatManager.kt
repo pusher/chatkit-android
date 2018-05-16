@@ -5,7 +5,7 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService

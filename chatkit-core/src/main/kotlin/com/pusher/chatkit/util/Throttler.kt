@@ -1,4 +1,4 @@
-package com.pusher.chatkit.cursors
+package com.pusher.chatkit.util
 
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel

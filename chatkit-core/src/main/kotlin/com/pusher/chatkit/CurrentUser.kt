@@ -5,7 +5,7 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.network.toJson
+import com.pusher.chatkit.util.toJson
 import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.toFuture

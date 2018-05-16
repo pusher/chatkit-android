@@ -5,7 +5,7 @@ import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.files.NoAttachment
-import com.pusher.chatkit.network.toJson
+import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.Error

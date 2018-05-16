@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.tokenProvider.TokenProvider

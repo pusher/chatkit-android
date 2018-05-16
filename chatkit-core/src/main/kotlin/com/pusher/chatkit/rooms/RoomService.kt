@@ -3,7 +3,7 @@ package com.pusher.chatkit.rooms
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.RoomCreateRequest
-import com.pusher.chatkit.network.toJson
+import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error

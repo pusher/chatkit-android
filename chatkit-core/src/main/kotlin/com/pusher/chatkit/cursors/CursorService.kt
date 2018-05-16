@@ -3,8 +3,8 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.InstanceType.*
-import com.pusher.chatkit.network.parseAs
-import com.pusher.platform.RequestOptions
+import com.pusher.chatkit.util.parseAs
+import com.pusher.chatkit.util.Throttler
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
