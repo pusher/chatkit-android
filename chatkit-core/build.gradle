@@ -2,6 +2,8 @@ plugins {
     id 'kotlin'
     id 'java-library'
     id 'org.junit.platform.gradle.plugin'
+    id 'maven-publish'
+    id "com.jfrog.bintray" version "1.7.3"
 }
 
 apply from: "$projectDir/../gradle/jacoco.gradle"
@@ -49,4 +51,47 @@ afterEvaluate {
     def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
     junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
     junitPlatformTestTask.systemProperties += System.env
+}
+
+bintray {
+    user = bintray_user
+    key = bintry_api_key
+    publish = true
+    override = true
+    publications = ['Release']
+    pkg {
+        repo = 'maven'
+        name = "$POM_ARTIFACT_ID"
+        userOrg = "$POM_DEVELOPER_ID"
+        licenses = ["$POM_LICENCE_NAME"]
+        vcsUrl = "$POM_SCM_URL"
+        version {
+            name = "$VERSION_NAME"
+            desc = "$POM_DESCRIPTION"
+            released  = new Date()
+            vcsTag = "$VERSION_NAME"
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+// Create the publication with the pom configuration:
+publishing {
+    publications {
+        Release(MavenPublication) {
+            artifactId "$POM_ARTIFACT_ID"
+            from components.java
+            groupId "$GROUP"
+            version "$VERSION_NAME"
+            artifact sourcesJar
+        }
+    }
 }
