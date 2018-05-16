@@ -46,7 +46,7 @@ internal class RoomSubscription(
     }
 
     init {
-        check(messageLimit >= 0) { "messageLimit should be greater or equal than 0" }
+        check(messageLimit >= 0) { "messageLimit must be positive" }
         chatManager.observerEvents { if (active) it.consume() }
     }
 
