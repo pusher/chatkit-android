@@ -1,22 +1,28 @@
 package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
-import com.pusher.chatkit.*
+import com.pusher.chatkit.ChatEvent
+import com.pusher.chatkit.ChatManager
+import com.pusher.chatkit.SERVICE_VERSION
 import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.util.*
+import com.pusher.platform.network.flatMap
+import com.pusher.util.Result
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
+import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
 import elements.SubscriptionEvent
-import java.util.concurrent.*
+import java.util.concurrent.Future
 
 
 private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
 
 internal class CursorService(private val chatManager: ChatManager) {
 
-    private val cursorsInstance  by chatManager.lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
+    private val cursorsInstance by chatManager.lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
     private val tokenProvider = chatManager.tokenProvider
 
     private val cursors = CursorsStore()
@@ -25,28 +31,29 @@ internal class CursorService(private val chatManager: ChatManager) {
         userId: String,
         roomId: Int,
         position: Int
-    ): Future<Result<Boolean, Error>> = throttler.throttle(
+    ): Future<Result<Unit, Error>> = setReadCursorThrottler.throttle(RequestOptions(
+        method = "PUT",
+        path = "/cursors/0/rooms/$roomId/users/$userId",
+        body = """{ "position" : $position }"""
+    ))
+    .flatMap { it }
+    .mapResult {
+        cursors[userId] += Cursor(
+            userId = userId,
+            roomId = roomId,
+            position = position
+        )
+    }
+
+    private val setReadCursorThrottler = Throttler { options: RequestOptions ->
         cursorsInstance.request<JsonElement>(
-            options = RequestOptions(
-                method = "PUT",
-                path = "/cursors/0/rooms/$roomId/users/$userId",
-                body = ChatManager.GSON.toJson(SetCursorRequest(position))
-            ),
+            options = options,
             tokenProvider = tokenProvider,
             responseParser = { it.parseAs() }
-        ).mapResult {
-            cursors[userId] += Cursor(
-                userId = userId,
-                roomId = roomId,
-                position = position
-            )
-            true
-        }
-    )
+        )
+    }
 
-    private val throttler = Throttler<Boolean>()
-
-    fun getReadCursor(userId: String, roomId: Int) : Result<Cursor, Error> =
+    fun getReadCursor(userId: String, roomId: Int): Result<Cursor, Error> =
         cursors[userId][roomId]?.asSuccess() ?: notSubscribedToRoom("$roomId").asFailure()
 
     private fun notSubscribedToRoom(name: String) =
@@ -59,7 +66,7 @@ internal class CursorService(private val chatManager: ChatManager) {
     fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         createSubscription("/cursors/0/rooms/$roomId", consumeEvent)
 
-    fun subscribeForUser(userId: String,  consumeEvent: (CursorSubscriptionEvent) -> Unit) =
+    fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         createSubscription("/cursors/0/users/$userId", consumeEvent)
 
     private fun createSubscription(path: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
@@ -71,8 +78,8 @@ internal class CursorService(private val chatManager: ChatManager) {
                     val cursorEvent = event.toCursorEvent()
                         .recover { CursorSubscriptionEvent.OnError(it) }
                     consumeEvent(cursorEvent)
-                    when(cursorEvent) {
-                        is CursorSubscriptionEvent.OnCursorSet ->  cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
+                    when (cursorEvent) {
+                        is CursorSubscriptionEvent.OnCursorSet -> cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
                         is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
                     }
                 },
@@ -93,7 +100,7 @@ internal class CursorService(private val chatManager: ChatManager) {
 
 }
 
-private fun SubscriptionEvent<ChatEvent>.toCursorEvent(): Result<CursorSubscriptionEvent, Error> = when(body.eventName) {
+private fun SubscriptionEvent<ChatEvent>.toCursorEvent(): Result<CursorSubscriptionEvent, Error> = when (body.eventName) {
     "new_cursor" -> body.data.parseAs<Cursor>().map(CursorSubscriptionEvent::OnCursorSet)
     "initial_state" -> body.data.parseAs<CursorSubscriptionEvent.InitialState>()
     else -> CursorSubscriptionEvent.NoEvent.asSuccess<CursorSubscriptionEvent, Error>()
@@ -126,5 +133,3 @@ private class UserCursorStore {
     operator fun get(roomId: Int) = cursors[roomId]
 
 }
-
-private data class SetCursorRequest(val position: Int)
