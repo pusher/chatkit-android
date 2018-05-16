@@ -63,7 +63,7 @@ class CursorsSpek : Spek({
             val firstMessageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
             val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").wait().assumeSuccess()
 
-            var initialState by FutureValue<Any?>(Wait.ForEver)
+            var initialState by FutureValue<Any?>()
             var secondMessageCursor by FutureValue<Cursor>()
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
