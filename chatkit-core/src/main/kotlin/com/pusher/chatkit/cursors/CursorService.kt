@@ -2,8 +2,8 @@ package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
 import com.pusher.chatkit.*
+import com.pusher.chatkit.InstanceType.*
 import com.pusher.chatkit.network.parseAs
-import com.pusher.chatkit.network.toJson
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.*
@@ -12,13 +12,7 @@ import elements.Errors
 import elements.SubscriptionEvent
 import java.util.concurrent.*
 
-
-private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
-
 internal class CursorService(private val chatManager: ChatManager) {
-
-    private val cursorsInstance  by chatManager.lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
-    private val tokenProvider = chatManager.tokenProvider
 
     private val cursors = CursorsStore()
 
@@ -27,14 +21,11 @@ internal class CursorService(private val chatManager: ChatManager) {
         roomId: Int,
         position: Int
     ): Future<Result<Boolean, Error>> = throttler.throttle(
-        cursorsInstance.request<JsonElement>(
-            options = RequestOptions(
-                method = "PUT",
-                path = "/cursors/0/rooms/$roomId/users/$userId",
-                body = """{ "position" : $position }"""
-            ),
-            tokenProvider = tokenProvider,
-            responseParser = { it.parseAs() }
+        chatManager.doPut<JsonElement>(
+            path = "/cursors/0/rooms/$roomId/users/$userId",
+            body = """{ "position" : $position }""",
+            responseParser = { it.parseAs() },
+            instanceType = CURSORS
         ).mapResult {
             cursors[userId] += Cursor(
                 userId = userId,
@@ -66,9 +57,8 @@ internal class CursorService(private val chatManager: ChatManager) {
     private fun createSubscription(
         path: String,
         consumeEvent: (CursorSubscriptionEvent) -> Unit
-    ) = cursorsInstance.subscribeResuming(
+    ) = chatManager.subscribeResuming(
         path = path,
-        tokenProvider = chatManager.tokenProvider,
         listeners = SubscriptionListeners<ChatEvent>(
             onEvent = { event ->
                 val cursorEvent = event.toCursorEvent()
@@ -81,17 +71,15 @@ internal class CursorService(private val chatManager: ChatManager) {
             },
             onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
         ),
-        messageParser = { it.parseAs() }
+        messageParser = { it.parseAs() },
+        instanceType = CURSORS
     )
 
 
-    fun request(userId: String): Future<Result<List<Cursor>, Error>> = cursorsInstance.request(
-        options = RequestOptions(
-            method = "GET",
-            path = "/cursors/0/users/$userId"
-        ),
-        tokenProvider = tokenProvider,
-        responseParser = { it.parseAs<List<Cursor>>() }
+    fun request(userId: String): Future<Result<List<Cursor>, Error>> = chatManager.doGet(
+        "/cursors/0/users/$userId",
+        responseParser = { it.parseAs<List<Cursor>>() },
+        instanceType = CURSORS
     )
 
 }

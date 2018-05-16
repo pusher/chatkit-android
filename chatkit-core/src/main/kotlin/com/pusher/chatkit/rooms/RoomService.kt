@@ -83,6 +83,9 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
 
 internal data class UpdateRoomRequest(val name: String, val isPrivate: Boolean?)
 
+/**
+ * Used by [RoomService.roomFor] so an object can say that they have a room
+ */
 interface HasRoom {
     val roomId: Int
 }

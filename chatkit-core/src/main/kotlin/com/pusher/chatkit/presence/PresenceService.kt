@@ -1,6 +1,7 @@
 package com.pusher.chatkit.presence
 
 import com.pusher.chatkit.*
+import com.pusher.chatkit.InstanceType.*
 import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
@@ -12,16 +13,10 @@ import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
-private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
-
 internal class PresenceService(private val chatManager: ChatManager) {
 
-    private val userService = chatManager.userService
-    private val presenceInstance by chatManager.lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
-
-    fun subscribeToPresence(userId: String, consumeEvent: ChatManagerEventConsumer): Subscription = presenceInstance.subscribeResuming<ChatEvent>(
+    fun subscribeToPresence(userId: String, consumeEvent: ChatManagerEventConsumer): Subscription = chatManager.subscribeResuming<ChatEvent>(
         path = "/users/$userId/presence",
-        tokenProvider = chatManager.tokenProvider,
         listeners = SubscriptionListeners(
             onEvent = { event ->
                 event.body
@@ -32,7 +27,8 @@ internal class PresenceService(private val chatManager: ChatManager) {
             },
             onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) }
         ),
-        messageParser = { it.parseAs() }
+        messageParser = { it.parseAs() },
+        instanceType = PRESENCE
     )
 
     private fun ChatEvent.toUserPresences() = when (eventName) {
@@ -42,7 +38,7 @@ internal class PresenceService(private val chatManager: ChatManager) {
     }
 
     private fun eventForPresence(userId: String, presence: Presence): Future<ChatManagerEvent> =
-        userService.fetchUserBy(userId)
+        chatManager.userService.fetchUserBy(userId)
             .mapResult { user ->
                 user.takeIf { it.presence != presence }
                     ?.also { it.presence = presence }
