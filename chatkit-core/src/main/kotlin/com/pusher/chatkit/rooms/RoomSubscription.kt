@@ -38,14 +38,15 @@ internal class RoomSubscription(
     )
 
 
-    private val cursorSubscription = chatManager.cursorService.subscribeToRoomCursors(roomId) { event ->
+    private val cursorSubscription = chatManager.cursorService.subscribeForRoom(roomId) { event ->
         when(event) {
             is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(RoomSubscriptionEvent.NewReadCursor(event.cursor))
+            is CursorSubscriptionEvent.InitialState -> consumeEvent(RoomSubscriptionEvent.InitialReadCursors(event.cursors))
         }
     }
 
     init {
-        check(messageLimit > 0) { "messageLimit should be greater than 0" }
+        check(messageLimit >= 0) { "messageLimit should be greater or equal than 0" }
         chatManager.observerEvents { if (active) it.consume() }
     }
 
