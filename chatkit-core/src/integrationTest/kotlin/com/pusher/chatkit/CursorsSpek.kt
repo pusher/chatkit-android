@@ -84,6 +84,21 @@ class CursorsSpek : Spek({
             assertThat(cursorsReceived).containsExactly(secondMessageCursor)
         }
 
+        it("should read $ALICE's cursor") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
+
+            alice.setReadCursor(alice.generalRoom, messageId).wait().assumeSuccess()
+
+            alice.getReadCursor(alice.generalRoom).wait().assumeSuccess()
+
+
+        }
+
     }
 
 })

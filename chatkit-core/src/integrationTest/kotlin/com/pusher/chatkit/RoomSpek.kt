@@ -179,6 +179,62 @@ class RoomSpek : Spek({
             assertThat(pusherino.rooms).doesNotContain(generalRoom)
         }
 
+        it("gets joinable rooms") {
+            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+
+            val rooms = pusherino.getJoinableRooms().wait().assumeSuccess()
+
+            assertThat(rooms).hasSize(1)
+            check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+        }
+
+        it("gets rooms") {
+            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO), newRoom(NOT_GENERAL))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+
+            val rooms = pusherino.rooms
+
+            assertThat(rooms).hasSize(1)
+            check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+        }
+
+        it("provides users for a room") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+
+            val users = pusherino.usersForRoom(pusherino.generalRoom).wait().assumeSuccess()
+
+            assertThat(users.map { it.id }).containsExactly(SUPER_USER, PUSHERINO, ALICE)
+        }
+
+        it("is subscribed to room") {
+            setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
+
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            alice.subscribeToRoom(alice.generalRoom) { }
+
+            val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
+
+            assertThat(isSubscribed).isTrue()
+        }
+
+        it("is not subscribed to room after unsubscribe") {
+            setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
+
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            alice.subscribeToRoom(alice.generalRoom) { }.unsubscribe()
+
+            val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
+
+            assertThat(isSubscribed).isFalse()
+        }
+
     }
 
 })
