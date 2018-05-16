@@ -6,6 +6,7 @@ import com.pusher.chatkit.InstanceType.*
 import com.pusher.chatkit.network.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
 import elements.Errors
@@ -38,8 +39,9 @@ internal class CursorService(private val chatManager: ChatManager) {
 
     private val throttler = Throttler<Boolean>()
 
-    fun getReadCursor(userId: String, roomId: Int) : Result<Cursor, Error> =
-        cursors[userId][roomId]?.asSuccess() ?: notSubscribedToRoom("$roomId").asFailure()
+    fun getReadCursor(userId: String, roomId: Int) : Future<Result<Cursor, Error>> =
+        (cursors[userId][roomId]?.asSuccess<Cursor, Error>() ?: notSubscribedToRoom("$roomId").asFailure())
+            .toFuture()
 
     private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursors")

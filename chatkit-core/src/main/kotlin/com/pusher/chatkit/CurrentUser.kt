@@ -45,10 +45,10 @@ class CurrentUser(
     fun setReadCursor(roomId: Int, position: Int): Future<Result<Boolean, Error>> =
         chatManager.cursorService.setReadCursor(id, roomId, position)
 
-    fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
+    fun getReadCursor(roomId: Int) : Future<Result<Cursor, Error>> =
         chatManager.cursorService.getReadCursor(id, roomId)
 
-    fun getReadCursor(room: Room) : Result<Cursor, Error> =
+    fun getReadCursor(room: Room) : Future<Result<Cursor, Error>> =
         getReadCursor(room.id)
 
     fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
