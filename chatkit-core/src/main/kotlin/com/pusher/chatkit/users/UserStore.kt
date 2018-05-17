@@ -3,7 +3,7 @@ package com.pusher.chatkit.users
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class UserStore(private val userMap : ConcurrentMap<String, User> = ConcurrentHashMap()) {
+internal class UserStore(private val userMap : ConcurrentMap<String, User> = ConcurrentHashMap()) {
 
     internal operator fun plusAssign(user: User) {
         userMap[user.id] = user
