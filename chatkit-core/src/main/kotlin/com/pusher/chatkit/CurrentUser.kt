@@ -42,10 +42,10 @@ class CurrentUser(
         customData = newUser.customData
     }
 
-    fun setReadCursor(room: Room, position: Int): Future<Result<Boolean, Error>> =
+    fun setReadCursor(room: Room, position: Int): Future<Result<Unit, Error>> =
         setReadCursor(room.id, position)
 
-    fun setReadCursor(roomId: Int, position: Int): Future<Result<Boolean, Error>> =
+    fun setReadCursor(roomId: Int, position: Int): Future<Result<Unit, Error>> =
         chatManager.cursorService.setReadCursor(id, roomId, position)
 
     fun getReadCursor(roomId: Int) : Future<Result<Cursor, Error>> =

@@ -4,12 +4,12 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
+import com.pusher.platform.network.Futures
 import com.pusher.platform.network.wait
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
@@ -64,6 +64,37 @@ class CursorsSpek : Spek({
             alice.setReadCursor(alice.generalRoom, secondMessageId).wait()
 
             assertThat(cursorsReceived).containsExactly(secondMessageCursor)
+        }
+
+        it("should report cursor after timeout") {
+            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val cursorsReceived = mutableListOf<RoomSubscriptionEvent.NewReadCursor>()
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            val firstMessageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
+            val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").wait().assumeSuccess()
+            val thirdMessageId = pusherino.sendMessage(pusherino.generalRoom, "Are you there?").wait().assumeSuccess()
+
+            val thirdMessageCursor by pusherino
+                .subscribeRoomFor(GENERAL) {
+                    (it as? RoomSubscriptionEvent.NewReadCursor)?.takeIf { event ->
+                        cursorsReceived += event
+                        event.cursor.position == secondMessageId
+                    }
+                }
+
+            Futures.schedule {
+                alice.setReadCursor(alice.generalRoom, firstMessageId)
+                alice.setReadCursor(alice.generalRoom, secondMessageId).wait()
+            }
+            Thread.sleep(500)
+            alice.setReadCursor(alice.generalRoom, thirdMessageId).wait()
+
+            checkNotNull(thirdMessageCursor)
+
+            assertThat(cursorsReceived.map { it.cursor.position }).containsExactly(secondMessageId, thirdMessageId)
         }
 
         it("should read $ALICE's cursor") {
