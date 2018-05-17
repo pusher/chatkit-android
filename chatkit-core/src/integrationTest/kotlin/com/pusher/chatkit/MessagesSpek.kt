@@ -127,7 +127,7 @@ class MessagesSpek : Spek({
 
             with(receivedMessage) {
                 assertThat(text).isEqualTo("Cats and dogs, living together")
-                assertThat(roomId).isEqualTo(pusherino.generalRoom.id)
+                assertThat(roomId).isEqualTo(alice.generalRoom.id)
                 assertThat(attachment).isNull()
             }
         }

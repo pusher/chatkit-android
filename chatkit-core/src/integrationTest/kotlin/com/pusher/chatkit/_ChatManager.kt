@@ -21,14 +21,18 @@ fun <A> ChatManager.connectFor(block: (ChatManagerEvent) -> A?): FutureValue<A> 
  * Same as [connectFor] but for room subs
  */
 fun <A> ChatManager.subscribeRoomFor(roomName: String, block: (RoomSubscriptionEvent) -> A?): FutureValue<A> {
+    val currentUserEvent by connectFor { it as? ChatManagerEvent.CurrentUserReceived }
+    return currentUserEvent.currentUser.subscribeRoomFor(roomName, block)
+}
+
+/**
+ * Same as [connectFor] but for room subs
+ */
+fun <A> CurrentUser.subscribeRoomFor(roomName: String, block: (RoomSubscriptionEvent) -> A?): FutureValue<A> {
     val futureValue = FutureValue<A>()
     var ready by FutureValue<Any>()
-    val currentUserEvent by connectFor { it as? ChatManagerEvent.CurrentUserReceived }
-
-    val currentUser = currentUserEvent.currentUser
-    val room = currentUser.rooms.first { it.name == roomName }
-
-    currentUser.subscribeToRoom(room) {
+    val room = rooms.first { it.name == roomName }
+    subscribeToRoom(room) {
         if (it is RoomSubscriptionEvent.InitialReadCursors) ready = it
         (block(it))?.let { futureValue.set(it) }
     }
