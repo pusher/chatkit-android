@@ -43,8 +43,6 @@ class TestChatkitDependencies(
     }.build()
 }
 
-val forTenSeconds = Wait.For(10, TimeUnit.SECONDS)
-
 val CurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 
