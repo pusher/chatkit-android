@@ -36,7 +36,7 @@ class ChatManagerSpek : Spek({
         it("loads current user") {
             setUpInstanceWith(newUser(PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect().wait(forTenSeconds)
+            val user = chatFor(PUSHERINO).connect().wait()
             val userId = user.assumeSuccess().id
 
             assertThat(userId).isEqualTo(PUSHERINO)
@@ -45,7 +45,7 @@ class ChatManagerSpek : Spek({
         it("loads user rooms") {
             setUpInstanceWith(newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect().wait(forTenSeconds)
+            val user = chatFor(PUSHERINO).connect().wait()
             val roomNames = user.assumeSuccess().rooms.map { it.name }
 
             assertThat(roomNames).containsExactly(GENERAL)
@@ -54,8 +54,8 @@ class ChatManagerSpek : Spek({
         it("loads users related to current user") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val user = chatFor(PUSHERINO).connect().wait(forTenSeconds)
-            val users = user.assumeSuccess().users.wait(forTenSeconds)
+            val user = chatFor(PUSHERINO).connect().wait()
+            val users = user.assumeSuccess().users.wait()
 
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
@@ -65,8 +65,8 @@ class ChatManagerSpek : Spek({
         it("subscribes to a room and receives message from alice") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait(forTenSeconds)
-            val alice = chatFor(ALICE).connect().wait(forTenSeconds)
+            val pusherino = chatFor(PUSHERINO).connect().wait()
+            val alice = chatFor(ALICE).connect().wait()
 
             val room = pusherino.assumeSuccess().generalRoom
 
@@ -77,10 +77,20 @@ class ChatManagerSpek : Spek({
                 onErrorOccurred = { e -> error("error: $e") }
             ))
 
-            val messageResult = alice.assumeSuccess().sendMessage(room, "message text").wait(forTenSeconds)
+            val messageResult = alice.assumeSuccess().sendMessage(room, "message text").wait()
 
             check(messageResult is Result.Success)
             assertThat(messageReceived.text).isEqualTo("message text")
+        }
+
+
+        it("receives current user with listeners instead of callback") {
+            setUpInstanceWith(newUser(PUSHERINO))
+
+            val user = chatFor(PUSHERINO).connect(ChatManagerListeners()).wait()
+            val userId = user.assumeSuccess().id
+
+            assertThat(userId).isEqualTo(PUSHERINO)
         }
 
     }

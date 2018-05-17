@@ -478,7 +478,7 @@ All other connected members of the room will [receive an event](#chat-events) th
 
 ## Subscriptions
 
-To be notified when new messages are added to a room, you’ll need to subscribe to it and provide a `RoomSubscriptionListeners` instance or a lambda to listen for `RoomSubscriptionEvent`. (Too see the full list of possible hooks see [Room Subscription Hooks](#room-subscription-hooks)). At most 100 recent messages can be retrieved on subscription, to fetch older messages see [Fetching Messages From a Room](#fetching-messages-for-a-room). To receive only new messages, set the `messageLimit` to 0.
+To be notified when new messages are added to a room, you’ll need to subscribe to it and provide a `RoomSubscriptionListeners` instance or a lambda to listen for `RoomSubscriptionEvent`. (Too see the full list of possible hooks see [Room Subscription Hooks](#room-subscription-events)). At most 100 recent messages can be retrieved on subscription, to fetch older messages see [Fetching Messages From a Room](#fetching-messages-for-a-room). To receive only new messages, set the `messageLimit` to 0.
 
 Using `RoomSubscriptionListeners`:
 

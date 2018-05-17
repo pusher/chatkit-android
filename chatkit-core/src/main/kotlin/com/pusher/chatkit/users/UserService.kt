@@ -1,7 +1,7 @@
 package com.pusher.chatkit.users
 
 import com.pusher.chatkit.*
-import com.pusher.chatkit.network.toJson
+import com.pusher.chatkit.util.toJson
 import com.pusher.chatkit.rooms.Room
 import com.pusher.platform.network.*
 import com.pusher.util.*

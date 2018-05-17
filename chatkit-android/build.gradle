@@ -3,7 +3,6 @@ apply plugin: 'kotlin-android'
 apply plugin: 'de.mannodermaus.android-junit5'
 
 apply from: "$projectDir/../gradle/jacoco-android.gradle"
-apply from: 'maven-push.gradle'
 
 android {
     compileSdkVersion 27
@@ -42,25 +41,9 @@ android {
 
 }
 
-kotlin {
-    experimental {
-        coroutines 'enable'
-    }
-}
-
 dependencies {
-    implementation "com.android.support:appcompat-v7:$android_support_version"
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
-    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
-
-    if (rootProject.properties.containsKey("pusher_platform_local")) {
-        api project(':pusher-platform-android')
-    } else {
-        api "com.pusher:pusher-platform-android:$pusher_platform_version"
-    }
+    api "com.pusher:pusher-platform-android:$pusher_platform_version"
     api project(':chatkit-core')
 
     testImplementation "junit:junit:$junit_legacy_version"

@@ -3,8 +3,9 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.SERVICE_VERSION
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.InstanceType
+import com.pusher.chatkit.InstanceType.*
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.flatMap
@@ -12,18 +13,13 @@ import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
+import com.pusher.platform.network.toFuture
 import elements.Error
 import elements.Errors
 import elements.SubscriptionEvent
 import java.util.concurrent.Future
 
-
-private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
-
 internal class CursorService(private val chatManager: ChatManager) {
-
-    private val cursorsInstance by chatManager.lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
-    private val tokenProvider = chatManager.tokenProvider
 
     private val cursors = CursorsStore()
 
@@ -46,15 +42,16 @@ internal class CursorService(private val chatManager: ChatManager) {
     }
 
     private val setReadCursorThrottler = Throttler { options: RequestOptions ->
-        cursorsInstance.request<JsonElement>(
+        chatManager.platformInstance(CURSORS).request<JsonElement>(
             options = options,
-            tokenProvider = tokenProvider,
+            tokenProvider = chatManager.tokenProvider,
             responseParser = { it.parseAs() }
         )
     }
 
-    fun getReadCursor(userId: String, roomId: Int): Result<Cursor, Error> =
-        cursors[userId][roomId]?.asSuccess() ?: notSubscribedToRoom("$roomId").asFailure()
+    fun getReadCursor(userId: String, roomId: Int) : Future<Result<Cursor, Error>> =
+        (cursors[userId][roomId]?.asSuccess<Cursor, Error>() ?: notSubscribedToRoom("$roomId").asFailure())
+            .toFuture()
 
     private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursors")
@@ -69,33 +66,31 @@ internal class CursorService(private val chatManager: ChatManager) {
     fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         createSubscription("/cursors/0/users/$userId", consumeEvent)
 
-    private fun createSubscription(path: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
-        cursorsInstance.subscribeResuming(
-            path = path,
-            tokenProvider = chatManager.tokenProvider,
-            listeners = SubscriptionListeners<ChatEvent>(
-                onEvent = { event ->
-                    val cursorEvent = event.toCursorEvent()
-                        .recover { CursorSubscriptionEvent.OnError(it) }
-                    consumeEvent(cursorEvent)
-                    when (cursorEvent) {
-                        is CursorSubscriptionEvent.OnCursorSet -> cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
-                        is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
-                    }
-                },
-                onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
-            ),
-            messageParser = { it.parseAs() }
-        )
-
-
-    fun request(userId: String): Future<Result<List<Cursor>, Error>> = cursorsInstance.request(
-        options = RequestOptions(
-            method = "GET",
-            path = "/cursors/0/users/$userId"
+    private fun createSubscription(
+        path: String,
+        consumeEvent: (CursorSubscriptionEvent) -> Unit
+    ) = chatManager.subscribeResuming(
+        path = path,
+        listeners = SubscriptionListeners<ChatEvent>(
+            onEvent = { event ->
+                val cursorEvent = event.toCursorEvent()
+                    .recover { CursorSubscriptionEvent.OnError(it) }
+                consumeEvent(cursorEvent)
+                when(cursorEvent) {
+                    is CursorSubscriptionEvent.OnCursorSet ->  cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
+                    is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
+                }
+            },
+            onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
         ),
-        tokenProvider = tokenProvider,
-        responseParser = { it.parseAs<List<Cursor>>() }
+        messageParser = { it.parseAs() },
+        instanceType = CURSORS
+    )
+
+    fun request(userId: String): Future<Result<List<Cursor>, Error>> = chatManager.doGet(
+        "/cursors/0/users/$userId",
+        responseParser = { it.parseAs<List<Cursor>>() },
+        instanceType = CURSORS
     )
 
 }

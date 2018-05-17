@@ -1,8 +1,8 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.*
-import com.pusher.chatkit.network.toJson
-import com.pusher.platform.network.map
+import com.pusher.chatkit.ChatManager
+import com.pusher.chatkit.HasChat
+import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
@@ -28,8 +28,8 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
         roomStore[id]
             .orElse { Errors.other("User not found locally") }
 
-    fun fetchUserRooms(userId: String, onlyJoinable: Boolean = false): Future<Result<List<Room>, Error>> =
-        chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$onlyJoinable")
+    fun fetchUserRooms(userId: String, joinable: Boolean = false): Future<Result<List<Room>, Error>> =
+        chatManager.doGet<List<Room>>("/users/$userId/rooms?joinable=$joinable")
             .mapResult { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
@@ -82,9 +82,19 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
 
 internal data class UpdateRoomRequest(val name: String, val isPrivate: Boolean?)
 
+/**
+ * Used by [RoomService.roomFor] so an object can say that they have a room
+ */
 interface HasRoom {
     val roomId: Int
 }
 
 private fun noRoomMembershipError(room: Room) : Error =
     Errors.other("User is not a member of ${room.name}")
+
+private data class RoomCreateRequest(
+    val name: String,
+    val private: Boolean,
+    val createdById: String,
+    var userIds: List<String> = emptyList()
+)

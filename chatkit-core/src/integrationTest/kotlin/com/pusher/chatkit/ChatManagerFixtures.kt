@@ -11,15 +11,17 @@ import okhttp3.OkHttpClient
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+const val MAX_LOG_LENGTH = 300
+
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
-        override fun verbose(message: String, error: Error?) = log("V", message, error)
-        override fun debug(message: String, error: Error?) = log("D", message, error)
-        override fun info(message: String, error: Error?) = log("I", message, error)
-        override fun warn(message: String, error: Error?) = log("W", message, error)
-        override fun error(message: String, error: Error?) = log("E", message, error)
+        override fun verbose(message: String, error: Error?) = log("V", message.take(MAX_LOG_LENGTH), error)
+        override fun debug(message: String, error: Error?) = log("D", message.take(MAX_LOG_LENGTH), error)
+        override fun info(message: String, error: Error?) = log("I", message.take(MAX_LOG_LENGTH), error)
+        override fun warn(message: String, error: Error?) = log("W", message.take(MAX_LOG_LENGTH), error)
+        override fun error(message: String, error: Error?) = log("E", message.take(MAX_LOG_LENGTH), error)
         private fun log(type: String, message: String, error: Error?) =
-            println("$type: $message ${error?.let { "\n" + it } ?: ""}")
+            println("$type: $message ${error?.let { "\n" + it } ?: ""}".take(MAX_LOG_LENGTH))
     }
     override val mediaTypeResolver: MediaTypeResolver = object : MediaTypeResolver {
         override fun fileMediaType(file: File): String? = "image/jif"
@@ -42,8 +44,6 @@ class TestChatkitDependencies(
         }
     }.build()
 }
-
-val forTenSeconds = Wait.For(10, TimeUnit.SECONDS)
 
 val CurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")

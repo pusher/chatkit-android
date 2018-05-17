@@ -6,7 +6,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Used to do a trailing throttle of actions. The [currentTask] is cancelled if a new action comes in before.
+ * Used to do a trailing throttle of actions.
  */
 internal class Throttler<A, B>(
     private val delay: Long = 500,

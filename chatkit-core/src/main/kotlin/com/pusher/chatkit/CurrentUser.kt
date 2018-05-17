@@ -1,11 +1,10 @@
 package com.pusher.chatkit
 
-import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.files.FetchedAttachment
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.network.toJson
 import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.toFuture
@@ -14,6 +13,7 @@ import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
 
+@Suppress("MemberVisibilityCanBePrivate") // Entry points
 class CurrentUser(
     val id: String,
     var avatarURL: String?,
@@ -31,8 +31,11 @@ class CurrentUser(
 
     private val roomSubscriptions = mutableMapOf<Int, Subscription>()
 
-    internal fun isSubscribedToRoom(roomId: Int): Boolean =
+    fun isSubscribedToRoom(roomId: Int): Boolean =
         roomSubscriptions.containsKey(roomId)
+
+    fun isSubscribedToRoom(room: Room): Boolean =
+        isSubscribedToRoom(room.id)
 
     fun updateWithPropertiesOf(newUser: User) {
         name = newUser.name
@@ -45,10 +48,10 @@ class CurrentUser(
     fun setReadCursor(roomId: Int, position: Int): Future<Result<Unit, Error>> =
         chatManager.cursorService.setReadCursor(id, roomId, position)
 
-    fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
+    fun getReadCursor(roomId: Int) : Future<Result<Cursor, Error>> =
         chatManager.cursorService.getReadCursor(id, roomId)
 
-    fun getReadCursor(room: Room) : Result<Cursor, Error> =
+    fun getReadCursor(room: Room) : Future<Result<Cursor, Error>> =
         getReadCursor(room.id)
 
     fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
@@ -104,7 +107,7 @@ class CurrentUser(
         listeners: RoomSubscriptionListeners,
         messageLimit : Int = 10
     ): Subscription =
-        subscribeToRoom(room.id, messageLimit, listeners.toCallback())
+        subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
     fun subscribeToRoom(
@@ -129,7 +132,15 @@ class CurrentUser(
         consumer: RoomSubscriptionConsumer
     ): Subscription =
         chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
+            .autoRemove(roomId)
             .also { roomSubscriptions += roomId to it }
+
+    private fun Subscription.autoRemove(roomId: Int) = object : Subscription {
+        override fun unsubscribe() {
+            roomSubscriptions -= roomId
+            this@autoRemove.unsubscribe()
+        }
+    }
 
     @JvmOverloads
     fun fetchMessages(
@@ -165,23 +176,18 @@ class CurrentUser(
     fun isTypingIn(room: Room): Future<Result<Unit, Error>> =
         isTypingIn(room.id)
 
-    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> =
-        TypingIndicatorBody(id).toJson().toFuture()
-            .takeIf { canSendTypingEvent() }
-            ?.flatMapFutureResult { body ->
-                chatManager.doPost<Unit>("/rooms/$roomId/events", body)
-                    .also { lastTypingEvent = System.currentTimeMillis() }
-            } ?: Unit.asSuccess<Unit, Error>().toFuture()
+    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> = when {
+        canSendTypingEvent() -> chatManager.doPost<Unit>(
+            path ="/rooms/$roomId/events",
+            body = """{ "user_id" : "$id", "name" : "typing_start" }"""
+        ).also { lastTypingEvent = System.currentTimeMillis() }
+        else -> Unit.asSuccess<Unit, Error>().toFuture()
+    }
 
-    internal data class TypingIndicatorBody(
-        val userId: String,
-        val name: String = "typing_start"
-    )
-
-    fun getJoinablerooms(): Future<Result<List<Room>, Error>> =
+    fun getJoinableRooms(): Future<Result<List<Room>, Error>> =
         chatManager.roomService.fetchUserRooms(
             userId = id,
-            onlyJoinable = true
+            joinable = true
         )
 
     fun usersForRoom(room: Room): Future<Result<List<User>, Error>> =
@@ -193,27 +199,5 @@ class CurrentUser(
     }
 
 }
-
-internal data class MessageRequest(val text: String? = null, val userId: String, val attachment: AttachmentBody? = null)
-
-internal sealed class AttachmentBody {
-    data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
-    object None : AttachmentBody()
-}
-
-internal data class RoomCreateRequest(
-    val name: String,
-    val private: Boolean,
-    val createdById: String,
-    var userIds: List<String> = emptyList()
-)
-
-data class FetchedAttachment(
-    val file: FetchedAttachmentFile,
-    @SerializedName("resource_link") val link: String,
-    val ttl: Double
-)
-
-data class FetchedAttachmentFile(val bytes: Int, val lastModified: Double, val name: String)
 
 private const val TYPING_TIME_THRESHOLD = 500

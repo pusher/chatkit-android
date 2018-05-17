@@ -4,7 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
@@ -16,13 +16,11 @@ import com.pusher.platform.network.Futures
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
-import com.pusher.util.flatMapFutureResult
 import elements.Error
 import org.junit.runner.notification.Failure
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KClass
 
 /**
  * In charge of setting the right state of an intance for a test
@@ -138,7 +136,7 @@ object InstanceActions {
     fun createSuperUser(): InstanceAction =
         compose(newUser(SUPER_USER), createAdminRole(), setUserRole(SUPER_USER, "admin") )
 
-    fun setUserRole(userId: String, role: String): InstanceAction = {
+    private fun setUserRole(userId: String, role: String): InstanceAction = {
         authorizerInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/users/$userId/roles",
@@ -150,7 +148,7 @@ object InstanceActions {
         )
     }.withName("Assign role $role to $userId")
 
-    fun createAdminRole(): InstanceAction = {
+    private fun createAdminRole(): InstanceAction = {
         authorizerInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/roles",

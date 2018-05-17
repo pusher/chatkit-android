@@ -12,13 +12,13 @@ import elements.Error
 import elements.Errors
 import okhttp3.Call
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okio.Buffer
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.mockito.ArgumentMatchers.*
+import org.mockito.ArgumentMatchers.argThat
+import org.mockito.ArgumentMatchers.notNull
 import java.util.*
 
 private val testProvider = ChatkitTokenProvider(

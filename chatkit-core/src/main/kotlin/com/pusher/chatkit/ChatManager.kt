@@ -1,35 +1,31 @@
 package com.pusher.chatkit
 
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
+import com.pusher.chatkit.InstanceType.*
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.files.AttachmentBody
+import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
-import com.pusher.chatkit.network.parseAs
+import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.presence.PresenceService
-import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscription
-import com.pusher.chatkit.users.*
-import com.pusher.platform.*
+import com.pusher.platform.Instance
+import com.pusher.platform.RequestOptions
+import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 import java.util.concurrent.SynchronousQueue
 
-private const val API_SERVICE_NAME = "chatkit"
-internal const val SERVICE_VERSION = "v1"
-private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -37,17 +33,9 @@ class ChatManager constructor(
     internal val dependencies: ChatkitDependencies
 ) {
 
-    val tokenProvider: TokenProvider = DebounceTokenProvider(dependencies.tokenProvider)
-
-    companion object {
-        val GSON: Gson = GsonBuilder()
-            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .create()
-    }
-
-    internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
-    internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
-
+    val tokenProvider: TokenProvider = DebounceTokenProvider(
+        dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
+    )
 
     private val subscriptions = mutableListOf<Subscription>()
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
@@ -59,25 +47,18 @@ class ChatManager constructor(
     internal val filesService by lazy { FilesService(this) }
     internal val roomService by lazy { RoomService(this) }
 
-    init {
-        if (tokenProvider is ChatkitTokenProvider) {
-            tokenProvider.userId = userId
-        }
-    }
-
     @JvmOverloads
-    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> =
-        CurrentUserConsumer()
-            .also { currentUserConsumer ->
-                eventConsumers += currentUserConsumer
-                eventConsumers += consumer
-                subscriptions += openSubscription()
-            }
-            .get()
+    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
+        val futureCurrentUser = CurrentUserConsumer()
+        eventConsumers += futureCurrentUser
+        eventConsumers += consumer
+        subscriptions += openSubscription()
+        return futureCurrentUser.get()
+    }
 
     private fun openSubscription() = UserSubscription(
         userId = userId,
-        chatManager = this@ChatManager,
+        chatManager = this,
         consumeEvent = { event -> eventConsumers.forEach { it(event) } }
     )
 
@@ -108,51 +89,44 @@ class ChatManager constructor(
         eventConsumers += consumer
     }
 
-    internal fun lazyInstance(serviceName: String, serviceVersion: String) = lazy {
-        val instance = Instance(
-            locator = instanceLocator,
-            serviceName = serviceName,
-            serviceVersion = serviceVersion,
-            dependencies = dependencies
-        )
-        dependencies.okHttpClient?.let { client ->
-            instance.copy(baseClient = instance.baseClient.copy(client = client))
-        } ?: instance
-    }
-
     internal inline fun <reified A> doPost(
         path: String,
         body: String = "",
-        noinline responseParser: DataParser<A> = { it.parseAs() }
+        noinline responseParser: DataParser<A> = { it.parseAs() },
+        instanceType: InstanceType = DEFAULT
     ): Future<Result<A, Error>> =
-        doRequest("POST", path, body, responseParser)
+        doRequest("POST", path, body, responseParser, instanceType)
 
     internal inline fun <reified A> doPut(
         path: String,
         body: String = "",
-        noinline responseParser: DataParser<A> = { it.parseAs() }
+        noinline responseParser: DataParser<A> = { it.parseAs() },
+        instanceType: InstanceType = DEFAULT
     ): Future<Result<A, Error>> =
-        doRequest("PUT", path, body, responseParser)
+        doRequest("PUT", path, body, responseParser, instanceType)
 
     internal inline fun <reified A> doGet(
         path: String,
-        noinline responseParser: DataParser<A> = { it.parseAs() }
+        noinline responseParser: DataParser<A> = { it.parseAs() },
+        instanceType: InstanceType = DEFAULT
     ): Future<Result<A, Error>> =
-        doRequest("GET", path, null, responseParser)
+        doRequest("GET", path, null, responseParser, instanceType)
 
     internal inline fun <reified A> doDelete(
         path: String,
-        noinline responseParser: DataParser<A> = { it.parseAs() }
+        noinline responseParser: DataParser<A> = { it.parseAs() },
+        instanceType: InstanceType = DEFAULT
     ): Future<Result<A, Error>> =
-        doRequest("DELETE", path, null, responseParser)
+        doRequest("DELETE", path, null, responseParser, instanceType)
 
     private fun <A> doRequest(
         method: String,
         path: String,
         body: String?,
-        responseParser: DataParser<A>
+        responseParser: DataParser<A>,
+        instanceType: InstanceType = DEFAULT
     ): Future<Result<A, Error>> =
-        apiInstance.request(
+        platformInstance(instanceType).request(
             options = RequestOptions(
                 method = method,
                 path = path,
@@ -161,6 +135,29 @@ class ChatManager constructor(
             tokenProvider = tokenProvider,
             responseParser = responseParser
         )
+
+    @Suppress("UNCHECKED_CAST")
+    internal fun upload(
+        path: String,
+        attachment: DataAttachment
+    ): Future<Result<AttachmentBody, Error>> = platformInstance(FILES).upload(
+        path = path,
+        file = attachment.file,
+        tokenProvider = tokenProvider,
+        responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
+    )
+
+    internal fun <A> subscribeResuming(
+        path: String,
+        listeners: SubscriptionListeners<A>,
+        messageParser: DataParser<A>,
+        instanceType: InstanceType = DEFAULT
+    ) = platformInstance(instanceType).subscribeResuming(
+        path = path,
+        tokenProvider = tokenProvider,
+        listeners = listeners,
+        messageParser = messageParser
+    ).also { subscriptions += it }
 
     /**
      * Tries to close all pending subscriptions and resources
@@ -174,54 +171,32 @@ class ChatManager constructor(
         Errors.other(e).asFailure()
     }
 
-}
+    private val instances = mutableMapOf<InstanceType, Instance>()
 
-internal interface HasChat {
+    internal fun platformInstance(type: InstanceType = DEFAULT) =
+        instances[type] ?: createInstance(type.serviceName, type.version).also { instances[type] = it }
 
-    val chatManager: ChatManager
-
-    fun Future<Result<Room, Error>>.saveRoomWhenReady() = mapResult {
-        it.also { room ->
-            chatManager.roomService.roomStore += room
-            populateRoomUserStore(room)
+    private fun createInstance(serviceName: String, serviceVersion: String): Instance {
+        val instance = Instance(
+            locator = instanceLocator,
+            serviceName = serviceName,
+            serviceVersion = serviceVersion,
+            dependencies = dependencies
+        )
+        return dependencies.okHttpClient.let { client ->
+            when (client) {
+                null -> instance
+                else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
+            }
         }
     }
 
-    fun Future<Result<Int, Error>>.removeRoomWhenReady() = mapResult {
-        it.also { roomId ->
-            chatManager.roomService.roomStore -= roomId
-        }
-    }
-
-    private fun populateRoomUserStore(room: Room) {
-        chatManager.userService.populateUserStore(room.memberUserIds)
-    }
-
 }
 
-internal data class ChatEvent(
-    val eventName: String,
-    override val userId: String = "",
-    val timestamp: String,
-    val data: JsonElement
-) : HasUser
-
-/**
- * Used to avoid multiple requests to the tokenProvider if one is pending
- */
-private class DebounceTokenProvider(
-    val original: TokenProvider
-) : TokenProvider {
-
-    private var pending: Future<Result<String, Error>>? = null
-
-    override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = synchronized(this) {
-        pending ?: original.fetchToken(tokenParams).also { pending = it }
-    }
-
-    override fun clearToken(token: String?) = synchronized(this) {
-        original.clearToken(token)
-        pending = null
-    }
-
+internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
+    DEFAULT("chatkit"),
+    CURSORS("chatkit_cursors"),
+    PRESENCE("chatkit_presence"),
+    FILES("chatkit_files")
 }
+

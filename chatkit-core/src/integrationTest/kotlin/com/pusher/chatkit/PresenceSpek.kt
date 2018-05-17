@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.*
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
@@ -26,61 +27,49 @@ class PresenceSpek : Spek({
         it("notifies when '$ALICE' comes online in room '$GENERAL'") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var userCameOnline by FutureValue<User>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-
-            pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserCameOnline && event.user.id != PUSHERINO) userCameOnline = event.user
-            }
+            val userCameOnline by chatFor(PUSHERINO)
+                .subscribeRoomFor(GENERAL) { (it as? RoomSubscriptionEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
 
             chatFor(ALICE).connect().wait().assumeSuccess()
 
-            assertThat(userCameOnline.id).isEqualTo(ALICE)
+            assertThat(userCameOnline.user.id).isEqualTo(ALICE)
         }
 
         it("notifies when '$ALICE' comes online globally") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var userCameOnline by FutureValue<User>()
-            chatFor(PUSHERINO).connect{ event ->
-                if (event is ChatManagerEvent.UserCameOnline && event.user.id != PUSHERINO) userCameOnline = event.user
-            }.wait().assumeSuccess()
+            val userCameOnline by chatFor(PUSHERINO)
+                .connectFor { (it as? ChatManagerEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
 
             chatFor(ALICE).connect().wait().assumeSuccess()
 
-            assertThat(userCameOnline.id).isEqualTo(ALICE)
+            assertThat(userCameOnline.user.id).isEqualTo(ALICE)
         }
 
         it("notifies when '$ALICE' goes offline in room '$GENERAL'") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var userWentOffline by FutureValue<User>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-
-            pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserWentOffline) userWentOffline = event.user
-            }
+            val userWentOffline by chatFor(PUSHERINO)
+                .subscribeRoomFor(GENERAL) { it as? RoomSubscriptionEvent.UserWentOffline }
 
             val aliceChat = chatFor(ALICE)
             aliceChat.connect().wait().assumeSuccess()
             aliceChat.close()
 
-            assertThat(userWentOffline.id).isEqualTo(ALICE)
+            assertThat(userWentOffline.user.id).isEqualTo(ALICE)
         }
 
         it("notifies when '$ALICE' goes offline globally") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var userWentOffline by FutureValue<User>()
-            chatFor(PUSHERINO).connect{ event ->
-                if (event is ChatManagerEvent.UserWentOffline) userWentOffline = event.user
-            }
+            val userWentOffline by chatFor(PUSHERINO)
+                .connectFor { it as? ChatManagerEvent.UserWentOffline }
 
             val aliceChat = chatFor(ALICE)
             aliceChat.connect().wait().assumeSuccess()
             aliceChat.close()
 
-            assertThat(userWentOffline.id).isEqualTo(ALICE)
+            assertThat(userWentOffline.user.id).isEqualTo(ALICE)
         }
 
     }
