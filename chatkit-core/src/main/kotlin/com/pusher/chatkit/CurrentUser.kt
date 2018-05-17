@@ -39,10 +39,10 @@ class CurrentUser(
         customData = newUser.customData
     }
 
-    fun setReadCursor(room: Room, position: Int): Future<Result<Boolean, Error>> =
+    fun setReadCursor(room: Room, position: Int): Future<Result<Unit, Error>> =
         setReadCursor(room.id, position)
 
-    fun setReadCursor(roomId: Int, position: Int): Future<Result<Boolean, Error>> =
+    fun setReadCursor(roomId: Int, position: Int): Future<Result<Unit, Error>> =
         chatManager.cursorService.setReadCursor(id, roomId, position)
 
     fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
@@ -200,8 +200,6 @@ internal sealed class AttachmentBody {
     data class Resource(val resourceLink: String, val type: String) : AttachmentBody()
     object None : AttachmentBody()
 }
-
-internal data class SetCursorRequest(val position: Int)
 
 internal data class RoomCreateRequest(
     val name: String,

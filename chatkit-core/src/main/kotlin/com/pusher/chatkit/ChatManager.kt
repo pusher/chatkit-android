@@ -11,7 +11,6 @@ import com.pusher.chatkit.network.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.*
 import com.pusher.platform.*
@@ -29,7 +28,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.SynchronousQueue
 
 private const val API_SERVICE_NAME = "chatkit"
-private const val CURSOR_SERVICE_NAME = "chatkit_cursors"
 internal const val SERVICE_VERSION = "v1"
 private const val PRESENCE_SERVICE_NAME = "chatkit_presence"
 
@@ -48,7 +46,6 @@ class ChatManager constructor(
     }
 
     internal val apiInstance by lazyInstance(API_SERVICE_NAME, SERVICE_VERSION)
-    internal val cursorsInstance by lazyInstance(CURSOR_SERVICE_NAME, SERVICE_VERSION)
     internal val presenceInstance by lazyInstance(PRESENCE_SERVICE_NAME, SERVICE_VERSION)
 
 
