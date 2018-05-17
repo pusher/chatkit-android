@@ -12,6 +12,7 @@ import com.pusher.util.asFailure
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
+import com.pusher.chatkit.users.UserSubscriptionEvent.*
 
 internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> {
 
@@ -36,9 +37,9 @@ internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> 
         "removed_from_room" -> parseAs<RemovedFromRoomEvent>()
         "room_updated" -> parseAs<RoomUpdatedEvent>()
         "room_deleted" -> parseAs<RoomDeletedEvent>()
-        "user_joined" -> parseAs<UserJoinedEvent>()
-        "user_left" -> parseAs<UserLeftEvent>()
-        "typing_start" -> parseAs<UserStartedTyping>()
+        "user_joined" -> parseAs<JoinedRoomEvent>()
+        "user_left" -> parseAs<LeftRoomEvent>()
+        "typing_start" -> parseAs<StartedTyping>()
         else -> Errors.other("Invalid event name: $eventName").asFailure()
     }.map { it } // Generics -_-
 

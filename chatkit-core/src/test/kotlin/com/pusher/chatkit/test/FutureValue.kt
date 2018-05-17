@@ -11,8 +11,10 @@ import kotlin.reflect.KProperty
 class FutureValue<A>(private val wait: Wait = Wait.For(10, TimeUnit.SECONDS)) {
     private val queue: BlockingQueue<Value<A>> = SynchronousQueue(true)
     private val future = Futures.schedule { queue.take().value }
-    operator fun getValue(thisRef: Nothing?, property: KProperty<*>): A = future.wait(wait)
-    operator fun setValue(thisRef: Nothing?, property: KProperty<*>, value: A) = queue.put(Value(value))
+    operator fun getValue(thisRef: Nothing?, property: KProperty<*>): A = get()
+    operator fun setValue(thisRef: Nothing?, property: KProperty<*>, value: A) = set(value)
+    fun get(): A = future.wait(wait)
+    fun set(value: A) = queue.put(Value(value))
 }
 
 /**
