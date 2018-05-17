@@ -81,7 +81,7 @@ class CursorsSpek : Spek({
                 .subscribeRoomFor(GENERAL) {
                     (it as? RoomSubscriptionEvent.NewReadCursor)?.takeIf { event ->
                         cursorsReceived += event
-                        event.cursor.position == secondMessageId
+                        event.cursor.position == thirdMessageId
                     }
                 }
 

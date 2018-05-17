@@ -44,6 +44,7 @@ internal class CursorService(private val chatManager: ChatManager) {
     private val setReadCursorThrottler = Throttler { options: RequestOptions ->
         chatManager.platformInstance(CURSORS).request<JsonElement>(
             options = options,
+            tokenProvider = chatManager.tokenProvider,
             responseParser = { it.parseAs() }
         )
     }
