@@ -13,13 +13,13 @@ import java.util.concurrent.TimeUnit
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
-        override fun verbose(message: String, error: Error?) = log("V", message, error)
-        override fun debug(message: String, error: Error?) = log("D", message, error)
-        override fun info(message: String, error: Error?) = log("I", message, error)
-        override fun warn(message: String, error: Error?) = log("W", message, error)
-        override fun error(message: String, error: Error?) = log("E", message, error)
+        override fun verbose(message: String, error: Error?) = log("V", message.take(200), error)
+        override fun debug(message: String, error: Error?) = log("D", message.take(200), error)
+        override fun info(message: String, error: Error?) = log("I", message.take(200), error)
+        override fun warn(message: String, error: Error?) = log("W", message.take(200), error)
+        override fun error(message: String, error: Error?) = log("E", message.take(200), error)
         private fun log(type: String, message: String, error: Error?) =
-            println("$type: $message ${error?.let { "\n" + it } ?: ""}")
+            println("$type: $message ${error?.let { "\n" + it } ?: ""}".take(200))
     }
     override val mediaTypeResolver: MediaTypeResolver = object : MediaTypeResolver {
         override fun fileMediaType(file: File): String? = "image/jif"
