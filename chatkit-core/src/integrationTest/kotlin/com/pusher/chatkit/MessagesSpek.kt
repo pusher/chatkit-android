@@ -132,7 +132,7 @@ class MessagesSpek : Spek({
             }
         }
 
-        xit("receives message with link attachment", reason = "Server doesn't send new message with link") {
+        it("receives message with link attachment") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -141,13 +141,9 @@ class MessagesSpek : Spek({
             var receivedMessage by FutureValue<Message>()
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
-                println("Event for Pusherino: $event")
                 when (event) {
                     is RoomSubscriptionEvent.NewMessage -> receivedMessage = event.message
                 }
-            }
-            alice.subscribeToRoom(alice.generalRoom) { event ->
-                println("Event for Alice: $event")
             }
 
             alice.sendMessage(
@@ -174,13 +170,9 @@ class MessagesSpek : Spek({
             var receivedMessage by FutureValue<Message>()
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
-                println("Event for Pusherino: $event")
                 when (event) {
                     is RoomSubscriptionEvent.NewMessage -> receivedMessage = event.message
                 }
-            }
-            alice.subscribeToRoom(alice.generalRoom) { event ->
-                println("Event for Alice: $event")
             }
 
             alice.sendMessage(

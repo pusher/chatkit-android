@@ -71,15 +71,11 @@ internal class RoomSubscription(
     private fun JsonElement.toNewMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
         .map { message ->
             if (message.attachment != null) {
-                val attachmentURL = URL(message.attachment.link)
-                val queryParamsMap: MutableMap<String, String> = mutableMapOf()
-                attachmentURL.query.split("&").forEach { pair ->
-                    val splitPair = pair.split("=")
-                    if (splitPair.count() == 2) {
-                        queryParamsMap[splitPair[0]] = splitPair[1]
-                    }
-                }
-                if (queryParamsMap["chatkit_link"] == "true") {
+                val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&") ?: emptyList())
+                    .mapNotNull { it.split("=").takeIf { it.size == 2 } }
+                    .map { (key, value) -> key to value }
+                    .toMap()
+                if (queryParamsMap["bob"] == "true") {
                     message.attachment.fetchRequired = true
                 }
             }
