@@ -4,7 +4,9 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor
@@ -69,7 +71,7 @@ class CursorsSpek : Spek({
         it("should report cursor after timeout") {
             setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val cursorsReceived = mutableListOf<RoomSubscriptionEvent.NewReadCursor>()
+            val cursorsReceived = mutableListOf<Cursor>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
@@ -80,21 +82,19 @@ class CursorsSpek : Spek({
             val thirdMessageCursor by pusherino
                 .subscribeRoomFor(GENERAL) {
                     (it as? RoomSubscriptionEvent.NewReadCursor)?.takeIf { event ->
-                        cursorsReceived += event
+                        cursorsReceived += event.cursor
                         event.cursor.position == thirdMessageId
                     }
                 }
 
-            Futures.schedule {
                 alice.setReadCursor(alice.generalRoom, firstMessageId)
                 alice.setReadCursor(alice.generalRoom, secondMessageId).wait()
-            }
-            Thread.sleep(500)
-            alice.setReadCursor(alice.generalRoom, thirdMessageId).wait()
+                Thread.sleep(500)
+                alice.setReadCursor(alice.generalRoom, thirdMessageId).wait()
 
             checkNotNull(thirdMessageCursor)
 
-            assertThat(cursorsReceived.map { it.cursor.position }).containsExactly(secondMessageId, thirdMessageId)
+            assertThat(cursorsReceived.map { it.position }).containsExactly(secondMessageId, thirdMessageId)
         }
 
         it("should read $ALICE's cursor") {
