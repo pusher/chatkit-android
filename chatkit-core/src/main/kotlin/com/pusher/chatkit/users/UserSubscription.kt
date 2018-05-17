@@ -14,22 +14,11 @@ import elements.*
 import java.lang.Thread.sleep
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.SECONDS
-
-internal sealed class UserSubscriptionEvent
-
-internal data class InitialState(val rooms: List<Room>, val currentUser: User) : UserSubscriptionEvent()
-internal data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
-internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
-internal data class RoomDeletedEvent(val roomId: Int) : UserSubscriptionEvent()
-internal data class RemovedFromRoomEvent(val roomId: Int) : UserSubscriptionEvent()
-internal data class UserLeftEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
-internal data class UserJoinedEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
-internal data class UserStartedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
-internal data class UserStoppedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
+import com.pusher.chatkit.users.UserSubscriptionEvent.*
 
 private const val USERS_PATH = "users"
 
-class UserSubscription(
+internal class UserSubscription(
     val userId: String,
     private val chatManager: ChatManager,
     private val consumeEvent: (ChatManagerEvent) -> Unit
@@ -98,9 +87,9 @@ class UserSubscription(
             is RoomUpdatedEvent -> roomStore += room
             is RoomDeletedEvent -> roomStore -= roomId
             is RemovedFromRoomEvent -> roomStore -= roomId
-            is UserLeftEvent -> roomStore[roomId]?.removeUser(userId)
-            is UserJoinedEvent -> roomStore[roomId]?.addUser(userId)
-            is UserStartedTyping -> typingTimers
+            is LeftRoomEvent -> roomStore[roomId]?.removeUser(userId)
+            is JoinedRoomEvent -> roomStore[roomId]?.addUser(userId)
+            is StartedTyping -> typingTimers
                 .firstOrNull { it.userId == userId && it.roomId == roomId }
                 ?: TypingTimer(userId, roomId).also { typingTimers += it }
                     .triggerTyping()
@@ -120,7 +109,7 @@ class UserSubscription(
 
         private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
             sleep(1_500)
-            val event = UserStoppedTyping(userId, roomId)
+            val event = UserSubscriptionEvent.StoppedTyping(userId, roomId)
                 .toChatManagerEvent()
                 .wait()
                 .recover { ErrorOccurred(it) }
@@ -149,22 +138,22 @@ class UserSubscription(
         is RoomUpdatedEvent -> RoomUpdated(room).toFutureSuccess()
         is RoomDeletedEvent -> RoomDeleted(roomId).toFutureSuccess()
         is RemovedFromRoomEvent -> CurrentUserRemovedFromRoom(roomId).toFutureSuccess()
-        is UserLeftEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
+        is LeftRoomEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
             roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserLeftRoom(user, room) }
         }
-        is UserJoinedEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
+        is JoinedRoomEvent -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
             roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
         }
-        is UserStartedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
+        is StartedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
             chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
                 ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
             }
         }
-        is UserStoppedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
+        is StoppedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
             chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
                 ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
             }
