@@ -2,14 +2,13 @@ package com.pusher.chatkit
 
 import com.pusher.SdkInfo
 import com.pusher.chatkit.test.insecureOkHttpClient
-import com.pusher.platform.*
+import com.pusher.platform.MediaTypeResolver
+import com.pusher.platform.PlatformDependencies
 import com.pusher.platform.logger.Logger
-import com.pusher.platform.network.Wait
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import okhttp3.OkHttpClient
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 const val MAX_LOG_LENGTH = 300
 

@@ -130,13 +130,12 @@ interface TokenCache {
 /**
  * A simple in-memory cache implementation
  * */
-class InMemoryTokenCache(val clock: Clock) : TokenCache {
-    var token: String? = null
-    var expiration: Long = -1
+class InMemoryTokenCache(private val clock: Clock) : TokenCache {
+    private var token: String? = null
+    private var expiration: Long = -1
 
 
     override fun cache(token: String, expiresIn: Long) {
-
         this.token = token
         this.expiration = clock.currentTimestampInSeconds() + expiresIn - CACHE_EXPIRY_TOLERANCE
     }
