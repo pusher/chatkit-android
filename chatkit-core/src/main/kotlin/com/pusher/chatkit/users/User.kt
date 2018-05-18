@@ -7,8 +7,8 @@ import java.util.*
 
 data class User(
     val id: String,
-    val createdAt: String,
-    val updatedAt: String,
+    private val createdAt: String,
+    private val updatedAt: String,
 
     val name: String?,
     val avatarURL: String?,

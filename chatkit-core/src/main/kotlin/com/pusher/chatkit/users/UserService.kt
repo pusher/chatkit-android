@@ -1,10 +1,15 @@
 package com.pusher.chatkit.users
 
-import com.pusher.chatkit.*
+import com.pusher.chatkit.ChatManager
+import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.util.toJson
-import com.pusher.chatkit.rooms.Room
-import com.pusher.platform.network.*
-import com.pusher.util.*
+import com.pusher.platform.network.Futures
+import com.pusher.platform.network.map
+import com.pusher.platform.network.toFuture
+import com.pusher.util.Result
+import com.pusher.util.asSuccess
+import com.pusher.util.flatMapFutureResult
+import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 import java.util.concurrent.Future
@@ -51,16 +56,6 @@ internal class UserService(
             }
 
     internal data class UserIdsWrapper(val userIds: List<String>)
-
-    fun joinRoom(user: CurrentUser, roomId: Int): Future<Result<Room, Error>> =
-        chatManager.doPost<Room>("/users/${user.id}/rooms/$roomId/join")
-            .saveRoomWhenReady()
-
-    fun userFor(userAware: HasUser): Future<Result<User, Error>> =
-        fetchUserBy(userAware.userId)
-
-    fun usersFor(userAware: List<HasUser>): Future<Result<List<User>, Error>> =
-        fetchUsersBy(userAware.map { it.userId }.toSet())
 
     internal fun populateUserStore(userIds: Set<String>) {
         fetchUsersBy(userIds)

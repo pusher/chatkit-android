@@ -1,10 +1,10 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.test.mock
-import com.pusher.chatkit.test.returns
-import com.pusher.chatkit.test.returnsStub
-import com.pusher.chatkit.test.stub
+import mockitox.mock
+import mockitox.returns
+import mockitox.returnsStub
+import mockitox.stub
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import com.pusher.util.asFailure

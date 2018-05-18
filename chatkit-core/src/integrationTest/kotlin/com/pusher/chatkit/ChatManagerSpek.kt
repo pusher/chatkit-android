@@ -17,7 +17,7 @@ import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
-import com.pusher.chatkit.test.stub
+import mockitox.stub
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.wait
 import com.pusher.util.Result

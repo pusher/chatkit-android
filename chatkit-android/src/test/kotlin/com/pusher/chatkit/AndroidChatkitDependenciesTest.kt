@@ -2,7 +2,7 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.*
 import com.pusher.SdkInfo
-import mokitox.stub
+import mockitox.stub
 import org.junit.jupiter.api.Test
 
 internal class AndroidChatkitDependenciesTest {

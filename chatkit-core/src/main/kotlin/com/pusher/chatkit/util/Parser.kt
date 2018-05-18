@@ -9,7 +9,6 @@ import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
-import java.io.Reader
 
 private val GSON = GsonBuilder()
     .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
@@ -17,10 +16,6 @@ private val GSON = GsonBuilder()
 
 internal inline fun <reified A> typeToken() =
     object : TypeToken<A>() {}.type
-
-internal inline fun <reified A> Reader.parseAs(): Result<A, Error> = safeParse {
-    GSON.fromJson<A>(this, typeToken<A>())
-}
 
 internal inline fun <reified A> JsonElement.parseAs(): Result<A, Error> = safeParse {
     GSON.fromJson<A>(this, typeToken<A>())
