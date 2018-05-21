@@ -79,7 +79,7 @@ publishing {
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
                 configurations.implementation.allDependencies.each {
                     def dependencyNode = dependenciesNode.appendNode('dependency')
-                    if(it.name == "pusher-platform-core") {
+                    if(it.name == "chatkit-core") {
                         dependencyNode.appendNode('groupId', GROUP)
                         dependencyNode.appendNode('artifactId', it.name)
                         dependencyNode.appendNode('version', VERSION_NAME)
