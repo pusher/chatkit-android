@@ -4,15 +4,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.1.0...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.2.0...HEAD)
+
+## [0.2.0](https://github.com/pusher/chatkit-android/compare/0.1.0...0.2.0) - 2018-05-18
+
+### Changed
+
+- Bump PusherPlatform dependency to 0.4.0
+- Requests resulting from `setReadCursor` calls are batched up if made in quick succession
+- File upload path has been updated to include the user ID
+
+### Removals
+
+- Removed `tokenParams`
+
+### Additions
+
+- Added tests for nearly everything
 
 ## [0.1.0](https://github.com/pusher/chatkit-android/compare/919c62d03e...0.1.0) - 2018-01-26
 
 ### Changed
+
 - Bump PusherPlatform dependency to 0.3.0
 - `addMessage` on `CurrentUser` has been replaced by `sendMessage`
 
 ### Added
+
 - Support for message attachments
 - `sendMessage` on `CurrentUser`, which replaces `addMessage`; usage looks like this:
 
@@ -117,5 +135,3 @@ currentUser.fetchAttachment(
 ```
 
 You can then use the `attachment.link` to download the file, if you so wish.
-
-_.. prehistory_
