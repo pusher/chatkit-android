@@ -12,7 +12,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.google.code.gson:gson:2.8.2'
-    api "com.pusher:pusher-platform-core:$pusher_platform_version"
+    if (rootProject.properties.containsKey("pusher_platform_local")) {
+        api project(':pusher-platform-core')
+    } else {
+        api "com.pusher:pusher-platform-core:$pusher_platform_version"
+    }
 
     testImplementation "org.mockito:mockito-inline:$mockito_version"
     testImplementation "com.google.truth:truth:0.40"

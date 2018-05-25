@@ -47,7 +47,12 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    api "com.pusher:pusher-platform-android:$pusher_platform_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    if (rootProject.properties.containsKey("pusher_platform_local")) {
+        api project(':pusher-platform-android')
+    } else {
+        api "com.pusher:pusher-platform-android:$pusher_platform_version"
+    }
     api project(':chatkit-core')
 
     testImplementation "junit:junit:$junit_legacy_version"
