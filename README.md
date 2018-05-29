@@ -51,7 +51,7 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
    * [Access other user's cursor](#access-other-user's-cursors)
  * [Logger](#logger)
  * [Development Build](#development-build)
- 
+
 
 ## Features
 
@@ -95,7 +95,7 @@ const val TOKEN_PROVIDER_ENDPOINT = "your.auth.url"
 const val USER_ID = "sarah"
 
 val chatManager = ChatManager(
-    instanceLocator = INSTANCE_LOCATOR, 
+    instanceLocator = INSTANCE_LOCATOR,
     userId = USER_ID,
     dependencies = AndroidChatkitDependencies(
         context = getApplicationContext(),
@@ -111,7 +111,7 @@ This is how we do it on our demo app: [ChatkitDemoApp](https://github.com/pusher
 
  - `userId`: Used to identify the user that will be connected with this `ChatManager` instance.
 
- - `dependencies`: Contains some requirements needed for `ChatManager`. We provide a ready made type for `ChatkitDependencies` for android, so all you have to do is provide a `Context` and a `TokenProvider`. 
+ - `dependencies`: Contains some requirements needed for `ChatManager`. We provide a ready made type for `ChatkitDependencies` for android, so all you have to do is provide a `Context` and a `TokenProvider`.
 
 We also have available an implementation for `tokenProvider` which just needs the url to authorize users. If you have enabled the test token provider on the `Settings` section of our dashboard, you can get a test url for this purpose in there. For production applications you have to create your own server side. More information about this can be found here: https://docs.pusher.com/chatkit/reference/server-node.
 
@@ -137,7 +137,7 @@ The implementation of `ChatkitTokenProvider` has the following properties:
 
 ### Connecting
 
-The simplest way to connect returns a `Future` which will provide either a `CurrentUser` or an `Error`. 
+The simplest way to connect returns a `Future` which will provide either a `CurrentUser` or an `Error`.
 
 ```kotlin
 val futureUser: Future<Result<CurrentUser, Error>> = chatManager.connect()
@@ -178,9 +178,9 @@ chatManager.connect().wait().fold(
 If you are using coroutines this can be wrapped into a suspending method like this:
 
 ```kotlin
-suspend fun ChatManager.connectForUser(): Result<CurrentUser, Error> = 
+suspend fun ChatManager.connectForUser(): Result<CurrentUser, Error> =
   suspendCoroutine{ c -> c.resume(connect().wait()) }
-  
+
 // or, if want to treat error as an exception:
 
 suspend fun ChatManager.connectForUser(): CurrentUser = suspendCoroutine { c ->
@@ -223,7 +223,7 @@ val user = chatManager.connect(ChatManagerListeners(
       onUserWentOffline = { user -> toast("${user.name} went ofline") }
 ))
 
-``` 
+```
 
 Alternatively you can listen to all events with a single listener:
 
@@ -253,7 +253,7 @@ The available events are:
  | RoomDeleted                | Int (room id)  | Happens when the logged user is available or updated              |
  | NewReadCursor              | Int (room id)  | Happens when a new cursor is set for `CurrentUser`                |
  | ErrorOccurred              | (Pusher)Error  | An error occurred, it does not mean the subscription has finished |
- 
+
 Each of the events have a relevant listener that can be set on `ChatManagerListeners`
 
 ### Termination
@@ -272,7 +272,7 @@ When an initial connection is successfully made to Chatkit the client will recei
  |------------------|----------------------------------|------------------------------------------------------------------------|
  | rooms            | List<Room>                       | The rooms that the connected user is a member of.                      |
  | users            | Future<Result<List<User>, Error> | The users that share a common room membership with the connected user. |
- 
+
 The `users` property is a `Future` because it may not have all the required information for all the users so it must go get it, which in turn may fail.
 
 ## Rooms
@@ -311,7 +311,7 @@ If you want to make a private room ir can be done:
 ```kotlin
 currentUser.createRoom(
   name = "my room name",
-  private = true  
+  private = true
 )
 ```
 
@@ -334,9 +334,9 @@ currentUser.fetchMessages(
   initialId = 42, // Optional
   direction = NEWER_FIRST, // Optional, OLDER_FIRST by default
   limit = 20 // Optional, 10 by default
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<List<Message>, Error>
-    is Result.Success -> toast("Mesages ${result.value} received.")
+    is Result.Success -> toast("Messages ${result.value} received.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
 }
@@ -355,8 +355,8 @@ The full set of options follows:
  | initialId   | Int (Optional)       | A message ID that defaults to the most recent message ID.                          |
  | direction   | Direction (Optional) | Defaults to `OLDER_FIRST`, dictates the direction of the messages being returned.  |
  | limit       | Int (Optional)       | Limits the number of messages that we get back, defaults to 10.                    |
- 
- 
+
+
 ### Add User to a Room
 
 The current user can add users to rooms that they themselves are a member of.
@@ -365,7 +365,7 @@ The current user can add users to rooms that they themselves are a member of.
 currentUser.addUsersToRoom(
   userIds = listOf("keith"),
   room = someRoom
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Unit, Error>
     is Result.Success -> toast("Successfully added users.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -381,7 +381,7 @@ The current user can remove users from rooms that they themselves are a member o
 currentUser.removeUsersFromRoom(
   userIds = listOf("keith"),
   room = someRoom
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Unit, Error>
     is Result.Success -> toast("Successfully removed users.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -395,7 +395,7 @@ To fetch a list of the rooms that a user is able to join (but isn’t yet a memb
 
 
 ```kotlin
-currentUser.getJoinableRooms().wait().let { result -> 
+currentUser.getJoinableRooms().wait().let { result ->
  when(result) {  // Result<List<Room>, Error>
    is Result.Success -> toast("The user can join ${result.value}.")
    is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -412,7 +412,7 @@ Join a room with ID `someRoomId`:
 ```kotlin
 currentUser.joinRoom(
   roomId = someRoomId
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Room, Error>
     is Result.Success -> toast("CurrentUser joined room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -427,7 +427,7 @@ Leave a room with ID `someRoomId`:
 ```kotlin
 currentUser.leaveRoom(
   roomId = someRoomId
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Int, Error>
     is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -445,7 +445,7 @@ currentUser.updateRoom(
   roomId = someRoomId,
   name = "Some updated name",
   private = false // Optional
-).let { result -> 
+).let { result ->
   when(result) { // Result<Unit, Error>
     is Result.Success -> toast("Updated room.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -464,7 +464,7 @@ Delete a room with ID `someRoomId`:
 ```kotlin
 currentUser.deleteRoom(
   roomId = someRoomId
-).let { result -> 
+).let { result ->
   when(result) { // Result<Unit, Error>
     is Result.Success -> toast("Updated room.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -486,7 +486,7 @@ Using `RoomSubscriptionListeners`:
 currentUser.subscribeToRoom(
   roomId = someroomId,
   listeners = Roomsubscription(
-    onNewMesage = { message -> toast("${message.userId} says: ${message.text}") },
+    onNewMessage = { message -> toast("${message.userId} says: ${message.text}") },
     onErrorOccurred = { error -> toast("Oops something bad happened: $error") }
   ),
   messageLimit = 10 // Optional, 10 by default
@@ -525,9 +525,9 @@ This is the full list of available events from a room subscription:
  | UserCameOnline    | User         | User is now online                                    |
  | UserWentOffline   | User         | User is now offline                                   |
  | NewReadCursor     | Cursor       | A member of the room set a new read cursor.           |
- 
+
 Each of the events have a relevant listener that can be set on `RoomSubscriptionListeners`
- 
+
 ### Cancel a subscription
 
 The `subscribeToRoom` function returns a `Subscription` that can be cancelled by calling `subscription.unsubscribe()` when the subscription is no longer needed.
@@ -546,24 +546,24 @@ User objects can be found in various places: globally under `currentUser.users` 
  | name      | String   | The human readable name of the user. This is not required to be unique.                 |
  | avatarUrl | String   | The location (url) of an avatar for the user.                                           |
  | presence  | Presence | An object containing information regarding the users presence state. See user presence. |
- 
+
 Rooms contain a list of user ids, to resolve these you can use this:
 
 ```kotlin
 currentUser.usersforRoom(someRoom)
 ```
- 
+
 ## Messages
- 
+
 Every message belongs to a [Room](#rooms) and has an associated sender, which is represented by a [User](#users) object. Files can be sent along with a messages by specifying an [Attachment](#attachment) property.
- 
+
 ### Message properties
 
  | Property   | Type       | Description                                            |
  |------------|------------|--------------------------------------------------------|
  | id         | Int        | The Id assigned to the message by the Chatkit servers. |
  | text       | String     | The text content of the message if present.            |
- | attachment | Attachment | The message’s attachment if present.                   |                      
+ | attachment | Attachment | The message’s attachment if present.                   |
  | sender     | User       | The user who sent the message.                         |
  | room       | Room       | The room to which the message belongs.                 |
  | createdAt  | String     | The timestamp at which the message was created.        |
@@ -578,7 +578,7 @@ currentUser.sendMessage(
   room = someRoom, // also available as roomId: Int
   messageTest = "Hi there! 👋",
   attachment = NoAttachment // Optional, NoAttachment by default
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Int, Error>, either the new message id or an error
     is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -599,7 +599,7 @@ currentUser.sendMessage(
     file = File("file/path.jpg"),
     name = "file-name" // optional, "file" by default
   )
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Int, Error>, either the new message id or an error
     is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -621,7 +621,7 @@ currentUser.sendMessage(
     link = File("file/path.jpg"),
     type = AttachmentType.IMAGE
   )
-).wait().let { result -> 
+).wait().let { result ->
   when(result) { // Result<Int, Error>, either the new message id or an error
     is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
@@ -689,12 +689,12 @@ RoomSubscription(
 Alternatively, if you are using an event callback:
 
 ```kotlin
-{ event -> 
+{ event ->
   when(event) {
     is UserStartedTyping -> toast("User ${event.user.name} started typing in room ${event.room.name}")
     is UserStoppedTyping -> toast("User ${event.user.name} stopped typing in room ${event.room.name}")
-  
-  } 
+
+  }
 }
 ```
 
@@ -715,7 +715,7 @@ chatManager.connect { event ->
   when(event) {
     is UserCameOnline -> toast("User ${event.user.name} came online.")
     is UserWentOffline -> toast("User ${event.user.name} went offline.")
-  } 
+  }
 }
 ```
 
@@ -786,7 +786,7 @@ As part of `ChatManager` dependencies a custom logger can be provided:
 
 ```kotlin
 val chatManager = ChatManager(
-    instanceLocator = INSTANCE_LOCATOR, 
+    instanceLocator = INSTANCE_LOCATOR,
     userId = USER_ID,
     dependencies = AndroidChatkitDependencies(
         context = getApplicationContext(),
@@ -804,7 +804,7 @@ val chatManager = ChatManager(
 
 ## Development build
 
-When building this project, you may choose to use a local version of [`pusher-platform-android`](1). 
+When building this project, you may choose to use a local version of [`pusher-platform-android`](1).
 
 To do so you can add the path to your local copy in your `~/.gradle/gradle.properties`:
 
