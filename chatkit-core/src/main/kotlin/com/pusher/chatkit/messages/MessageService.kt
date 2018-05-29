@@ -28,7 +28,7 @@ internal class MessageService(private val chatManager: ChatManager) {
         direction: Direction
     ) = listOfNotNull(
         limit.takeIf { it > 0 }?.let { "limit" to it },
-        initialId?.let { "initialId" to it },
+        initialId?.let { "initial_id" to it },
         "direction" to direction
     )
 
