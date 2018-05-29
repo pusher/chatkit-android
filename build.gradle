@@ -12,7 +12,7 @@ buildscript {
         espresso_version = '3.0.1'
         espresso_runner_version = '1.0.1'
         junit_legacy_version = '4.12'
-        pusher_platform_version = '0.4.0'
+        pusher_platform_version = '0.4.1'
 
         bintray_user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
         bintry_api_key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
@@ -60,4 +60,3 @@ task ciBuild(type: GradleBuild) {
         tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug', 'jacocoTestReportDebug']) +
         'codeCoverageReport'
 }
-
