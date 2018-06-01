@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.2.1...HEAD)
 
+### Fixed
+
+- Messages with attachments that require a fetch are now identified properly over room subscriptions
+
 ## [0.2.1](https://github.com/pusher/chatkit-android/compare/0.2.0...0.2.1) - 2018-05-29
 
 ### Fixed
