@@ -75,7 +75,7 @@ internal class RoomSubscription(
                     .mapNotNull { it.split("=").takeIf { it.size == 2 } }
                     .map { (key, value) -> key to value }
                     .toMap()
-                if (queryParamsMap["bob"] == "true") {
+                if (queryParamsMap["chatkit_link"] == "true") {
                     message.attachment.fetchRequired = true
                 }
             }
