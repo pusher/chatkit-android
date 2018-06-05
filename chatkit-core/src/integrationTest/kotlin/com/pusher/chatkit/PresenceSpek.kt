@@ -5,6 +5,8 @@ import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.test.InstanceActions
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
@@ -22,7 +24,7 @@ class PresenceSpek : Spek({
     describe("Chatkit with presence") {
 
         it("notifies when '$ALICE' comes online in room '$GENERAL'") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
                 .subscribeRoomFor(GENERAL) { (it as? RoomSubscriptionEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
@@ -33,7 +35,7 @@ class PresenceSpek : Spek({
         }
 
         it("notifies when '$ALICE' comes online globally") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
                 .connectFor { (it as? ChatManagerEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
@@ -44,7 +46,7 @@ class PresenceSpek : Spek({
         }
 
         it("notifies when '$ALICE' goes offline in room '$GENERAL'") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userWentOffline by chatFor(PUSHERINO)
                 .subscribeRoomFor(GENERAL) { it as? RoomSubscriptionEvent.UserWentOffline }
@@ -57,7 +59,7 @@ class PresenceSpek : Spek({
         }
 
         it("notifies when '$ALICE' goes offline globally") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userWentOffline by chatFor(PUSHERINO)
                 .connectFor { it as? ChatManagerEvent.UserWentOffline }

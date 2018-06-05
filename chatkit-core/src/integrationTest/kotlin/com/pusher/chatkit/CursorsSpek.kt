@@ -6,6 +6,7 @@ import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor
@@ -23,7 +24,7 @@ class CursorsSpek : Spek({
     describe("ChatManager with cursors") {
 
         it("notifies when '$ALICE' reads messages") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -43,7 +44,7 @@ class CursorsSpek : Spek({
         }
 
         it("should avoid multiple setReadCursor calls") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val cursorsReceived = mutableListOf<RoomSubscriptionEvent.NewReadCursor>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -67,7 +68,7 @@ class CursorsSpek : Spek({
         }
 
         it("should report cursor after timeout") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val cursorsReceived = mutableListOf<Cursor>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -96,7 +97,7 @@ class CursorsSpek : Spek({
         }
 
         it("should read $ALICE's cursor") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()

@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.test.InstanceActions
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
@@ -22,7 +24,7 @@ class UserTypingSpek : Spek({
     describe("ChatManager") {
 
         it("sends and receives started typing indicator in room") {
-            setUpInstanceWith(newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
             var startedTypingUser by FutureValue<User>()
 
@@ -39,7 +41,7 @@ class UserTypingSpek : Spek({
         }
 
         it("sends and receives stopped typing indicator in room") {
-            setUpInstanceWith(newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
             var stoppedTypingUser by FutureValue<User>()
 
@@ -56,7 +58,7 @@ class UserTypingSpek : Spek({
         }
 
         it("sends and receives started typing indicator globally") {
-            setUpInstanceWith(newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
             var startedTypingUser by FutureValue<User>()
 
@@ -71,7 +73,7 @@ class UserTypingSpek : Spek({
         }
 
         it("sends and receives stopped typing indicator globally") {
-            setUpInstanceWith(newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
             var stoppedTypingUser by FutureValue<User>()
 

@@ -6,6 +6,7 @@ import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
 import com.pusher.chatkit.test.InstanceActions.tearDown
@@ -23,7 +24,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 /**
- * In charge of setting the right state of an intance for a test
+ * In charge of setting the right state of an instance for a test
  */
 object InstanceSupervisor {
 
@@ -31,6 +32,8 @@ object InstanceSupervisor {
      * Calls set up without actions
      */
     fun tearDownInstance() = tearDown().run()
+
+    fun createRoles() = createDefaultRole().run()
 
     /**
      * Tear downs the instance and runs the provided actions.
@@ -136,7 +139,7 @@ object InstanceActions {
     fun createSuperUser(): InstanceAction =
         compose(newUser(SUPER_USER), createAdminRole(), setUserRole(SUPER_USER, "admin") )
 
-    private fun setUserRole(userId: String, role: String): InstanceAction = {
+    fun setUserRole(userId: String, role: String): InstanceAction = {
         authorizerInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/users/$userId/roles",
@@ -153,18 +156,68 @@ object InstanceActions {
             options = RequestOptions(
                 path = "/roles",
                 method = "POST",
-                body = arrayOf(
-                    mapOf(
-                        "name" to "admin",
-                        "permissions" to arrayOf("room:create", "user:update"),
-                        "scope" to "global"
-                    )
+                body = mapOf(
+                    "name" to "admin",
+                    "permissions" to arrayOf(
+                            "message:create",
+                            "room:join",
+                            "room:leave",
+                            "room:members:add",
+                            "room:members:remove",
+                            "room:get",
+                            "room:create",
+                            "room:messages:get",
+                            "room:typing_indicator:create",
+                            "presence:subscribe",
+                            "user:get",
+                            "user:rooms:get",
+                            "cursors:read:get",
+                            "cursors:read:set",
+                            "file:create",
+                            "file:get",
+                            "room:delete",
+                            "room:update"
+                    ),
+                    "scope" to "global"
                 ).toJson()
             ),
             tokenProvider = sudoTokenProvider,
             responseParser = { it.parseAs() }
         )
     }.withName("Create admin role")
+
+    fun createDefaultRole(): InstanceAction = {
+        authorizerInstance.request<JsonElement>(
+                options = RequestOptions(
+                        path = "/roles",
+                        method = "POST",
+                        body = mapOf(
+                                "name" to "default",
+                                "permissions" to arrayOf(
+                                        "message:create",
+                                        "room:join",
+                                        "room:leave",
+                                        "room:members:add",
+                                        "room:members:remove",
+                                        "room:get",
+                                        "room:create",
+                                        "room:messages:get",
+                                        "room:typing_indicator:create",
+                                        "presence:subscribe",
+                                        "user:get",
+                                        "user:rooms:get",
+                                        "cursors:read:get",
+                                        "cursors:read:set",
+                                        "file:create",
+                                        "file:get"
+                                ),
+                                "scope" to "global"
+                        ).toJson()
+                ),
+                tokenProvider = sudoTokenProvider,
+                responseParser = { it.parseAs() }
+        )
+    }.withName("Create default role")
 
     fun newUser(
         id: String,

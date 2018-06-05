@@ -11,6 +11,8 @@ import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.test.InstanceActions
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
@@ -29,7 +31,7 @@ class MessagesSpek : Spek({
     describe("Messages for Chatkit") {
 
         it("retrieves old messages") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -48,7 +50,7 @@ class MessagesSpek : Spek({
         }
 
         it("retrieves old messages reversed") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -70,7 +72,7 @@ class MessagesSpek : Spek({
         }
 
         it("sends message with attachment") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -89,7 +91,7 @@ class MessagesSpek : Spek({
         }
 
         it("sends message with link attachment") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -106,7 +108,7 @@ class MessagesSpek : Spek({
         }
 
         it("receives message sent") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -132,7 +134,7 @@ class MessagesSpek : Spek({
         }
 
         it("receives message with link attachment") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -161,7 +163,7 @@ class MessagesSpek : Spek({
         }
 
         it("receives message with file attachment") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
