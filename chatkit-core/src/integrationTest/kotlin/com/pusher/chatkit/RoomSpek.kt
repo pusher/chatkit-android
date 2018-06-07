@@ -9,7 +9,9 @@ import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.deleteRoom
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
@@ -32,7 +34,7 @@ class RoomSpek : Spek({
     describe("Room subscription") {
 
         it("notifies when '$PUSHERINO' joins room '$GENERAL'") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
 
             var userJoined by FutureValue<User>()
 
@@ -49,7 +51,7 @@ class RoomSpek : Spek({
         }
 
         it("notifies when '$PUSHERINO' leaves room '$GENERAL'") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userLeft by FutureValue<User>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -64,7 +66,7 @@ class RoomSpek : Spek({
         }
 
         it("notifies '$ALICE' when room '$GENERAL' is updated") {
-            setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             var updatedRoom by FutureValue<Room>()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
@@ -78,7 +80,7 @@ class RoomSpek : Spek({
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var deletedRoomId by FutureValue<Int>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -93,7 +95,7 @@ class RoomSpek : Spek({
         }
 
         it("notifies when '$ALICE' is invited to '$GENERAL") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO))
 
             var roomJoined by FutureValue<Room>()
 
@@ -108,7 +110,7 @@ class RoomSpek : Spek({
         }
 
         it("notifies when '$ALICE' is removed from '$GENERAL'") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var roomRemovedFromId by FutureValue<Int>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
@@ -127,7 +129,7 @@ class RoomSpek : Spek({
     describe("currentUser '$PUSHERINO'") {
 
         it("creates room") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
 
@@ -137,7 +139,7 @@ class RoomSpek : Spek({
         }
 
         it("updates room name") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
 
@@ -147,7 +149,7 @@ class RoomSpek : Spek({
         }
 
         it("deletes room") {
-            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
             val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
 
@@ -157,7 +159,7 @@ class RoomSpek : Spek({
         }
 
         it("joins room") {
-            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
 
             val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
 
@@ -168,7 +170,7 @@ class RoomSpek : Spek({
         }
 
         it("leaves room") {
-            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
             val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
             val generalRoom = pusherino.generalRoom
@@ -180,7 +182,7 @@ class RoomSpek : Spek({
         }
 
         it("gets joinable rooms") {
-            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
 
@@ -191,7 +193,7 @@ class RoomSpek : Spek({
         }
 
         it("gets rooms") {
-            setUpInstanceWith(newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO), newRoom(NOT_GENERAL))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO), newRoom(NOT_GENERAL))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
 
@@ -202,7 +204,7 @@ class RoomSpek : Spek({
         }
 
         it("provides users for a room") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
 
@@ -212,7 +214,7 @@ class RoomSpek : Spek({
         }
 
         it("is subscribed to room") {
-            setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
@@ -224,7 +226,7 @@ class RoomSpek : Spek({
         }
 
         it("is not subscribed to room after unsubscribe") {
-            setUpInstanceWith(newUsers(ALICE), newRoom(GENERAL, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 

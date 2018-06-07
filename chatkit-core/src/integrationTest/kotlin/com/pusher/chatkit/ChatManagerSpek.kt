@@ -12,9 +12,11 @@ import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.rooms.RoomSubscriptionListeners
 import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.newUsers
+import com.pusher.chatkit.test.InstanceSupervisor.createRoles
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import mockitox.stub
@@ -34,7 +36,7 @@ class ChatManagerSpek : Spek({
     describe("ChatManager with valid instance") {
 
         it("loads current user") {
-            setUpInstanceWith(newUser(PUSHERINO))
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
 
             val user = chatFor(PUSHERINO).connect().wait()
             val userId = user.assumeSuccess().id
@@ -43,7 +45,7 @@ class ChatManagerSpek : Spek({
         }
 
         it("loads user rooms") {
-            setUpInstanceWith(newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
             val user = chatFor(PUSHERINO).connect().wait()
             val roomNames = user.assumeSuccess().rooms.map { it.name }
@@ -52,7 +54,7 @@ class ChatManagerSpek : Spek({
         }
 
         it("loads users related to current user") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val user = chatFor(PUSHERINO).connect().wait()
             val users = user.assumeSuccess().users.wait()
@@ -63,7 +65,7 @@ class ChatManagerSpek : Spek({
         }
 
         it("subscribes to a room and receives message from alice") {
-            setUpInstanceWith(newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait()
             val alice = chatFor(ALICE).connect().wait()
@@ -85,7 +87,7 @@ class ChatManagerSpek : Spek({
 
 
         it("receives current user with listeners instead of callback") {
-            setUpInstanceWith(newUser(PUSHERINO))
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
 
             val user = chatFor(PUSHERINO).connect(ChatManagerListeners()).wait()
             val userId = user.assumeSuccess().id
