@@ -6,6 +6,7 @@ import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.*
 import com.pusher.util.*
 import elements.Error
+import java.net.URL
 import java.util.concurrent.Future
 
 internal class MessageService(private val chatManager: ChatManager) {
@@ -19,7 +20,20 @@ internal class MessageService(private val chatManager: ChatManager) {
         fetchMessagesParams(limit, initialId, direction)
             .joinToString(separator = "&", prefix = "?") { (key, value) -> "$key=$value" }
             .let { params ->
-                chatManager.doGet("/rooms/$roomId/messages$params")
+                chatManager.doGet<List<Message>>("/rooms/$roomId/messages$params").mapResult { messages ->
+                    messages.map { message ->
+                        if (message.attachment != null) {
+                            val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&") ?: emptyList())
+                                    .mapNotNull { it.split("=").takeIf { it.size == 2 } }
+                                    .map { (key, value) -> key to value }
+                                    .toMap()
+                            if (queryParamsMap["chatkit_link"] == "true") {
+                                message.attachment.fetchRequired = true
+                            }
+                        }
+                        message
+                    }
+                }
             }
 
     private fun fetchMessagesParams(
