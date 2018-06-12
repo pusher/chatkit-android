@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.files.Attachment
 import com.pusher.chatkit.files.AttachmentType.IMAGE
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
@@ -47,6 +48,33 @@ class MessagesSpek : Spek({
             val messages = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
 
             assertThat(messages.map { it.text }).containsAllIn(sentMessages)
+        }
+
+        it("retrieves messages with attachments and sets fetchRequired to true if appropriate") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            alice.generalRoom.let { room ->
+                alice.sendMessage(room, "message without attachment").wait().assumeSuccess()
+                alice.sendMessage(
+                        room,
+                        "message with no Chatkit attachment",
+                        LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
+                ).wait().assumeSuccess()
+                alice.sendMessage(
+                        room,
+                        "message with Chatkit attachment",
+                        DataAttachment(billMurray)
+                ).wait().assumeSuccess()
+            }
+
+            val messages = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
+
+            assertThat(messages[0].attachment?.fetchRequired).isTrue()
+            assertThat(messages[1].attachment?.fetchRequired).isFalse()
+            assertThat(messages[2].attachment).isNull()
         }
 
         it("retrieves old messages reversed") {
