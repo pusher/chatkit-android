@@ -59,7 +59,11 @@ class ChatManager constructor(
     private fun openSubscription() = UserSubscription(
         userId = userId,
         chatManager = this,
-        consumeEvent = { event -> eventConsumers.forEach { it(event) } }
+        consumeEvent = { event ->
+            for (consumer in eventConsumers) {
+                consumer(event)
+            }
+        }
     )
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {
@@ -163,7 +167,9 @@ class ChatManager constructor(
      * Tries to close all pending subscriptions and resources
      */
     fun close(): Result<Unit, Error> = try {
-        subscriptions.forEach { it.unsubscribe() }
+        for (sub in subscriptions) {
+            sub.unsubscribe()
+        }
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
         Unit.asSuccess()

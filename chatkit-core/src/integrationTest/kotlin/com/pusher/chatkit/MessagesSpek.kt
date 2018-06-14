@@ -40,7 +40,7 @@ class MessagesSpek : Spek({
             val sentMessages = (0..4).map { "message $it" }
 
             alice.generalRoom.let { room ->
-                sentMessages.forEach { message ->
+                for (message in sentMessages) {
                     alice.sendMessage(room, message).wait().assumeSuccess()
                 }
             }
@@ -86,7 +86,7 @@ class MessagesSpek : Spek({
             val sentMessages = (0..4).map { "message $it" }
 
             alice.generalRoom.let { room ->
-                sentMessages.forEach { message ->
+                for (message in sentMessages) {
                     alice.sendMessage(room, message).wait().assumeSuccess()
                 }
             }

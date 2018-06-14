@@ -76,7 +76,9 @@ internal class UserSubscription(
     private fun UserSubscriptionEvent.applySideEffects(): UserSubscriptionEvent = this.apply {
         when (this) {
             is InitialState -> {
-                updateExistingRooms(rooms).forEach(consumeEvent)
+                for (event in updateExistingRooms(rooms)) {
+                    consumeEvent(event)
+                }
                 roomStore += rooms
                 this@UserSubscription.currentUser?.apply {
                     close()
