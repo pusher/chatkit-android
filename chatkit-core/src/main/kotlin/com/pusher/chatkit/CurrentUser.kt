@@ -194,7 +194,9 @@ class CurrentUser(
         chatManager.userService.fetchUsersBy(room.memberUserIds)
 
     fun close() {
-        roomSubscriptions.values.forEach { it.unsubscribe() }
+        for (roomSub in roomSubscriptions.values) {
+            roomSub.unsubscribe()
+        }
         roomSubscriptions.clear()
     }
 

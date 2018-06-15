@@ -58,7 +58,9 @@ fun chatFor(userName: String) = ChatManager(
 ).also { managers += it }
 
 fun closeChatManagers() {
-    managers.forEach { it.close() }
+    for (manager in managers) {
+        manager.close()
+    }
     managers.clear()
 }
 

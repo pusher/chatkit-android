@@ -19,11 +19,14 @@ internal class PresenceService(private val chatManager: ChatManager) {
         path = "/users/$userId/presence",
         listeners = SubscriptionListeners(
             onEvent = { event ->
-                event.body
+                val presenceEventFutures = event.body
                     .toUserPresences()
                     .map { presences: List<UserPresence> -> presences.map { eventForPresence(it.userId, it.presence) } }
                     .recover { error -> listOf((ChatManagerEvent.ErrorOccurred(error) as ChatManagerEvent).toFuture()) }
-                    .forEach { consumeEvent(it.wait()) }
+
+                for (presEventFuture in presenceEventFutures) {
+                    consumeEvent(presEventFuture.wait())
+                }
             },
             onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) }
         ),

@@ -57,7 +57,9 @@ internal class CursorService(private val chatManager: ChatManager) {
         Errors.other("Must be subscribed to room $name to access member's read cursors")
 
     fun saveCursors(cursors: Map<Int, Cursor>) {
-        cursors.forEach { _, cursor -> this.cursors[cursor.userId] += cursor }
+        for ((_, cursor) in cursors) {
+            this.cursors[cursor.userId] += cursor
+        }
     }
 
     fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
@@ -112,8 +114,11 @@ private class CursorsStore {
         get(userId) += cursor
     }
 
-    operator fun plusAssign(cursors: List<Cursor>) =
-        cursors.forEach { cursor -> this[cursor.userId] += cursor }
+    operator fun plusAssign(cursors: List<Cursor>) {
+        for (cursor in cursors) {
+            this[cursor.userId] += cursor
+        }
+    }
 
 }
 
