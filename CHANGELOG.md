@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.2.1...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.2.2...HEAD)
+
+## [0.2.2](https://github.com/pusher/chatkit-android/compare/0.2.1...0.2.2) - 2018-06-15
 
 ### Fixed
 
-- Messages with attachments that require a fetch are now identified properly over room subscriptions
+- Messages with attachments that require a fetch are now identified properly over room subscriptions and when fetching messages
+
+### Changed
+
+- `forEach`s replaced with `for (... in ...)`s
 
 ## [0.2.1](https://github.com/pusher/chatkit-android/compare/0.2.0...0.2.1) - 2018-05-29
 
