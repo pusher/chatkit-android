@@ -31,6 +31,10 @@ internal class MessageService(private val chatManager: ChatManager) {
                                 message.attachment.fetchRequired = true
                             }
                         }
+                        chatManager.userService.fetchUserBy(message.userId).wait().fold(
+                                onFailure = {},
+                                onSuccess = { message.user = it }
+                        )
                         message
                     }
                 }

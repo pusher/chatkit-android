@@ -3,6 +3,7 @@ package com.pusher.chatkit.messages
 import com.pusher.chatkit.files.Attachment
 import com.pusher.chatkit.rooms.HasRoom
 import com.pusher.chatkit.users.HasUser
+import com.pusher.chatkit.users.User
 
 data class Message(
     val id: Int,
@@ -12,4 +13,6 @@ data class Message(
     val attachment: Attachment? = null,
     val createdAt: String,
     val updatedAt: String
-) : HasRoom, HasUser
+) : HasRoom, HasUser {
+    var user: User? = null
+}

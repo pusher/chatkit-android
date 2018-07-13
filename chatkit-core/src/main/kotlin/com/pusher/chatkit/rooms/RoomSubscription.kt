@@ -79,7 +79,12 @@ internal class RoomSubscription(
                     message.attachment.fetchRequired = true
                 }
             }
+            chatManager.userService.fetchUserBy(message.userId).wait().fold(
+                    onFailure = {},
+                    onSuccess = { message.user = it }
+            )
             NewMessage(message)
+
         }
 
     override fun unsubscribe() {
