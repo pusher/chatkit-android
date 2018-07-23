@@ -50,6 +50,21 @@ class MessagesSpek : Spek({
             assertThat(messages.map { it.text }).containsAllIn(sentMessages)
         }
 
+        it("retrieves old messages and they have the user set correctly") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+
+            alice.generalRoom.let { room ->
+                alice.sendMessage(room, "testing some stuff").wait().assumeSuccess()
+            }
+
+            val messages = pusherino.fetchMessages(pusherino.generalRoom.id).wait().assumeSuccess()
+
+            assertThat(messages[0].user?.id).isEqualTo(alice.id)
+        }
+
         it("retrieves messages with attachments and sets fetchRequired to true if appropriate") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
@@ -158,6 +173,7 @@ class MessagesSpek : Spek({
                 assertThat(text).isEqualTo("Cats and dogs, living together")
                 assertThat(roomId).isEqualTo(alice.generalRoom.id)
                 assertThat(attachment).isNull()
+                assertThat(user?.id).isEqualTo(alice.id)
             }
         }
 
