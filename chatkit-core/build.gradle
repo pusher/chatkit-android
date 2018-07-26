@@ -3,8 +3,10 @@ plugins {
     id 'java-library'
     id 'org.junit.platform.gradle.plugin'
     id 'maven-publish'
-    id "com.jfrog.bintray" version "1.7.3"
+    id 'com.jfrog.bintray' version '1.8.4'
 }
+
+apply plugin: 'org.jetbrains.dokka'
 
 apply from: "$projectDir/../gradle/jacoco.gradle"
 
@@ -13,14 +15,14 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.google.code.gson:gson:2.8.2'
-    if (rootProject.properties.containsKey("pusher_platform_local")) {
+    if (rootProject.properties.containsKey('pusher_platform_local')) {
         api project(':pusher-platform-core')
     } else {
         api "com.pusher:pusher-platform-core:$pusher_platform_version"
     }
 
     testImplementation "org.mockito:mockito-inline:$mockito_version"
-    testImplementation "com.google.truth:truth:0.40"
+    testImplementation 'com.google.truth:truth:0.40'
     testImplementation 'org.jetbrains.spek:spek-api:1.1.5'
     testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
     testImplementation 'org.junit.platform:junit-platform-runner:1.1.0'
@@ -34,8 +36,8 @@ test {
     useJUnitPlatform()
 }
 
-sourceCompatibility = "1.7"
-targetCompatibility = "1.7"
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
 
 sourceSets.test {
     java.srcDirs = ['src/test/kotlin', 'src/integrationTest/kotlin']
@@ -75,6 +77,10 @@ bintray {
             desc = "$POM_DESCRIPTION"
             released  = new Date()
             vcsTag = "$VERSION_NAME"
+            gpg {
+                sign = true
+                passphrase = System.getenv('SONATYPE_GPG_PASSPHRASE')
+            }
         }
     }
 }
@@ -84,19 +90,54 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
-artifacts {
-    archives sourcesJar
+dokka {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
+}
+
+task javadocJar(type: Jar, dependsOn: dokka) {
+    classifier = 'javadoc'
+    from dokka.outputDirectory
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name 'MIT'
+            url "$POM_LICENCE_URL"
+            distribution 'repo'
+        }
+    }
+    developers {
+        developer {
+            id 'hamchapman'
+            name 'Hamilton Chapman'
+            email 'hamilton@pusher.com'
+        }
+    }
+
+    scm {
+        url "$POM_SCM_URL"
+    }
 }
 
 // Create the publication with the pom configuration:
 publishing {
     publications {
         Release(MavenPublication) {
-            artifactId "$POM_ARTIFACT_ID"
             from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            artifactId "$POM_ARTIFACT_ID"
             groupId "$GROUP"
             version "$VERSION_NAME"
-            artifact sourcesJar
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', "$POM_DESCRIPTION")
+                root.appendNode('name', "$POM_NAME")
+                root.appendNode('url', "$POM_URL")
+                root.children().last() + pomConfig
+            }
         }
     }
 }

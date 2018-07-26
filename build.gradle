@@ -12,7 +12,8 @@ buildscript {
         espresso_version = '3.0.1'
         espresso_runner_version = '1.0.1'
         junit_legacy_version = '4.12'
-        pusher_platform_version = '0.4.1'
+        pusher_platform_version = '0.4.2'
+        dokka_version = '0.9.17'
 
         bintray_user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
         bintry_api_key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
@@ -27,6 +28,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.1.0'
         classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.0.31'
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
     }
 }
 
