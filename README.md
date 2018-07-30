@@ -51,6 +51,9 @@ The SDK is written in Kotlin, but aimed to be as Java-friendly as possible.
    * [Access other user's cursor](#access-other-user's-cursors)
  * [Logger](#logger)
  * [Development Build](#development-build)
+ * [Publishing](#publishing)
+   * [jCenter](#jcenter)
+   * [Maven](#maven)
 
 
 ## Features
@@ -815,4 +818,44 @@ pusher_platform_local=../pusher-platform-android
 It can be either a relative or absolute path.
 
 [1]: https://github.com/pusher/pusher-platform-android
+
+
+## Publishing
+
+### jCenter
+
+The two artifacts this project produces (`chatkit-core` and `chatkit-android`) are published in `jCenter`.
+
+Firstly, make sure you have a [BinTray](https://bintray.com) account. To get the api key go to Profile > Edit > Api Key
+
+Then you need to set up a user name and api key.
+
+Either on your local `~/.gradle/gradle.properties` as:
+
+```properties
+bintrayUser=you-bintray-user-name
+bintrayApiKey=your-bintray-api-key
+```
+
+Or as environment variables (mainly for CI):
+
+```bash
+BINTRAY_USER=you-bintray-user-name
+BINTRAY_API_KEY=your-bintray-api-key
+```
+
+You will also need to have `SONATYPE_GPG_PASSPHRASE` set as an environment variable. This is, as the name suggests, the GPG passphrase for the Pusher Maven account.
+
+Now, to do the actual release run:
+
+```bash
+gradlew bintrayUpload
+```
+
+**Note:** The publish action will both override the current release (if it has the same version name as the current) and automatically publish the new version.
+
+
+### Maven
+
+Syncing the artifacts to Maven is also setup. It involves logging into bintray and syncing an uploaded release.
 
