@@ -177,12 +177,12 @@ internal class UserSubscription(
         }
         is StartedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
             chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
-                ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
+                ChatManagerEvent.UserIsTyping(user, room) as ChatManagerEvent
             }
         }
         is StoppedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
             chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
-                ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
+                ChatManagerEvent.UserIsTyping(user, room) as ChatManagerEvent
             }
         }
     }
