@@ -3,7 +3,6 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.HasChat
-import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.map
@@ -14,7 +13,6 @@ import com.pusher.util.flatMapFutureResult
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import java.net.URLEncoder
 import java.util.concurrent.Future
@@ -47,7 +45,7 @@ internal class UserService(
 
         return when {
             missingUserIds.isEmpty() -> Futures.now(localUsers.asSuccess())
-            else -> chatManager.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
+            else ->chatManager.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
                 .map { usersResult ->
                     usersResult.map { loadedUsers ->
                         userStore += loadedUsers
