@@ -32,7 +32,7 @@ class UserTypingSpek : Spek({
             val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStartedTyping) startedTypingUser = event.user
+                if (event is RoomSubscriptionEvent.UserIsTyping) startedTypingUser = event.user
             }
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
@@ -49,7 +49,7 @@ class UserTypingSpek : Spek({
             val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStoppedTyping) stoppedTypingUser = event.user
+                if (event is RoomSubscriptionEvent.UserIsTyping) stoppedTypingUser = event.user
             }
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
@@ -64,7 +64,7 @@ class UserTypingSpek : Spek({
 
             val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
             chatFor(Users.ALICE).connect { event ->
-                if (event is ChatManagerEvent.UserStartedTyping) startedTypingUser = event.user
+                if (event is ChatManagerEvent.UserIsTyping) startedTypingUser = event.user
             }.wait().assumeSuccess()
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
@@ -79,7 +79,7 @@ class UserTypingSpek : Spek({
 
             val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
             chatFor(Users.ALICE).connect { event ->
-                if (event is ChatManagerEvent.UserStoppedTyping) stoppedTypingUser = event.user
+                if (event is ChatManagerEvent.UserIsTyping) stoppedTypingUser = event.user
             }.wait().assumeSuccess()
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
