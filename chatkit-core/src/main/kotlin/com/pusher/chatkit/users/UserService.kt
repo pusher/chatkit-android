@@ -12,6 +12,7 @@ import com.pusher.util.flatMapFutureResult
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
+import java.net.URLEncoder
 import java.util.concurrent.Future
 
 internal class UserService(
@@ -24,7 +25,9 @@ internal class UserService(
         val users = userIds.map { id -> getLocalUser(id).orElse { id } }
         val missingUserIds = Result.failuresOf(users).map { it }
         val localUsers = Result.successesOf(users)
-        val missingUserIdsQs = missingUserIds.map { userId -> "id={$userId}"}.joinToString(separator = "&")
+        val missingUserIdsQs = missingUserIds.map {
+                userId -> "id=${URLEncoder.encode(userId, "UTF-8")}"
+            }.joinToString(separator = "&")
 
         return when {
             missingUserIds.isEmpty() -> Futures.now(localUsers.asSuccess())
