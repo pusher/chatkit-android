@@ -200,7 +200,7 @@ class ChatManager constructor(
 }
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
-    DEFAULT("chatkit"),
+    DEFAULT("chatkit", "v2"),
     CURSORS("chatkit_cursors"),
     PRESENCE("chatkit_presence"),
     FILES("chatkit_files")

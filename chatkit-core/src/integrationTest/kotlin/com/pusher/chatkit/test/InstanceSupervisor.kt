@@ -86,7 +86,7 @@ private val chatkitInstance by lazy {
     Instance(
         locator = INSTANCE_LOCATOR,
         serviceName = "chatkit",
-        serviceVersion = "v1",
+        serviceVersion = "v2",
         dependencies = TestDependencies()
     )
 }
