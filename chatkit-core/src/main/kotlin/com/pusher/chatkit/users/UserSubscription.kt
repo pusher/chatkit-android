@@ -26,35 +26,40 @@ internal class UserSubscription(
 
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
-
     private var headers: Headers = emptyHeaders()
+    private lateinit var subscription: Subscription
 
-    private val subscription = chatManager.subscribeResuming(
-        path = USERS_PATH,
-        listeners = SubscriptionListeners(
-            onOpen = { headers ->
-                logger.verbose("OnOpen $headers")
-                this.headers = headers
-            },
-            onEvent = { event: SubscriptionEvent<UserSubscriptionEvent> ->
-                event.body
-                    .applySideEffects()
-                    .toChatManagerEvent()
-                    .waitOr(Wait.For(10, SECONDS), { ErrorOccurred(Errors.other(it)).asSuccess() })
-                    .recover { ErrorOccurred(it) }
-                    .also { if (it is CurrentUserReceived) currentUser = it.currentUser }
-                    .also(consumeEvent)
-                    .also { logger.verbose("Event received $it") }
-            },
-            onError = { error -> consumeEvent(ErrorOccurred(error)) },
-            onSubscribe = { logger.verbose("Subscription established.") },
-            onRetrying = { logger.verbose("Subscription lost. Trying again.") },
-            onEnd = { error -> logger.verbose("Subscription ended with: $error") }
-        ),
-        messageParser = UserSubscriptionEventParser
-    )
+    fun connect(): Subscription {
+        subscription = chatManager.subscribeResuming(
+            path = USERS_PATH,
+            listeners = SubscriptionListeners(
+                onOpen = { headers ->
+                    logger.verbose("[User subscription] OnOpen $headers")
+                    this.headers = headers
+                },
+                onEvent = { event: SubscriptionEvent<UserSubscriptionEvent> ->
+                    event.body
+                        .applySideEffects()
+                        .toChatManagerEvent()
+                        .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
+                        .recover { ErrorOccurred(it) }
+                        .also { if (it is CurrentUserReceived) currentUser = it.currentUser }
+                        .also(consumeEvent)
+                        .also { logger.verbose("Event received $it") }
+                },
+                onError = { error -> consumeEvent(ErrorOccurred(error)) },
+                onSubscribe = { logger.verbose("Subscription established.") },
+                onRetrying = { logger.verbose("Subscription lost. Trying again.") },
+                onEnd = { error -> logger.verbose("Subscription ended with: $error") }
+            ),
+            messageParser = UserSubscriptionEventParser
+        )
 
-    private val presenceSubscription = chatManager.presenceService.subscribeToPresence(userId, consumeEvent)
+        return subscription
+    }
+
+
+    private val presenceSubscription = chatManager.presenceService.subscribe(userId, consumeEvent)
 
     private val cursorSubscription = chatManager.cursorService.subscribeForUser(userId) { event ->
         when(event) {
