@@ -163,6 +163,19 @@ class ChatManager constructor(
         messageParser = messageParser
     ).also { subscriptions += it }
 
+
+    internal fun <A> subscribeNonResuming(
+        path: String,
+        listeners: SubscriptionListeners<A>,
+        messageParser: DataParser<A>,
+        instanceType: InstanceType = DEFAULT
+    ) = platformInstance(instanceType).subscribeNonResuming(
+           path = path,
+            tokenProvider = tokenProvider,
+            listeners = listeners,
+            messageParser = messageParser
+    ).also { subscriptions += it  }
+
     /**
      * Tries to close all pending subscriptions and resources
      */
