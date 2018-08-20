@@ -5,12 +5,12 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.files.AttachmentBody
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
+import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.UserSubscription
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
@@ -23,9 +23,7 @@ import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import java.util.concurrent.Future
-import java.util.concurrent.SynchronousQueue
-
+import java.util.concurrent.*
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -46,6 +44,7 @@ class ChatManager constructor(
     internal val messageService by lazy { MessageService(this) }
     internal val filesService by lazy { FilesService(this) }
     internal val roomService by lazy { RoomService(this) }
+    internal val membershipService by lazy { MembershipService(this) }
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
@@ -56,15 +55,11 @@ class ChatManager constructor(
         return futureCurrentUser.get()
     }
 
-    private fun openSubscription() = UserSubscription(
-        userId = userId,
-        chatManager = this,
-        consumeEvent = { event ->
-            for (consumer in eventConsumers) {
-                consumer(event)
-            }
+    private fun openSubscription() = userService.subscribe(userId, this) { event ->
+        for (consumer in eventConsumers) {
+            consumer(event)
         }
-    )
+    }
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {
 
@@ -162,7 +157,6 @@ class ChatManager constructor(
         listeners = listeners,
         messageParser = messageParser
     ).also { subscriptions += it }
-
 
     internal fun <A> subscribeNonResuming(
         path: String,
