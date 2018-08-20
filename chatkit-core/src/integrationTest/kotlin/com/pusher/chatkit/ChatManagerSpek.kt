@@ -29,7 +29,7 @@ import org.jetbrains.spek.api.dsl.it
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
-
+    beforeEachTest(::tearDownInstance)
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
@@ -47,8 +47,8 @@ class ChatManagerSpek : Spek({
         it("loads user rooms") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect().wait()
-            val roomNames = user.assumeSuccess().rooms.map { it.name }
+            val user = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val roomNames = user.rooms.map { room -> room.name }
 
             assertThat(roomNames).containsExactly(GENERAL)
         }
@@ -56,9 +56,10 @@ class ChatManagerSpek : Spek({
         it("loads users related to current user") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val user = chatFor(PUSHERINO).connect().wait()
-            val users = user.assumeSuccess().users.wait()
+            val user = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            user.rooms.forEach { room -> user.subscribeToRoom(room) { } }
 
+            val users = user.users.wait()
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
             assertThat(relatedUserIds).containsAllOf(ALICE, PUSHERINO)

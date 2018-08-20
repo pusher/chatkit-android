@@ -17,7 +17,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
 class CursorsSpek : Spek({
-
+    beforeEachTest(InstanceSupervisor::tearDownInstance)
     afterEachTest(InstanceSupervisor::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
