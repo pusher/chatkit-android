@@ -23,8 +23,12 @@ import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import java.util.concurrent.Future
-import java.util.concurrent.SynchronousQueue
+import java.time.LocalDateTime
+import java.util.*
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.ReentrantLock
 
 
 class ChatManager constructor(
@@ -156,13 +160,74 @@ class ChatManager constructor(
         listeners: SubscriptionListeners<A>,
         messageParser: DataParser<A>,
         instanceType: InstanceType = DEFAULT
-    ) = platformInstance(instanceType).subscribeResuming(
-        path = path,
-        tokenProvider = tokenProvider,
-        listeners = listeners,
-        messageParser = messageParser
-    ).also { subscriptions += it }
+    ): Future<Result<Subscription, Error>> =
+        object : RunnableFuture<Result<Subscription, Error>> {
+            private lateinit var sub : Subscription
+            private var result : Result<Subscription, Error>? = null
 
+            private val lock = ReentrantLock()
+            private val condition = lock.newCondition()
+
+            override fun get(): Result<Subscription, Error> {
+                lock.lock()
+                try {
+                    while (result == null) {
+                        condition.await()
+                    }
+                    return result!!
+                }
+                finally {
+                    lock.unlock()
+                }
+            }
+
+            override fun get(timeout: Long, unit: TimeUnit?): Result<Subscription, Error> {
+                lock.lock()
+                return try {
+                    if (result == null) {
+                        condition.await(timeout, unit))
+                    }
+
+                    if (result == null) {
+                        Errors.other("timeout awaiting subscription").asFailure()
+                    } else {
+                        result!!
+                    }
+                }
+                finally {
+                    lock.unlock()
+                }
+            }
+
+            override fun isDone(): Boolean {
+                return result != null
+            }
+
+            override fun cancel(interrupt: Boolean): Boolean {
+                return false
+            }
+
+            override fun isCancelled(): Boolean {
+                return false
+            }
+
+            override fun run() {
+                this.sub = platformInstance(instanceType).subscribeResuming(
+                        path = path,
+                        tokenProvider = tokenProvider,
+                        listeners = SubscriptionListeners.compose(SubscriptionListeners(
+                                onOpen = { this.complete(this.sub.asSuccess()) },
+                                onError = { error -> this.complete(error.asFailure()) }
+                        ), listeners),
+                        messageParser = messageParser
+                )
+            }
+
+            private fun complete(result: Result<Subscription, Error>) {
+                this.result = result
+                condition.signalAll()
+            }
+        }
 
     internal fun <A> subscribeNonResuming(
         path: String,
