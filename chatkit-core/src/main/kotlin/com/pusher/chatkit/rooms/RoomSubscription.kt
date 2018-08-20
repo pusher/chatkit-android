@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
+import com.pusher.chatkit.memberships.MembershipSubscription
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.users.User
@@ -19,28 +20,36 @@ import java.net.URL
 
 internal class RoomSubscription(
     private val roomId: Int,
-    userId: String,
     private val consumeEvent: RoomSubscriptionConsumer,
     private val chatManager: ChatManager,
     messageLimit: Int
 ) : Subscription {
 
     private var active = true
-
+    private val logger = chatManager.dependencies.logger
     private val subscription = chatManager.subscribeResuming(
-        path = "/rooms/$roomId?user_id=$userId&message_limit=$messageLimit",
+        path = "/rooms/$roomId?&message_limit=$messageLimit",
         listeners = SubscriptionListeners<ChatEvent>(
+            onOpen = { headers ->
+                logger.verbose("[Room subscription] On open $headers")
+            },
             onEvent = { it.body.toRoomEvent().let(consumeEvent) },
             onError = { consumeEvent(ErrorOccurred(it)) }
         ),
         messageParser = { it.parseAs() }
     )
 
-
     private val cursorSubscription = chatManager.cursorService.subscribeForRoom(roomId) { event ->
         when(event) {
             is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(RoomSubscriptionEvent.NewReadCursor(event.cursor))
             is CursorSubscriptionEvent.InitialState -> consumeEvent(RoomSubscriptionEvent.InitialReadCursors(event.cursors))
+        }
+    }
+
+    private val membershipSubscription = MembershipSubscription(roomId, chatManager) { event ->
+        when(event) {
+            is ChatManagerEvent.UserJoinedRoom -> consumeEvent(RoomSubscriptionEvent.UserJoined(event.user))
+            is ChatManagerEvent.UserLeftRoom -> consumeEvent(RoomSubscriptionEvent.UserLeft(event.user))
         }
     }
 
@@ -89,8 +98,9 @@ internal class RoomSubscription(
 
     override fun unsubscribe() {
         active = false
-        subscription.unsubscribe()
         cursorSubscription.unsubscribe()
+        membershipSubscription.unsubscribe()
+        subscription.unsubscribe()
     }
 
 }

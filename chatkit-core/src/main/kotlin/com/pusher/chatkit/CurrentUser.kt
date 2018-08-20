@@ -23,7 +23,6 @@ class CurrentUser(
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
-        .filter { it.memberUserIds.contains(id) }
     val users: Future<Result<List<User>, Error>>
         get() = rooms
         .flatMap { it.memberUserIds }
@@ -131,7 +130,7 @@ class CurrentUser(
         messageLimit : Int = 10,
         consumer: RoomSubscriptionConsumer
     ): Subscription =
-        chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
+        chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
             .autoRemove(roomId)
             .also { roomSubscriptions += roomId to it }
 
