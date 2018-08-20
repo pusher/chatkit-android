@@ -16,8 +16,10 @@ import com.pusher.util.mapResult
 import com.pusher.platform.network.toFuture
 import elements.Error
 import elements.Errors
+import elements.Subscription
 import elements.SubscriptionEvent
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 internal class CursorService(private val chatManager: ChatManager) {
 
@@ -71,23 +73,48 @@ internal class CursorService(private val chatManager: ChatManager) {
     private fun createSubscription(
         path: String,
         consumeEvent: (CursorSubscriptionEvent) -> Unit
-    ) = chatManager.subscribeResuming(
-        path = path,
-        listeners = SubscriptionListeners<ChatEvent>(
-            onEvent = { event ->
-                val cursorEvent = event.toCursorEvent()
-                    .recover { CursorSubscriptionEvent.OnError(it) }
-                consumeEvent(cursorEvent)
-                when(cursorEvent) {
-                    is CursorSubscriptionEvent.OnCursorSet ->  cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
-                    is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
-                }
-            },
-            onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
-        ),
-        messageParser = { it.parseAs() },
-        instanceType = CURSORS
-    )
+    ) {
+        val futureSubscription = object : Future<Subscription> {
+            private val sub = chatManager.subscribeResuming(
+                path = path,
+                listeners = SubscriptionListeners<ChatEvent>(
+                    onEvent = {
+                        event ->
+                        val cursorEvent = event.toCursorEvent()
+                                .recover { CursorSubscriptionEvent.OnError(it) }
+                        consumeEvent(cursorEvent)
+                        when (cursorEvent) {
+                            is CursorSubscriptionEvent.OnCursorSet -> cursors[cursorEvent.cursor.userId] += cursorEvent.cursor
+                            is CursorSubscriptionEvent.InitialState -> cursors += cursorEvent.cursors
+                        }
+                    },
+                    onOpen = {
+                        opened = true
+                    },
+                    onError = {
+                        errored = true
+                        consumeEvent(CursorSubscriptionEvent.OnError(it))
+                    }
+                ),
+                messageParser = { it.parseAs() },
+                instanceType = CURSORS
+            )
+            private var opened = false
+            private var errored = false
+
+            override fun isDone(): Boolean {
+                return opened || errored
+            }
+
+            override fun get(): Subscription {
+                return sub
+            }
+
+            override fun get(time: Long, unit: TimeUnit?): Subscription {
+
+            }
+        }
+    }
 
     fun request(userId: String): Future<Result<List<Cursor>, Error>> = chatManager.doGet(
         "/cursors/0/users/$userId",
