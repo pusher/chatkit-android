@@ -5,12 +5,12 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.files.AttachmentBody
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
+import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.UserSubscription
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
@@ -23,13 +23,7 @@ import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import java.time.LocalDateTime
-import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.ReentrantLock
-
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -50,6 +44,7 @@ class ChatManager constructor(
     internal val messageService by lazy { MessageService(this) }
     internal val filesService by lazy { FilesService(this) }
     internal val roomService by lazy { RoomService(this) }
+    internal val membershipService by lazy { MembershipService(this) }
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
@@ -60,15 +55,11 @@ class ChatManager constructor(
         return futureCurrentUser.get()
     }
 
-    private fun openSubscription() = UserSubscription(
-        userId = userId,
-        chatManager = this,
-        consumeEvent = { event ->
-            for (consumer in eventConsumers) {
-                consumer(event)
-            }
+    private fun openSubscription() = userService.subscribe(userId, this) { event ->
+        for (consumer in eventConsumers) {
+            consumer(event)
         }
-    )
+    }
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {
 
@@ -160,74 +151,12 @@ class ChatManager constructor(
         listeners: SubscriptionListeners<A>,
         messageParser: DataParser<A>,
         instanceType: InstanceType = DEFAULT
-    ): Future<Result<Subscription, Error>> =
-        object : RunnableFuture<Result<Subscription, Error>> {
-            private lateinit var sub : Subscription
-            private var result : Result<Subscription, Error>? = null
-
-            private val lock = ReentrantLock()
-            private val condition = lock.newCondition()
-
-            override fun get(): Result<Subscription, Error> {
-                lock.lock()
-                try {
-                    while (result == null) {
-                        condition.await()
-                    }
-                    return result!!
-                }
-                finally {
-                    lock.unlock()
-                }
-            }
-
-            override fun get(timeout: Long, unit: TimeUnit?): Result<Subscription, Error> {
-                lock.lock()
-                return try {
-                    if (result == null) {
-                        condition.await(timeout, unit))
-                    }
-
-                    if (result == null) {
-                        Errors.other("timeout awaiting subscription").asFailure()
-                    } else {
-                        result!!
-                    }
-                }
-                finally {
-                    lock.unlock()
-                }
-            }
-
-            override fun isDone(): Boolean {
-                return result != null
-            }
-
-            override fun cancel(interrupt: Boolean): Boolean {
-                return false
-            }
-
-            override fun isCancelled(): Boolean {
-                return false
-            }
-
-            override fun run() {
-                this.sub = platformInstance(instanceType).subscribeResuming(
-                        path = path,
-                        tokenProvider = tokenProvider,
-                        listeners = SubscriptionListeners.compose(SubscriptionListeners(
-                                onOpen = { this.complete(this.sub.asSuccess()) },
-                                onError = { error -> this.complete(error.asFailure()) }
-                        ), listeners),
-                        messageParser = messageParser
-                )
-            }
-
-            private fun complete(result: Result<Subscription, Error>) {
-                this.result = result
-                condition.signalAll()
-            }
-        }
+    ) = platformInstance(instanceType).subscribeResuming(
+        path = path,
+        tokenProvider = tokenProvider,
+        listeners = listeners,
+        messageParser = messageParser
+    ).also { subscriptions += it }
 
     internal fun <A> subscribeNonResuming(
         path: String,

@@ -26,29 +26,35 @@ internal class MembershipSubscription(
     private var active = false
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
-    private val subscription = chatManager.subscribeNonResuming(
-        path = "/rooms/$roomId/memberships",
-        listeners = SubscriptionListeners(
-            onOpen = { headers ->
-                active = true
-                logger.verbose("[Membership subscription] OnOpen $headers")
-            },
-            onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
-                event.body
-                    .applySideEffects()
-                    .toChatManagerEvent()
-                    .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
-                    .recover { ErrorOccurred(it) }
-                    .also(consumeEvent)
-                    .also { logger.verbose("Event received $event") }
-            },
-            onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error))},
-            onSubscribe = { logger.verbose("Subscription established") },
-            onRetrying = { logger.verbose("Subscription lost. Trying again.") },
-            onEnd = { error -> logger.verbose("Subscription ended with: $error") }
-        ),
-        messageParser = MembershipSubscriptionEventParser
-    )
+    private lateinit var subscription: Subscription
+
+    fun connect(): Subscription {
+        subscription = chatManager.subscribeNonResuming(
+            path = "/rooms/$roomId/memberships",
+            listeners = SubscriptionListeners(
+                onOpen = { headers ->
+                    active = true
+                    logger.verbose("[Membership subscription] OnOpen $headers")
+                },
+                onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
+                    event.body
+                        .applySideEffects()
+                        .toChatManagerEvent()
+                        .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
+                        .recover { ErrorOccurred(it) }
+                        .also(consumeEvent)
+                        .also { logger.verbose("Event received $event") }
+                },
+                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error))},
+                onSubscribe = { logger.verbose("Subscription established") },
+                onRetrying = { logger.verbose("Subscription lost. Trying again.") },
+                onEnd = { error -> logger.verbose("Subscription ended with: $error") }
+            ),
+            messageParser = MembershipSubscriptionEventParser
+        )
+
+        return subscription
+    }
 
     override fun unsubscribe() {
         active = false
