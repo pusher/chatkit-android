@@ -5,8 +5,11 @@ import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.CurrentUser
 import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.cursors.CursorSubscription
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
+import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.*
 import com.pusher.util.*
@@ -22,14 +25,14 @@ internal class UserSubscription(
     val userId: String,
     private val chatManager: ChatManager,
     private val consumeEvent: (ChatManagerEvent) -> Unit
-) : Subscription {
+) : ChatkitSubscription {
 
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
     private var headers: Headers = emptyHeaders()
     private lateinit var subscription: Subscription
 
-    fun connect(): Subscription {
+    override fun connect(): ChatkitSubscription {
         subscription = chatManager.subscribeResuming(
             path = USERS_PATH,
             listeners = SubscriptionListeners(
@@ -55,7 +58,7 @@ internal class UserSubscription(
             messageParser = UserSubscriptionEventParser
         )
 
-        return subscription
+        return this
     }
 
 

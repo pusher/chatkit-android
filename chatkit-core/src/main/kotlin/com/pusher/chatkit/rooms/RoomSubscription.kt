@@ -5,6 +5,7 @@ import com.pusher.chatkit.*
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
@@ -22,7 +23,7 @@ internal class RoomSubscription(
     private val consumeEvent: RoomSubscriptionConsumer,
     private val chatManager: ChatManager,
     private val messageLimit: Int
-) : Subscription {
+) : ChatkitSubscription {
     private var active = true
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
@@ -46,7 +47,7 @@ internal class RoomSubscription(
         chatManager.observerEvents { if (active) it.consume() }
     }
 
-    fun connect(): Subscription {
+    override fun connect(): ChatkitSubscription {
         subscription = chatManager.subscribeResuming(
             path = "/rooms/$roomId?&message_limit=$messageLimit",
             listeners = SubscriptionListeners<ChatEvent>(
@@ -59,7 +60,7 @@ internal class RoomSubscription(
             messageParser = { it.parseAs() }
         )
 
-        return subscription
+        return this
     }
 
     private fun ChatManagerEvent.consume() = when {

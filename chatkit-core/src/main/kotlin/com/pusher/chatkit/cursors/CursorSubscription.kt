@@ -3,6 +3,7 @@ package com.pusher.chatkit.cursors
 import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.Result
@@ -16,12 +17,12 @@ internal class CursorSubscription(
     private val chatManager: ChatManager,
     private val cursorsStore: CursorsStore,
     private val consumeEvent: (CursorSubscriptionEvent) -> Unit
-): Subscription {
+): ChatkitSubscription {
     private var active = false
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
-    fun connect(): Subscription{
+    override fun connect(): ChatkitSubscription{
         subscription = chatManager.subscribeResuming(
             path = path,
             listeners = SubscriptionListeners<ChatEvent>(
@@ -43,7 +44,7 @@ internal class CursorSubscription(
             messageParser = { it.parseAs() },
             instanceType = InstanceType.CURSORS
         )
-        return subscription
+        return this
     }
 
     override fun unsubscribe() {

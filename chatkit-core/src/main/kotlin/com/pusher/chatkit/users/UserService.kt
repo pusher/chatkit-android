@@ -3,6 +3,7 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.HasChat
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.map
@@ -13,7 +14,6 @@ import com.pusher.util.flatMapFutureResult
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import elements.Subscription
 import java.net.URLEncoder
 import java.util.concurrent.Future
 
@@ -27,7 +27,7 @@ internal class UserService(
         userId: String,
         chatManager: ChatManager,
         consumeEvent: (ChatManagerEvent) -> Unit
-    ): Subscription =
+    ): ChatkitSubscription =
         UserSubscription(userId, chatManager, consumeEvent).connect()
 
     fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {

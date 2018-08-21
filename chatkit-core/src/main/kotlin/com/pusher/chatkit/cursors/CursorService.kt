@@ -3,6 +3,7 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType.*
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
@@ -58,7 +59,7 @@ internal class CursorService(private val chatManager: ChatManager) {
         }
     }
 
-    fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
+    fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit): ChatkitSubscription =
         CursorSubscription(
             "/cursorsStore/0/rooms/$roomId",
             chatManager,
@@ -66,7 +67,7 @@ internal class CursorService(private val chatManager: ChatManager) {
             consumeEvent
         ).connect()
 
-    fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
+    fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit): ChatkitSubscription =
         CursorSubscription(
             "/cursorsStore/0/rooms/$userId",
             chatManager,
