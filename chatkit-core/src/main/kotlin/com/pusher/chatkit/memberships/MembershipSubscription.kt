@@ -11,6 +11,7 @@ import java.util.concurrent.Future
 import com.pusher.util.*
 import elements.Errors
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.waitOr
@@ -21,14 +22,14 @@ internal class MembershipSubscription(
     private val roomId: Int,
     private val chatManager: ChatManager,
     private val consumeEvent: (ChatManagerEvent) -> Unit
-) : Subscription {
+) : ChatkitSubscription {
 
     private var active = false
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
     private lateinit var subscription: Subscription
 
-    fun connect(): Subscription {
+    override fun connect(): ChatkitSubscription {
         subscription = chatManager.subscribeNonResuming(
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
@@ -53,7 +54,7 @@ internal class MembershipSubscription(
             messageParser = MembershipSubscriptionEventParser
         )
 
-        return subscription
+        return this
     }
 
     override fun unsubscribe() {
