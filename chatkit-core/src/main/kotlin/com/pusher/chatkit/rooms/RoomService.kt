@@ -2,12 +2,12 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.HasChat
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
 import elements.Errors
-import elements.Subscription
 import java.util.concurrent.Future
 
 internal class RoomService(override val chatManager: ChatManager) : HasChat {
@@ -74,7 +74,7 @@ internal class RoomService(override val chatManager: ChatManager) : HasChat {
         roomId: Int,
         listeners: RoomSubscriptionConsumer,
         messageLimit : Int
-    ): Subscription =
+    ): ChatkitSubscription =
         RoomSubscription(roomId, listeners, chatManager, messageLimit).connect()
 
 }

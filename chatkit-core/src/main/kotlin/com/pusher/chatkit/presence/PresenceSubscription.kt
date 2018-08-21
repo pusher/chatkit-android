@@ -1,6 +1,7 @@
 package com.pusher.chatkit.presence
 
 import com.pusher.chatkit.*
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
@@ -15,12 +16,12 @@ import java.util.concurrent.Future
 internal class PresenceSubscription(
     private val userId: String,
     private val chatManager: ChatManager,
-    private val consumeEvent: ChatManagerEventConsumer): Subscription {
+    private val consumeEvent: ChatManagerEventConsumer): ChatkitSubscription {
     private var active = false
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
-    fun connect(): Subscription {
+    override fun connect(): ChatkitSubscription {
         subscription = chatManager.subscribeResuming<ChatEvent>(
             path = "/users/$userId/presence",
             listeners = SubscriptionListeners(
@@ -43,7 +44,7 @@ internal class PresenceSubscription(
             instanceType = InstanceType.PRESENCE
         )
 
-        return subscription
+        return this
     }
 
     private fun ChatEvent.toUserPresences() = when (eventName) {
