@@ -4,6 +4,7 @@ import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType
 import com.pusher.chatkit.subscription.ChatkitSubscription
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.util.Result
@@ -22,12 +23,12 @@ internal class CursorSubscription(
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
-    override fun connect(): ChatkitSubscription{
-        subscription = chatManager.subscribeResuming(
+    override suspend fun connect(): ChatkitSubscription{
+        subscription = ResolvableSubscription(
             path = path,
             listeners = SubscriptionListeners<ChatEvent>(
                 onOpen = { headers ->
-                    logger.verbose("[Cursor subscription] OnOpen $headers")
+                    logger.verbose("[Cursor] OnOpen $headers")
                     active = true
                 },
                 onEvent = { event ->
@@ -39,11 +40,19 @@ internal class CursorSubscription(
                         is CursorSubscriptionEvent.InitialState -> cursorsStore += cursorEvent.cursors
                     }
                 },
-                onError = { consumeEvent(CursorSubscriptionEvent.OnError(it)) }
+                onError = { error ->
+                    logger.verbose("[Cursor] Subscription errored: $error")
+                    consumeEvent(CursorSubscriptionEvent.OnError(error))
+                },
+                onSubscribe = { logger.verbose("[Cursor] Subscription established") },
+                onRetrying = { logger.verbose("[Cursor] Subscription lost. Trying again.") },
+                onEnd = { error -> logger.verbose("[Cursor] Subscription ended with: $error") }
             ),
             messageParser = { it.parseAs() },
+            chatManager = chatManager,
             instanceType = InstanceType.CURSORS
-        )
+        ).connect()
+
         return this
     }
 

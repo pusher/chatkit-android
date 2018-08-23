@@ -2,7 +2,6 @@ package com.pusher.chatkit.memberships
 
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEvent
-import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.platform.SubscriptionListeners
 import elements.Subscription
 import elements.SubscriptionEvent
@@ -11,7 +10,9 @@ import java.util.concurrent.Future
 import com.pusher.util.*
 import elements.Errors
 import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.InstanceType
 import com.pusher.chatkit.subscription.ChatkitSubscription
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.waitOr
@@ -29,13 +30,13 @@ internal class MembershipSubscription(
     private val roomStore = chatManager.roomService.roomStore
     private lateinit var subscription: Subscription
 
-    override fun connect(): ChatkitSubscription {
-        subscription = chatManager.subscribeNonResuming(
+    override suspend fun connect(): ChatkitSubscription {
+        subscription = ResolvableSubscription(
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
                 onOpen = { headers ->
                     active = true
-                    logger.verbose("[Membership subscription] OnOpen $headers")
+                    logger.verbose("[Membership] OnOpen $headers")
                 },
                 onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
                     event.body
@@ -44,15 +45,17 @@ internal class MembershipSubscription(
                         .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
                         .recover { ErrorOccurred(it) }
                         .also(consumeEvent)
-                        .also { logger.verbose("Event received $event") }
+                        .also { logger.verbose("[Membership] Event received $event") }
                 },
-                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error))},
-                onSubscribe = { logger.verbose("Subscription established") },
-                onRetrying = { logger.verbose("Subscription lost. Trying again.") },
-                onEnd = { error -> logger.verbose("Subscription ended with: $error") }
+                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) },
+                onSubscribe = { logger.verbose("[Membership] Subscription established") },
+                onRetrying = { logger.verbose("[Membership] Subscription lost. Trying again.") },
+                onEnd = { error -> logger.verbose("[Membership] Subscription ended with: $error") }
             ),
-            messageParser = MembershipSubscriptionEventParser
-        )
+            messageParser = MembershipSubscriptionEventParser,
+            chatManager = chatManager,
+            resolveOnFirstEvent = true
+        ).connect()
 
         return this
     }
@@ -75,6 +78,7 @@ internal class MembershipSubscription(
             }
         }
     }
+
 
     private fun MembershipSubscriptionEvent.toChatManagerEvent(): Future<Result<ChatManagerEvent, Error>> = when (this) {
         is InitialState -> {

@@ -14,6 +14,8 @@ import com.pusher.util.flatMapFutureResult
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import java.net.URLEncoder
 import java.util.concurrent.Future
 
@@ -27,8 +29,13 @@ internal class UserService(
         userId: String,
         chatManager: ChatManager,
         consumeEvent: (ChatManagerEvent) -> Unit
-    ): ChatkitSubscription =
-        UserSubscription(userId, chatManager, consumeEvent).connect()
+    ) = runBlocking {
+            UserSubscription(
+                userId,
+                chatManager,
+                consumeEvent
+            ).connect()
+        }
 
     fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {
         val users = userIds.map { id -> getLocalUser(id).orElse { id } }
@@ -40,7 +47,7 @@ internal class UserService(
 
         return when {
             missingUserIds.isEmpty() -> Futures.now(localUsers.asSuccess())
-            else -> chatManager.doGet<List<User>>("/users_by_ids?${missingUserIdsQs}")
+            else -> chatManager.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
                 .map { usersResult ->
                     usersResult.map { loadedUsers ->
                         userStore += loadedUsers
