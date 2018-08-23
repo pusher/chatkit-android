@@ -2,6 +2,7 @@ package com.pusher.chatkit.presence
 
 import com.pusher.chatkit.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.map
@@ -11,6 +12,7 @@ import com.pusher.util.asFailure
 import com.pusher.util.mapResult
 import elements.Errors
 import elements.Subscription
+import kotlinx.coroutines.experimental.async
 import java.util.concurrent.Future
 
 internal class PresenceSubscription(
@@ -21,12 +23,13 @@ internal class PresenceSubscription(
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
-    override fun connect(): ChatkitSubscription {
-        subscription = chatManager.subscribeResuming<ChatEvent>(
+    override suspend fun connect(): ChatkitSubscription {
+        subscription = ResolvableSubscription(
             path = "/users/$userId/presence",
-            listeners = SubscriptionListeners(
+            listeners = SubscriptionListeners<ChatEvent>(
                 onOpen = { headers ->
-                    logger.verbose("[Presence subscription] OnOpen $headers")
+                    logger.verbose("[Presence] OnOpen $headers")
+                    active = true
                 },
                 onEvent = { event ->
                     val presenceEventFutures = event.body
@@ -40,9 +43,11 @@ internal class PresenceSubscription(
                 },
                 onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) }
             ),
+            chatManager = chatManager,
             messageParser = { it.parseAs() },
+            resolveOnFirstEvent = true,
             instanceType = InstanceType.PRESENCE
-        )
+        ).connect()
 
         return this
     }
@@ -70,6 +75,7 @@ internal class PresenceSubscription(
             .map { it.recover { error -> ChatManagerEvent.ErrorOccurred(error) } }
 
     override fun unsubscribe() {
+        active = false
         subscription.unsubscribe()
     }
 }

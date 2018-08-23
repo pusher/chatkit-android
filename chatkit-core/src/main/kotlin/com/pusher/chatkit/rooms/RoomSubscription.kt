@@ -6,6 +6,7 @@ import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.subscription.ChatkitSubscription
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
@@ -16,6 +17,7 @@ import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
 import elements.Subscription
+import kotlinx.coroutines.experimental.async
 import java.net.URL
 
 internal class RoomSubscription(
@@ -26,39 +28,52 @@ internal class RoomSubscription(
 ) : ChatkitSubscription {
     private var active = true
     private val logger = chatManager.dependencies.logger
-    private lateinit var subscription: Subscription
-
-    private val cursorSubscription = chatManager.cursorService.subscribeForRoom(roomId) { event ->
-        when(event) {
-            is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(RoomSubscriptionEvent.NewReadCursor(event.cursor))
-            is CursorSubscriptionEvent.InitialState -> consumeEvent(RoomSubscriptionEvent.InitialReadCursors(event.cursors))
-        }
-    }
-
-    private val membershipSubscription = chatManager.membershipService.subscribe(roomId) { event ->
-        when(event) {
-            is ChatManagerEvent.UserJoinedRoom -> consumeEvent(RoomSubscriptionEvent.UserJoined(event.user))
-            is ChatManagerEvent.UserLeftRoom -> consumeEvent(RoomSubscriptionEvent.UserLeft(event.user))
-        }
-    }
+    private lateinit var roomSubscription: Subscription
+    private lateinit var cursorSubscription: Subscription
+    private lateinit var membershipSubscription: Subscription
 
     init {
         check(messageLimit >= 0) { "messageLimit must be positive" }
         chatManager.observerEvents { if (active) it.consume() }
     }
 
-    override fun connect(): ChatkitSubscription {
-        subscription = chatManager.subscribeResuming(
-            path = "/rooms/$roomId?&message_limit=$messageLimit",
-            listeners = SubscriptionListeners<ChatEvent>(
-                onOpen = { headers ->
-                    logger.verbose("[Room subscription] On open $headers")
-                },
-                onEvent = { it.body.toRoomEvent().let(consumeEvent) },
-                onError = { consumeEvent(ErrorOccurred(it)) }
-            ),
-            messageParser = { it.parseAs() }
-        )
+    override suspend fun connect(): ChatkitSubscription {
+        val deferredRoomSubscription = async {
+            ResolvableSubscription(
+                path = "/rooms/$roomId?&message_limit=$messageLimit",
+                listeners = SubscriptionListeners<ChatEvent>(
+                    onOpen = { headers ->
+                        logger.verbose("[Room] On open $headers")
+                    },
+                    onEvent = { it.body.toRoomEvent().let(consumeEvent) },
+                    onError = { consumeEvent(ErrorOccurred(it)) }
+                ),
+                chatManager = chatManager,
+                messageParser = { it.parseAs() }
+            ).connect()
+        }
+
+        val deferredMembershipSubscription = async {
+            chatManager.membershipService.subscribe(roomId) { event ->
+                when (event) {
+                    is ChatManagerEvent.UserJoinedRoom -> consumeEvent(RoomSubscriptionEvent.UserJoined(event.user))
+                    is ChatManagerEvent.UserLeftRoom -> consumeEvent(RoomSubscriptionEvent.UserLeft(event.user))
+                }
+            }
+        }
+
+        val deferredCursorSubscription = async {
+            chatManager.cursorService.subscribeForRoom(roomId) { event ->
+                when (event) {
+                    is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(RoomSubscriptionEvent.NewReadCursor(event.cursor))
+                    is CursorSubscriptionEvent.InitialState -> consumeEvent(RoomSubscriptionEvent.InitialReadCursors(event.cursors))
+                }
+            }
+        }
+
+        roomSubscription = deferredRoomSubscription.await()
+        membershipSubscription = deferredMembershipSubscription.await()
+        cursorSubscription = deferredCursorSubscription.await()
 
         return this
     }
@@ -105,7 +120,7 @@ internal class RoomSubscription(
         active = false
         cursorSubscription.unsubscribe()
         membershipSubscription.unsubscribe()
-        subscription.unsubscribe()
+        roomSubscription.unsubscribe()
     }
 
 }
