@@ -10,6 +10,7 @@ import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.subscription.ChatkitSubscription
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.*
 import com.pusher.util.*
@@ -18,6 +19,7 @@ import java.lang.Thread.sleep
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.SECONDS
 import com.pusher.chatkit.users.UserSubscriptionEvent.*
+import kotlinx.coroutines.experimental.async
 
 private const val USERS_PATH = "users"
 
@@ -30,48 +32,63 @@ internal class UserSubscription(
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
     private var headers: Headers = emptyHeaders()
-    private lateinit var subscription: Subscription
 
-    override fun connect(): ChatkitSubscription {
-        subscription = chatManager.subscribeResuming(
-            path = USERS_PATH,
-            listeners = SubscriptionListeners(
-                onOpen = { headers ->
-                    logger.verbose("[User subscription] OnOpen $headers")
-                    this.headers = headers
-                },
-                onEvent = { event: SubscriptionEvent<UserSubscriptionEvent> ->
-                    event.body
-                        .applySideEffects()
-                        .toChatManagerEvent()
-                        .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
-                        .recover { ErrorOccurred(it) }
-                        .also { if (it is CurrentUserReceived) currentUser = it.currentUser }
-                        .also(consumeEvent)
-                        .also { logger.verbose("Event received $it") }
-                },
-                onError = { error -> consumeEvent(ErrorOccurred(error)) },
-                onSubscribe = { logger.verbose("Subscription established.") },
-                onRetrying = { logger.verbose("Subscription lost. Trying again.") },
-                onEnd = { error -> logger.verbose("Subscription ended with: $error") }
-            ),
-            messageParser = UserSubscriptionEventParser
-        )
+    private lateinit var userSubscription: Subscription
+    private lateinit var presenceSubscription: Subscription
+    private lateinit var cursorSubscription: Subscription
+
+    override suspend fun connect(): ChatkitSubscription {
+        val deferredUserSubscription = async {
+            ResolvableSubscription(
+                path = USERS_PATH,
+                listeners = SubscriptionListeners(
+                    onOpen = { headers ->
+                        logger.verbose("[User] OnOpen $headers")
+                        this@UserSubscription.headers = headers
+                    },
+                    onEvent = { event: SubscriptionEvent<UserSubscriptionEvent> ->
+                        event.body
+                            .applySideEffects()
+                            .toChatManagerEvent()
+                            .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
+                            .recover { ErrorOccurred(it) }
+                            .also { if (it is CurrentUserReceived) currentUser = it.currentUser }
+                            .also(consumeEvent)
+                            .also { logger.verbose("[User] Event received $it") }
+                    },
+                    onError = { error -> consumeEvent(ErrorOccurred(error)) },
+                    onSubscribe = { logger.verbose("[User] Subscription established.") },
+                    onRetrying = { logger.verbose("[User] Subscription lost. Trying again.") },
+                    onEnd = { error -> logger.verbose("[User] Subscription ended with: $error") }
+                ),
+                chatManager = chatManager,
+                messageParser = UserSubscriptionEventParser,
+                resolveOnFirstEvent = true
+            ).connect()
+        }
+
+        val deferredPresenceSubscription = async {
+            chatManager.presenceService.subscribe(userId, consumeEvent)
+        }
+
+        val deferredCursorSubscription = async {
+            chatManager.cursorService.subscribeForUser(userId) { event ->
+                when(event) {
+                    is CursorSubscriptionEvent.OnCursorSet ->
+                        consumeEvent(ChatManagerEvent.NewReadCursor(event.cursor))
+                }
+            }
+        }
+
+        cursorSubscription = deferredCursorSubscription.await()
+        userSubscription = deferredUserSubscription.await()
+        presenceSubscription = deferredPresenceSubscription.await()
 
         return this
     }
 
-
-    private val presenceSubscription = chatManager.presenceService.subscribe(userId, consumeEvent)
-
-    private val cursorSubscription = chatManager.cursorService.subscribeForUser(userId) { event ->
-        when(event) {
-            is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(NewReadCursor(event.cursor))
-        }
-    }
-
     override fun unsubscribe() {
-        subscription.unsubscribe()
+        userSubscription.unsubscribe()
         cursorSubscription.unsubscribe()
         presenceSubscription.unsubscribe()
         currentUser?.close()
