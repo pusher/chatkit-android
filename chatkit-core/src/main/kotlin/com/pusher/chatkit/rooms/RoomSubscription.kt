@@ -1,24 +1,24 @@
 package com.pusher.chatkit.rooms
 
-import com.google.gson.JsonElement
 import com.pusher.chatkit.*
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
-import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.network.Futures
+import com.pusher.platform.network.cancel
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
-import com.pusher.util.asSuccess
+import com.pusher.util.flatMapFutureResult
+import com.pusher.util.flatMapResult
 import com.pusher.util.mapResult
-import elements.Error
-import elements.Errors
 import elements.Subscription
+import elements.SubscriptionEvent
 import kotlinx.coroutines.experimental.async
 import java.net.URL
+import java.util.concurrent.Future
 
 internal class RoomSubscription(
     private val roomId: Int,
@@ -41,15 +41,20 @@ internal class RoomSubscription(
         val deferredRoomSubscription = async {
             ResolvableSubscription(
                 path = "/rooms/$roomId?&message_limit=$messageLimit",
-                listeners = SubscriptionListeners<ChatEvent>(
+                listeners = SubscriptionListeners(
                     onOpen = { headers ->
                         logger.verbose("[Room] On open $headers")
                     },
-                    onEvent = { it.body.toRoomEvent().let(consumeEvent) },
+                    onEvent = { event: SubscriptionEvent<RoomSubscriptionEvent> ->
+                        event.body
+                            .applySideEffects()
+                            .also(consumeEvent)
+                            .also { logger.verbose("[Room] Event received $it") }
+                    },
                     onError = { consumeEvent(ErrorOccurred(it)) }
                 ),
                 chatManager = chatManager,
-                messageParser = { it.parseAs() }
+                messageParser = RoomSubscriptionEventParser
             ).connect()
         }
 
@@ -79,7 +84,8 @@ internal class RoomSubscription(
     }
 
     private fun ChatManagerEvent.consume() = when {
-        this is ChatManagerEvent.UserIsTyping&& room.id == roomId -> UserIsTyping(user)
+        this is ChatManagerEvent.UserStartedTyping && room.id == roomId -> UserStartedTyping(user)
+        this is ChatManagerEvent.UserStoppedTyping && room.id == roomId -> UserStoppedTyping(user)
         this is ChatManagerEvent.UserJoinedRoom && room.id == roomId -> UserJoined(user)
         this is ChatManagerEvent.UserLeftRoom && room.id == roomId -> UserLeft(user)
         this is ChatManagerEvent.UserCameOnline && user.isInRoom() -> UserCameOnline(user)
@@ -91,35 +97,67 @@ internal class RoomSubscription(
 
     private fun User.isInRoom() = chatManager.roomService.fetchRoomBy(id, roomId).mapResult { true }.wait().recover { false }
 
-    private fun ChatEvent.toRoomEvent() : RoomSubscriptionEvent = when(eventName) {
-        "new_message" -> data.toNewMessage()
-        else -> ErrorOccurred(Errors.other("Wrong event type: $eventName")).asSuccess<RoomSubscriptionEvent, Error>()
-    }.recover { error -> ErrorOccurred(error) }
-
-    private fun JsonElement.toNewMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
-        .map { message ->
-            if (message.attachment != null) {
-                val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&") ?: emptyList())
-                    .mapNotNull { it.split("=").takeIf { it.size == 2 } }
-                    .map { (key, value) -> key to value }
-                    .toMap()
-                if (queryParamsMap["chatkit_link"] == "true") {
-                    message.attachment.fetchRequired = true
+    private fun RoomSubscriptionEvent.applySideEffects(): RoomSubscriptionEvent {
+        return when (this) {
+            is NewMessage -> {
+                if (message.attachment != null) {
+                    val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&")
+                        ?: emptyList())
+                        .mapNotNull { it.split("=").takeIf { it.size == 2 } }
+                        .map { (key, value) -> key to value }
+                        .toMap()
+                    if (queryParamsMap["chatkit_link"] == "true") {
+                        message.attachment.fetchRequired = true
+                    }
                 }
-            }
-            chatManager.userService.fetchUserBy(message.userId).wait().fold(
+                chatManager.userService.fetchUserBy(message.userId).wait().fold(
                     onFailure = {},
                     onSuccess = { message.user = it }
-            )
-            NewMessage(message)
-
+                )
+                NewMessage(message)
+            }
+            is UserIsTyping -> {
+                typingTimers
+                    .firstOrNull { it.userId == userId && it.roomId == roomId }
+                    ?: TypingTimer(userId, roomId).also { typingTimers += it }
+                        .triggerTyping()
+                val maybeUser = chatManager.userService.fetchUserBy(userId).get()
+                when (maybeUser) {
+                    is Result.Success -> UserStartedTyping(maybeUser.value)
+                    is Result.Failure -> ErrorOccurred(maybeUser.error)
+                }
+            }
+            else -> this
         }
+    }
+
 
     override fun unsubscribe() {
         active = false
         cursorSubscription.unsubscribe()
         membershipSubscription.unsubscribe()
         roomSubscription.unsubscribe()
+    }
+
+    private val typingTimers = mutableListOf<TypingTimer>()
+    inner class TypingTimer(val userId: String, val roomId: Int) {
+        private var job: Future<Unit>? = null
+
+        fun triggerTyping() {
+            if (job.isActive) job?.cancel()
+            job = scheduleStopTyping()
+        }
+
+        private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
+            Thread.sleep(1_500)
+            chatManager.userService.fetchUserBy(userId).mapResult { user ->
+                consumeEvent(RoomSubscriptionEvent.UserStoppedTyping(user))
+            }.wait().recover { RoomSubscriptionEvent.ErrorOccurred(it) }
+        }
+
+        private val <A> Future<A>?.isActive
+            get() = this != null && !isDone && !isCancelled
+
     }
 
 }

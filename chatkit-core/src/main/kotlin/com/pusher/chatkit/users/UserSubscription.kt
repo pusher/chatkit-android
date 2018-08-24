@@ -116,36 +116,7 @@ internal class UserSubscription(
             is RemovedFromRoomEvent -> roomStore -= roomId
             is LeftRoomEvent -> roomStore[roomId]?.removeUser(userId)
             is JoinedRoomEvent -> roomStore[roomId]?.addUser(userId)
-            is StartedTyping -> typingTimers
-                .firstOrNull { it.userId == userId && it.roomId == roomId }
-                ?: TypingTimer(userId, roomId).also { typingTimers += it }
-                    .triggerTyping()
         }
-    }
-
-    private val typingTimers = mutableListOf<TypingTimer>()
-
-    inner class TypingTimer(val userId: String, val roomId: Int) {
-
-        private var job: Future<Unit>? = null
-
-        fun triggerTyping() {
-            if (job.isActive) job?.cancel()
-            job = scheduleStopTyping()
-        }
-
-        private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
-            sleep(1_500)
-            val event = UserSubscriptionEvent.StoppedTyping(userId, roomId)
-                .toChatManagerEvent()
-                .wait()
-                .recover { ErrorOccurred(it) }
-            consumeEvent(event)
-        }
-
-        private val <A> Future<A>?.isActive
-            get() = this != null && !isDone && !isCancelled
-
     }
 
     private fun createCurrentUser(initialState: InitialState) = CurrentUser(
@@ -174,16 +145,6 @@ internal class UserSubscription(
             roomStore[roomId]
                 .orElse { Errors.other("room $roomId not found.") }
                 .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
-        }
-        is StartedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
-            chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
-                ChatManagerEvent.UserIsTyping(user, room) as ChatManagerEvent
-            }
-        }
-        is StoppedTyping -> chatManager.userService.fetchUserBy(userId).flatMapFutureResult { user ->
-            chatManager.roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
-                ChatManagerEvent.UserIsTyping(user, room) as ChatManagerEvent
-            }
         }
     }
 
