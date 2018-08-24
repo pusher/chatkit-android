@@ -123,12 +123,14 @@ class ChatManagerSpek : Spek({
                 onUserCameOnline = { actual += "onUserCameOnline" to it },
                 onUserJoinedRoom = { u, r -> actual += "onUserJoinedRoom" to u to r },
                 onUserLeftRoom = { u, r -> actual += "onUserLeftRoom" to u to r },
-                    onUserIsTyping = {u, r -> actual += "onUserIsTyping" to u to r},
+                onUserStartedTyping = { u, r -> actual += "onUserStartedTyping" to u to r },
+                onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r },
                 onUserWentOffline = { actual += "onUserWentOffline" to it }
             ).toCallback()
 
             consume(CurrentUserReceived(currentUser))
-            consume(UserIsTyping(user, room))
+            consume(UserStartedTyping(user, room))
+            consume(UserStoppedTyping(user, room))
             consume(UserJoinedRoom(user, room))
             consume(UserLeftRoom(user, room))
             consume(UserCameOnline(user))
@@ -152,7 +154,8 @@ class ChatManagerSpek : Spek({
                 "onUserCameOnline" to user,
                 "onUserJoinedRoom" to user to room,
                 "onUserLeftRoom" to user to room,
-                "onUserIsTyping" to user to room,
+                "onUserStartedTyping" to user to room,
+                "onUserStoppedTyping" to user to room,
                 "onUserWentOffline" to user
             )
 
@@ -172,14 +175,16 @@ class ChatManagerSpek : Spek({
                 onRoomDeleted = { actual += "onRoomDeleted" to it },
                 onRoomUpdated = { actual += "onRoomUpdated" to it },
                 onUserCameOnline = { actual += "onUserCameOnline" to it },
-                onUserIsTyping = { actual += "onUserIsTyping" to it },
+                onUserStartedTyping = { actual += "onUserStartedTyping" to it},
+                onUserStoppedTyping = { actual += "onUserStoppedTyping" to it},
                 onUserWentOffline = { actual += "onUserWentOffline" to it },
                 onNewMessage = { actual += "onNewMessage" to it },
                 onUserJoined = { actual += "onUserJoined" to it },
                 onUserLeft = { actual += "onUserLeft" to it }
             ).toCallback()
 
-            consume(RoomSubscriptionEvent.UserIsTyping(user))
+            consume(RoomSubscriptionEvent.UserStartedTyping(user))
+            consume(RoomSubscriptionEvent.UserStoppedTyping(user))
             consume(RoomSubscriptionEvent.UserJoined(user))
             consume(RoomSubscriptionEvent.UserLeft(user))
             consume(RoomSubscriptionEvent.UserCameOnline(user))
@@ -191,7 +196,8 @@ class ChatManagerSpek : Spek({
             consume(RoomSubscriptionEvent.NewMessage(message))
 
             assertThat(actual).containsExactly(
-                "onUserIsTyping" to user,
+                "onUserStartedTyping" to user,
+                "onUserStoppedTyping" to user,
                 "onUserJoined" to user,
                 "onUserLeft" to user,
                 "onUserCameOnline" to user,
