@@ -11,7 +11,8 @@ import elements.Error
  */
 data class ChatManagerListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
-    val onUserIsTyping: (User, Room) -> Unit = {_, _ -> },
+    val onUserStartedTyping: (User, Room) -> Unit = {_, _ -> },
+    val onUserStoppedTyping: (User, Room) -> Unit = {_, _ -> },
     val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserCameOnline: (User) -> Unit = { },
@@ -35,7 +36,8 @@ typealias ChatManagerEventConsumer = (ChatManagerEvent) -> Unit
 internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { event ->
     when (event) {
         is CurrentUserReceived -> onCurrentUserReceived(event.currentUser)
-        is UserIsTyping -> onUserIsTyping(event.user, event.room)
+        is UserStartedTyping -> onUserStartedTyping(event.user, event.room)
+        is UserStoppedTyping -> onUserStoppedTyping(event.user, event.room)
         is UserJoinedRoom -> onUserJoinedRoom(event.user, event.room)
         is UserLeftRoom -> onUserLeftRoom(event.user, event.room)
         is UserCameOnline -> onUserCameOnline(event.user)
@@ -54,9 +56,10 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
  * Same as [ChatManagerListeners] but using events instead of individual listeners.
  */
 sealed class ChatManagerEvent {
-
     data class CurrentUserReceived internal constructor(val currentUser: CurrentUser) : ChatManagerEvent()
     data class UserIsTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
+    data class UserStartedTyping internal constructor(val user: User, val room: Room): ChatManagerEvent()
+    data class UserStoppedTyping internal constructor(val user: User, val room: Room): ChatManagerEvent()
     data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserCameOnline internal constructor(val user: User) : ChatManagerEvent()
