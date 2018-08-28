@@ -48,6 +48,8 @@ class ChatManager constructor(
     internal val roomService by lazy { RoomService(this) }
     internal val membershipService by lazy { MembershipService(this) }
 
+    internal fun eventConsumers() = eventConsumers
+
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
         val futureCurrentUser = CurrentUserConsumer()
@@ -82,7 +84,6 @@ class ChatManager constructor(
         fun get() = Futures.schedule {
             queue.take().also { waitingForUser = false }
         }
-
     }
 
     fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
