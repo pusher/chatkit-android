@@ -9,14 +9,11 @@ import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.*
 import com.pusher.util.*
-import elements.Error
-import elements.Errors
 import elements.Subscription
 import elements.SubscriptionEvent
 import kotlinx.coroutines.experimental.async
 import java.net.URL
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
 internal class RoomSubscription(
     private val roomId: Int,
@@ -49,9 +46,11 @@ internal class RoomSubscription(
                             .also(consumeEvent)
                             .also { logger.verbose("[Room] Event received $it") }
                             .toChatManagerEvent()
-                            .waitOr(Wait.For(10, TimeUnit.SECONDS)) { ChatManagerEvent.ErrorOccurred(Errors.other(it)).asSuccess() }
-                            .recover { ChatManagerEvent.ErrorOccurred(it) }
-                            .consume()
+                            .also { event ->
+                                for (consumer in chatManager.eventConsumers()) {
+                                    consumer(event)
+                                }
+                            }
                     },
                     onError = { consumeEvent(ErrorOccurred(it)) }
                 ),
@@ -133,16 +132,26 @@ internal class RoomSubscription(
         }
     }
 
-    private fun ChatManagerEvent.toFutureSuccess() = asSuccess<ChatManagerEvent, Error>().toFuture()
-
-    private fun RoomSubscriptionEvent.toChatManagerEvent(): Future<Result<ChatManagerEvent, Error>> = when (this) {
-        is UserStartedTyping -> chatManager.roomService.fetchRoomBy(user.id, roomId).flatMapResult { room ->
-            ChatManagerEvent.UserStartedTyping(user, room).asSuccess<ChatManagerEvent, Error>()
+    private fun RoomSubscriptionEvent.toChatManagerEvent(): ChatManagerEvent = when (this) {
+        is UserStartedTyping -> {
+            val roomResult = chatManager.roomService.fetchRoomBy(user.id, roomId).get()
+            when (roomResult) {
+                is Result.Success -> {
+                    ChatManagerEvent.UserStartedTyping(user, roomResult.value)
+                }
+                is Result.Failure -> ChatManagerEvent.ErrorOccurred(roomResult.error)
+            }
         }
-        is UserStoppedTyping -> chatManager.roomService.fetchRoomBy(user.id, roomId).flatMapResult { room ->
-            ChatManagerEvent.UserStoppedTyping(user, room).asSuccess<ChatManagerEvent, Error>()
+        is UserStoppedTyping -> {
+            val roomResult = chatManager.roomService.fetchRoomBy(user.id, roomId).get()
+            when (roomResult) {
+                is Result.Success -> {
+                    ChatManagerEvent.UserStoppedTyping(user, roomResult.value)
+                }
+                is Result.Failure -> ChatManagerEvent.ErrorOccurred(roomResult.error)
+            }
         }
-        else -> ChatManagerEvent.NoEvent.toFutureSuccess()
+        else -> ChatManagerEvent.NoEvent
     }
 
     override fun unsubscribe() {
@@ -164,7 +173,11 @@ internal class RoomSubscription(
         private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
             Thread.sleep(1_500)
             chatManager.userService.fetchUserBy(userId).mapResult { user ->
-                consumeEvent(RoomSubscriptionEvent.UserStoppedTyping(user))
+                val event = RoomSubscriptionEvent.UserStoppedTyping(user)
+                consumeEvent(event)
+                for (consumer in chatManager.eventConsumers()) {
+                    consumer(event.toChatManagerEvent())
+                }
             }.wait().recover { RoomSubscriptionEvent.ErrorOccurred(it) }
         }
 
