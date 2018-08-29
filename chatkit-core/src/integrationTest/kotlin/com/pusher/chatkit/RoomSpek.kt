@@ -27,7 +27,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
 class RoomSpek : Spek({
-
+    beforeEachTest(::tearDownInstance)
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
@@ -207,6 +207,7 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            pusherino.subscribeToRoom(pusherino.generalRoom) { }
 
             val users = pusherino.usersForRoom(pusherino.generalRoom).wait().assumeSuccess()
 

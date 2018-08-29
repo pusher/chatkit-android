@@ -11,8 +11,8 @@ import elements.Error
  */
 data class ChatManagerListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
-    val onUserStartedTyping: (User, Room) -> Unit = { _, _ -> },
-    val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
+    val onUserStartedTyping: (User, Room) -> Unit = {_, _ -> },
+    val onUserStoppedTyping: (User, Room) -> Unit = {_, _ -> },
     val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
     val onUserCameOnline: (User) -> Unit = { },
@@ -56,10 +56,10 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
  * Same as [ChatManagerListeners] but using events instead of individual listeners.
  */
 sealed class ChatManagerEvent {
-
     data class CurrentUserReceived internal constructor(val currentUser: CurrentUser) : ChatManagerEvent()
-    data class UserStartedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-    data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
+    data class UserIsTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
+    data class UserStartedTyping internal constructor(val user: User, val room: Room): ChatManagerEvent()
+    data class UserStoppedTyping internal constructor(val user: User, val room: Room): ChatManagerEvent()
     data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserCameOnline internal constructor(val user: User) : ChatManagerEvent()

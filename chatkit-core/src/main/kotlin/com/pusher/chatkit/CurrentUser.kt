@@ -6,11 +6,13 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.*
 import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
 import elements.Subscription
+import kotlinx.coroutines.experimental.runBlocking
 import java.util.concurrent.Future
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
@@ -23,13 +25,12 @@ class CurrentUser(
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
-        .filter { it.memberUserIds.contains(id) }
     val users: Future<Result<List<User>, Error>>
         get() = rooms
         .flatMap { it.memberUserIds }
         .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
 
-    private val roomSubscriptions = mutableMapOf<Int, Subscription>()
+    private val roomSubscriptions = mutableMapOf<Int, ChatkitSubscription>()
 
     fun isSubscribedToRoom(roomId: Int): Boolean =
         roomSubscriptions.containsKey(roomId)
@@ -106,7 +107,7 @@ class CurrentUser(
         room: Room,
         listeners: RoomSubscriptionListeners,
         messageLimit : Int = 10
-    ): Subscription =
+    ): ChatkitSubscription =
         subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
@@ -114,7 +115,7 @@ class CurrentUser(
         roomId: Int,
         listeners: RoomSubscriptionListeners,
         messageLimit : Int = 10
-    ): Subscription =
+    ): ChatkitSubscription =
         subscribeToRoom(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
@@ -122,7 +123,7 @@ class CurrentUser(
         room: Room,
         messageLimit : Int = 10,
         consumer: RoomSubscriptionConsumer
-    ): Subscription =
+    ): ChatkitSubscription =
         subscribeToRoom(room.id, messageLimit, consumer)
 
     @JvmOverloads
@@ -130,12 +131,18 @@ class CurrentUser(
         roomId: Int,
         messageLimit : Int = 10,
         consumer: RoomSubscriptionConsumer
-    ): Subscription =
-        chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
-            .autoRemove(roomId)
-            .also { roomSubscriptions += roomId to it }
+    ) = runBlocking {
+            chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
+                .autoRemove(roomId)
+                .also { roomSubscriptions += roomId to it }
+        }
 
-    private fun Subscription.autoRemove(roomId: Int) = object : Subscription {
+
+    private fun Subscription.autoRemove(roomId: Int) = object : ChatkitSubscription {
+        override suspend fun connect(): ChatkitSubscription {
+            return this
+        }
+
         override fun unsubscribe() {
             roomSubscriptions -= roomId
             this@autoRemove.unsubscribe()
@@ -178,8 +185,7 @@ class CurrentUser(
 
     fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> = when {
         canSendTypingEvent() -> chatManager.doPost<Unit>(
-            path ="/rooms/$roomId/events",
-            body = """{ "user_id" : "$id", "name" : "typing_start" }"""
+            path ="/rooms/$roomId/typing_indicators"
         ).also { lastTypingEvent = System.currentTimeMillis() }
         else -> Unit.asSuccess<Unit, Error>().toFuture()
     }

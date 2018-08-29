@@ -5,12 +5,13 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.files.AttachmentBody
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
+import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.UserSubscription
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
@@ -23,9 +24,8 @@ import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import java.util.concurrent.Future
-import java.util.concurrent.SynchronousQueue
-
+import kotlinx.coroutines.experimental.runBlocking
+import java.util.concurrent.*
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -46,6 +46,9 @@ class ChatManager constructor(
     internal val messageService by lazy { MessageService(this) }
     internal val filesService by lazy { FilesService(this) }
     internal val roomService by lazy { RoomService(this) }
+    internal val membershipService by lazy { MembershipService(this) }
+
+    internal fun eventConsumers() = eventConsumers
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
@@ -56,15 +59,13 @@ class ChatManager constructor(
         return futureCurrentUser.get()
     }
 
-    private fun openSubscription() = UserSubscription(
-        userId = userId,
-        chatManager = this,
-        consumeEvent = { event ->
+    private fun openSubscription() = runBlocking {
+        userService.subscribe(userId, this@ChatManager) { event ->
             for (consumer in eventConsumers) {
                 consumer(event)
             }
         }
-    )
+    }
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {
 
@@ -83,7 +84,6 @@ class ChatManager constructor(
         fun get() = Futures.schedule {
             queue.take().also { waitingForUser = false }
         }
-
     }
 
     fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
@@ -200,7 +200,7 @@ class ChatManager constructor(
 }
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
-    DEFAULT("chatkit"),
+    DEFAULT("chatkit", "v2"),
     CURSORS("chatkit_cursors"),
     PRESENCE("chatkit_presence"),
     FILES("chatkit_files")

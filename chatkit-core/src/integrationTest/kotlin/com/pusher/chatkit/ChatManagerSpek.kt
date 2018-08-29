@@ -29,7 +29,7 @@ import org.jetbrains.spek.api.dsl.it
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
-
+    beforeEachTest(::tearDownInstance)
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
@@ -49,16 +49,17 @@ class ChatManagerSpek : Spek({
 
             val user = chatFor(PUSHERINO).connect().wait()
             val roomNames = user.assumeSuccess().rooms.map { it.name }
-
+            
             assertThat(roomNames).containsExactly(GENERAL)
         }
 
         it("loads users related to current user") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val user = chatFor(PUSHERINO).connect().wait()
-            val users = user.assumeSuccess().users.wait()
+            val user = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            user.rooms.forEach { room -> user.subscribeToRoom(room) { } }
 
+            val users = user.users.wait()
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
             assertThat(relatedUserIds).containsAllOf(ALICE, PUSHERINO)
@@ -174,7 +175,8 @@ class ChatManagerSpek : Spek({
                 onRoomDeleted = { actual += "onRoomDeleted" to it },
                 onRoomUpdated = { actual += "onRoomUpdated" to it },
                 onUserCameOnline = { actual += "onUserCameOnline" to it },
-                onUserStartedTyping = { actual += "onUserStartedTyping" to it },
+                onUserStartedTyping = { actual += "onUserStartedTyping" to it},
+                onUserStoppedTyping = { actual += "onUserStoppedTyping" to it},
                 onUserWentOffline = { actual += "onUserWentOffline" to it },
                 onNewMessage = { actual += "onNewMessage" to it },
                 onUserJoined = { actual += "onUserJoined" to it },
@@ -182,6 +184,7 @@ class ChatManagerSpek : Spek({
             ).toCallback()
 
             consume(RoomSubscriptionEvent.UserStartedTyping(user))
+            consume(RoomSubscriptionEvent.UserStoppedTyping(user))
             consume(RoomSubscriptionEvent.UserJoined(user))
             consume(RoomSubscriptionEvent.UserLeft(user))
             consume(RoomSubscriptionEvent.UserCameOnline(user))
@@ -194,6 +197,7 @@ class ChatManagerSpek : Spek({
 
             assertThat(actual).containsExactly(
                 "onUserStartedTyping" to user,
+                "onUserStoppedTyping" to user,
                 "onUserJoined" to user,
                 "onUserLeft" to user,
                 "onUserCameOnline" to user,

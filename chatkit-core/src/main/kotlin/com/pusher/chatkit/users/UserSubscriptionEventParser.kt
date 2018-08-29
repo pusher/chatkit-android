@@ -39,7 +39,6 @@ internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> 
         "room_deleted" -> parseAs<RoomDeletedEvent>()
         "user_joined" -> parseAs<JoinedRoomEvent>()
         "user_left" -> parseAs<LeftRoomEvent>()
-        "typing_start" -> parseAs<StartedTyping>()
         else -> Errors.other("Invalid event name: $eventName").asFailure()
     }.map { it } // Generics -_-
 

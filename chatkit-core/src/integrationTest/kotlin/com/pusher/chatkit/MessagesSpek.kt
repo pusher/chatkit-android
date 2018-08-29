@@ -25,7 +25,7 @@ import org.jetbrains.spek.api.dsl.it
 import java.io.File
 
 class MessagesSpek : Spek({
-
+    beforeEachTest(::tearDownInstance)
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 

@@ -17,7 +17,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
 class UserTypingSpek : Spek({
-
+    beforeEachTest(::tearDownInstance)
     afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
@@ -49,7 +49,7 @@ class UserTypingSpek : Spek({
             val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStoppedTyping) stoppedTypingUser = event.user
+                if (event is RoomSubscriptionEvent.UserStartedTyping) stoppedTypingUser = event.user
             }
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
@@ -63,9 +63,11 @@ class UserTypingSpek : Spek({
             var startedTypingUser by FutureValue<User>()
 
             val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            chatFor(Users.ALICE).connect { event ->
+            val alice = chatFor(Users.ALICE).connect { event ->
                 if (event is ChatManagerEvent.UserStartedTyping) startedTypingUser = event.user
             }.wait().assumeSuccess()
+
+            alice.subscribeToRoom(pusherino.generalRoom) {}
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
 
@@ -78,9 +80,11 @@ class UserTypingSpek : Spek({
             var stoppedTypingUser by FutureValue<User>()
 
             val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            chatFor(Users.ALICE).connect { event ->
+            val alice = chatFor(Users.ALICE).connect { event ->
                 if (event is ChatManagerEvent.UserStoppedTyping) stoppedTypingUser = event.user
             }.wait().assumeSuccess()
+
+            alice.subscribeToRoom(pusherino.generalRoom) {}
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
 
