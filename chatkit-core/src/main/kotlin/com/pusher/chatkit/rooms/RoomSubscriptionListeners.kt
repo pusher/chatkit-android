@@ -1,7 +1,7 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.Message as ChatkitMessage
 import com.pusher.chatkit.users.User
 import elements.Error
 
@@ -9,7 +9,7 @@ import elements.Error
  * Used in [com.pusher.chatkit.CurrentUser] to register for room events.
  */
 data class RoomSubscriptionListeners @JvmOverloads constructor(
-    val onNewMessage: (Message) -> Unit = {},
+    val onMessage: (ChatkitMessage) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = {},
     val onUserStoppedTyping: (User) -> Unit = {},
     val onUserJoined: (User) -> Unit = {},
@@ -32,7 +32,7 @@ typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
  */
 internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = { event ->
     when(event) {
-        is RoomSubscriptionEvent.NewMessage -> onNewMessage(event.message)
+        is RoomSubscriptionEvent.Message -> onMessage(event.message)
         is RoomSubscriptionEvent.UserStartedTyping -> onUserStartedTyping(event.user)
         is RoomSubscriptionEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
         is RoomSubscriptionEvent.UserJoined -> onUserJoined(event.user)
@@ -50,7 +50,7 @@ internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = 
  * Same as [RoomSubscriptionListeners] but using events instead of individual listeners.
  */
 sealed class RoomSubscriptionEvent {
-    data class NewMessage(val message: Message) : RoomSubscriptionEvent()
+    data class Message(val message: ChatkitMessage) : RoomSubscriptionEvent()
     data class UserStartedTyping(val user: User) : RoomSubscriptionEvent()
     data class UserStoppedTyping(val user: User) : RoomSubscriptionEvent()
     data class UserJoined(val user: User) : RoomSubscriptionEvent()

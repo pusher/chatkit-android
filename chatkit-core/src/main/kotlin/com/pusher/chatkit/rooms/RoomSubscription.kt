@@ -64,11 +64,11 @@ internal class RoomSubscription(
     private fun User.isInRoom() = chatManager.roomService.fetchRoomBy(id, roomId).mapResult { true }.wait().recover { false }
 
     private fun ChatEvent.toRoomEvent() : RoomSubscriptionEvent = when(eventName) {
-        "new_message" -> data.toNewMessage()
+        "new_message" -> data.toMessage()
         else -> ErrorOccurred(Errors.other("Wrong event type: $eventName")).asSuccess<RoomSubscriptionEvent, Error>()
     }.recover { error -> ErrorOccurred(error) }
 
-    private fun JsonElement.toNewMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
+    private fun JsonElement.toMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
         .map { message ->
             if (message.attachment != null) {
                 val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&") ?: emptyList())
@@ -83,7 +83,7 @@ internal class RoomSubscription(
                     onFailure = {},
                     onSuccess = { message.user = it }
             )
-            NewMessage(message)
+            Message(message)
 
         }
 

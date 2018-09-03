@@ -489,7 +489,7 @@ Using `RoomSubscriptionListeners`:
 currentUser.subscribeToRoom(
   roomId = someroomId,
   listeners = Roomsubscription(
-    onNewMessage = { message -> toast("${message.userId} says: ${message.text}") },
+    onMessage = { message -> toast("${message.userId} says: ${message.text}") },
     onErrorOccurred = { error -> toast("Oops something bad happened: $error") }
   ),
   messageLimit = 10 // Optional, 10 by default
@@ -504,7 +504,7 @@ currentUser.subscribeToRoom(
     messageLimit = 10 // Optional, 10 by default
 ) { event ->
   when(event) {
-    is NewMessage -> toast("${event.message.userId} says: ${event.message.text}")
+    is Message -> toast("${event.message.userId} says: ${event.message.text}")
     is ErrorOccurred -> toast("Oops something bad happened: ${event.error}")
   }
 }
@@ -512,7 +512,7 @@ currentUser.subscribeToRoom(
 
 **Note:** Subscribing implicitly joins a room if you aren’t already a member. Subscribing to the same room twice will cause the existing subscription to be cancelled and replaced by the new one.
 
-By default when you subscribe to a room you will receive up to the 10 most recent messages that have been added to the room. The number of recent messages to fetch can be configured by setting the `messageLimit` parameter`. These recent messages will be passed to the `onNewMessage` callback (or as `NewMessage` event) in the order they were sent, just as if they were being sent for the first time.
+By default when you subscribe to a room you will receive up to the 10 most recent messages that have been added to the room. The number of recent messages to fetch can be configured by setting the `messageLimit` parameter`. These recent messages will be passed to the `onMessage` callback (or as `Message` event) in the order they were sent, just as if they were being sent for the first time.
 
 ### Room subscription events
 
@@ -520,7 +520,7 @@ This is the full list of available events from a room subscription:
 
  | Event             | Properties   | Description                                           |
  |-------------------|--------------|-------------------------------------------------------|
- | NewMessage        | Message      | A new message has been added to the room.             |
+ | Message        | Message      | A new message has been added to the room.             |
  | UserStartedTyping | User         | User has started typing                               |
  | UserStoppedTyping | User         | User has stopped typing                               |
  | UserJoined        | Int (userId) | User has joined the room                              |
