@@ -20,7 +20,7 @@ internal class ResolvableSubscription<A>(
 ): ChatkitSubscription {
     private lateinit var subscription: Subscription
 
-    override suspend fun connect(): ChatkitSubscription {
+    override fun connect(): ChatkitSubscription {
         val latch = CountDownLatch(1)
         subscription = chatManager.subscribeResuming(
             path = this@ResolvableSubscription.path,
@@ -57,6 +57,7 @@ internal class ResolvableSubscription<A>(
     }
 
     override fun unsubscribe() {
+        chatManager.dependencies.logger.verbose("Unsubscribing $this")
         this.subscription.unsubscribe()
     }
 }

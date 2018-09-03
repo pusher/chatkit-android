@@ -12,7 +12,6 @@ import com.pusher.platform.network.toFuture
 import com.pusher.util.*
 import elements.Error
 import elements.Subscription
-import kotlinx.coroutines.experimental.runBlocking
 import java.util.concurrent.Future
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
@@ -131,15 +130,14 @@ class CurrentUser(
         roomId: Int,
         messageLimit : Int = 10,
         consumer: RoomSubscriptionConsumer
-    ) = runBlocking {
-            chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
-                .autoRemove(roomId)
-                .also { roomSubscriptions += roomId to it }
-        }
+    ) = chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
+            .autoRemove(roomId)
+            .also { roomSubscriptions += roomId to it }
+
 
 
     private fun Subscription.autoRemove(roomId: Int) = object : ChatkitSubscription {
-        override suspend fun connect(): ChatkitSubscription {
+        override fun connect(): ChatkitSubscription {
             return this
         }
 

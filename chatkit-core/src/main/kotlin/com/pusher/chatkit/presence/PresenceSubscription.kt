@@ -12,7 +12,6 @@ import com.pusher.util.asFailure
 import com.pusher.util.mapResult
 import elements.Errors
 import elements.Subscription
-import kotlinx.coroutines.experimental.async
 import java.util.concurrent.Future
 
 internal class PresenceSubscription(
@@ -23,7 +22,7 @@ internal class PresenceSubscription(
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
-    override suspend fun connect(): ChatkitSubscription {
+    override fun connect(): ChatkitSubscription {
         subscription = ResolvableSubscription(
             path = "/users/$userId/presence",
             listeners = SubscriptionListeners<ChatEvent>(

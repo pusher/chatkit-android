@@ -23,7 +23,7 @@ internal class CursorSubscription(
     private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
-    override suspend fun connect(): ChatkitSubscription{
+    override fun connect(): ChatkitSubscription{
         subscription = ResolvableSubscription(
             path = path,
             listeners = SubscriptionListeners<ChatEvent>(
