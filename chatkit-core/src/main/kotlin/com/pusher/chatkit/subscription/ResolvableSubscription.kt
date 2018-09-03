@@ -57,7 +57,6 @@ internal class ResolvableSubscription<A>(
     }
 
     override fun unsubscribe() {
-        chatManager.dependencies.logger.verbose("Unsubscribing $this")
         this.subscription.unsubscribe()
     }
 }

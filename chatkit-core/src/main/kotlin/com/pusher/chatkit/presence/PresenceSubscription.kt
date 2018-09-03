@@ -40,7 +40,8 @@ internal class PresenceSubscription(
                         consumeEvent(presEventFuture.wait())
                     }
                 },
-                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) }
+                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) },
+                onEnd = { error -> logger.verbose("[Presence] Subscription ended with: $error") }
             ),
             chatManager = chatManager,
             messageParser = { it.parseAs() },
