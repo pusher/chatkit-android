@@ -5,9 +5,7 @@ import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.CurrentUser
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.cursors.CursorSubscription
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
@@ -19,7 +17,6 @@ import java.lang.Thread.sleep
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.SECONDS
 import com.pusher.chatkit.users.UserSubscriptionEvent.*
-import kotlinx.coroutines.experimental.async
 
 private const val USERS_PATH = "users"
 
@@ -37,8 +34,8 @@ internal class UserSubscription(
     private lateinit var presenceSubscription: Subscription
     private lateinit var cursorSubscription: Subscription
 
-    override suspend fun connect(): ChatkitSubscription {
-        val deferredUserSubscription = async {
+    override fun connect(): ChatkitSubscription {
+        val deferredUserSubscription = Futures.schedule {
             ResolvableSubscription(
                 path = USERS_PATH,
                 listeners = SubscriptionListeners(
@@ -67,11 +64,11 @@ internal class UserSubscription(
             ).connect()
         }
 
-        val deferredPresenceSubscription = async {
+        val deferredPresenceSubscription = Futures.schedule {
             chatManager.presenceService.subscribe(userId, consumeEvent)
         }
 
-        val deferredCursorSubscription = async {
+        val deferredCursorSubscription = Futures.schedule {
             chatManager.cursorService.subscribeForUser(userId) { event ->
                 when(event) {
                     is CursorSubscriptionEvent.OnCursorSet ->
@@ -80,9 +77,9 @@ internal class UserSubscription(
             }
         }
 
-        cursorSubscription = deferredCursorSubscription.await()
-        userSubscription = deferredUserSubscription.await()
-        presenceSubscription = deferredPresenceSubscription.await()
+        cursorSubscription = deferredCursorSubscription.wait()
+        userSubscription = deferredUserSubscription.wait()
+        presenceSubscription = deferredPresenceSubscription.wait()
 
         return this
     }

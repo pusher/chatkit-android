@@ -10,7 +10,6 @@ import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -24,7 +23,6 @@ import com.pusher.util.asSuccess
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import kotlinx.coroutines.experimental.runBlocking
 import java.util.concurrent.*
 
 class ChatManager constructor(
@@ -57,12 +55,10 @@ class ChatManager constructor(
         return futureCurrentUser.get()
     }
 
-    private fun openSubscription() = runBlocking {
-        userService.subscribe(userId, this@ChatManager) { event ->
+    private fun openSubscription() =userService.subscribe(userId, this@ChatManager) { event ->
             for (consumer in eventConsumers) {
                 consumer(event)
             }
-        }
     }
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {

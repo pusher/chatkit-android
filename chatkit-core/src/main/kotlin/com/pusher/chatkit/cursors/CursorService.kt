@@ -3,7 +3,6 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType.*
-import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
@@ -15,7 +14,6 @@ import com.pusher.util.mapResult
 import com.pusher.platform.network.toFuture
 import elements.Error
 import elements.Errors
-import kotlinx.coroutines.experimental.runBlocking
 import java.util.concurrent.Future
 
 internal class CursorService(private val chatManager: ChatManager) {
@@ -61,24 +59,21 @@ internal class CursorService(private val chatManager: ChatManager) {
     }
 
     fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
-        runBlocking {
-            CursorSubscription(
-                "/cursors/0/rooms/$roomId",
-                chatManager,
-                cursorsStore,
-                consumeEvent
-            ).connect()
-        }
+        CursorSubscription(
+            "/cursors/0/rooms/$roomId",
+            chatManager,
+            cursorsStore,
+            consumeEvent
+        ).connect()
 
     fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
-        runBlocking {
-            CursorSubscription(
-                "/cursors/0/users/$userId",
-                chatManager,
-                cursorsStore,
-                consumeEvent
-            ).connect()
-        }
+        CursorSubscription(
+            "/cursors/0/users/$userId",
+            chatManager,
+            cursorsStore,
+            consumeEvent
+        ).connect()
+
 
     fun request(userId: String): Future<Result<List<Cursor>, Error>> = chatManager.doGet(
         "/cursors/0/users/$userId",

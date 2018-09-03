@@ -10,6 +10,7 @@ import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.network.Futures
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
@@ -17,7 +18,6 @@ import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import kotlinx.coroutines.experimental.async
 import java.net.URL
 
 internal class RoomSubscription(
@@ -37,8 +37,8 @@ internal class RoomSubscription(
         chatManager.observerEvents { if (active) it.consume() }
     }
 
-    override suspend fun connect(): ChatkitSubscription {
-        val deferredRoomSubscription = async {
+    override fun connect(): ChatkitSubscription {
+        val deferredRoomSubscription = Futures.schedule {
             ResolvableSubscription(
                 path = "/rooms/$roomId?&message_limit=$messageLimit",
                 listeners = SubscriptionListeners<ChatEvent>(
@@ -53,7 +53,7 @@ internal class RoomSubscription(
             ).connect()
         }
 
-        val deferredMembershipSubscription = async {
+        val deferredMembershipSubscription = Futures.schedule {
             chatManager.membershipService.subscribe(roomId) { event ->
                 when (event) {
                     is ChatManagerEvent.UserJoinedRoom -> consumeEvent(RoomSubscriptionEvent.UserJoined(event.user))
@@ -62,7 +62,7 @@ internal class RoomSubscription(
             }
         }
 
-        val deferredCursorSubscription = async {
+        val deferredCursorSubscription = Futures.schedule {
             chatManager.cursorService.subscribeForRoom(roomId) { event ->
                 when (event) {
                     is CursorSubscriptionEvent.OnCursorSet -> consumeEvent(RoomSubscriptionEvent.NewReadCursor(event.cursor))
@@ -71,9 +71,9 @@ internal class RoomSubscription(
             }
         }
 
-        roomSubscription = deferredRoomSubscription.await()
-        membershipSubscription = deferredMembershipSubscription.await()
-        cursorSubscription = deferredCursorSubscription.await()
+        roomSubscription = deferredRoomSubscription.wait()
+        membershipSubscription = deferredMembershipSubscription.wait()
+        cursorSubscription = deferredCursorSubscription.wait()
 
         return this
     }

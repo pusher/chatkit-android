@@ -30,7 +30,7 @@ internal class MembershipSubscription(
     private val roomStore = chatManager.roomService.roomStore
     private lateinit var subscription: Subscription
 
-    override suspend fun connect(): ChatkitSubscription {
+    override fun connect(): ChatkitSubscription {
         subscription = ResolvableSubscription(
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
