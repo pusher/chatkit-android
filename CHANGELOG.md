@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.2.4...HEAD)
 
+### Changed
+
+- Renamed `onNewMessage` `RoomSubscriptionListeners` function to `onMessage` to make it clearer that it is the function that gets called when a new message is received over the room subscription, which includes historical messages upon initial subscription success
+- Renamed the `NewMessage` `RoomSubscriptionEvent` to `Message`, for the same reasons as the point above
+
 ## [0.2.4](https://github.com/pusher/chatkit-android/compare/0.2.3...0.2.4) - 2018-07-27
 
 ### Fixed
