@@ -2,6 +2,7 @@ package com.pusher.chatkit.subscription
 
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType
+import com.pusher.chatkit.PlatformClient
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.DataParser
 import elements.Subscription
@@ -12,18 +13,17 @@ import java.util.concurrent.CountDownLatch
 // on receiving the first event on the subscription
 internal class ResolvableSubscription<A>(
     private val path: String,
-    private val chatManager: ChatManager,
+    private val client: PlatformClient,
     private val listeners: SubscriptionListeners<A>,
     private val messageParser: DataParser<A>,
-    private val resolveOnFirstEvent: Boolean = false,
-    private val instanceType: InstanceType = InstanceType.DEFAULT
+    private val resolveOnFirstEvent: Boolean = false
 ): ChatkitSubscription {
     private lateinit var subscription: Subscription
 
     override fun connect(): ChatkitSubscription {
         val latch = CountDownLatch(1)
-        subscription = chatManager.subscribeResuming(
-            path = this@ResolvableSubscription.path,
+        subscription = client.subscribeResuming(
+            path = this.path,
             listeners = SubscriptionListeners(
                 onOpen = { headers ->
                     if (!resolveOnFirstEvent) {
@@ -48,8 +48,7 @@ internal class ResolvableSubscription<A>(
                 onSubscribe = listeners.onSubscribe,
                 onRetrying = listeners.onRetrying
             ),
-            messageParser = messageParser,
-            instanceType = instanceType
+            messageParser = messageParser
         )
         latch.await()
 

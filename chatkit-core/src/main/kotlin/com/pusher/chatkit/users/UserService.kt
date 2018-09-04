@@ -3,7 +3,12 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.HasChat
+import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.presence.PresenceService
+import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.util.toJson
+import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.map
 import com.pusher.platform.network.toFuture
@@ -17,19 +22,27 @@ import java.net.URLEncoder
 import java.util.concurrent.Future
 
 internal class UserService(
-    override val chatManager: ChatManager
-) : HasChat {
-
+        private val client: PlatformClient,
+        private val roomService: RoomService,
+        private val userService: UserService,
+        private val cursorService: CursorService,
+        private val presenceService: PresenceService,
+        private val logger: Logger
+) {
     private val userStore by lazy { UserStore() }
 
     fun subscribe(
         userId: String,
-        chatManager: ChatManager,
         consumeEvent: (ChatManagerEvent) -> Unit
     ) = UserSubscription(
             userId,
-            chatManager,
-            consumeEvent
+            client,
+            roomService,
+            userService,
+            cursorService,
+            presenceService,
+            consumeEvent,
+            logger
         ).connect()
 
     fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {
@@ -42,7 +55,7 @@ internal class UserService(
 
         return when {
             missingUserIds.isEmpty() -> Futures.now(localUsers.asSuccess())
-            else -> chatManager.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
+            else -> client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
                 .map { usersResult ->
                     usersResult.map { loadedUsers ->
                         userStore += loadedUsers
@@ -62,13 +75,13 @@ internal class UserService(
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
         UserIdsWrapper(userIds).toJson().toFuture()
             .flatMapFutureResult { body ->
-                chatManager.doPut<Unit>("/rooms/$roomId/users/add", body)
+                client.doPut<Unit>("/rooms/$roomId/users/add", body)
             }
 
     fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
         UserIdsWrapper(userIds).toJson().toFuture()
             .flatMapFutureResult { body ->
-                chatManager.doPut<Unit>("/rooms/$roomId/users/remove", body)
+                client.doPut<Unit>("/rooms/$roomId/users/remove", body)
             }
 
     internal data class UserIdsWrapper(val userIds: List<String>)
