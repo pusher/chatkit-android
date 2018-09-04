@@ -3,9 +3,6 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.ChatManagerEvent.CurrentUserRemovedFromRoom
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.subscription.ChatkitSubscription
@@ -26,20 +23,14 @@ import java.util.concurrent.Future
 private const val USERS_PATH = "users"
 
 internal class UserSubscription(
-    private val userId: String,
     private val client: PlatformClient,
     private val roomService: RoomService,
-    private val userService: UserService,
-    private val cursorService: CursorService,
-    private val presenceService: PresenceService,
     private val consumeEvent: (UserSubscriptionEvent) -> Unit,
     private val logger: Logger
 ) : ChatkitSubscription {
     private var headers: Headers = emptyHeaders()
 
-    private lateinit var userSubscription: Subscription
-    private lateinit var presenceSubscription: Subscription
-    private lateinit var cursorSubscription: Subscription
+    private lateinit var underlyingSubscription: Subscription
 
     override fun connect(): ChatkitSubscription {
         val deferredUserSubscription = Futures.schedule {
@@ -67,30 +58,13 @@ internal class UserSubscription(
             ).connect()
         }
 
-        val deferredPresenceSubscription = Futures.schedule {
-            presenceService.subscribe(userId, consumeEvent)
-        }
-
-        val deferredCursorSubscription = Futures.schedule {
-            cursorService.subscribeForUser(userId) { event ->
-                when(event) {
-                    is CursorSubscriptionEvent.OnCursorSet ->
-                        consumeEvent(ChatManagerEvent.NewReadCursor(event.cursor))
-                }
-            }
-        }
-
-        cursorSubscription = deferredCursorSubscription.wait()
-        userSubscription = deferredUserSubscription.wait()
-        presenceSubscription = deferredPresenceSubscription.wait()
+        underlyingSubscription = deferredUserSubscription.wait()
 
         return this
     }
 
     override fun unsubscribe() {
-        userSubscription.unsubscribe()
-        cursorSubscription.unsubscribe()
-        presenceSubscription.unsubscribe()
+        underlyingSubscription.unsubscribe()
     }
 
     private fun UserSubscriptionEvent.applySideEffects(): UserSubscriptionEvent = this.apply {

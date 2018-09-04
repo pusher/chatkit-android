@@ -1,21 +1,20 @@
 package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
-import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.InstanceType.*
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.flatMap
+import com.pusher.platform.network.toFuture
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
-import com.pusher.platform.network.toFuture
 import elements.Error
 import elements.Errors
+import elements.Subscription
 import java.util.concurrent.Future
 
 internal class CursorService(
@@ -23,24 +22,27 @@ internal class CursorService(
         private val logger: Logger
 ) {
     private val cursorsStore = CursorsStore()
+    private val subscriptions = mutableListOf<Subscription>()
 
     fun setReadCursor(
         userId: String,
         roomId: Int,
         position: Int
-    ): Future<Result<Unit, Error>> = setReadCursorThrottler.throttle(RequestOptions(
-        method = "PUT",
-        path = "/cursors/0/rooms/$roomId/users/$userId",
-        body = """{ "position" : $position }"""
-    ))
-    .flatMap { it }
-    .mapResult {
-        cursorsStore[userId] += Cursor(
-            userId = userId,
-            roomId = roomId,
-            position = position
-        )
-    }
+    ): Future<Result<Unit, Error>> =
+            setReadCursorThrottler.throttle(
+                RequestOptions(
+                    method = "PUT",
+                    path = "/cursors/0/rooms/$roomId/users/$userId",
+                    body = """{ "position" : $position }"""
+                )
+            ).flatMap { it }
+            .mapResult {
+                cursorsStore[userId] += Cursor(
+                        userId = userId,
+                        roomId = roomId,
+                        position = position
+                )
+            }
 
     private val setReadCursorThrottler = Throttler { options: RequestOptions ->
         client.doRequest<JsonElement>(
@@ -69,7 +71,7 @@ internal class CursorService(
             cursorsStore,
             consumeEvent,
             logger
-        ).connect()
+        ).also { subscriptions.add(it) }.connect()
 
     fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         CursorSubscription(
@@ -78,10 +80,12 @@ internal class CursorService(
             cursorsStore,
             consumeEvent,
             logger
-        ).connect()
+        ).also { subscriptions.add(it) }.connect()
 
     fun request(userId: String): Future<Result<List<Cursor>, Error>> = client.doGet(
         "/cursors/0/users/$userId",
         responseParser = { it.parseAs<List<Cursor>>() }
     )
+
+    fun unsubscribe() = subscriptions.forEach { sub -> sub.unsubscribe() }
 }

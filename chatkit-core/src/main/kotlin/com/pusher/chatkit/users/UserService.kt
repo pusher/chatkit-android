@@ -19,27 +19,23 @@ import java.net.URLEncoder
 import java.util.concurrent.Future
 
 internal class UserService(
-        private val client: PlatformClient,
-        private val roomService: RoomService,
-        private val cursorService: CursorService,
-        private val presenceService: PresenceService,
-        private val logger: Logger
-) {
-    private val userStore by lazy { UserStore() }
-
-    fun subscribe(
         userId: String,
-        consumeEvent: (UserSubscriptionEvent) -> Unit
-    ) = UserSubscription(
+        consumeEvent: (UserSubscriptionEvent) -> Unit,
+        private val client: PlatformClient,
+        roomService: RoomService,
+        logger: Logger
+) {
+    private val userStore = UserStore()
+    private val userSubscription = UserSubscription(
             userId,
             client,
             roomService,
-            this,
-            cursorService,
-            presenceService,
             consumeEvent,
             logger
-        ).connect()
+    )
+
+    fun subscribe() = userSubscription.connect()
+    fun unsubscribe() = userSubscription.unsubscribe()
 
     fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {
         val users = userIds.map { id -> getLocalUser(id).orElse { id } }

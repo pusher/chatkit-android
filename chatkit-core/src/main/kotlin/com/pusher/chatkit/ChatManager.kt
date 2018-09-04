@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
@@ -35,21 +36,29 @@ class ChatManager constructor(
     private val subscriptions = mutableListOf<Subscription>()
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
-    private val cursorService by lazy {
+    internal val cursorService by lazy {
         CursorService(
                 createPlatformClient(InstanceType.CURSORS),
                 dependencies.logger
         )
     }
 
-    private val presenceService by lazy { PresenceService(this) }
+    private val presenceService by lazy {
+        PresenceService(
+                createPlatformClient(InstanceType.PRESENCE),
+                userId,
+                consumeEvent,
+                userService,
+                dependencies.logger
+        )
+    }
 
-    private val userService by lazy {
+    internal val userService by lazy {
         UserService(
+                userId,
+                this::consumeUserSubscriptionEvent,
                 createPlatformClient(InstanceType.DEFAULT),
                 roomService,
-                cursorService,
-                presenceService,
                 dependencies.logger
         )
     }
@@ -63,11 +72,16 @@ class ChatManager constructor(
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
-        val futureCurrentUser = CurrentUserConsumer()
+        val futureCurrentUser = CurrentUserConsumer() // TODO: not sure about this!
         eventConsumers += futureCurrentUser
         eventConsumers += replaceCurrentUser
         eventConsumers += consumer
-        subscriptions += openSubscription()
+
+        // TODO: These each block, but they're supposed to happen in parallel
+        userService.subscribe()
+        presenceService.subscribe()
+        cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
+
         return futureCurrentUser.get()
     }
 
@@ -80,7 +94,7 @@ class ChatManager constructor(
         }
     }
 
-    private fun openSubscription() = userService.subscribe(userId) { event ->
+    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) {
         transformUserSubscriptionEvent(event)
                 .waitOr(Wait.For(10, TimeUnit.SECONDS)) { ChatManagerEvent.ErrorOccurred(Errors.other(it)).asSuccess() }
                 .recover { ChatManagerEvent.ErrorOccurred(it) }
@@ -90,6 +104,22 @@ class ChatManager constructor(
                     }
                 }
     }
+
+    private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) {
+        transformCursorSubscriptionEvent(event).also { chatManagerEvent ->
+            eventConsumers.forEach { consumer ->
+                consumer(chatManagerEvent)
+            }
+        }
+    }
+
+    private fun transformCursorSubscriptionEvent(event: CursorSubscriptionEvent): ChatManagerEvent =
+            when (event) {
+                is CursorSubscriptionEvent.OnCursorSet ->
+                    ChatManagerEvent.NewReadCursor(event.cursor)
+                else ->
+                    ChatManagerEvent.NoEvent
+            }
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): Future<Result<ChatManagerEvent, Error>> =
             when (event) {
@@ -175,6 +205,9 @@ class ChatManager constructor(
         for (sub in subscriptions) {
             sub.unsubscribe()
         }
+        userService.unsubscribe()
+        presenceService.unsubscribe()
+        cursorService.unsubscribe()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
         Unit.asSuccess()
