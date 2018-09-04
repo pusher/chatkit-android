@@ -1,10 +1,15 @@
 package com.pusher.chatkit.presence
 
-import com.pusher.chatkit.*
+import com.pusher.chatkit.ChatEvent
+import com.pusher.chatkit.ChatManagerEvent
+import com.pusher.chatkit.ChatManagerEventConsumer
+import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.map
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.wait
@@ -15,15 +20,18 @@ import elements.Subscription
 import java.util.concurrent.Future
 
 internal class PresenceSubscription(
+    private val client: PlatformClient,
     private val userId: String,
-    private val chatManager: ChatManager,
-    private val consumeEvent: ChatManagerEventConsumer): ChatkitSubscription {
+    private val consumeEvent: ChatManagerEventConsumer,
+    private val userService: UserService,
+    private val logger: Logger
+): ChatkitSubscription {
     private var active = false
-    private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
     override fun connect(): ChatkitSubscription {
         subscription = ResolvableSubscription(
+            client = client,
             path = "/users/$userId/presence",
             listeners = SubscriptionListeners<ChatEvent>(
                 onOpen = { headers ->
@@ -43,10 +51,8 @@ internal class PresenceSubscription(
                 onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) },
                 onEnd = { error -> logger.verbose("[Presence] Subscription ended with: $error") }
             ),
-            chatManager = chatManager,
             messageParser = { it.parseAs() },
-            resolveOnFirstEvent = true,
-            instanceType = InstanceType.PRESENCE
+            resolveOnFirstEvent = true
         ).connect()
 
         return this
@@ -59,7 +65,7 @@ internal class PresenceSubscription(
     }
 
     private fun eventForPresence(userId: String, presence: Presence): Future<ChatManagerEvent> =
-        chatManager.userService.fetchUserBy(userId)
+        userService.fetchUserBy(userId)
             .mapResult { user ->
                 user.takeIf { it.presence != presence }
                     ?.also { it.presence = presence }
