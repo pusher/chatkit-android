@@ -30,7 +30,6 @@ class ChatManager constructor(
     private val userId: String,
     internal val dependencies: ChatkitDependencies
 ) {
-
     val tokenProvider: TokenProvider = DebounceTokenProvider(
         dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
     )
@@ -55,14 +54,13 @@ class ChatManager constructor(
         return futureCurrentUser.get()
     }
 
-    private fun openSubscription() =userService.subscribe(userId, this@ChatManager) { event ->
-            for (consumer in eventConsumers) {
-                consumer(event)
-            }
+    private fun openSubscription() = userService.subscribe(userId, this@ChatManager) { event ->
+        for (consumer in eventConsumers) {
+            consumer(event)
+        }
     }
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {
-
         val queue = SynchronousQueue<Result<CurrentUser, Error>>()
         var waitingForUser = true
 
@@ -87,76 +85,6 @@ class ChatManager constructor(
     internal fun observerEvents(consumer: ChatManagerEventConsumer) {
         eventConsumers += consumer
     }
-
-    internal inline fun <reified A> doPost(
-        path: String,
-        body: String = "",
-        noinline responseParser: DataParser<A> = { it.parseAs() },
-        instanceType: InstanceType = DEFAULT
-    ): Future<Result<A, Error>> =
-        doRequest("POST", path, body, responseParser, instanceType)
-
-    internal inline fun <reified A> doPut(
-        path: String,
-        body: String = "",
-        noinline responseParser: DataParser<A> = { it.parseAs() },
-        instanceType: InstanceType = DEFAULT
-    ): Future<Result<A, Error>> =
-        doRequest("PUT", path, body, responseParser, instanceType)
-
-    internal inline fun <reified A> doGet(
-        path: String,
-        noinline responseParser: DataParser<A> = { it.parseAs() },
-        instanceType: InstanceType = DEFAULT
-    ): Future<Result<A, Error>> =
-        doRequest("GET", path, null, responseParser, instanceType)
-
-    internal inline fun <reified A> doDelete(
-        path: String,
-        noinline responseParser: DataParser<A> = { it.parseAs() },
-        instanceType: InstanceType = DEFAULT
-    ): Future<Result<A, Error>> =
-        doRequest("DELETE", path, null, responseParser, instanceType)
-
-    private fun <A> doRequest(
-        method: String,
-        path: String,
-        body: String?,
-        responseParser: DataParser<A>,
-        instanceType: InstanceType = DEFAULT
-    ): Future<Result<A, Error>> =
-        platformInstance(instanceType).request(
-            options = RequestOptions(
-                method = method,
-                path = path,
-                body = body
-            ),
-            tokenProvider = tokenProvider,
-            responseParser = responseParser
-        )
-
-    @Suppress("UNCHECKED_CAST")
-    internal fun upload(
-        path: String,
-        attachment: DataAttachment
-    ): Future<Result<AttachmentBody, Error>> = platformInstance(FILES).upload(
-        path = path,
-        file = attachment.file,
-        tokenProvider = tokenProvider,
-        responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
-    )
-
-    internal fun <A> subscribeResuming(
-        path: String,
-        listeners: SubscriptionListeners<A>,
-        messageParser: DataParser<A>,
-        instanceType: InstanceType = DEFAULT
-    ) = platformInstance(instanceType).subscribeResuming(
-        path = path,
-        tokenProvider = tokenProvider,
-        listeners = listeners,
-        messageParser = messageParser
-    ).also { subscriptions += it }
 
     /**
      * Tries to close all pending subscriptions and resources

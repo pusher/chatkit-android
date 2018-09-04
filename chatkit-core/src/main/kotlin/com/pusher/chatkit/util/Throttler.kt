@@ -12,10 +12,9 @@ internal class Throttler<A, B>(
     private val delay: Long = 500,
     private val action: (A) -> B
 ) {
-
     private val target = AtomicReference<A>()
 
-    var future: Future<B>? = null
+    private var future: Future<B>? = null
 
     fun throttle(input: A): Future<B> {
         target.set(input)
@@ -26,5 +25,4 @@ internal class Throttler<A, B>(
         sleep(delay)
         action(target.get())
     }.also { future = it }
-
 }

@@ -3,9 +3,11 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType.*
+import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
+import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.flatMap
 import com.pusher.util.Result
 import com.pusher.util.asFailure
@@ -16,7 +18,10 @@ import elements.Error
 import elements.Errors
 import java.util.concurrent.Future
 
-internal class CursorService(private val chatManager: ChatManager) {
+internal class CursorService(
+        private val client: PlatformClient,
+        private val logger: Logger
+) {
     private val cursorsStore = CursorsStore()
 
     fun setReadCursor(
@@ -38,9 +43,8 @@ internal class CursorService(private val chatManager: ChatManager) {
     }
 
     private val setReadCursorThrottler = Throttler { options: RequestOptions ->
-        chatManager.platformInstance(CURSORS).request<JsonElement>(
+        client.doRequest<JsonElement>(
             options = options,
-            tokenProvider = chatManager.tokenProvider,
             responseParser = { it.parseAs() }
         )
     }
@@ -60,26 +64,24 @@ internal class CursorService(private val chatManager: ChatManager) {
 
     fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         CursorSubscription(
+            client,
             "/cursors/0/rooms/$roomId",
-            chatManager,
             cursorsStore,
-            consumeEvent
+            consumeEvent,
+            logger
         ).connect()
 
     fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
         CursorSubscription(
+            client,
             "/cursors/0/users/$userId",
-            chatManager,
             cursorsStore,
-            consumeEvent
+            consumeEvent,
+            logger
         ).connect()
 
-
-    fun request(userId: String): Future<Result<List<Cursor>, Error>> = chatManager.doGet(
+    fun request(userId: String): Future<Result<List<Cursor>, Error>> = client.doGet(
         "/cursors/0/users/$userId",
-        responseParser = { it.parseAs<List<Cursor>>() },
-        instanceType = CURSORS
+        responseParser = { it.parseAs<List<Cursor>>() }
     )
-
 }
-

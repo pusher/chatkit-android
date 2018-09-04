@@ -3,10 +3,12 @@ package com.pusher.chatkit.cursors
 import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.InstanceType
+import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.logger.Logger
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
@@ -14,17 +16,18 @@ import elements.Subscription
 import elements.SubscriptionEvent
 
 internal class CursorSubscription(
-    private val path: String,
-    private val chatManager: ChatManager,
-    private val cursorsStore: CursorsStore,
-    private val consumeEvent: (CursorSubscriptionEvent) -> Unit
+        private val client: PlatformClient,
+        private val path: String,
+        private val cursorsStore: CursorsStore,
+        private val consumeEvent: (CursorSubscriptionEvent) -> Unit,
+        private val logger: Logger
 ): ChatkitSubscription {
     private var active = false
-    private val logger = chatManager.dependencies.logger
     private lateinit var subscription: Subscription
 
     override fun connect(): ChatkitSubscription{
         subscription = ResolvableSubscription(
+            client = client,
             path = path,
             listeners = SubscriptionListeners<ChatEvent>(
                 onOpen = { headers ->
@@ -48,9 +51,7 @@ internal class CursorSubscription(
                 onRetrying = { logger.verbose("[Cursor] Subscription lost. Trying again.") },
                 onEnd = { error -> logger.verbose("[Cursor] Subscription ended with: $error") }
             ),
-            messageParser = { it.parseAs() },
-            chatManager = chatManager,
-            instanceType = InstanceType.CURSORS
+            messageParser = { it.parseAs() }
         ).connect()
 
         return this
