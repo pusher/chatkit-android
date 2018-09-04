@@ -2,7 +2,6 @@ package com.pusher.chatkit.presence
 
 import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManagerEvent
-import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
@@ -11,18 +10,18 @@ import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.map
-import com.pusher.platform.network.toFuture
-import com.pusher.platform.network.wait
-import com.pusher.util.asFailure
+import com.pusher.util.Result
+import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
-import elements.Errors
+import elements.Error
 import elements.Subscription
+import elements.SubscriptionEvent
 import java.util.concurrent.Future
 
 internal class PresenceSubscription(
     private val client: PlatformClient,
     private val userId: String,
-    private val consumeEvent: ChatManagerEventConsumer,
+    private val consumeEvent: (PresenceSubscriptionEvent) -> Unit,
     private val userService: UserService,
     private val logger: Logger
 ): ChatkitSubscription {
@@ -39,16 +38,9 @@ internal class PresenceSubscription(
                     active = true
                 },
                 onEvent = { event ->
-                    val presenceEventFutures = event.body
-                        .toUserPresences()
-                        .map { presences: List<UserPresence> -> presences.map { eventForPresence(it.userId, it.presence) } }
-                        .recover { error -> listOf((ChatManagerEvent.ErrorOccurred(error) as ChatManagerEvent).toFuture()) }
-
-                    for (presEventFuture in presenceEventFutures) {
-                        consumeEvent(presEventFuture.wait())
-                    }
+                    consumeEvent(event.toPresenceEvent().recover { PresenceSubscriptionEvent.ErrorOccurred(it) })
                 },
-                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) },
+                onError = { error -> consumeEvent(PresenceSubscriptionEvent.ErrorOccurred(error)) },
                 onEnd = { error -> logger.verbose("[Presence] Subscription ended with: $error") }
             ),
             messageParser = { it.parseAs() },
@@ -58,10 +50,11 @@ internal class PresenceSubscription(
         return this
     }
 
-    private fun ChatEvent.toUserPresences() = when (eventName) {
-        "presence_update" -> data.parseAs<UserPresence>().map { listOf(it) }
-        "initial_state", "join_room_presence_update" -> data.parseAs<UserPresences>().map { it.userStates }
-        else -> Errors.network("Not a valid eventName for ChatEvent: $eventName").asFailure()
+    private fun SubscriptionEvent<ChatEvent>.toPresenceEvent(): Result<PresenceSubscriptionEvent, Error> = when (body.eventName) {
+        "presence_update" -> body.data.parseAs<UserPresence>().map { PresenceSubscriptionEvent.PresenceUpdate(it) }
+        "initial_state" -> body.data.parseAs<UserPresences>().map { PresenceSubscriptionEvent.InitialState(it.userStates) }
+        "join_room_presence_update" -> body.data.parseAs<UserPresences>().map { PresenceSubscriptionEvent.JoinedRoom(it.userStates) }
+        else -> PresenceSubscriptionEvent.NoEvent.asSuccess()
     }
 
     private fun eventForPresence(userId: String, presence: Presence): Future<ChatManagerEvent> =
@@ -84,19 +77,6 @@ internal class PresenceSubscription(
         active = false
         subscription.unsubscribe()
     }
-}
-
-private data class UserPresence(
-    private val state: String,
-    val lastSeenAt: String,
-    val userId: String
-) {
-    val presence: Presence
-        get() = when(state) {
-            "online" -> Presence.Online
-            else -> Presence.Offline
-        }
-
 }
 
 private data class UserPresences(val userStates: List<UserPresence>)
