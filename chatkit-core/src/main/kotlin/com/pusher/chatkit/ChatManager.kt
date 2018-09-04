@@ -6,15 +6,14 @@ import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceService
+import com.pusher.chatkit.presence.PresenceSubscriptionEvent
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.platform.Instance
-import com.pusher.platform.network.Futures
-import com.pusher.platform.network.Wait
-import com.pusher.platform.network.toFuture
-import com.pusher.platform.network.waitOr
+import com.pusher.platform.network.*
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
@@ -47,7 +46,7 @@ class ChatManager constructor(
         PresenceService(
                 createPlatformClient(InstanceType.PRESENCE),
                 userId,
-                consumeEvent,
+                this::consumePresenceSubscriptionEvent,
                 userService,
                 dependencies.logger
         )
@@ -112,6 +111,30 @@ class ChatManager constructor(
             }
         }
     }
+
+    private fun consumePresenceSubscriptionEvent(event: PresenceSubscriptionEvent) {
+        transformPresenceSubscriptionEvent(event).also { chatManagerEvent ->
+            eventConsumers.forEach { consumer ->
+                consumer(chatManagerEvent)
+            }
+        }
+    }
+
+    private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): Future<ChatManagerEvent> =
+            userService.fetchUserBy(event.userId)
+                    .mapResult { user ->
+                        user.takeIf { it.presence != event.presence }
+                                ?.also { it.presence = event.presence }
+                                ?.presence
+                                .let { userPresence ->
+                                    when (userPresence) {
+                                        Presence.Online -> ChatManagerEvent.UserCameOnline(user)
+                                        Presence.Offline -> ChatManagerEvent.UserWentOffline(user)
+                                        null -> ChatManagerEvent.NoEvent
+                                    }
+                                }
+                    }
+                    .map { it.recover { error -> ChatManagerEvent.ErrorOccurred(error) } }
 
     private fun transformCursorSubscriptionEvent(event: CursorSubscriptionEvent): ChatManagerEvent =
             when (event) {
