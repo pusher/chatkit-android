@@ -37,7 +37,7 @@ class CurrentUser(
     fun isSubscribedToRoom(room: Room): Boolean =
         isSubscribedToRoom(room.id)
 
-    fun updateWithPropertiesOf(newUser: User) {
+    fun updateWithPropertiesOf(newUser: CurrentUser) {
         name = newUser.name
         customData = newUser.customData
     }

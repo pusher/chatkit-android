@@ -1,8 +1,5 @@
 package com.pusher.chatkit.users
 
-import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.ChatManagerEvent
-import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.presence.PresenceService
@@ -24,7 +21,6 @@ import java.util.concurrent.Future
 internal class UserService(
         private val client: PlatformClient,
         private val roomService: RoomService,
-        private val userService: UserService,
         private val cursorService: CursorService,
         private val presenceService: PresenceService,
         private val logger: Logger
@@ -33,12 +29,12 @@ internal class UserService(
 
     fun subscribe(
         userId: String,
-        consumeEvent: (ChatManagerEvent) -> Unit
+        consumeEvent: (UserSubscriptionEvent) -> Unit
     ) = UserSubscription(
             userId,
             client,
             roomService,
-            userService,
+            this,
             cursorService,
             presenceService,
             consumeEvent,
