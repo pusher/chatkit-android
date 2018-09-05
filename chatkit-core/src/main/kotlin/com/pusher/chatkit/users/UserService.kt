@@ -1,8 +1,6 @@
 package com.pusher.chatkit.users
 
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -27,7 +25,6 @@ internal class UserService(
 ) {
     private val userStore = UserStore()
     private val userSubscription = UserSubscription(
-            userId,
             client,
             roomService,
             consumeEvent,

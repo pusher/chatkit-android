@@ -1,6 +1,5 @@
 package com.pusher.chatkit.presence
 
-import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.users.UserService
 import com.pusher.platform.logger.Logger
@@ -8,7 +7,7 @@ import com.pusher.platform.logger.Logger
 internal class PresenceService(
         client: PlatformClient,
         userId: String,
-        consumeEvent: (ChatManagerEvent) -> Unit,
+        consumeEvent: (PresenceSubscriptionEvent) -> Unit,
         userService: UserService,
         logger: Logger
 ) {
