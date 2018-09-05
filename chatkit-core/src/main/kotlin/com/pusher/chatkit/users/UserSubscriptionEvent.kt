@@ -11,6 +11,5 @@ sealed class UserSubscriptionEvent {
     internal data class LeftRoomEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
     internal data class JoinedRoomEvent(val roomId: Int, val userId: String) : UserSubscriptionEvent()
     internal data class StartedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
-    internal data class StoppedTyping(val userId: String, val roomId: Int) : UserSubscriptionEvent()
     internal data class ErrorOccurred(val error: elements.Error) : UserSubscriptionEvent()
 }
