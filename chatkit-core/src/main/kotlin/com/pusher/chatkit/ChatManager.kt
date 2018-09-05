@@ -1,6 +1,5 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
@@ -15,7 +14,7 @@ import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.platform.Instance
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.Wait
-import com.pusher.platform.network.toFuture
+import com.pusher.platform.network.cancel
 import com.pusher.platform.network.waitOr
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
@@ -96,45 +95,34 @@ class ChatManager constructor(
         }
     }
 
-    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) {
-        transformUserSubscriptionEvent(event)
-                .waitOr(Wait.For(10, TimeUnit.SECONDS)) { ChatManagerEvent.ErrorOccurred(Errors.other(it)).asSuccess() }
-                .recover { ChatManagerEvent.ErrorOccurred(it) }
-                .also { chatManagerEvent ->
-                    eventConsumers.forEach { consumer ->
-                        consumer(chatManagerEvent)
-                    }
-                }
-    }
+    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) =
+            consumeEvents(
+                    applyUserSubscriptionEvent(event).map { transformUserSubscriptionEvent(it) }
+            )
 
-    private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) {
-        transformCursorSubscriptionEvent(event).also { chatManagerEvent ->
+    private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
+            consumeEvents(transformCursorsSubscriptionEvent(event))
+
+    private fun consumePresenceSubscriptionEvent(event: PresenceSubscriptionEvent) =
+            consumeEvents(transformPresenceSubscriptionEvent(event))
+
+    private fun consumeEvents(events : List<ChatManagerEvent>) {
+        events.forEach { event ->
             eventConsumers.forEach { consumer ->
-                consumer(chatManagerEvent)
+                consumer(event)
             }
         }
     }
 
-    private fun consumePresenceSubscriptionEvent(event: PresenceSubscriptionEvent) {
-        transformPresenceSubscriptionEvent(event)
-                .also { chatManagerEvents ->
-                    chatManagerEvents.forEach { chatManagerEvent ->
-                        eventConsumers.forEach { consumer ->
-                            consumer(chatManagerEvent)
-                        }
-                    }
-                }
-    }
-
     private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatManagerEvent> =
-            // TODO we should be making use of the userService.fetchUser*s*By() method in order
-            // to fetch all users in one call to the server, and enforce a maximum wait of 10 seconds.
             when (event) {
                 is PresenceSubscriptionEvent.InitialState -> event.presences
                 is PresenceSubscriptionEvent.JoinedRoom -> event.presences
                 is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.presence)
                 else -> listOf()
             }.map { newState ->
+                // TODO we should be making use of the userService.fetchUser*s*By() method in order
+                // to fetch all users in one call to the server, and enforce a maximum wait of 10 seconds.
                 newState to userService.fetchUserBy(newState.userId)
             }.map { (newState, futureUserResult) ->
                 // Unwrap the futures in a separate stage, so that they are
@@ -163,57 +151,87 @@ class ChatManager constructor(
                         }
             }
 
-    private fun transformCursorSubscriptionEvent(event: CursorSubscriptionEvent): ChatManagerEvent =
-            when (event) {
-                is CursorSubscriptionEvent.OnCursorSet ->
-                    ChatManagerEvent.NewReadCursor(event.cursor)
-                else ->
-                    ChatManagerEvent.NoEvent
-            }
+    private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): List<ChatManagerEvent> =
+            listOf(
+                    when (event) {
+                        is CursorSubscriptionEvent.OnCursorSet ->
+                            ChatManagerEvent.NewReadCursor(event.cursor)
+                        else ->
+                            ChatManagerEvent.NoEvent
+                    }
+            )
 
-    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): Future<Result<ChatManagerEvent, Error>> =
+    private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
+        when (event) {
+            is UserSubscriptionEvent.InitialState -> {
+                val removedFrom = (roomService.roomStore.toList() - event.rooms).map {
+                    UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
+                }
+
+                val addedTo = (event.rooms - roomService.roomStore.toList()).map {
+                    UserSubscriptionEvent.AddedToRoomEvent(it)
+                }
+
+                removedFrom + addedTo + listOf(event)
+            }
+            is UserSubscriptionEvent.AddedToRoomEvent ->
+                listOf(event.also { roomService.roomStore += event.room })
+            is UserSubscriptionEvent.RoomUpdatedEvent ->
+                listOf(event.also { roomService.roomStore += event.room })
+            is UserSubscriptionEvent.RoomDeletedEvent ->
+                listOf(event.also { roomService.roomStore -= event.roomId })
+            is UserSubscriptionEvent.RemovedFromRoomEvent ->
+                listOf(event.also { roomService.roomStore -= event.roomId })
+            is UserSubscriptionEvent.LeftRoomEvent ->
+                listOf(event.also { roomService.roomStore[event.roomId]?.removeUser(event.userId) })
+            is UserSubscriptionEvent.JoinedRoomEvent ->
+                listOf(event.also { roomService.roomStore[event.roomId]?.addUser(event.userId) })
+            is UserSubscriptionEvent.StartedTyping ->
+                listOf(event.also { _ ->
+                    typingTimers
+                            .firstOrNull { it.userId == event.userId && it.roomId == event.roomId }
+                            ?: TypingTimer(event.userId, event.roomId).also { typingTimers += it }
+                                    .triggerTyping()
+                })
+            else -> listOf(event)
+        }
+
+    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatManagerEvent =
             when (event) {
-                is UserSubscriptionEvent.InitialState -> getCursors().mapResult { cursors ->
-                    cursorService.saveCursors(cursors)
+                is UserSubscriptionEvent.InitialState ->
                     ChatManagerEvent.CurrentUserReceived(createCurrentUser(event))
-                }
-                is UserSubscriptionEvent.AddedToRoomEvent -> ChatManagerEvent.CurrentUserAddedToRoom(event.room).toFutureSuccess()
-                is UserSubscriptionEvent.RoomUpdatedEvent -> ChatManagerEvent.RoomUpdated(event.room).toFutureSuccess()
-                is UserSubscriptionEvent.RoomDeletedEvent -> ChatManagerEvent.RoomDeleted(event.roomId).toFutureSuccess()
-                is UserSubscriptionEvent.RemovedFromRoomEvent -> ChatManagerEvent.CurrentUserRemovedFromRoom(event.roomId).toFutureSuccess()
-                is UserSubscriptionEvent.LeftRoomEvent -> userService.fetchUserBy(event.userId).flatMapResult { user ->
-                    roomService.roomStore[event.roomId]
-                            .orElse { Errors.other("room ${event.roomId} not found.") }
-                            .map<ChatManagerEvent> { room -> ChatManagerEvent.UserLeftRoom(user, room) }
-                }
-                is UserSubscriptionEvent.JoinedRoomEvent -> userService.fetchUserBy(event.userId).flatMapResult { user ->
-                    roomService.roomStore[event.roomId]
-                            .orElse { Errors.other("room ${event.roomId} not found.") }
-                            .map<ChatManagerEvent> { room -> ChatManagerEvent.UserJoinedRoom(user, room) }
-                }
-                is UserSubscriptionEvent.StartedTyping -> userService.fetchUserBy(event.userId).flatMapFutureResult { user ->
-                    roomService.fetchRoomBy(user.id, event.roomId).mapResult { room ->
-                        ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
-                    }
-                }
-                is UserSubscriptionEvent.StoppedTyping -> userService.fetchUserBy(event.userId).flatMapFutureResult { user ->
-                    roomService.fetchRoomBy(user.id, event.roomId).mapResult { room ->
-                        ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
-                    }
-                }
-                is UserSubscriptionEvent.ErrorOccurred -> ChatManagerEvent.ErrorOccurred(event.error).toFutureSuccess()
+                is UserSubscriptionEvent.AddedToRoomEvent ->
+                    ChatManagerEvent.CurrentUserAddedToRoom(event.room)
+                is UserSubscriptionEvent.RemovedFromRoomEvent ->
+                    ChatManagerEvent.CurrentUserRemovedFromRoom(event.roomId)
+                is UserSubscriptionEvent.RoomUpdatedEvent ->
+                    ChatManagerEvent.RoomUpdated(event.room)
+                is UserSubscriptionEvent.RoomDeletedEvent ->
+                    ChatManagerEvent.RoomDeleted(event.roomId)
+                is UserSubscriptionEvent.LeftRoomEvent ->
+                            userService.fetchUserBy(event.userId).flatMapResult { user ->
+                                roomService.roomStore[event.roomId]
+                                        .orElse { Errors.other("room ${event.roomId} not found.") }
+                                        .map<ChatManagerEvent> { room -> ChatManagerEvent.UserLeftRoom(user, room) }
+                            }.waitAndRecover()
+                is UserSubscriptionEvent.JoinedRoomEvent ->
+                            userService.fetchUserBy(event.userId).flatMapResult { user ->
+                                roomService.roomStore[event.roomId]
+                                        .orElse { Errors.other("room ${event.roomId} not found.") }
+                                        .map<ChatManagerEvent> { room -> ChatManagerEvent.UserJoinedRoom(user, room) }
+                            }.waitAndRecover()
+                is UserSubscriptionEvent.StartedTyping ->
+                            userService.fetchUserBy(event.userId).flatMapFutureResult { user ->
+                                roomService.fetchRoomBy(user.id, event.roomId).mapResult { room ->
+                                    ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
+                                }
+                            }.waitAndRecover()
+                is UserSubscriptionEvent.ErrorOccurred ->
+                    ChatManagerEvent.ErrorOccurred(event.error)
             }
 
-    private fun ChatManagerEvent.toFutureSuccess() =
-            asSuccess<ChatManagerEvent, Error>().toFuture()
-
-    private fun getCursors(): Future<Result<Map<Int, Cursor>, Error>> =
-            cursorService.request(userId)
-                    .mapResult { cursors ->
-                        cursors.map { cursor ->
-                            cursor.roomId to cursor
-                        }.toMap()
-                    }
+    private fun Future<Result<ChatManagerEvent, Error>>.waitAndRecover() =
+        this.waitOr { ChatManagerEvent.ErrorOccurred(Errors.other(it)).asSuccess() }.recover { ChatManagerEvent.ErrorOccurred(it) }
 
     private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = CurrentUser(
             id = initialState.currentUser.id,
@@ -281,6 +299,33 @@ class ChatManager constructor(
                 else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
             }
         }
+    }
+
+    private val typingTimers = mutableListOf<TypingTimer>()
+
+    inner class TypingTimer(val userId: String, val roomId: Int) {
+
+        private var job: Future<Unit>? = null
+
+        fun triggerTyping() {
+            if (job.isActive) job?.cancel()
+            job = scheduleStopTyping()
+        }
+
+        private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
+            Thread.sleep(1_500)
+
+            consumeEvents(listOf(
+                userService.fetchUserBy(userId).flatMapFutureResult { user ->
+                    roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
+                        ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
+                    }
+                }.waitAndRecover()
+            ))
+        }
+
+        private val <A> Future<A>?.isActive
+            get() = this != null && !isDone && !isCancelled
     }
 }
 
