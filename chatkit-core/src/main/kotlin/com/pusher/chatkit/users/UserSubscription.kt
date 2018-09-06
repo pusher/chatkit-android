@@ -7,10 +7,8 @@ import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.wait
-import elements.Headers
 import elements.Subscription
 import elements.SubscriptionEvent
-import elements.emptyHeaders
 
 private const val USERS_PATH = "users"
 
@@ -19,7 +17,6 @@ internal class UserSubscription(
     private val consumeEvent: (UserSubscriptionEvent) -> Unit,
     private val logger: Logger
 ) : ChatkitSubscription {
-    private var headers: Headers = emptyHeaders()
 
     private lateinit var underlyingSubscription: Subscription
 
@@ -29,16 +26,16 @@ internal class UserSubscription(
                 client = client,
                 path = USERS_PATH,
                 listeners = SubscriptionListeners(
-                    onOpen = { headers ->
-                        logger.verbose("[User] OnOpen $headers")
-                        this@UserSubscription.headers = headers
-                    },
+                    onOpen = { logger.verbose("[User] OnOpen triggered") },
                     onEvent = { event: SubscriptionEvent<UserSubscriptionEvent> ->
                         event.body
                             .also(consumeEvent)
                             .also { logger.verbose("[User] Event received $it") }
                     },
-                    onError = { error -> consumeEvent(UserSubscriptionEvent.ErrorOccurred(error)) },
+                    onError = { error ->
+                        logger.verbose("[User] Subscription error: $error")
+                        consumeEvent(UserSubscriptionEvent.ErrorOccurred(error))
+                    },
                     onSubscribe = { logger.verbose("[User] Subscription established.") },
                     onRetrying = { logger.verbose("[User] Subscription lost. Trying again.") },
                     onEnd = { error -> logger.verbose("[User] Subscription ended with: $error") }

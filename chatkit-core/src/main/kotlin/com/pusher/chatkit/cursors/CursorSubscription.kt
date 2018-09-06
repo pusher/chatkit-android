@@ -1,8 +1,6 @@
 package com.pusher.chatkit.cursors
 
 import com.pusher.chatkit.ChatEvent
-import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.InstanceType
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
@@ -22,7 +20,6 @@ internal class CursorSubscription(
         private val consumeEvent: (CursorSubscriptionEvent) -> Unit,
         private val logger: Logger
 ): ChatkitSubscription {
-    private var active = false
     private lateinit var subscription: Subscription
 
     override fun connect(): ChatkitSubscription{
@@ -30,10 +27,7 @@ internal class CursorSubscription(
             client = client,
             path = path,
             listeners = SubscriptionListeners<ChatEvent>(
-                onOpen = { headers ->
-                    logger.verbose("[Cursor] OnOpen $headers")
-                    active = true
-                },
+                onOpen = { logger.verbose("[Cursor] OnOpen triggered") },
                 onEvent = { event ->
                     val cursorEvent = event.toCursorEvent()
                         .recover { CursorSubscriptionEvent.OnError(it) }
@@ -44,7 +38,7 @@ internal class CursorSubscription(
                     }
                 },
                 onError = { error ->
-                    logger.verbose("[Cursor] Subscription errored: $error")
+                    logger.verbose("[Cursor] Subscription error: $error")
                     consumeEvent(CursorSubscriptionEvent.OnError(error))
                 },
                 onSubscribe = { logger.verbose("[Cursor] Subscription established") },
@@ -58,7 +52,6 @@ internal class CursorSubscription(
     }
 
     override fun unsubscribe() {
-        active = false
         subscription.unsubscribe()
     }
 }
