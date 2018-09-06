@@ -2,25 +2,29 @@ package com.pusher.chatkit.memberships
 
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEvent
-import com.pusher.platform.SubscriptionListeners
-import elements.Subscription
-import elements.SubscriptionEvent
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent.*
-import java.util.concurrent.Future
-import com.pusher.util.*
-import elements.Errors
 import com.pusher.chatkit.ChatManagerEvent.*
-import com.pusher.chatkit.InstanceType
+import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.memberships.MembershipSubscriptionEvent.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
+import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.toFuture
 import com.pusher.platform.network.waitOr
+import com.pusher.util.Result
+import com.pusher.util.asSuccess
+import com.pusher.util.flatMapResult
+import com.pusher.util.orElse
 import elements.Error
+import elements.Errors
+import elements.Subscription
+import elements.SubscriptionEvent
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.SECONDS
 
 internal class MembershipSubscription(
     private val roomId: Int,
+    private val client: PlatformClient,
     private val chatManager: ChatManager,
     private val consumeEvent: (ChatManagerEvent) -> Unit
 ) : ChatkitSubscription {
@@ -32,6 +36,7 @@ internal class MembershipSubscription(
 
     override fun connect(): ChatkitSubscription {
         subscription = ResolvableSubscription(
+            client = client,
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
                 onOpen = { headers ->
@@ -53,7 +58,6 @@ internal class MembershipSubscription(
                 onEnd = { error -> logger.verbose("[Membership] Subscription ended with: $error") }
             ),
             messageParser = MembershipSubscriptionEventParser,
-            chatManager = chatManager,
             resolveOnFirstEvent = true
         ).connect()
 
