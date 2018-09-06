@@ -33,7 +33,7 @@ internal object PresenceSubscriptionEventParser : DataParser<PresenceSubscriptio
     private fun JsonObject.parseEvent(eventName: String): Result<PresenceSubscriptionEvent, Error> =
             when (eventName) {
                 "initial_state" -> parseAs<PresenceSubscriptionEvent.InitialState>()
-                "presence_update" -> parseAs<PresenceSubscriptionEvent.PresenceUpdate>()
+                "presence_update" -> parseAs<UserPresence>().map(PresenceSubscriptionEvent::PresenceUpdate)
                 "join_room_presence_update" -> parseAs<PresenceSubscriptionEvent.JoinedRoom>()
                 else -> Errors.other("Invalid event name: $eventName").asFailure()
             }.map { it } // generics -.-

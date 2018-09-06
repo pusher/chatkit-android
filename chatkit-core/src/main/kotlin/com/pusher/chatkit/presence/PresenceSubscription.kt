@@ -20,11 +20,15 @@ internal class PresenceSubscription(
             client = client,
             path = "/users/$userId/presence",
             listeners = SubscriptionListeners(
-                onOpen = { headers ->
-                    logger.verbose("[Presence] OnOpen $headers")
+                onOpen = { logger.verbose("[Presence] OnOpen triggered") },
+                onEvent = {
+                    logger.verbose("[Presence] Event received: $it")
+                    consumeEvent(it.body)
                 },
-                onEvent = { consumeEvent(it.body) },
-                onError = { error -> consumeEvent(PresenceSubscriptionEvent.ErrorOccurred(error)) },
+                onError = { error ->
+                    logger.verbose("[Presence] Subscription error: $error")
+                    consumeEvent(PresenceSubscriptionEvent.ErrorOccurred(error))
+                },
                 onEnd = { error -> logger.verbose("[Presence] Subscription ended with: $error") }
             ),
             messageParser = PresenceSubscriptionEventParser,

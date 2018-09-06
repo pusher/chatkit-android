@@ -30,6 +30,7 @@ class CurrentUser(
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
+
     val users: Future<Result<List<User>, Error>>
         get() = rooms
         .flatMap { it.memberUserIds }

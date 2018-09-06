@@ -16,13 +16,12 @@ import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.newUsers
-import com.pusher.chatkit.test.InstanceSupervisor.createRoles
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
-import mockitox.stub
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
+import mockitox.stub
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it

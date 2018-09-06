@@ -47,9 +47,7 @@ internal class RoomSubscription(
                 client = client,
                 path = "/rooms/$roomId?&message_limit=$messageLimit",
                 listeners = SubscriptionListeners<ChatEvent>(
-                    onOpen = { headers ->
-                        logger.verbose("[Room] On open $headers")
-                    },
+                    onOpen = { logger.verbose("[Room] On open triggered") },
                     onEvent = { it.body.toRoomEvent().let(consumeEvent) },
                     onError = { consumeEvent(ErrorOccurred(it)) }
                 ),

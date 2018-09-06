@@ -94,7 +94,7 @@ class ChatManager constructor(
         presenceSubscription.connect()
         cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
 
-        return futureCurrentUser.get()
+        return futureCurrentUser.get().also { dependencies.logger.verbose("Current User initialised") }
     }
 
     private val replaceCurrentUser = { event: ChatManagerEvent ->
@@ -127,9 +127,9 @@ class ChatManager constructor(
 
     private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatManagerEvent> =
             when (event) {
-                is PresenceSubscriptionEvent.InitialState -> event.presences
-                is PresenceSubscriptionEvent.JoinedRoom -> event.presences
-                is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.presence)
+                is PresenceSubscriptionEvent.InitialState -> event.userStates
+                is PresenceSubscriptionEvent.JoinedRoom -> event.userStates
+                is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.state)
                 else -> listOf()
             }.map { newState ->
                 // TODO we should be making use of the userService.fetchUser*s*By() method in order
@@ -175,11 +175,15 @@ class ChatManager constructor(
     private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
-                val removedFrom = (roomService.roomStore.toList() - event.rooms).map {
+                val removedFrom = (roomService.roomStore.toList() - event.rooms).also {
+                    roomService.roomStore -= it
+                }.map {
                     UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
                 }
 
-                val addedTo = (event.rooms - roomService.roomStore.toList()).map {
+                val addedTo = (event.rooms - roomService.roomStore.toList()).also {
+                    roomService.roomStore += it
+                }.map {
                     UserSubscriptionEvent.AddedToRoomEvent(it)
                 }
 
