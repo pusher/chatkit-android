@@ -10,6 +10,7 @@ import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.platform.Instance
 import com.pusher.platform.network.Futures
@@ -56,10 +57,14 @@ class ChatManager constructor(
 
     internal val userService by lazy {
         UserService(
-                userId,
-                this::consumeUserSubscriptionEvent,
                 createPlatformClient(InstanceType.DEFAULT),
-                roomService,
+        )
+    }
+
+    private val userSubscription by lazy {
+        UserSubscription(
+                createPlatformClient(InstanceType.DEFAULT),
+                this::consumeUserSubscriptionEvent,
                 dependencies.logger
         )
     }
@@ -79,7 +84,7 @@ class ChatManager constructor(
         eventConsumers += consumer
 
         // TODO: These each block, but they're supposed to happen in parallel
-        userService.subscribe()
+        userSubscription.connect()
         presenceService.subscribe()
         cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
 
@@ -273,7 +278,7 @@ class ChatManager constructor(
         for (sub in subscriptions) {
             sub.unsubscribe()
         }
-        userService.unsubscribe()
+        userSubscription.unsubscribe()
         presenceService.unsubscribe()
         cursorService.unsubscribe()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
