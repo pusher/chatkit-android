@@ -1,14 +1,17 @@
 package com.pusher.chatkit.rooms
 
 import com.google.gson.JsonElement
-import com.pusher.chatkit.*
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
+import com.pusher.chatkit.ChatEvent
+import com.pusher.chatkit.ChatManager
+import com.pusher.chatkit.ChatManagerEvent
+import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
-import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.users.User
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.wait
@@ -23,6 +26,7 @@ import java.net.URL
 internal class RoomSubscription(
     private val roomId: Int,
     private val consumeEvent: RoomSubscriptionConsumer,
+    private val client: PlatformClient,
     private val chatManager: ChatManager,
     private val messageLimit: Int
 ) : ChatkitSubscription {
@@ -40,6 +44,7 @@ internal class RoomSubscription(
     override fun connect(): ChatkitSubscription {
         val deferredRoomSubscription = Futures.schedule {
             ResolvableSubscription(
+                client = client,
                 path = "/rooms/$roomId?&message_limit=$messageLimit",
                 listeners = SubscriptionListeners<ChatEvent>(
                     onOpen = { headers ->
@@ -48,7 +53,6 @@ internal class RoomSubscription(
                     onEvent = { it.body.toRoomEvent().let(consumeEvent) },
                     onError = { consumeEvent(ErrorOccurred(it)) }
                 ),
-                chatManager = chatManager,
                 messageParser = { it.parseAs() }
             ).connect()
         }
@@ -122,6 +126,5 @@ internal class RoomSubscription(
         membershipSubscription.unsubscribe()
         roomSubscription.unsubscribe()
     }
-
 }
 

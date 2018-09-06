@@ -1,16 +1,24 @@
 package com.pusher.chatkit.messages
 
-import com.pusher.chatkit.*
+import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.files.*
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
-import com.pusher.platform.network.*
-import com.pusher.util.*
+import com.pusher.platform.network.toFuture
+import com.pusher.platform.network.wait
+import com.pusher.util.Result
+import com.pusher.util.asSuccess
+import com.pusher.util.flatMapFutureResult
+import com.pusher.util.mapResult
 import elements.Error
 import java.net.URL
 import java.util.concurrent.Future
 
-internal class MessageService(private val chatManager: ChatManager) {
-
+internal class MessageService(
+        private val client: PlatformClient,
+        private val userService: UserService,
+        private val filesService: FilesService
+) {
     fun fetchMessages(
         roomId: Int,
         limit: Int,
@@ -20,7 +28,7 @@ internal class MessageService(private val chatManager: ChatManager) {
         fetchMessagesParams(limit, initialId, direction)
             .joinToString(separator = "&", prefix = "?") { (key, value) -> "$key=$value" }
             .let { params ->
-                chatManager.doGet<List<Message>>("/rooms/$roomId/messages$params").mapResult { messages ->
+                client.doGet<List<Message>>("/rooms/$roomId/messages$params").mapResult { messages ->
                     messages.map { message ->
                         if (message.attachment != null) {
                             val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&") ?: emptyList())
@@ -31,7 +39,7 @@ internal class MessageService(private val chatManager: ChatManager) {
                                 message.attachment.fetchRequired = true
                             }
                         }
-                        chatManager.userService.fetchUserBy(message.userId).wait().fold(
+                        userService.fetchUserBy(message.userId).wait().fold(
                                 onFailure = {},
                                 onSuccess = { message.user = it }
                         )
@@ -61,7 +69,7 @@ internal class MessageService(private val chatManager: ChatManager) {
             .flatMapFutureResult { sendMessage(roomId, userId, text, it) }
 
     private fun GenericAttachment.asAttachmentBody(roomId: Int, userId: String): Future<Result<AttachmentBody, Error>> = when (this) {
-        is DataAttachment -> chatManager.filesService.uploadFile(this, roomId, userId)
+        is DataAttachment -> filesService.uploadFile(this, roomId, userId)
         is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
             .asSuccess<AttachmentBody, elements.Error>()
             .toFuture()
@@ -80,7 +88,7 @@ internal class MessageService(private val chatManager: ChatManager) {
             .toJson()
             .toFuture()
             .flatMapFutureResult { body ->
-                chatManager.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
             }
             .mapResult { it.messageId }
 

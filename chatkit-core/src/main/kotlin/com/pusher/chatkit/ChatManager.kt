@@ -6,7 +6,7 @@ import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
-import com.pusher.chatkit.presence.PresenceService
+import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService
@@ -45,19 +45,18 @@ class ChatManager constructor(
         )
     }
 
-    private val presenceService by lazy {
-        PresenceService(
+    private val presenceSubscription by lazy {
+        PresenceSubscription(
                 createPlatformClient(InstanceType.PRESENCE),
                 userId,
                 this::consumePresenceSubscriptionEvent,
-                userService,
                 dependencies.logger
         )
     }
 
     internal val userService by lazy {
         UserService(
-                createPlatformClient(InstanceType.DEFAULT),
+                createPlatformClient(InstanceType.DEFAULT)
         )
     }
 
@@ -69,10 +68,17 @@ class ChatManager constructor(
         )
     }
 
-    internal val messageService by lazy { MessageService(this) }
-    internal val filesService by lazy { FilesService(this) }
-    internal val roomService by lazy { RoomService(this) }
-    internal val membershipService by lazy { MembershipService(this) }
+    internal val messageService by lazy {
+        MessageService(
+                createPlatformClient(InstanceType.DEFAULT),
+                userService,
+                filesService
+        )
+    }
+
+    internal val filesService by lazy { FilesService(createPlatformClient(InstanceType.FILES)) }
+    internal val roomService by lazy { RoomService(this, createPlatformClient(InstanceType.DEFAULT)) }
+    internal val membershipService by lazy { MembershipService(this, createPlatformClient(InstanceType.DEFAULT)) }
 
     private var currentUser: CurrentUser? = null
 
@@ -85,7 +91,7 @@ class ChatManager constructor(
 
         // TODO: These each block, but they're supposed to happen in parallel
         userSubscription.connect()
-        presenceService.subscribe()
+        presenceSubscription.connect()
         cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
 
         return futureCurrentUser.get()
@@ -243,7 +249,8 @@ class ChatManager constructor(
             avatarURL = initialState.currentUser.avatarURL,
             customData = initialState.currentUser.customData,
             name = initialState.currentUser.name,
-            chatManager = this
+            chatManager = this,
+            client = createPlatformClient(InstanceType.DEFAULT)
     )
 
     private class CurrentUserConsumer: ChatManagerEventConsumer {
@@ -279,7 +286,7 @@ class ChatManager constructor(
             sub.unsubscribe()
         }
         userSubscription.unsubscribe()
-        presenceService.unsubscribe()
+        presenceSubscription.unsubscribe()
         cursorService.unsubscribe()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()

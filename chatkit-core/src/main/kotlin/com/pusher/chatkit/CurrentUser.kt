@@ -4,12 +4,17 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.files.FetchedAttachment
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
-import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.messages.Direction
+import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomSubscriptionConsumer
+import com.pusher.chatkit.rooms.RoomSubscriptionListeners
+import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.toFuture
-import com.pusher.util.*
+import com.pusher.util.Result
+import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
 import java.util.concurrent.Future
@@ -20,7 +25,8 @@ class CurrentUser(
     var avatarURL: String?,
     var customData: CustomData?,
     var name: String?,
-    private val chatManager: ChatManager
+    private val chatManager: ChatManager,
+    private val client: PlatformClient
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
@@ -182,7 +188,7 @@ class CurrentUser(
         isTypingIn(room.id)
 
     fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> = when {
-        canSendTypingEvent() -> chatManager.doPost<Unit>(
+        canSendTypingEvent() -> client.doPost<Unit>(
             path ="/rooms/$roomId/events",
             body = """{ "user_id" : "$id", "name" : "typing_start" }"""
         ).also { lastTypingEvent = System.currentTimeMillis() }
