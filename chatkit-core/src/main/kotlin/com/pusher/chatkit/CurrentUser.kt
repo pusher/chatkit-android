@@ -190,8 +190,7 @@ class CurrentUser(
 
     fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> = when {
         canSendTypingEvent() -> client.doPost<Unit>(
-            path ="/rooms/$roomId/events",
-            body = """{ "user_id" : "$id", "name" : "typing_start" }"""
+            path ="/rooms/$roomId/typing_indicators"
         ).also { lastTypingEvent = System.currentTimeMillis() }
         else -> Unit.asSuccess<Unit, Error>().toFuture()
     }

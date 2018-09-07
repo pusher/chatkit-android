@@ -51,6 +51,7 @@ internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = 
  */
 sealed class RoomSubscriptionEvent {
     data class NewMessage(val message: Message) : RoomSubscriptionEvent()
+    data class UserIsTyping(val userId: String) : RoomSubscriptionEvent()
     data class UserStartedTyping(val user: User) : RoomSubscriptionEvent()
     data class UserStoppedTyping(val user: User) : RoomSubscriptionEvent()
     data class UserJoined(val user: User) : RoomSubscriptionEvent()
@@ -62,4 +63,5 @@ sealed class RoomSubscriptionEvent {
     data class RoomUpdated(val room: Room) : RoomSubscriptionEvent()
     data class RoomDeleted(val roomId: Int) : RoomSubscriptionEvent()
     data class ErrorOccurred(val error: Error) : RoomSubscriptionEvent()
+    object NoEvent : RoomSubscriptionEvent()
 }

@@ -3,6 +3,7 @@ package com.pusher.chatkit.rooms
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.network.toFuture
 import com.pusher.util.*
@@ -12,7 +13,9 @@ import java.util.concurrent.Future
 
 internal class RoomService(
         override val chatManager: ChatManager,
-        private val client: PlatformClient
+        private val client: PlatformClient,
+        private val userService: UserService,
+        private val consumer: (Int) -> RoomSubscriptionConsumer
 ) : HasChat {
 
     val roomStore by lazy { RoomStore() }
@@ -75,10 +78,16 @@ internal class RoomService(
 
     fun subscribeToRoom(
         roomId: Int,
-        listeners: RoomSubscriptionConsumer,
+        externalListeners: RoomSubscriptionConsumer,
         messageLimit : Int
-    ) = RoomSubscription(roomId, listeners, client, chatManager, messageLimit).connect()
+    ) = RoomSubscription(roomId, compose(externalListeners, consumer(roomId)), client, chatManager, userService, messageLimit).connect()
+}
 
+fun <A> compose(a: (A) -> Unit, b: (A) -> Unit): (A) -> Unit {
+    return { e ->
+        a(e)
+        b(e)
+    }
 }
 
 internal data class UpdateRoomRequest(val name: String, val isPrivate: Boolean?)

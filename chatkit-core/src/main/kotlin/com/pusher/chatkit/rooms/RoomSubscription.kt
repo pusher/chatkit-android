@@ -1,33 +1,31 @@
 package com.pusher.chatkit.rooms
 
-import com.google.gson.JsonElement
-import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEvent
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.User
-import com.pusher.chatkit.util.parseAs
+import com.pusher.chatkit.users.UserService
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.Futures
+import com.pusher.platform.network.cancel
 import com.pusher.platform.network.wait
-import com.pusher.util.Result
+import com.pusher.platform.network.waitOr
 import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
-import elements.Error
 import elements.Errors
 import elements.Subscription
-import java.net.URL
+import java.util.concurrent.Future
 
 internal class RoomSubscription(
     private val roomId: Int,
     private val consumeEvent: RoomSubscriptionConsumer,
     private val client: PlatformClient,
     private val chatManager: ChatManager,
+    private val userService: UserService,
     private val messageLimit: Int
 ) : ChatkitSubscription {
     private var active = true
@@ -46,12 +44,14 @@ internal class RoomSubscription(
             ResolvableSubscription(
                 client = client,
                 path = "/rooms/$roomId?&message_limit=$messageLimit",
-                listeners = SubscriptionListeners<ChatEvent>(
-                    onOpen = { logger.verbose("[Room] On open triggered") },
-                    onEvent = { it.body.toRoomEvent().let(consumeEvent) },
+                listeners = SubscriptionListeners(
+                    onOpen = { logger.verbose("[Room $roomId] On open triggered") },
+                    onEvent = {
+                        logger.verbose("[Room $roomId] received event: ${it.body}")
+                        consumeEvent(transformEvent(it.body)) },
                     onError = { consumeEvent(ErrorOccurred(it)) }
                 ),
-                messageParser = { it.parseAs() }
+                messageParser = RoomSubscriptionEventParser
             ).connect()
         }
 
@@ -80,6 +80,46 @@ internal class RoomSubscription(
         return this
     }
 
+    private fun transformEvent(event: RoomSubscriptionEvent): RoomSubscriptionEvent =
+            when (event) {
+                is UserIsTyping -> {
+                    userService.fetchUserBy(event.userId).mapResult { user ->
+                        if (scheduleStopTypingEvent(user)) {
+                            RoomSubscriptionEvent.UserStartedTyping(user)
+                        } else {
+                            RoomSubscriptionEvent.NoEvent
+                        }
+                    }.waitOr {
+                        RoomSubscriptionEvent.ErrorOccurred(Errors.other(it)).asSuccess()
+                    }.recover {
+                        RoomSubscriptionEvent.ErrorOccurred(it)
+                    }
+                }
+                else ->
+                    event
+            }
+
+    private val typingTimers = HashMap<String, Future<Unit>>()
+
+    private fun scheduleStopTypingEvent(user: User): Boolean {
+        synchronized(typingTimers) {
+            val new = typingTimers[user.id] == null
+            if (!new) {
+                typingTimers[user.id]!!.cancel()
+            }
+
+            typingTimers[user.id] = Futures.schedule {
+                Thread.sleep(1_500)
+                synchronized(typingTimers) {
+                    typingTimers.remove(user.id)
+                }
+                consumeEvent(RoomSubscriptionEvent.UserStoppedTyping(user))
+            }
+
+            return new
+        }
+    }
+
     private fun ChatManagerEvent.consume() = when {
         this is ChatManagerEvent.UserStartedTyping && room.id == roomId -> UserStartedTyping(user)
         this is ChatManagerEvent.UserStoppedTyping && room.id == roomId -> UserStoppedTyping(user)
@@ -94,32 +134,7 @@ internal class RoomSubscription(
 
     private fun User.isInRoom() = chatManager.roomService.fetchRoomBy(id, roomId).mapResult { true }.wait().recover { false }
 
-    private fun ChatEvent.toRoomEvent() : RoomSubscriptionEvent = when(eventName) {
-        "new_message" -> data.toNewMessage()
-        else -> ErrorOccurred(Errors.other("Wrong event type: $eventName")).asSuccess<RoomSubscriptionEvent, Error>()
-    }.recover { error -> ErrorOccurred(error) }
-
-    private fun JsonElement.toNewMessage(): Result<RoomSubscriptionEvent, Error> = parseAs<Message>()
-        .map { message ->
-            if (message.attachment != null) {
-                val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&") ?: emptyList())
-                    .mapNotNull { it.split("=").takeIf { it.size == 2 } }
-                    .map { (key, value) -> key to value }
-                    .toMap()
-                if (queryParamsMap["chatkit_link"] == "true") {
-                    message.attachment.fetchRequired = true
-                }
-            }
-            chatManager.userService.fetchUserBy(message.userId).wait().fold(
-                    onFailure = {},
-                    onSuccess = { message.user = it }
-            )
-            NewMessage(message)
-
-        }
-
     override fun unsubscribe() {
-        active = false
         cursorSubscription.unsubscribe()
         membershipSubscription.unsubscribe()
         roomSubscription.unsubscribe()

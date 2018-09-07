@@ -29,7 +29,6 @@ internal class MembershipSubscription(
     private val consumeEvent: (ChatManagerEvent) -> Unit
 ) : ChatkitSubscription {
 
-    private var active = false
     private val logger = chatManager.dependencies.logger
     private val roomStore = chatManager.roomService.roomStore
     private lateinit var subscription: Subscription
@@ -40,7 +39,6 @@ internal class MembershipSubscription(
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
                 onOpen = { headers ->
-                    active = true
                     logger.verbose("[Membership] OnOpen $headers")
                 },
                 onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
@@ -65,7 +63,6 @@ internal class MembershipSubscription(
     }
 
     override fun unsubscribe() {
-        active = false
         subscription.unsubscribe()
     }
 

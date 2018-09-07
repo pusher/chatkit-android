@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.test.FutureValue
-import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
@@ -22,7 +21,6 @@ class UserTypingSpek : Spek({
     afterEachTest(::closeChatManagers)
 
     describe("ChatManager") {
-
         it("sends and receives started typing indicator in room") {
             setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
@@ -86,7 +84,5 @@ class UserTypingSpek : Spek({
 
             assertThat(stoppedTypingUser.id).isEqualTo(pusherino.id)
         }
-
     }
-
 })

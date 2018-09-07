@@ -9,13 +9,14 @@ import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.rooms.RoomSubscriptionConsumer
+import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.platform.Instance
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.Wait
-import com.pusher.platform.network.cancel
 import com.pusher.platform.network.waitOr
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
@@ -76,9 +77,22 @@ class ChatManager constructor(
         )
     }
 
-    internal val filesService by lazy { FilesService(createPlatformClient(InstanceType.FILES)) }
-    internal val roomService by lazy { RoomService(this, createPlatformClient(InstanceType.DEFAULT)) }
-    internal val membershipService by lazy { MembershipService(this, createPlatformClient(InstanceType.DEFAULT)) }
+    internal val filesService by lazy {
+        FilesService(createPlatformClient(InstanceType.FILES))
+    }
+
+    internal val roomService by lazy {
+        RoomService(
+                this,
+                createPlatformClient(InstanceType.DEFAULT),
+                userService,
+                this::consumeRoomSubscriptionEvent
+        )
+    }
+
+    internal val membershipService by lazy {
+        MembershipService(this, createPlatformClient(InstanceType.DEFAULT))
+    }
 
     private var currentUser: CurrentUser? = null
 
@@ -112,7 +126,12 @@ class ChatManager constructor(
             )
 
     private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
-            consumeEvents(transformCursorsSubscriptionEvent(event))
+            consumeEvents(listOf(transformCursorsSubscriptionEvent(event)))
+
+    private fun consumeRoomSubscriptionEvent(roomId: Int): RoomSubscriptionConsumer =
+            { event ->
+                consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
+            }
 
     private fun consumePresenceSubscriptionEvent(event: PresenceSubscriptionEvent) =
             consumeEvents(transformPresenceSubscriptionEvent(event))
@@ -124,6 +143,20 @@ class ChatManager constructor(
             }
         }
     }
+
+    private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomSubscriptionEvent): ChatManagerEvent =
+        when (event) {
+            is RoomSubscriptionEvent.UserStartedTyping ->
+                roomService.fetchRoomBy(event.user.id, roomId).mapResult { room ->
+                    ChatManagerEvent.UserStartedTyping(event.user, room) as ChatManagerEvent
+                }.waitAndRecover()
+            is RoomSubscriptionEvent.UserStoppedTyping ->
+                roomService.fetchRoomBy(event.user.id, roomId).mapResult { room ->
+                    ChatManagerEvent.UserStoppedTyping(event.user, room) as ChatManagerEvent
+                }.waitAndRecover()
+            else ->
+                ChatManagerEvent.NoEvent
+        }
 
     private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatManagerEvent> =
             when (event) {
@@ -162,15 +195,13 @@ class ChatManager constructor(
                         }
             }
 
-    private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): List<ChatManagerEvent> =
-            listOf(
-                    when (event) {
-                        is CursorSubscriptionEvent.OnCursorSet ->
-                            ChatManagerEvent.NewReadCursor(event.cursor)
-                        else ->
-                            ChatManagerEvent.NoEvent
-                    }
-            )
+    private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): ChatManagerEvent =
+                when (event) {
+                    is CursorSubscriptionEvent.OnCursorSet ->
+                        ChatManagerEvent.NewReadCursor(event.cursor)
+                    else ->
+                        ChatManagerEvent.NoEvent
+                }
 
     private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
         when (event) {
@@ -201,13 +232,6 @@ class ChatManager constructor(
                 listOf(event.also { roomService.roomStore[event.roomId]?.removeUser(event.userId) })
             is UserSubscriptionEvent.JoinedRoomEvent ->
                 listOf(event.also { roomService.roomStore[event.roomId]?.addUser(event.userId) })
-            is UserSubscriptionEvent.StartedTyping ->
-                listOf(event.also { _ ->
-                    typingTimers
-                            .firstOrNull { it.userId == event.userId && it.roomId == event.roomId }
-                            ?: TypingTimer(event.userId, event.roomId).also { typingTimers += it }
-                                    .triggerTyping()
-                })
             else -> listOf(event)
         }
 
@@ -234,12 +258,6 @@ class ChatManager constructor(
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
                                         .map<ChatManagerEvent> { room -> ChatManagerEvent.UserJoinedRoom(user, room) }
-                            }.waitAndRecover()
-                is UserSubscriptionEvent.StartedTyping ->
-                            userService.fetchUserBy(event.userId).flatMapFutureResult { user ->
-                                roomService.fetchRoomBy(user.id, event.roomId).mapResult { room ->
-                                    ChatManagerEvent.UserStartedTyping(user, room) as ChatManagerEvent
-                                }
                             }.waitAndRecover()
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatManagerEvent.ErrorOccurred(event.error)
@@ -315,33 +333,6 @@ class ChatManager constructor(
                 else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
             }
         }
-    }
-
-    private val typingTimers = mutableListOf<TypingTimer>()
-
-    inner class TypingTimer(val userId: String, val roomId: Int) {
-
-        private var job: Future<Unit>? = null
-
-        fun triggerTyping() {
-            if (job.isActive) job?.cancel()
-            job = scheduleStopTyping()
-        }
-
-        private fun scheduleStopTyping(): Future<Unit> = Futures.schedule {
-            Thread.sleep(1_500)
-
-            consumeEvents(listOf(
-                userService.fetchUserBy(userId).flatMapFutureResult { user ->
-                    roomService.fetchRoomBy(user.id, roomId).mapResult { room ->
-                        ChatManagerEvent.UserStoppedTyping(user, room) as ChatManagerEvent
-                    }
-                }.waitAndRecover()
-            ))
-        }
-
-        private val <A> Future<A>?.isActive
-            get() = this != null && !isDone && !isCancelled
     }
 }
 
