@@ -1,5 +1,7 @@
 package com.pusher.chatkit.rooms
 
+import com.pusher.chatkit.ChatManagerEvent
+import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
@@ -23,6 +25,7 @@ class RoomSubscriptionGroup(
         roomId: Int,
         private val userService: UserService,
         cursorService: CursorService,
+        private val globalEventConsumers: MutableList<ChatManagerEventConsumer>,
         client: PlatformClient,
         logger: Logger,
         private val consumers: List<RoomConsumer>
@@ -50,6 +53,7 @@ class RoomSubscriptionGroup(
     private val typingTimers = HashMap<String, Future<Unit>>()
 
     override fun connect(): ChatkitSubscription {
+        globalEventConsumers += this::consumeEvent
         // TODO these should be done in parallel
         roomSubscription.connect()
         membershipSubscription.connect()
@@ -62,6 +66,8 @@ class RoomSubscriptionGroup(
         roomSubscription.unsubscribe()
         membershipSubscription.unsubscribe()
         cursorsSubscription.unsubscribe()
+
+        globalEventConsumers -= this::consumeEvent
     }
 
     private fun forwardEvent(event: RoomEvent) {
@@ -129,6 +135,27 @@ class RoomSubscriptionGroup(
                         RoomEvent.NewMessage(event.message)
                     is RoomSubscriptionEvent.ErrorOccurred ->
                         RoomEvent.ErrorOccurred(event.error)
+                }
+        )
+    }
+
+    private fun consumeEvent(event: ChatManagerEvent) {
+        forwardEvent(
+                // This function must map events which we wish to report at room scope that
+                // are not received at room scope from the backend.
+                // Be careful, if you map an event where which originated here, you will create
+                // an infinite loop consuming that event.
+                when (event) {
+                    is ChatManagerEvent.RoomUpdated ->
+                        RoomEvent.RoomUpdated(event.room)
+                    is ChatManagerEvent.RoomDeleted ->
+                        RoomEvent.RoomDeleted(event.roomId)
+                    is ChatManagerEvent.UserCameOnline ->
+                        RoomEvent.UserCameOnline(event.user)
+                    is ChatManagerEvent.UserWentOffline ->
+                        RoomEvent.UserWentOffline(event.user)
+                    else ->
+                        RoomEvent.NoEvent
                 }
         )
     }

@@ -88,6 +88,7 @@ class ChatManager constructor(
                 createPlatformClient(InstanceType.DEFAULT),
                 userService,
                 cursorService,
+                this.eventConsumers,
                 this::consumeRoomSubscriptionEvent,
                 dependencies.logger
         )
@@ -130,8 +131,7 @@ class ChatManager constructor(
     private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
             consumeEvents(listOf(transformCursorsSubscriptionEvent(event)))
 
-    private fun consumeRoomSubscriptionEvent(roomId: Int): RoomConsumer =
-            { event ->
+    private fun consumeRoomSubscriptionEvent(roomId: Int): RoomConsumer = { event ->
                 consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
             }
 

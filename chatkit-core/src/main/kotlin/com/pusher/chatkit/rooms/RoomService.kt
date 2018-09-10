@@ -1,6 +1,7 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.ChatManager
+import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
@@ -19,6 +20,7 @@ internal class RoomService(
         private val client: PlatformClient,
         private val userService: UserService,
         private val cursorsService: CursorService,
+        private val globalEventConsumers: MutableList<ChatManagerEventConsumer>,
         private val globalConsumer: (Int) -> RoomConsumer,
         private val logger: Logger
 ) : HasChat {
@@ -91,6 +93,7 @@ internal class RoomService(
                     roomId,
                     userService,
                     cursorsService,
+                    globalEventConsumers,
                     client,
                     logger,
                     listOf(applySideEffects(roomId), globalConsumer(roomId), externalConsumer)
