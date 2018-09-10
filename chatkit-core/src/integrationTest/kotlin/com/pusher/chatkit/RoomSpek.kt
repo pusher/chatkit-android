@@ -40,8 +40,12 @@ class RoomSpek : Spek({
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomEvent.UserJoined) userJoined = event.user
+                // TODO this represents a change in behaviour
+                // Previously we didn't report users joined and left from the initial state
+                if (event is RoomEvent.UserJoined && event.user.id == PUSHERINO) userJoined = event.user
             }
+
+            assertThat(alice.rooms[0].memberUserIds).doesNotContain(PUSHERINO)
 
             pusherino.joinRoom(alice.generalRoom.id).wait().assumeSuccess()
 
@@ -99,9 +103,9 @@ class RoomSpek : Spek({
 
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
 
-            chatFor(ALICE).connect({ event ->
+            chatFor(ALICE).connect() { event ->
                 if (event is ChatManagerEvent.CurrentUserAddedToRoom) roomJoined = event.room
-            }).wait().assumeSuccess()
+            }.wait().assumeSuccess()
             pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(ALICE)).wait().assumeSuccess()
 
             assertThat(roomJoined.id).isEqualTo(pusherino.generalRoom.id)
@@ -113,9 +117,9 @@ class RoomSpek : Spek({
             var roomRemovedFromId by FutureValue<Int>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
 
-            chatFor(ALICE).connect({ event ->
+            chatFor(ALICE).connect() { event ->
                 if (event is ChatManagerEvent.CurrentUserRemovedFromRoom) roomRemovedFromId = event.roomId
-            }).wait().assumeSuccess()
+            }.wait().assumeSuccess()
 
             pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(ALICE)).wait().assumeSuccess()
 

@@ -186,12 +186,16 @@ class CurrentUser(
     fun isTypingIn(room: Room): Future<Result<Unit, Error>> =
         isTypingIn(room.id)
 
-    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> = when {
-        canSendTypingEvent() -> client.doPost<Unit>(
-            path ="/rooms/$roomId/typing_indicators"
-        ).also { lastTypingEvent = System.currentTimeMillis() }
-        else -> Unit.asSuccess<Unit, Error>().toFuture()
-    }
+    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> =
+            if (canSendTypingEvent()) {
+                client.doPost<Unit>(
+                        path = "/rooms/$roomId/typing_indicators"
+                ).also {
+                    lastTypingEvent = System.currentTimeMillis()
+                }
+            } else {
+                Unit.asSuccess<Unit, Error>().toFuture()
+            }
 
     fun getJoinableRooms(): Future<Result<List<Room>, Error>> =
         chatManager.roomService.fetchUserRooms(
