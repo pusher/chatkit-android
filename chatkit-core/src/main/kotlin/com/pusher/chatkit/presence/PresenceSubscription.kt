@@ -12,22 +12,16 @@ internal class PresenceSubscription(
     consumeEvent: PresenceSubscriptionConsumer,
     logger: Logger
 ): ChatkitSubscription {
-    private var subscription =ResolvableSubscription(
+    private var subscription = ResolvableSubscription(
             client = client,
             path = "/users/$userId/presence",
             listeners = SubscriptionListeners(
-                    onOpen = { logger.verbose("[Presence] OnOpen triggered") },
-                    onEvent = {
-                        logger.verbose("[Presence] Event received: $it")
-                        consumeEvent(it.body)
-                    },
-                    onError = { error ->
-                        logger.verbose("[Presence] Subscription error: $error")
-                        consumeEvent(PresenceSubscriptionEvent.ErrorOccurred(error))
-                    },
-                    onEnd = { error -> logger.verbose("[Presence] Subscription ended with: $error") }
+                    onEvent = { consumeEvent(it.body) },
+                    onError = { error -> consumeEvent(PresenceSubscriptionEvent.ErrorOccurred(error)) }
             ),
             messageParser = PresenceSubscriptionEventParser,
+            logger = logger,
+            description = "Presence for user $userId",
             resolveOnFirstEvent = true
     )
 

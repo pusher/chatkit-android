@@ -31,7 +31,6 @@ class RoomSpek : Spek({
     afterEachTest(::closeChatManagers)
 
     describe("Room subscription") {
-
         it("notifies when '$PUSHERINO' joins room '$GENERAL'") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
 

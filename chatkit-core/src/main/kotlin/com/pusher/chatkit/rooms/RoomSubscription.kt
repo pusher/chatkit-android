@@ -17,14 +17,12 @@ internal class RoomSubscription(
             client = client,
             path = "/rooms/$roomId?&message_limit=$messageLimit",
             listeners = SubscriptionListeners(
-                    onOpen = { logger.verbose("[Room $roomId] On open triggered") },
-                    onEvent = {
-                        logger.verbose("[Room $roomId] received event: ${it.body}")
-                        consumeEvent(it.body)
-                    },
+                    onEvent = { consumeEvent(it.body) },
                     onError = { consumeEvent(RoomSubscriptionEvent.ErrorOccurred(it)) }
             ),
-            messageParser = RoomSubscriptionEventParser
+            messageParser = RoomSubscriptionEventParser,
+            description = "Room $roomId",
+            logger = logger
     )
 
     init {

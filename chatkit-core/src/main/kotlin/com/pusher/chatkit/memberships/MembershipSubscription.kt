@@ -16,20 +16,12 @@ internal class MembershipSubscription(
             client = client,
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
-                    onOpen = { headers ->
-                        logger.verbose("[Membership] OnOpen $headers")
-                    },
-                    onEvent = { event ->
-                        event.body
-                                .also(consumeEvent)
-                                .also { logger.verbose("[Membership] Event received $event") }
-                    },
-                    onError = { error -> consumeEvent(MembershipSubscriptionEvent.ErrorOccurred(error)) },
-                    onSubscribe = { logger.verbose("[Membership] Subscription established") },
-                    onRetrying = { logger.verbose("[Membership] Subscription lost. Trying again.") },
-                    onEnd = { error -> logger.verbose("[Membership] Subscription ended with: $error") }
+                    onEvent = { event -> consumeEvent(event.body) },
+                    onError = { error -> consumeEvent(MembershipSubscriptionEvent.ErrorOccurred(error)) }
             ),
             messageParser = MembershipSubscriptionEventParser,
+            logger = logger,
+            description = "Memberships room $roomId",
             resolveOnFirstEvent = true
     )
 
