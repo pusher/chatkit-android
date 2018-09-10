@@ -91,7 +91,6 @@ internal class RoomService(
                     roomId,
                     userService,
                     cursorsService,
-                    chatManager,
                     client,
                     logger,
                     listOf(applySideEffects(roomId), globalConsumer(roomId), externalConsumer)

@@ -1,63 +1,41 @@
 package com.pusher.chatkit.cursors
 
-import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
-import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import com.pusher.util.Result
-import com.pusher.util.asSuccess
-import elements.Error
-import elements.Subscription
-import elements.SubscriptionEvent
 
-internal class CursorSubscription(
-        private val client: PlatformClient,
-        private val path: String,
-        private val cursorsStore: CursorsStore,
-        private val consumeEvent: (CursorSubscriptionEvent) -> Unit,
+class CursorSubscription(
+        client: PlatformClient,
+        path: String,
+        private val consumers: List<CursorSubscriptionConsumer>,
         private val logger: Logger
 ): ChatkitSubscription {
-    private lateinit var subscription: Subscription
-
-    override fun connect(): ChatkitSubscription{
-        subscription = ResolvableSubscription(
+    private var subscription = ResolvableSubscription(
             client = client,
             path = path,
-            listeners = SubscriptionListeners<ChatEvent>(
-                onOpen = { logger.verbose("[Cursor] OnOpen triggered") },
-                onEvent = { event ->
-                    val cursorEvent = event.toCursorEvent()
-                        .recover { CursorSubscriptionEvent.OnError(it) }
-                    consumeEvent(cursorEvent)
-                    when(cursorEvent) {
-                        is CursorSubscriptionEvent.OnCursorSet ->  cursorsStore[cursorEvent.cursor.userId] += cursorEvent.cursor
-                        is CursorSubscriptionEvent.InitialState -> cursorsStore += cursorEvent.cursors
-                    }
-                },
-                onError = { error ->
-                    logger.verbose("[Cursor] Subscription error: $error")
-                    consumeEvent(CursorSubscriptionEvent.OnError(error))
-                },
-                onSubscribe = { logger.verbose("[Cursor] Subscription established") },
-                onRetrying = { logger.verbose("[Cursor] Subscription lost. Trying again.") },
-                onEnd = { error -> logger.verbose("[Cursor] Subscription ended with: $error") }
+            listeners = SubscriptionListeners(
+                    onOpen = { logger.verbose("[Cursor] OnOpen triggered") },
+                    onEvent = { event ->
+                        consumers.forEach { consumer -> consumer(event.body) }
+                    },
+                    onError = { error ->
+                        logger.verbose("[Cursor] Subscription error: $error")
+                        consumers.forEach { consumer -> consumer(CursorSubscriptionEvent.OnError(error)) }
+                    },
+                    onSubscribe = { logger.verbose("[Cursor] Subscription established") },
+                    onRetrying = { logger.verbose("[Cursor] Subscription lost. Trying again.") },
+                    onEnd = { error -> logger.verbose("[Cursor] Subscription ended with: $error") }
             ),
-            messageParser = { it.parseAs() }
-        ).connect()
+            messageParser = CursorSubscriptionEventParser
+    )
 
-        return this
+    override fun connect(): ChatkitSubscription{
+        return subscription.connect()
     }
 
     override fun unsubscribe() {
         subscription.unsubscribe()
     }
 }
-
-private fun SubscriptionEvent<ChatEvent>.toCursorEvent(): Result<CursorSubscriptionEvent, Error> = when (body.eventName) {
-    "new_cursor" -> body.data.parseAs<Cursor>().map(CursorSubscriptionEvent::OnCursorSet)
-    "initial_state" -> body.data.parseAs<CursorSubscriptionEvent.InitialState>()
-    else -> CursorSubscriptionEvent.NoEvent.asSuccess<CursorSubscriptionEvent, Error>()
-}.map { it }

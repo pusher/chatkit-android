@@ -14,7 +14,6 @@ import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
-import elements.Subscription
 import java.util.concurrent.Future
 
 class CursorService(
@@ -22,7 +21,6 @@ class CursorService(
         private val logger: Logger
 ) {
     private val cursorsStore = CursorsStore()
-    private val subscriptions = mutableListOf<Subscription>()
 
     fun setReadCursor(
         userId: String,
@@ -58,34 +56,32 @@ class CursorService(
     private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursorsStore")
 
-    fun saveCursors(cursors: Map<Int, Cursor>) {
-        for ((_, cursor) in cursors) {
-            this.cursorsStore[cursor.userId] += cursor
-        }
-    }
-
-    fun subscribeForRoom(roomId: Int, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
-        CursorSubscription(
+    fun subscribeForRoom(
+            roomId: Int,
+            externalConsumer: (CursorSubscriptionEvent) -> Unit
+    ) = CursorSubscription(
             client,
             "/cursors/0/rooms/$roomId",
-            cursorsStore,
-            consumeEvent,
+            listOf(::applySideEffects, externalConsumer),
             logger
-        ).also { subscriptions.add(it) }.connect()
+        )
 
-    fun subscribeForUser(userId: String, consumeEvent: (CursorSubscriptionEvent) -> Unit) =
-        CursorSubscription(
+    fun subscribeForUser(
+            userId: String,
+            externalConsumer: (CursorSubscriptionEvent) -> Unit
+    ) = CursorSubscription(
             client,
             "/cursors/0/users/$userId",
-            cursorsStore,
-            consumeEvent,
+            listOf(::applySideEffects, externalConsumer),
             logger
-        ).also { subscriptions.add(it) }.connect()
+        )
 
-    fun request(userId: String): Future<Result<List<Cursor>, Error>> = client.doGet(
-        "/cursors/0/users/$userId",
-        responseParser = { it.parseAs<List<Cursor>>() }
-    )
-
-    fun unsubscribe() = subscriptions.forEach { sub -> sub.unsubscribe() }
+    private fun applySideEffects(event: CursorSubscriptionEvent) {
+        when (event) {
+            is CursorSubscriptionEvent.OnCursorSet ->
+                cursorsStore[event.cursor.userId] += event.cursor
+            is CursorSubscriptionEvent.InitialState ->
+                cursorsStore += event.cursors
+        }
+    }
 }

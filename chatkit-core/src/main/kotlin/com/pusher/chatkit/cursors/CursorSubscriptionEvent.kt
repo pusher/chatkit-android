@@ -8,3 +8,5 @@ sealed class CursorSubscriptionEvent {
     data class OnError(val error: Error) : CursorSubscriptionEvent()
     object NoEvent : CursorSubscriptionEvent()
 }
+
+typealias CursorSubscriptionConsumer = (CursorSubscriptionEvent) -> Unit
