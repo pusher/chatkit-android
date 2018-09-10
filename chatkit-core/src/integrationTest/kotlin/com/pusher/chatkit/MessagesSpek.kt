@@ -4,15 +4,13 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
-import com.pusher.chatkit.files.Attachment
 import com.pusher.chatkit.files.AttachmentType.IMAGE
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.FutureValue
-import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
@@ -160,7 +158,7 @@ class MessagesSpek : Spek({
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
                 when (event) {
-                    is RoomSubscriptionEvent.NewMessage -> receivedMessage = event.message
+                    is RoomEvent.NewMessage -> receivedMessage = event.message
                 }
             }
 
@@ -187,7 +185,7 @@ class MessagesSpek : Spek({
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
                 when (event) {
-                    is RoomSubscriptionEvent.NewMessage -> receivedMessage = event.message
+                    is RoomEvent.NewMessage -> receivedMessage = event.message
                 }
             }
 
@@ -216,7 +214,7 @@ class MessagesSpek : Spek({
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
                 when (event) {
-                    is RoomSubscriptionEvent.NewMessage -> receivedMessage = event.message
+                    is RoomEvent.NewMessage -> receivedMessage = event.message
                 }
             }
 

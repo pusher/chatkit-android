@@ -5,7 +5,7 @@ import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
@@ -32,7 +32,7 @@ class CursorsSpek : Spek({
             val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
 
             val receivedCursor by pusherino
-                .subscribeRoomFor(GENERAL) { it as? RoomSubscriptionEvent.NewReadCursor }
+                .subscribeRoomFor(GENERAL) { it as? RoomEvent.NewReadCursor }
 
             alice.setReadCursor(alice.generalRoom, messageId).wait().assumeSuccess()
 
@@ -46,7 +46,7 @@ class CursorsSpek : Spek({
         it("should avoid multiple setReadCursor calls") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val cursorsReceived = mutableListOf<RoomSubscriptionEvent.NewReadCursor>()
+            val cursorsReceived = mutableListOf<RoomEvent.NewReadCursor>()
             val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
@@ -55,7 +55,7 @@ class CursorsSpek : Spek({
 
             val secondMessageCursor by pusherino
                 .subscribeRoomFor(GENERAL) {
-                    (it as? RoomSubscriptionEvent.NewReadCursor)?.takeIf { event ->
+                    (it as? RoomEvent.NewReadCursor)?.takeIf { event ->
                         cursorsReceived += event
                         event.cursor.position == secondMessageId
                     }
@@ -80,7 +80,7 @@ class CursorsSpek : Spek({
 
             val thirdMessageCursor by pusherino
                 .subscribeRoomFor(GENERAL) {
-                    (it as? RoomSubscriptionEvent.NewReadCursor)?.takeIf { event ->
+                    (it as? RoomEvent.NewReadCursor)?.takeIf { event ->
                         cursorsReceived += event.cursor
                         event.cursor.position == thirdMessageId
                     }
@@ -110,7 +110,5 @@ class CursorsSpek : Spek({
 
             assertThat(cursor.position).isEqualTo(messageId)
         }
-
     }
-
 })

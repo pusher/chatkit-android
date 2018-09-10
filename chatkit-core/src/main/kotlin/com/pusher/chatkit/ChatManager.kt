@@ -3,14 +3,13 @@ package com.pusher.chatkit
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
-import com.pusher.chatkit.memberships.MembershipService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomConsumer
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.rooms.RoomSubscriptionConsumer
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -86,12 +85,10 @@ class ChatManager constructor(
                 this,
                 createPlatformClient(InstanceType.DEFAULT),
                 userService,
-                this::consumeRoomSubscriptionEvent
+                cursorService,
+                this::consumeRoomSubscriptionEvent,
+                dependencies.logger
         )
-    }
-
-    internal val membershipService by lazy {
-        MembershipService(this, createPlatformClient(InstanceType.DEFAULT))
     }
 
     private var currentUser: CurrentUser? = null
@@ -128,7 +125,7 @@ class ChatManager constructor(
     private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
             consumeEvents(listOf(transformCursorsSubscriptionEvent(event)))
 
-    private fun consumeRoomSubscriptionEvent(roomId: Int): RoomSubscriptionConsumer =
+    private fun consumeRoomSubscriptionEvent(roomId: Int): RoomConsumer =
             { event ->
                 consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
             }
@@ -137,20 +134,22 @@ class ChatManager constructor(
             consumeEvents(transformPresenceSubscriptionEvent(event))
 
     private fun consumeEvents(events : List<ChatManagerEvent>) {
-        events.forEach { event ->
+        events.filter { event ->
+            event !is ChatManagerEvent.NoEvent
+        }.forEach { event ->
             eventConsumers.forEach { consumer ->
                 consumer(event)
             }
         }
     }
 
-    private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomSubscriptionEvent): ChatManagerEvent =
+    private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomEvent): ChatManagerEvent =
         when (event) {
-            is RoomSubscriptionEvent.UserStartedTyping ->
+            is RoomEvent.UserStartedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).mapResult { room ->
                     ChatManagerEvent.UserStartedTyping(event.user, room) as ChatManagerEvent
                 }.waitAndRecover()
-            is RoomSubscriptionEvent.UserStoppedTyping ->
+            is RoomEvent.UserStoppedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).mapResult { room ->
                     ChatManagerEvent.UserStoppedTyping(event.user, room) as ChatManagerEvent
                 }.waitAndRecover()

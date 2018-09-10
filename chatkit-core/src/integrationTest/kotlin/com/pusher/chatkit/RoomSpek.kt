@@ -7,9 +7,8 @@ import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.FutureValue
-import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.deleteRoom
@@ -42,7 +41,7 @@ class RoomSpek : Spek({
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserJoined) userJoined = event.user
+                if (event is RoomEvent.UserJoined) userJoined = event.user
             }
 
             pusherino.joinRoom(alice.generalRoom.id).wait().assumeSuccess()
@@ -58,7 +57,7 @@ class RoomSpek : Spek({
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserLeft) userLeft = event.user
+                if (event is RoomEvent.UserLeft) userLeft = event.user
             }
             pusherino.leaveRoom(alice.generalRoom.id).wait().assumeSuccess()
 
@@ -72,7 +71,7 @@ class RoomSpek : Spek({
             val alice = chatFor(ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.RoomUpdated) updatedRoom = event.room
+                if (event is RoomEvent.RoomUpdated) updatedRoom = event.room
             }
             changeRoomName(alice.generalRoom, NOT_GENERAL).run()
 
@@ -87,7 +86,7 @@ class RoomSpek : Spek({
             val expectedRoomId = pusherino.generalRoom.id
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.RoomDeleted) deletedRoomId = event.roomId
+                if (event is RoomEvent.RoomDeleted) deletedRoomId = event.roomId
             }
             deleteRoom(pusherino.generalRoom).run()
 
@@ -237,7 +236,5 @@ class RoomSpek : Spek({
 
             assertThat(isSubscribed).isFalse()
         }
-
     }
-
 })

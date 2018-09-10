@@ -4,8 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
-import com.pusher.chatkit.test.InstanceActions
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
@@ -27,7 +26,7 @@ class PresenceSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
-                .subscribeRoomFor(GENERAL) { (it as? RoomSubscriptionEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
+                .subscribeRoomFor(GENERAL) { (it as? RoomEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
 
             chatFor(ALICE).connect().wait().assumeSuccess()
 
@@ -49,7 +48,7 @@ class PresenceSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userWentOffline by chatFor(PUSHERINO)
-                .subscribeRoomFor(GENERAL) { it as? RoomSubscriptionEvent.UserWentOffline }
+                .subscribeRoomFor(GENERAL) { it as? RoomEvent.UserWentOffline }
 
             val aliceChat = chatFor(ALICE)
             aliceChat.connect().wait().assumeSuccess()

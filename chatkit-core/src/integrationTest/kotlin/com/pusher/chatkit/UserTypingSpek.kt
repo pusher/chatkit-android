@@ -2,7 +2,7 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
@@ -30,7 +30,7 @@ class UserTypingSpek : Spek({
             val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStartedTyping) startedTypingUser = event.user
+                if (event is RoomEvent.UserStartedTyping) startedTypingUser = event.user
             }
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
@@ -47,7 +47,7 @@ class UserTypingSpek : Spek({
             val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStoppedTyping) stoppedTypingUser = event.user
+                if (event is RoomEvent.UserStoppedTyping) stoppedTypingUser = event.user
             }
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()

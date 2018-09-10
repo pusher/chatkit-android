@@ -7,8 +7,8 @@ import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.RoomSubscriptionConsumer
-import com.pusher.chatkit.rooms.RoomSubscriptionListeners
+import com.pusher.chatkit.rooms.RoomConsumer
+import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.User
@@ -110,16 +110,16 @@ class CurrentUser(
 
     @JvmOverloads
     fun subscribeToRoom(
-        room: Room,
-        listeners: RoomSubscriptionListeners,
-        messageLimit : Int = 10
+            room: Room,
+            listeners: RoomListeners,
+            messageLimit : Int = 10
     ): ChatkitSubscription =
         subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
     fun subscribeToRoom(
         roomId: Int,
-        listeners: RoomSubscriptionListeners,
+        listeners: RoomListeners,
         messageLimit : Int = 10
     ): ChatkitSubscription =
         subscribeToRoom(roomId, messageLimit, listeners.toCallback())
@@ -128,7 +128,7 @@ class CurrentUser(
     fun subscribeToRoom(
         room: Room,
         messageLimit : Int = 10,
-        consumer: RoomSubscriptionConsumer
+        consumer: RoomConsumer
     ): ChatkitSubscription =
         subscribeToRoom(room.id, messageLimit, consumer)
 
@@ -136,12 +136,10 @@ class CurrentUser(
     fun subscribeToRoom(
         roomId: Int,
         messageLimit : Int = 10,
-        consumer: RoomSubscriptionConsumer
+        consumer: RoomConsumer
     ) = chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
             .autoRemove(roomId)
             .also { roomSubscriptions += roomId to it }
-
-
 
     private fun Subscription.autoRemove(roomId: Int) = object : ChatkitSubscription {
         override fun connect(): ChatkitSubscription {

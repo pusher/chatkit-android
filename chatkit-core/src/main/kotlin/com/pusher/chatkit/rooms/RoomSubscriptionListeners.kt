@@ -8,7 +8,7 @@ import elements.Error
 /**
  * Used in [com.pusher.chatkit.CurrentUser] to register for room events.
  */
-data class RoomSubscriptionListeners @JvmOverloads constructor(
+data class RoomListeners @JvmOverloads constructor(
     val onNewMessage: (Message) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = {},
     val onUserStoppedTyping: (User) -> Unit = {},
@@ -22,46 +22,44 @@ data class RoomSubscriptionListeners @JvmOverloads constructor(
     val onErrorOccurred: (Error) -> Unit = {}
 )
 
-/**
- * Used to consume instances of [RoomSubscriptionEvent]
- */
+typealias RoomConsumer = (RoomEvent) -> Unit
 typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
 
-/**
- * Transforms [RoomSubscriptionListeners] to [RoomSubscriptionConsumer]
- */
-internal fun RoomSubscriptionListeners.toCallback(): RoomSubscriptionConsumer = { event ->
+internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
     when(event) {
-        is RoomSubscriptionEvent.NewMessage -> onNewMessage(event.message)
-        is RoomSubscriptionEvent.UserStartedTyping -> onUserStartedTyping(event.user)
-        is RoomSubscriptionEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
-        is RoomSubscriptionEvent.UserJoined -> onUserJoined(event.user)
-        is RoomSubscriptionEvent.UserLeft -> onUserLeft(event.user)
-        is RoomSubscriptionEvent.UserCameOnline -> onUserCameOnline(event.user)
-        is RoomSubscriptionEvent.UserWentOffline -> onUserWentOffline(event.user)
-        is RoomSubscriptionEvent.NewReadCursor -> onNewReadCursor(event.cursor)
-        is RoomSubscriptionEvent.RoomUpdated -> onRoomUpdated(event.room)
-        is RoomSubscriptionEvent.RoomDeleted -> onRoomDeleted(event.roomId)
-        is RoomSubscriptionEvent.ErrorOccurred -> onErrorOccurred(event.error)
+        is RoomEvent.NewMessage -> onNewMessage(event.message)
+        is RoomEvent.UserStartedTyping -> onUserStartedTyping(event.user)
+        is RoomEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
+        is RoomEvent.UserJoined -> onUserJoined(event.user)
+        is RoomEvent.UserLeft -> onUserLeft(event.user)
+        is RoomEvent.UserCameOnline -> onUserCameOnline(event.user)
+        is RoomEvent.UserWentOffline -> onUserWentOffline(event.user)
+        is RoomEvent.NewReadCursor -> onNewReadCursor(event.cursor)
+        is RoomEvent.RoomUpdated -> onRoomUpdated(event.room)
+        is RoomEvent.RoomDeleted -> onRoomDeleted(event.roomId)
+        is RoomEvent.ErrorOccurred -> onErrorOccurred(event.error)
     }
 }
 
-/**
- * Same as [RoomSubscriptionListeners] but using events instead of individual listeners.
- */
+sealed class RoomEvent {
+    data class NewMessage(val message: Message) : RoomEvent()
+    data class UserStartedTyping(val user: User) : RoomEvent()
+    data class UserStoppedTyping(val user: User) : RoomEvent()
+    data class UserJoined(val user: User) : RoomEvent()
+    data class UserLeft(val user: User) : RoomEvent()
+    data class UserCameOnline(val user: User) : RoomEvent()
+    data class UserWentOffline(val user: User) : RoomEvent()
+    data class InitialReadCursors(val cursor: List<Cursor>) : RoomEvent()
+    data class NewReadCursor(val cursor: Cursor) : RoomEvent()
+    data class RoomUpdated(val room: Room) : RoomEvent()
+    data class RoomDeleted(val roomId: Int) : RoomEvent()
+    data class ErrorOccurred(val error: Error) : RoomEvent()
+    object NoEvent : RoomEvent()
+}
+
 sealed class RoomSubscriptionEvent {
     data class NewMessage(val message: Message) : RoomSubscriptionEvent()
     data class UserIsTyping(val userId: String) : RoomSubscriptionEvent()
-    data class UserStartedTyping(val user: User) : RoomSubscriptionEvent()
-    data class UserStoppedTyping(val user: User) : RoomSubscriptionEvent()
-    data class UserJoined(val user: User) : RoomSubscriptionEvent()
-    data class UserLeft(val user: User) : RoomSubscriptionEvent()
-    data class UserCameOnline(val user: User) : RoomSubscriptionEvent()
-    data class UserWentOffline(val user: User) : RoomSubscriptionEvent()
-    data class InitialReadCursors(val cursor: List<Cursor>) : RoomSubscriptionEvent()
-    data class NewReadCursor(val cursor: Cursor) : RoomSubscriptionEvent()
-    data class RoomUpdated(val room: Room) : RoomSubscriptionEvent()
-    data class RoomDeleted(val roomId: Int) : RoomSubscriptionEvent()
     data class ErrorOccurred(val error: Error) : RoomSubscriptionEvent()
     object NoEvent : RoomSubscriptionEvent()
 }
