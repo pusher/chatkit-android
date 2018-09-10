@@ -132,7 +132,14 @@ class RoomSubscriptionGroup(
                         }
                     }
                     is RoomSubscriptionEvent.NewMessage ->
-                        RoomEvent.NewMessage(event.message)
+                        userService.fetchUserBy(event.message.userId).mapResult { user ->
+                            event.message.user = user
+                            RoomEvent.NewMessage(event.message) as RoomEvent
+                        }.waitOr {
+                            RoomEvent.ErrorOccurred(Errors.other(it)).asSuccess()
+                        }.recover {
+                            RoomEvent.ErrorOccurred(it)
+                        }
                     is RoomSubscriptionEvent.ErrorOccurred ->
                         RoomEvent.ErrorOccurred(event.error)
                 }

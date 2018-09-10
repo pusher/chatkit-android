@@ -210,6 +210,8 @@ class ChatManager constructor(
     private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
+                // TODO This is a mix of apply and transform. The events should be generated in the
+                // transform step
                 val removedFrom = (roomService.roomStore.toList() - event.rooms).also {
                     roomService.roomStore -= it
                 }.map {
