@@ -7,11 +7,11 @@ import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 
 internal class RoomSubscription(
-        private val roomId: Int,
-        private val consumeEvent: RoomSubscriptionConsumer,
+        roomId: Int,
+        consumeEvent: RoomSubscriptionConsumer,
         client: PlatformClient,
         messageLimit: Int,
-        private val logger: Logger
+        logger: Logger
 ) : ChatkitSubscription {
     private var roomSubscription = ResolvableSubscription(
             client = client,

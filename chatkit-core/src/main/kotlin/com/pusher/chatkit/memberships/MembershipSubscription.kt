@@ -5,15 +5,13 @@ import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import elements.SubscriptionEvent
 
 internal class MembershipSubscription(
     roomId: Int,
     client: PlatformClient,
-    private val consumeEvent: (MembershipSubscriptionEvent) -> Unit,
-    private val logger: Logger
+    consumeEvent: MembershipSubscriptionConsumer,
+    logger: Logger
 ) : ChatkitSubscription {
-
     private var subscription = ResolvableSubscription(
             client = client,
             path = "/rooms/$roomId/memberships",
@@ -21,7 +19,7 @@ internal class MembershipSubscription(
                     onOpen = { headers ->
                         logger.verbose("[Membership] OnOpen $headers")
                     },
-                    onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
+                    onEvent = { event ->
                         event.body
                                 .also(consumeEvent)
                                 .also { logger.verbose("[Membership] Event received $event") }

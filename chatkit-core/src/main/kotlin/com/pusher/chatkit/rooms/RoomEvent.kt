@@ -28,6 +28,7 @@ sealed class RoomEvent {
     data class RoomUpdated(val room: Room) : RoomEvent()
     data class RoomDeleted(val roomId: Int) : RoomEvent()
     data class ErrorOccurred(val error: Error) : RoomEvent()
+    object NoEvent : RoomEvent()
 }
 
 /**

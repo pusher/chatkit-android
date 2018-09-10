@@ -5,22 +5,20 @@ import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import elements.SubscriptionEvent
 
 private const val USERS_PATH = "users"
 
 internal class UserSubscription(
-    private val client: PlatformClient,
-    private val consumeEvent: (UserSubscriptionEvent) -> Unit,
-    private val logger: Logger
+    client: PlatformClient,
+    consumeEvent: UserSubscriptionConsumer,
+    logger: Logger
 ) : ChatkitSubscription {
-
     private var underlyingSubscription = ResolvableSubscription(
             client = client,
             path = USERS_PATH,
             listeners = SubscriptionListeners(
                     onOpen = { logger.verbose("[User] OnOpen triggered") },
-                    onEvent = { event: SubscriptionEvent<UserSubscriptionEvent> ->
+                    onEvent = { event ->
                         event.body
                                 .also(consumeEvent)
                                 .also { logger.verbose("[User] Event received $it") }

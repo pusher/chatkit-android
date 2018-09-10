@@ -33,6 +33,8 @@ internal object CursorSubscriptionEventParser : DataParser<CursorSubscriptionEve
             when (eventName) {
                 "new_cursor" -> parseAs<Cursor>().map(CursorSubscriptionEvent::OnCursorSet)
                 "initial_state" -> parseAs<CursorSubscriptionEvent.InitialState>()
-                else -> CursorSubscriptionEvent.NoEvent.asSuccess<CursorSubscriptionEvent, Error>()
+                else -> CursorSubscriptionEvent.OnError(
+                        Errors.other("Unexpected event name $eventName")
+                ).asSuccess<CursorSubscriptionEvent, Error>()
             }.map { it }
 }
