@@ -26,7 +26,7 @@ class RoomSubscriptionGroup(
         client: PlatformClient,
         logger: Logger,
         private val consumers: List<RoomConsumer>
-        ): ChatkitSubscription {
+): ChatkitSubscription {
     private val roomSubscription = RoomSubscription(
             roomId,
             this::consumeEvent,
@@ -57,9 +57,9 @@ class RoomSubscriptionGroup(
 
     override fun connect(): ChatkitSubscription {
         // TODO these should be done in parallel
-        // TODO the cursors service already called connect on the Cursors Subscription!
         roomSubscription.connect()
         membershipSubscription.connect()
+        cursorsSubscription.connect()
 
         return this
     }
@@ -130,8 +130,6 @@ class RoomSubscriptionGroup(
                         RoomEvent.NewMessage(event.message)
                     is RoomSubscriptionEvent.ErrorOccurred ->
                         RoomEvent.ErrorOccurred(event.error)
-                    is RoomSubscriptionEvent.NoEvent ->
-                        RoomEvent.NoEvent
                 }
         )
     }
