@@ -1,99 +1,45 @@
 package com.pusher.chatkit.memberships
 
-import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.ChatManagerEvent
-import com.pusher.chatkit.ChatManagerEvent.*
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.network.Wait
-import com.pusher.platform.network.toFuture
-import com.pusher.platform.network.waitOr
-import com.pusher.util.Result
-import com.pusher.util.asSuccess
-import com.pusher.util.flatMapResult
-import com.pusher.util.orElse
-import elements.Error
-import elements.Errors
-import elements.Subscription
+import com.pusher.platform.logger.Logger
 import elements.SubscriptionEvent
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit.SECONDS
 
 internal class MembershipSubscription(
-    private val roomId: Int,
-    private val client: PlatformClient,
-    private val chatManager: ChatManager,
-    private val consumeEvent: (ChatManagerEvent) -> Unit
+    roomId: Int,
+    client: PlatformClient,
+    private val consumeEvent: (MembershipSubscriptionEvent) -> Unit,
+    private val logger: Logger
 ) : ChatkitSubscription {
 
-    private val logger = chatManager.dependencies.logger
-    private val roomStore = chatManager.roomService.roomStore
-    private lateinit var subscription: Subscription
-
-    override fun connect(): ChatkitSubscription {
-        subscription = ResolvableSubscription(
+    private var subscription = ResolvableSubscription(
             client = client,
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
-                onOpen = { headers ->
-                    logger.verbose("[Membership] OnOpen $headers")
-                },
-                onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
-                    event.body
-                        .applySideEffects()
-                        .toChatManagerEvent()
-                        .waitOr(Wait.For(10, SECONDS)) { ErrorOccurred(Errors.other(it)).asSuccess() }
-                        .recover { ErrorOccurred(it) }
-                        .also(consumeEvent)
-                        .also { logger.verbose("[Membership] Event received $event") }
-                },
-                onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) },
-                onSubscribe = { logger.verbose("[Membership] Subscription established") },
-                onRetrying = { logger.verbose("[Membership] Subscription lost. Trying again.") },
-                onEnd = { error -> logger.verbose("[Membership] Subscription ended with: $error") }
+                    onOpen = { headers ->
+                        logger.verbose("[Membership] OnOpen $headers")
+                    },
+                    onEvent = { event: SubscriptionEvent<MembershipSubscriptionEvent> ->
+                        event.body
+                                .also(consumeEvent)
+                                .also { logger.verbose("[Membership] Event received $event") }
+                    },
+                    onError = { error -> consumeEvent(MembershipSubscriptionEvent.ErrorOccurred(error)) },
+                    onSubscribe = { logger.verbose("[Membership] Subscription established") },
+                    onRetrying = { logger.verbose("[Membership] Subscription lost. Trying again.") },
+                    onEnd = { error -> logger.verbose("[Membership] Subscription ended with: $error") }
             ),
             messageParser = MembershipSubscriptionEventParser,
             resolveOnFirstEvent = true
-        ).connect()
+    )
 
-        return this
+    override fun connect(): ChatkitSubscription {
+        return subscription.connect()
     }
 
     override fun unsubscribe() {
         subscription.unsubscribe()
-    }
-
-    private fun MembershipSubscriptionEvent.applySideEffects(): MembershipSubscriptionEvent = this.apply {
-        when (this) {
-            is InitialState -> {
-                userIds.forEach { userId -> roomStore[roomId]?.addUser(userId) }
-            }
-            is UserJoined -> {
-                roomStore[roomId]?.addUser(userId)
-            }
-            is UserLeft -> {
-                roomStore[roomId]?.removeUser(userId)
-            }
-        }
-    }
-
-
-    private fun MembershipSubscriptionEvent.toChatManagerEvent(): Future<Result<ChatManagerEvent, Error>> = when (this) {
-        is InitialState -> {
-            NoEvent.asSuccess<ChatManagerEvent, Error>().toFuture()
-        }
-        is UserLeft -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
-            roomStore[roomId]
-                .orElse { Errors.other("room $roomId not found.") }
-                .map<ChatManagerEvent> { room -> UserLeftRoom(user, room) }
-        }
-        is UserJoined -> chatManager.userService.fetchUserBy(userId).flatMapResult { user ->
-            roomStore[roomId]
-                .orElse { Errors.other("room $roomId not found.") }
-                .map<ChatManagerEvent> { room -> UserJoinedRoom(user, room) }
-        }
     }
 }

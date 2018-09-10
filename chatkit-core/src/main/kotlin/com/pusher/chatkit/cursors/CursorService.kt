@@ -17,7 +17,7 @@ import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
-internal class CursorService(
+class CursorService(
         private val client: PlatformClient,
         private val logger: Logger
 ) {

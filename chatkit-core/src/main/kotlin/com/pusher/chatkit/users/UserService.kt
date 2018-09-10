@@ -15,7 +15,7 @@ import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
-internal class UserService(
+class UserService(
         private val client: PlatformClient
 ) {
     private val knownUsers = ConcurrentHashMap<String, User>()

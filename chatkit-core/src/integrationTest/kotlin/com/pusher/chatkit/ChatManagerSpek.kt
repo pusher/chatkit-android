@@ -8,8 +8,8 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
-import com.pusher.chatkit.rooms.RoomSubscriptionListeners
+import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.test.FutureValue
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -74,7 +74,7 @@ class ChatManagerSpek : Spek({
 
             var messageReceived by FutureValue<Message>()
 
-            pusherino.assumeSuccess().subscribeToRoom(room, RoomSubscriptionListeners(
+            pusherino.assumeSuccess().subscribeToRoom(room, RoomListeners(
                 onNewMessage = { message -> messageReceived = message },
                 onErrorOccurred = { e -> error("error: $e") }
             ))
@@ -85,7 +85,6 @@ class ChatManagerSpek : Spek({
             assertThat(messageReceived.text).isEqualTo("message text")
         }
 
-
         it("receives current user with listeners instead of callback") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
 
@@ -94,7 +93,6 @@ class ChatManagerSpek : Spek({
 
             assertThat(userId).isEqualTo(PUSHERINO)
         }
-
     }
 
     val currentUser = stub<CurrentUser>("currentUser")
@@ -108,9 +106,7 @@ class ChatManagerSpek : Spek({
     describe("ChatManagerListeners") {
 
         it("maps from callback to listeners") {
-
             val actual = mutableListOf<Any>()
-
             val consume = ChatManagerListeners(
                 onErrorOccurred = { actual += "onErrorOccurred" to it },
                 onCurrentUserAddedToRoom = { actual += "onCurrentUserAddedToRoom" to it },
@@ -157,18 +153,14 @@ class ChatManagerSpek : Spek({
                 "onUserStoppedTyping" to user to room,
                 "onUserWentOffline" to user
             )
-
         }
-
     }
 
     describe("RoomSubscriptionListener") {
-
         it("maps from callback to listeners") {
-
             val actual = mutableListOf<Any>()
 
-            val consume = RoomSubscriptionListeners(
+            val consume = RoomListeners(
                 onErrorOccurred = { actual += "onErrorOccurred" to it },
                 onNewReadCursor = { actual += "onNewReadCursor" to it },
                 onRoomDeleted = { actual += "onRoomDeleted" to it },
@@ -181,16 +173,16 @@ class ChatManagerSpek : Spek({
                 onUserLeft = { actual += "onUserLeft" to it }
             ).toCallback()
 
-            consume(RoomSubscriptionEvent.UserStartedTyping(user))
-            consume(RoomSubscriptionEvent.UserJoined(user))
-            consume(RoomSubscriptionEvent.UserLeft(user))
-            consume(RoomSubscriptionEvent.UserCameOnline(user))
-            consume(RoomSubscriptionEvent.UserWentOffline(user))
-            consume(RoomSubscriptionEvent.RoomUpdated(room))
-            consume(RoomSubscriptionEvent.RoomDeleted(roomId))
-            consume(RoomSubscriptionEvent.NewReadCursor(cursor))
-            consume(RoomSubscriptionEvent.ErrorOccurred(error))
-            consume(RoomSubscriptionEvent.NewMessage(message))
+            consume(RoomEvent.UserStartedTyping(user))
+            consume(RoomEvent.UserJoined(user))
+            consume(RoomEvent.UserLeft(user))
+            consume(RoomEvent.UserCameOnline(user))
+            consume(RoomEvent.UserWentOffline(user))
+            consume(RoomEvent.RoomUpdated(room))
+            consume(RoomEvent.RoomDeleted(roomId))
+            consume(RoomEvent.NewReadCursor(cursor))
+            consume(RoomEvent.ErrorOccurred(error))
+            consume(RoomEvent.NewMessage(message))
 
             assertThat(actual).containsExactly(
                 "onUserStartedTyping" to user,
@@ -204,10 +196,7 @@ class ChatManagerSpek : Spek({
                 "onErrorOccurred" to error,
                 "onNewMessage" to message
             )
-
         }
-
     }
-
 })
 
