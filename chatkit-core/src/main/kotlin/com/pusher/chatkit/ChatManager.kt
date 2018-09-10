@@ -21,7 +21,6 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.*
 import elements.Error
 import elements.Errors
-import elements.Subscription
 import java.util.concurrent.Future
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.TimeUnit
@@ -35,7 +34,6 @@ class ChatManager constructor(
             dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
     )
 
-    private val subscriptions = mutableListOf<Subscription>()
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
     internal val cursorService by lazy {
@@ -303,35 +301,30 @@ class ChatManager constructor(
      * Tries to close all pending subscriptions and resources
      */
     fun close(): Result<Unit, Error> = try {
-        for (sub in subscriptions) {
-            sub.unsubscribe()
-        }
         userSubscription.unsubscribe()
         presenceSubscription.unsubscribe()
         cursorSubscription.unsubscribe()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
+
         Unit.asSuccess()
     } catch (e: Throwable) {
         Errors.other(e).asFailure()
     }
 
-    private fun createPlatformClient(type: InstanceType) =
-            PlatformClient(createInstance(type), tokenProvider)
-
-    private fun createInstance(type: InstanceType): Instance {
+    private fun createPlatformClient(type: InstanceType): PlatformClient {
         val instance = Instance(
-            locator = instanceLocator,
-            serviceName = type.serviceName,
-            serviceVersion = type.version,
-            dependencies = dependencies
-        )
-        return dependencies.okHttpClient.let { client ->
-            when (client) {
-                null -> instance
-                else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
-            }
-        }
+                locator = instanceLocator,
+                serviceName = type.serviceName,
+                serviceVersion = type.version,
+                dependencies = dependencies
+            )
+        return PlatformClient(dependencies.okHttpClient.let { client ->
+                when (client) {
+                    null -> instance
+                    else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
+                }
+            }, tokenProvider)
     }
 }
 

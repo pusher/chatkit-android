@@ -49,12 +49,6 @@ class RoomSubscriptionGroup(
 
     private val typingTimers = HashMap<String, Future<Unit>>()
 
-    override fun unsubscribe() {
-        roomSubscription.unsubscribe()
-        membershipSubscription.unsubscribe()
-        cursorsSubscription.unsubscribe()
-    }
-
     override fun connect(): ChatkitSubscription {
         // TODO these should be done in parallel
         roomSubscription.connect()
@@ -62,6 +56,12 @@ class RoomSubscriptionGroup(
         cursorsSubscription.connect()
 
         return this
+    }
+
+    override fun unsubscribe() {
+        roomSubscription.unsubscribe()
+        membershipSubscription.unsubscribe()
+        cursorsSubscription.unsubscribe()
     }
 
     private fun forwardEvent(event: RoomEvent) {
@@ -105,7 +105,6 @@ class RoomSubscriptionGroup(
                     is CursorSubscriptionEvent.OnCursorSet -> RoomEvent.NewReadCursor(event.cursor)
                     is CursorSubscriptionEvent.InitialState -> RoomEvent.InitialReadCursors(event.cursors)
                     is CursorSubscriptionEvent.OnError -> RoomEvent.ErrorOccurred(event.error)
-                    is CursorSubscriptionEvent.NoEvent -> RoomEvent.NoEvent
                 }
         )
     }
