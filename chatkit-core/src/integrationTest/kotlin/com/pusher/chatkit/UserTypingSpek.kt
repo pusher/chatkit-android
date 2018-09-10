@@ -61,9 +61,13 @@ class UserTypingSpek : Spek({
             var startedTypingUser by FutureValue<User>()
 
             val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            chatFor(Users.ALICE).connect { event ->
+            val alice = chatFor(Users.ALICE).connect { event ->
                 if (event is ChatManagerEvent.UserStartedTyping) startedTypingUser = event.user
             }.wait().assumeSuccess()
+
+            // Even though they are reported globally, you must be subscribed to a room to see
+            // who is typing there
+            alice.subscribeToRoom(pusherino.generalRoom) {}
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
 
@@ -76,9 +80,13 @@ class UserTypingSpek : Spek({
             var stoppedTypingUser by FutureValue<User>()
 
             val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            chatFor(Users.ALICE).connect { event ->
+            val alice = chatFor(Users.ALICE).connect { event ->
                 if (event is ChatManagerEvent.UserStoppedTyping) stoppedTypingUser = event.user
             }.wait().assumeSuccess()
+
+            // Even though they are reported globally, you must be subscribed to a room to see
+            // who is typing there
+            alice.subscribeToRoom(pusherino.generalRoom) {}
 
             pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
 
