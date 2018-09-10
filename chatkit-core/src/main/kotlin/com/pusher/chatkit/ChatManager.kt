@@ -54,6 +54,10 @@ class ChatManager constructor(
         )
     }
 
+    private val cursorSubscription by lazy {
+        cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
+    }
+
     internal val userService by lazy {
         UserService(
                 createPlatformClient(InstanceType.DEFAULT)
@@ -103,7 +107,7 @@ class ChatManager constructor(
         // TODO: These each block, but they're supposed to happen in parallel
         userSubscription.connect()
         presenceSubscription.connect()
-        cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
+        cursorSubscription.connect()
 
         return futureCurrentUser.get().also { dependencies.logger.verbose("Current User initialised") }
     }
@@ -295,10 +299,6 @@ class ChatManager constructor(
     fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
         connect(listeners.toCallback())
 
-    internal fun observerEvents(consumer: ChatManagerEventConsumer) {
-        eventConsumers += consumer
-    }
-
     /**
      * Tries to close all pending subscriptions and resources
      */
@@ -308,7 +308,7 @@ class ChatManager constructor(
         }
         userSubscription.unsubscribe()
         presenceSubscription.unsubscribe()
-        cursorService.unsubscribe()
+        cursorSubscription.unsubscribe()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
         Unit.asSuccess()

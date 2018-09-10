@@ -1,6 +1,6 @@
 package com.pusher.chatkit.cursors
 
-internal class CursorsStore {
+class CursorsStore {
     private val map = mutableMapOf<String, UserCursorStore>()
 
     operator fun get(userId: String) =
@@ -18,7 +18,7 @@ internal class CursorsStore {
 
 }
 
-internal class UserCursorStore {
+class UserCursorStore {
     private val cursors = mutableMapOf<Int, Cursor>()
 
     operator fun plusAssign(cursor: Cursor) {
