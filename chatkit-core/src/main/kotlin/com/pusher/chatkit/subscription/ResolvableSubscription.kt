@@ -1,9 +1,9 @@
 package com.pusher.chatkit.subscription
 
-import com.pusher.chatkit.ChatManager
-import com.pusher.chatkit.InstanceType
 import com.pusher.chatkit.PlatformClient
 import com.pusher.platform.SubscriptionListeners
+import com.pusher.platform.logger.Logger
+import com.pusher.platform.loggingListeners
 import com.pusher.platform.network.DataParser
 import elements.Subscription
 import java.util.concurrent.CountDownLatch
@@ -16,6 +16,8 @@ internal class ResolvableSubscription<A>(
     private val client: PlatformClient,
     private val listeners: SubscriptionListeners<A>,
     private val messageParser: DataParser<A>,
+    private val logger: Logger,
+    private val description: String,
     private val resolveOnFirstEvent: Boolean = false
 ): ChatkitSubscription {
     private lateinit var subscription: Subscription
@@ -24,29 +26,27 @@ internal class ResolvableSubscription<A>(
         val latch = CountDownLatch(1)
         subscription = client.subscribeResuming(
             path = this.path,
-            listeners = SubscriptionListeners(
-                onOpen = { headers ->
-                    if (!resolveOnFirstEvent) {
-                        latch.countDown()
-                    }
-                    listeners.onOpen(headers)
-                },
-                onEvent = { event ->
-                    if (resolveOnFirstEvent) {
-                        latch.countDown()
-                    }
-                    listeners.onEvent(event)
-                },
-                onError = { error ->
-                    latch.countDown()
-                    listeners.onError(error)
-                },
-                onEnd = { error ->
-                    latch.countDown()
-                    listeners.onEnd(error)
-                },
-                onSubscribe = listeners.onSubscribe,
-                onRetrying = listeners.onRetrying
+            listeners = SubscriptionListeners.compose(
+                    SubscriptionListeners(
+                            onOpen = {
+                                if (!resolveOnFirstEvent) {
+                                    latch.countDown()
+                                }
+                            },
+                            onEvent = {
+                                if (resolveOnFirstEvent) {
+                                    latch.countDown()
+                                }
+                            },
+                            onError = {
+                                latch.countDown()
+                            },
+                            onEnd = {
+                                latch.countDown()
+                            }
+                        ),
+                    loggingListeners(description, logger),
+                    listeners
             ),
             messageParser = messageParser
         )

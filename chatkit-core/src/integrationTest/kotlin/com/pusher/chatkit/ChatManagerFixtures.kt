@@ -14,7 +14,7 @@ const val MAX_LOG_LENGTH = 300
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
-        override fun verbose(message: String, error: Error?) = log("V", message.take(MAX_LOG_LENGTH), error)
+        override fun verbose(message: String, error: Error?) = Unit
         override fun debug(message: String, error: Error?) = log("D", message.take(MAX_LOG_LENGTH), error)
         override fun info(message: String, error: Error?) = log("I", message.take(MAX_LOG_LENGTH), error)
         override fun warn(message: String, error: Error?) = log("W", message.take(MAX_LOG_LENGTH), error)

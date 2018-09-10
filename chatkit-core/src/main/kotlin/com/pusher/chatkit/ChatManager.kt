@@ -95,6 +95,9 @@ class ChatManager constructor(
 
     private var currentUser: CurrentUser? = null
 
+    fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
+            connect(listeners.toCallback())
+
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
         val futureCurrentUser = CurrentUserConsumer() // TODO: not sure about this!
@@ -293,9 +296,6 @@ class ChatManager constructor(
             queue.take().also { waitingForUser = false }
         }
     }
-
-    fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
-        connect(listeners.toCallback())
 
     /**
      * Tries to close all pending subscriptions and resources
