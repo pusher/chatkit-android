@@ -2,9 +2,11 @@ package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
 import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
+import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.flatMap
 import com.pusher.platform.network.toFuture
@@ -49,6 +51,7 @@ class CursorService(
         )
     }
 
+    // TODO not an async operation?
     fun getReadCursor(userId: String, roomId: Int) : Future<Result<Cursor, Error>> =
         (cursorsStore[userId][roomId]?.asSuccess<Cursor, Error>() ?: notSubscribedToRoom("$roomId").asFailure())
             .toFuture()
@@ -59,22 +62,33 @@ class CursorService(
     fun subscribeForRoom(
             roomId: Int,
             externalConsumer: (CursorSubscriptionEvent) -> Unit
-    ) = CursorSubscription(
-            client,
+    ) = cursorSubscription(
             "/cursors/0/rooms/$roomId",
-            listOf(::applySideEffects, externalConsumer),
-            logger
-        )
+            listOf(::applySideEffects, externalConsumer)
+    )
 
     fun subscribeForUser(
             userId: String,
             externalConsumer: (CursorSubscriptionEvent) -> Unit
-    ) = CursorSubscription(
-            client,
+    ) = cursorSubscription(
             "/cursors/0/users/$userId",
-            listOf(::applySideEffects, externalConsumer),
-            logger
-        )
+            listOf(::applySideEffects, externalConsumer)
+    )
+
+    private fun cursorSubscription(
+            path: String,
+            consumers: List<CursorSubscriptionConsumer>
+    ) = ResolvableSubscription(
+            client = client,
+            path = path,
+            listeners = SubscriptionListeners(
+                    onEvent = { event -> consumers.forEach { consumer -> consumer(event.body) } },
+                    onError = { error -> consumers.forEach { consumer -> consumer(CursorSubscriptionEvent.OnError(error)) } }
+            ),
+            messageParser = CursorSubscriptionEventParser,
+            description = "Cursor $path",
+            logger = logger
+    )
 
     private fun applySideEffects(event: CursorSubscriptionEvent) {
         when (event) {
