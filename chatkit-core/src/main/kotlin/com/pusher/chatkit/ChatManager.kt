@@ -5,15 +5,17 @@ import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
-import com.pusher.chatkit.presence.PresenceSubscription
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
+import com.pusher.chatkit.presence.PresenceSubscriptionEventParser
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
+import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.Instance
+import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.Wait
 import com.pusher.platform.network.waitOr
@@ -30,62 +32,25 @@ class ChatManager constructor(
     private val userId: String,
     internal val dependencies: ChatkitDependencies
 ) {
-    val tokenProvider: TokenProvider = DebounceTokenProvider(
+    private val tokenProvider: TokenProvider = DebounceTokenProvider(
             dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
     )
 
-    private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
+    private val logger = dependencies.logger
+    private val chatkitClient = createPlatformClient(InstanceType.DEFAULT)
+    private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
+    private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
+    private val filesClient = createPlatformClient(InstanceType.FILES)
 
-    internal val cursorService by lazy {
-        CursorService(
-                createPlatformClient(InstanceType.CURSORS),
-                dependencies.logger
-        )
-    }
-
-    private val presenceSubscription by lazy {
-        PresenceSubscription(
-                createPlatformClient(InstanceType.PRESENCE),
-                userId,
-                this::consumePresenceSubscriptionEvent,
-                dependencies.logger
-        )
-    }
-
-    private val cursorSubscription by lazy {
-        cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
-    }
-
-    internal val userService by lazy {
-        UserService(
-                createPlatformClient(InstanceType.DEFAULT)
-        )
-    }
-
-    private val userSubscription by lazy {
-        UserSubscription(
-                createPlatformClient(InstanceType.DEFAULT),
-                this::consumeUserSubscriptionEvent,
-                dependencies.logger
-        )
-    }
-
-    internal val messageService by lazy {
-        MessageService(
-                createPlatformClient(InstanceType.DEFAULT),
-                userService,
-                filesService
-        )
-    }
-
-    internal val filesService by lazy {
-        FilesService(createPlatformClient(InstanceType.FILES))
-    }
+    internal val cursorService by lazy { CursorService(cursorsClient, logger) }
+    internal val userService by lazy { UserService(chatkitClient) }
+    internal val messageService by lazy { MessageService(chatkitClient, userService, filesService) }
+    internal val filesService by lazy { FilesService(filesClient) }
 
     internal val roomService by lazy {
         RoomService(
                 this,
-                createPlatformClient(InstanceType.DEFAULT),
+                chatkitClient,
                 userService,
                 cursorService,
                 this.eventConsumers,
@@ -93,6 +58,42 @@ class ChatManager constructor(
                 dependencies.logger
         )
     }
+
+    private val presenceSubscription by lazy {
+        ResolvableSubscription(
+                client = presenceClient,
+                path = "/users/$userId/presence",
+                listeners = SubscriptionListeners(
+                        onEvent = { consumePresenceSubscriptionEvent(it.body) },
+                        onError = { error -> consumePresenceSubscriptionEvent(PresenceSubscriptionEvent.ErrorOccurred(error)) }
+                ),
+                messageParser = PresenceSubscriptionEventParser,
+                logger = logger,
+                description = "Presence for user $userId",
+                resolveOnFirstEvent = true
+        )
+    }
+
+    private val userSubscription by lazy {
+        ResolvableSubscription(
+                client = chatkitClient,
+                path = "users",
+                listeners = SubscriptionListeners(
+                        onEvent = { event -> consumeUserSubscriptionEvent(event.body) },
+                        onError = { error -> consumeUserSubscriptionEvent(UserSubscriptionEvent.ErrorOccurred(error)) }
+                ),
+                messageParser = UserSubscriptionEventParser,
+                resolveOnFirstEvent = true,
+                description = "User",
+                logger = logger
+        )
+    }
+
+    private val cursorSubscription by lazy {
+        cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
+    }
+
+    private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
     private var currentUser: CurrentUser? = null
 
@@ -106,12 +107,11 @@ class ChatManager constructor(
         eventConsumers += replaceCurrentUser
         eventConsumers += consumer
 
-        // TODO: These each block, but they're supposed to happen in parallel
-        userSubscription.connect()
-        presenceSubscription.connect()
-        cursorSubscription.connect()
+        userSubscription.await()
+        presenceSubscription.await()
+        cursorSubscription.await()
 
-        return futureCurrentUser.get().also { dependencies.logger.verbose("Current User initialised") }
+        return futureCurrentUser.get().also { logger.verbose("Current User initialised") }
     }
 
     private val replaceCurrentUser = { event: ChatManagerEvent ->

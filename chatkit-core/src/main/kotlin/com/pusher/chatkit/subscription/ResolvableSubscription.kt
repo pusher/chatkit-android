@@ -11,21 +11,19 @@ import java.util.concurrent.CountDownLatch
 // Implements a subscription that can be used to resolve subscriptions
 // either on opening a subscription (default behaviour) or
 // on receiving the first event on the subscription
-internal class ResolvableSubscription<A>(
-    private val path: String,
-    private val client: PlatformClient,
-    private val listeners: SubscriptionListeners<A>,
-    private val messageParser: DataParser<A>,
-    private val logger: Logger,
-    private val description: String,
-    private val resolveOnFirstEvent: Boolean = false
-): ChatkitSubscription {
-    private lateinit var subscription: Subscription
+class ResolvableSubscription<A>(
+    path: String,
+    client: PlatformClient,
+    listeners: SubscriptionListeners<A>,
+    messageParser: DataParser<A>,
+    logger: Logger,
+    description: String,
+    resolveOnFirstEvent: Boolean = false
+): Subscription {
+    private val latch = CountDownLatch(1)
 
-    override fun connect(): ChatkitSubscription {
-        val latch = CountDownLatch(1)
-        subscription = client.subscribeResuming(
-            path = this.path,
+    private val subscription = client.subscribeResuming(
+            path = path,
             listeners = SubscriptionListeners.compose(
                     SubscriptionListeners(
                             onOpen = {
@@ -44,15 +42,15 @@ internal class ResolvableSubscription<A>(
                             onEnd = {
                                 latch.countDown()
                             }
-                        ),
+                    ),
                     loggingListeners(description, logger),
                     listeners
             ),
             messageParser = messageParser
-        )
-        latch.await()
+    )
 
-        return this
+    fun await() {
+        latch.await()
     }
 
     override fun unsubscribe() {

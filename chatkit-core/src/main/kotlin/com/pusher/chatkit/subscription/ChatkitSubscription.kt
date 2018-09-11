@@ -7,5 +7,5 @@ interface ChatkitSubscription: Subscription {
     // established. Creating a ChatkitSubscription instance
     // will just return an instance and do nothing i.e
     // no events will be received
-    fun connect(): ChatkitSubscription
+    fun connect(): Subscription
 }
