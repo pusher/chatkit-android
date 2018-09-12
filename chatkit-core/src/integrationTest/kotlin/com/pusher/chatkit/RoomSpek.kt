@@ -18,7 +18,6 @@ import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
-import com.pusher.platform.network.wait
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
 import org.jetbrains.spek.api.Spek
@@ -36,8 +35,8 @@ class RoomSpek : Spek({
 
             var userJoined by FutureValue<User>()
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
                 // TODO this represents a change in behaviour
@@ -47,7 +46,7 @@ class RoomSpek : Spek({
 
             assertThat(alice.rooms[0].memberUserIds).doesNotContain(PUSHERINO)
 
-            pusherino.joinRoom(alice.generalRoom.id).wait().assumeSuccess()
+            pusherino.joinRoom(alice.generalRoom.id).assumeSuccess()
 
             assertThat(userJoined.id).isEqualTo(pusherino.id)
         }
@@ -56,13 +55,13 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var userLeft by FutureValue<User>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
                 if (event is RoomEvent.UserLeft) userLeft = event.user
             }
-            pusherino.leaveRoom(alice.generalRoom.id).wait().assumeSuccess()
+            pusherino.leaveRoom(alice.generalRoom.id).assumeSuccess()
 
             assertThat(userLeft.id).isEqualTo(pusherino.id)
         }
@@ -71,7 +70,7 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE), newRoom(GENERAL, ALICE))
 
             var updatedRoom by FutureValue<Room>()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
                 if (event is RoomEvent.RoomUpdated) updatedRoom = event.room
@@ -85,7 +84,7 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var deletedRoomId by FutureValue<Int>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val expectedRoomId = pusherino.generalRoom.id
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
@@ -101,12 +100,12 @@ class RoomSpek : Spek({
 
             var roomJoined by FutureValue<Room>()
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             chatFor(ALICE).connect() { event ->
                 if (event is ChatManagerEvent.CurrentUserAddedToRoom) roomJoined = event.room
-            }.wait().assumeSuccess()
-            pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(ALICE)).wait().assumeSuccess()
+            }.assumeSuccess()
+            pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(ALICE)).assumeSuccess()
 
             assertThat(roomJoined.id).isEqualTo(pusherino.generalRoom.id)
         }
@@ -115,13 +114,13 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             var roomRemovedFromId by FutureValue<Int>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             chatFor(ALICE).connect() { event ->
                 if (event is ChatManagerEvent.CurrentUserRemovedFromRoom) roomRemovedFromId = event.roomId
-            }.wait().assumeSuccess()
+            }.assumeSuccess()
 
-            pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(ALICE)).wait().assumeSuccess()
+            pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(ALICE)).assumeSuccess()
 
             assertThat(roomRemovedFromId).isEqualTo(pusherino.generalRoom.id)
         }
@@ -133,9 +132,9 @@ class RoomSpek : Spek({
         it("creates room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
-            val room = pusherino.createRoom(GENERAL).wait().assumeSuccess()
+            val room = pusherino.createRoom(GENERAL).assumeSuccess()
 
             assertThat(room.name).isEqualTo(GENERAL)
         }
@@ -143,9 +142,9 @@ class RoomSpek : Spek({
         it("updates room name") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
 
-            val room = superUser.updateRoom(superUser.generalRoom, NOT_GENERAL).wait()
+            val room = superUser.updateRoom(superUser.generalRoom, NOT_GENERAL)
 
             check(room is Success) { (room as? Failure)?.error as Any }
         }
@@ -153,9 +152,9 @@ class RoomSpek : Spek({
         it("deletes room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
-            val superUser = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
 
-            val room = superUser.deleteRoom(superUser.generalRoom).wait()
+            val room = superUser.deleteRoom(superUser.generalRoom)
 
             check(room is Success) { (room as? Failure)?.error as Any }
         }
@@ -163,9 +162,9 @@ class RoomSpek : Spek({
         it("joins room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
 
-            val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val pusherino = chatFor(SUPER_USER).connect().assumeSuccess()
 
-            val room = pusherino.joinRoom(pusherino.generalRoom).wait()
+            val room = pusherino.joinRoom(pusherino.generalRoom)
 
             check(room is Success) { (room as? Failure)?.error as Any }
             assertThat(pusherino.rooms).contains(pusherino.generalRoom)
@@ -174,10 +173,10 @@ class RoomSpek : Spek({
         it("leaves room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
-            val pusherino = chatFor(SUPER_USER).connect().wait().assumeSuccess()
+            val pusherino = chatFor(SUPER_USER).connect().assumeSuccess()
             val generalRoom = pusherino.generalRoom
 
-            val room = pusherino.leaveRoom(generalRoom).wait()
+            val room = pusherino.leaveRoom(generalRoom)
 
             check(room is Success) { (room as? Failure)?.error as Any }
             assertThat(pusherino.rooms).doesNotContain(generalRoom)
@@ -186,9 +185,9 @@ class RoomSpek : Spek({
         it("gets joinable rooms") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
-            val rooms = pusherino.getJoinableRooms().wait().assumeSuccess()
+            val rooms = pusherino.getJoinableRooms().assumeSuccess()
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
@@ -197,7 +196,7 @@ class RoomSpek : Spek({
         it("gets rooms") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO), newRoom(NOT_GENERAL))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             val rooms = pusherino.rooms
 
@@ -208,10 +207,10 @@ class RoomSpek : Spek({
         it("provides users for a room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             pusherino.subscribeToRoom(pusherino.generalRoom) { }
 
-            val users = pusherino.usersForRoom(pusherino.generalRoom).wait().assumeSuccess()
+            val users = pusherino.usersForRoom(pusherino.generalRoom).assumeSuccess()
 
             assertThat(users.map { it.id }).containsExactly(SUPER_USER, PUSHERINO, ALICE)
         }
@@ -219,7 +218,7 @@ class RoomSpek : Spek({
         it("is subscribed to room") {
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE), newRoom(GENERAL, ALICE))
 
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { }
 
@@ -231,7 +230,7 @@ class RoomSpek : Spek({
         it("is not subscribed to room after unsubscribe") {
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE), newRoom(GENERAL, ALICE))
 
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { }.unsubscribe()
 

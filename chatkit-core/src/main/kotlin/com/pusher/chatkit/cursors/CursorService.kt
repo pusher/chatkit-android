@@ -8,15 +8,12 @@ import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import com.pusher.platform.network.flatMap
-import com.pusher.platform.network.toFuture
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
-import java.util.concurrent.Future
 
 class CursorService(
         private val client: PlatformClient,
@@ -24,40 +21,38 @@ class CursorService(
 ) {
     private val cursorsStore = CursorsStore()
 
+    private val setReadCursorThrottler =
+            Throttler { options: RequestOptions ->
+                client.doRequest<JsonElement>(
+                        options = options,
+                        responseParser = { it.parseAs() }
+                )
+            }
+
     fun setReadCursor(
         userId: String,
         roomId: Int,
         position: Int
-    ): Future<Result<Unit, Error>> =
-            setReadCursorThrottler.throttle(
+    ) =
+        setReadCursorThrottler.throttle(
                 RequestOptions(
-                    method = "PUT",
-                    path = "/cursors/0/rooms/$roomId/users/$userId",
-                    body = """{ "position" : $position }"""
+                        method = "PUT",
+                        path = "/cursors/0/rooms/$roomId/users/$userId",
+                        body = """{ "position" : $position }"""
                 )
-            ).flatMap { it }
-            .mapResult {
-                cursorsStore[userId] += Cursor(
-                        userId = userId,
-                        roomId = roomId,
-                        position = position
-                )
-            }
+        ).mapResult {
+            cursorsStore[userId] += Cursor(
+                    userId = userId,
+                    roomId = roomId,
+                    position = position
+            )
+        }
 
-    private val setReadCursorThrottler = Throttler { options: RequestOptions ->
-        client.doRequest<JsonElement>(
-            options = options,
-            responseParser = { it.parseAs() }
-        )
-    }
-
-    // TODO not an async operation?
-    fun getReadCursor(userId: String, roomId: Int) : Future<Result<Cursor, Error>> =
+    fun getReadCursor(userId: String, roomId: Int) : Result<Cursor, Error> =
         (cursorsStore[userId][roomId]?.asSuccess<Cursor, Error>() ?: notSubscribedToRoom("$roomId").asFailure())
-            .toFuture()
 
     private fun notSubscribedToRoom(name: String) =
-        Errors.other("Must be subscribed to room $name to access member's read cursorsStore")
+        Errors.other("Must be subscribed to room $name to access member's read cursors")
 
     fun subscribeForRoom(
             roomId: Int,

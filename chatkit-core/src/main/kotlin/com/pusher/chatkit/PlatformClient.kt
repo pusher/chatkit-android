@@ -10,7 +10,7 @@ import com.pusher.platform.network.DataParser
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import elements.Error
-import java.util.concurrent.Future
+import elements.Subscription
 
 class PlatformClient(
         private val platformInstance: Instance,
@@ -21,26 +21,26 @@ class PlatformClient(
             path: String,
             body: String = "",
             noinline responseParser: DataParser<A> = { it.parseAs() }
-    ): Future<Result<A, Error>> =
+    ): Result<A, Error> =
             doRequest("POST", path, body, responseParser)
 
     internal inline fun <reified A> doPut(
             path: String,
             body: String = "",
             noinline responseParser: DataParser<A> = { it.parseAs() }
-    ): Future<Result<A, Error>> =
+    ): Result<A, Error> =
             doRequest("PUT", path, body, responseParser)
 
     internal inline fun <reified A> doGet(
             path: String,
             noinline responseParser: DataParser<A> = { it.parseAs() }
-    ): Future<Result<A, Error>> =
+    ): Result<A, Error> =
             doRequest("GET", path, null, responseParser)
 
     internal inline fun <reified A> doDelete(
             path: String,
             noinline responseParser: DataParser<A> = { it.parseAs() }
-    ): Future<Result<A, Error>> =
+    ): Result<A, Error> =
             doRequest("DELETE", path, null, responseParser)
 
     private fun <A> doRequest(
@@ -48,7 +48,7 @@ class PlatformClient(
             path: String,
             body: String?,
             responseParser: DataParser<A>
-    ): Future<Result<A, Error>> =
+    ): Result<A, Error> =
             platformInstance.request(
                     options = RequestOptions(
                             method = method,
@@ -57,37 +57,39 @@ class PlatformClient(
                     ),
                     tokenProvider = tokenProvider,
                     responseParser = responseParser
-            )
+            ).get()
 
     fun <A> doRequest(
             options: RequestOptions,
             responseParser: DataParser<A>
-    ): Future<Result<A, Error>> =
+    ): Result<A, Error> =
             platformInstance.request(
                     options = options,
                     tokenProvider = tokenProvider,
                     responseParser = responseParser
-            )
+            ).get()
 
     @Suppress("UNCHECKED_CAST")
     internal fun upload(
             path: String,
             attachment: DataAttachment
-    ): Future<Result<AttachmentBody, Error>> = platformInstance.upload(
-            path = path,
-            file = attachment.file,
-            tokenProvider = tokenProvider,
-            responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
-    )
+    ): Result<AttachmentBody, Error> =
+            platformInstance.upload(
+                    path = path,
+                    file = attachment.file,
+                    tokenProvider = tokenProvider,
+                    responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
+            ).get()
 
     internal fun <A> subscribeResuming(
             path: String,
             listeners: SubscriptionListeners<A>,
             messageParser: DataParser<A>
-    ) = platformInstance.subscribeResuming(
-            path = path,
-            tokenProvider = tokenProvider,
-            listeners = listeners,
-            messageParser = messageParser
-    )
+    ): Subscription =
+            platformInstance.subscribeResuming(
+                    path = path,
+                    tokenProvider = tokenProvider,
+                    listeners = listeners,
+                    messageParser = messageParser
+            )
 }

@@ -15,12 +15,15 @@ internal class FilesService(
             attachment: DataAttachment,
             roomId: Int,
             userId: String
-    ): Future<Result<AttachmentBody, Error>> =
-            client.upload("/rooms/$roomId/users/$userId/files/${attachment.name}", attachment)
+    ): Result<AttachmentBody, Error> =
+            client.upload(
+                    "/rooms/$roomId/users/$userId/files/${attachment.name}",
+                    attachment
+            )
 
     fun fetchAttachment(
             attachmentUrl: String
-    ): Future<Result<FetchedAttachment, Error>> =
+    ): Result<FetchedAttachment, Error> =
             client.doRequest(
                     options = RequestOptions(
                         method = "GET",

@@ -12,12 +12,10 @@ import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.User
-import com.pusher.platform.network.toFuture
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
-import java.util.concurrent.Future
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class CurrentUser(
@@ -31,10 +29,11 @@ class CurrentUser(
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
 
-    val users: Future<Result<List<User>, Error>>
+    val users: Result<List<User>, Error>
         get() = rooms
-        .flatMap { it.memberUserIds }
-        .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
+                .flatMap { it.memberUserIds }
+                .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
+                .map { it.values.toList() }
 
     private val roomSubscriptions = mutableMapOf<Int, ChatkitSubscription>()
 
@@ -49,19 +48,19 @@ class CurrentUser(
         customData = newUser.customData
     }
 
-    fun setReadCursor(room: Room, position: Int): Future<Result<Unit, Error>> =
+    fun setReadCursor(room: Room, position: Int) =
         setReadCursor(room.id, position)
 
-    fun setReadCursor(roomId: Int, position: Int): Future<Result<Unit, Error>> =
+    fun setReadCursor(roomId: Int, position: Int) =
         chatManager.cursorService.setReadCursor(id, roomId, position)
 
-    fun getReadCursor(roomId: Int) : Future<Result<Cursor, Error>> =
+    fun getReadCursor(roomId: Int) : Result<Cursor, Error> =
         chatManager.cursorService.getReadCursor(id, roomId)
 
-    fun getReadCursor(room: Room) : Future<Result<Cursor, Error>> =
+    fun getReadCursor(room: Room) : Result<Cursor, Error> =
         getReadCursor(room.id)
 
-    fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
+    fun fetchAttachment(attachmentUrl: String): Result<FetchedAttachment, Error> =
         chatManager.filesService.fetchAttachment(attachmentUrl)
 
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
@@ -75,7 +74,7 @@ class CurrentUser(
         name: String,
         isPrivate: Boolean = false,
         userIds: List<String> = emptyList()
-    ): Future<Result<Room, Error>> = chatManager.roomService.createRoom(
+    ): Result<Room, Error> = chatManager.roomService.createRoom(
         creatorId = id,
         name = name,
         isPrivate = isPrivate,
@@ -83,29 +82,29 @@ class CurrentUser(
     )
 
     @JvmOverloads
-    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
+    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
         updateRoom(room.id, name, isPrivate)
 
     @JvmOverloads
-    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
+    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
         chatManager.roomService.updateRoom(roomId, name, isPrivate)
 
-    fun deleteRoom(room: Room): Future<Result<Int, Error>> =
+    fun deleteRoom(room: Room): Result<Int, Error> =
         deleteRoom(room.id)
 
-    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
+    fun deleteRoom(roomId: Int): Result<Int, Error> =
         chatManager.roomService.deleteRoom(roomId)
 
-    fun leaveRoom(room: Room): Future<Result<Int, Error>> =
+    fun leaveRoom(room: Room): Result<Int, Error> =
         leaveRoom(room.id)
 
-    fun leaveRoom(roomId: Int): Future<Result<Int, Error>> =
+    fun leaveRoom(roomId: Int): Result<Int, Error> =
         chatManager.roomService.leaveRoom(id, roomId)
 
-    fun joinRoom(room: Room): Future<Result<Room, Error>> =
+    fun joinRoom(room: Room): Result<Room, Error> =
         joinRoom(room.id)
 
-    fun joinRoom(roomId: Int): Future<Result<Room, Error>> =
+    fun joinRoom(roomId: Int): Result<Room, Error> =
         chatManager.roomService.joinRoom(id, roomId)
 
     @JvmOverloads
@@ -158,7 +157,7 @@ class CurrentUser(
         initialId: Int? = null,
         direction: Direction = Direction.OLDER_FIRST,
         limit: Int = 10
-    ): Future<Result<List<Message>, Error>> = chatManager
+    ): Result<List<Message>, Error> = chatManager
         .messageService
         .fetchMessages(roomId, limit, initialId, direction)
 
@@ -167,7 +166,7 @@ class CurrentUser(
         room: Room,
         messageText: String,
         attachment: GenericAttachment = NoAttachment
-    ): Future<Result<Int, Error>> =
+    ): Result<Int, Error> =
         sendMessage(room.id, messageText, attachment)
 
     @JvmOverloads
@@ -175,7 +174,7 @@ class CurrentUser(
         roomId: Int,
         messageText: String,
         attachment: GenericAttachment = NoAttachment
-    ): Future<Result<Int, Error>> =
+    ): Result<Int, Error> =
         chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
 
     private var lastTypingEvent: Long = 0
@@ -183,28 +182,28 @@ class CurrentUser(
     private fun canSendTypingEvent() =
         (System.currentTimeMillis() - lastTypingEvent) > TYPING_TIME_THRESHOLD
 
-    fun isTypingIn(room: Room): Future<Result<Unit, Error>> =
+    fun isTypingIn(room: Room): Result<Unit, Error> =
         isTypingIn(room.id)
 
-    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> =
+    fun isTypingIn(roomId: Int): Result<Unit, Error> =
             if (canSendTypingEvent()) {
-                client.doPost<Unit>(
+                lastTypingEvent = System.currentTimeMillis()
+                client.doPost(
                         path = "/rooms/$roomId/typing_indicators"
-                ).also {
-                    lastTypingEvent = System.currentTimeMillis()
-                }
+                )
             } else {
-                Unit.asSuccess<Unit, Error>().toFuture()
+                Unit.asSuccess()
             }
 
-    fun getJoinableRooms(): Future<Result<List<Room>, Error>> =
+    fun getJoinableRooms(): Result<List<Room>, Error> =
         chatManager.roomService.fetchUserRooms(
             userId = id,
             joinable = true
         )
 
-    fun usersForRoom(room: Room): Future<Result<List<User>, Error>> =
+    fun usersForRoom(room: Room): Result<List<User>, Error> =
         chatManager.userService.fetchUsersBy(room.memberUserIds)
+                .map { it.values.toList() }
 
     fun close() {
         for (roomSub in roomSubscriptions.values) {

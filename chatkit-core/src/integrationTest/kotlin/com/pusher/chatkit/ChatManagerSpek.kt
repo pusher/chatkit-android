@@ -19,7 +19,6 @@ import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.users.User
-import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import mockitox.stub
 import org.jetbrains.spek.api.Spek
@@ -37,7 +36,7 @@ class ChatManagerSpek : Spek({
         it("loads current user") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect().wait()
+            val user = chatFor(PUSHERINO).connect()
             val userId = user.assumeSuccess().id
 
             assertThat(userId).isEqualTo(PUSHERINO)
@@ -46,7 +45,7 @@ class ChatManagerSpek : Spek({
         it("loads user rooms") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val user = chatFor(PUSHERINO).connect().assumeSuccess()
             val roomNames = user.rooms.map { room -> room.name }
 
             assertThat(roomNames).containsExactly(GENERAL)
@@ -55,10 +54,10 @@ class ChatManagerSpek : Spek({
         it("loads users related to current user") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val user = chatFor(PUSHERINO).connect().wait().assumeSuccess()
+            val user = chatFor(PUSHERINO).connect().assumeSuccess()
             user.rooms.forEach { room -> user.subscribeToRoom(room) { } }
 
-            val users = user.users.wait()
+            val users = user.users
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
 
             assertThat(relatedUserIds).containsAllOf(ALICE, PUSHERINO)
@@ -67,8 +66,8 @@ class ChatManagerSpek : Spek({
         it("subscribes to a room and receives message from alice") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait()
-            val alice = chatFor(ALICE).connect().wait()
+            val pusherino = chatFor(PUSHERINO).connect()
+            val alice = chatFor(ALICE).connect()
 
             val room = pusherino.assumeSuccess().generalRoom
 
@@ -79,7 +78,7 @@ class ChatManagerSpek : Spek({
                 onErrorOccurred = { e -> error("error: $e") }
             ))
 
-            val messageResult = alice.assumeSuccess().sendMessage(room, "message text").wait()
+            val messageResult = alice.assumeSuccess().sendMessage(room, "message text")
 
             check(messageResult is Result.Success)
             assertThat(messageReceived.text).isEqualTo("message text")
@@ -88,7 +87,7 @@ class ChatManagerSpek : Spek({
         it("receives current user with listeners instead of callback") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect(ChatManagerListeners()).wait()
+            val user = chatFor(PUSHERINO).connect(ChatManagerListeners())
             val userId = user.assumeSuccess().id
 
             assertThat(userId).isEqualTo(PUSHERINO)
