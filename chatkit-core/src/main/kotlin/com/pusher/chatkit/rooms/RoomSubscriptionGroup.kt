@@ -15,10 +15,6 @@ import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
-import com.pusher.platform.network.waitOr
-import com.pusher.util.asSuccess
-import com.pusher.util.mapResult
-import elements.Errors
 import elements.Subscription
 import java.util.concurrent.Future
 
@@ -96,23 +92,20 @@ class RoomSubscriptionGroup(
     private fun consumeEvent(event: MembershipSubscriptionEvent) {
         val events = when (event) {
             is MembershipSubscriptionEvent.UserJoined -> listOf(
-                    userService.fetchUserBy(event.userId).mapResult { user ->
+                    userService.fetchUserBy(event.userId).map { user ->
                         RoomEvent.UserJoined(user) as RoomEvent
-                    }.waitOr { RoomEvent.ErrorOccurred(Errors.other(it)).asSuccess()
                     }.recover { RoomEvent.ErrorOccurred(it) }
                 )
             is MembershipSubscriptionEvent.UserLeft -> listOf(
-                    userService.fetchUserBy(event.userId).mapResult { user ->
+                    userService.fetchUserBy(event.userId).map { user ->
                         RoomEvent.UserLeft(user) as RoomEvent
-                    }.waitOr { RoomEvent.ErrorOccurred(Errors.other(it)).asSuccess()
                     }.recover { RoomEvent.ErrorOccurred(it) }
                 )
             is MembershipSubscriptionEvent.InitialState ->
                 // TODO we shouldn't fetch each user one at a time
                 event.userIds.map { userId ->
-                    userService.fetchUserBy(userId).mapResult { user ->
+                    userService.fetchUserBy(userId).map { user ->
                         RoomEvent.UserJoined(user) as RoomEvent
-                    }.waitOr { RoomEvent.ErrorOccurred(Errors.other(it)).asSuccess()
                     }.recover { RoomEvent.ErrorOccurred(it) }
                 }
             is MembershipSubscriptionEvent.ErrorOccurred ->
@@ -136,24 +129,20 @@ class RoomSubscriptionGroup(
         forwardEvent(
                 when (event) {
                     is RoomSubscriptionEvent.UserIsTyping -> {
-                        userService.fetchUserBy(event.userId).mapResult { user ->
+                        userService.fetchUserBy(event.userId).map { user ->
                             if (scheduleStopTypingEvent(user)) {
                                 RoomEvent.UserStartedTyping(user)
                             } else {
                                 RoomEvent.NoEvent
                             }
-                        }.waitOr {
-                            RoomEvent.ErrorOccurred(Errors.other(it)).asSuccess()
                         }.recover {
                             RoomEvent.ErrorOccurred(it)
                         }
                     }
                     is RoomSubscriptionEvent.NewMessage ->
-                        userService.fetchUserBy(event.message.userId).mapResult { user ->
+                        userService.fetchUserBy(event.message.userId).map { user ->
                             event.message.user = user
                             RoomEvent.NewMessage(event.message) as RoomEvent
-                        }.waitOr {
-                            RoomEvent.ErrorOccurred(Errors.other(it)).asSuccess()
                         }.recover {
                             RoomEvent.ErrorOccurred(it)
                         }

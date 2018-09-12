@@ -8,12 +8,13 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
-import com.pusher.platform.network.toFuture
-import com.pusher.util.*
+import com.pusher.util.Result
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
+import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 import elements.Subscription
-import java.util.concurrent.Future
 
 internal class RoomService(
         override val chatManager: ChatManager,
@@ -27,10 +28,10 @@ internal class RoomService(
 
     val roomStore by lazy { RoomStore() }
 
-    fun fetchRoomBy(userId: String, id: Int): Future<Result<Room, Error>> =
-            getLocalRoom(id).toFuture()
-                    .recoverFutureResult { client.doGet("/rooms/$id") }
-                    .flatMapResult { room ->
+    fun fetchRoomBy(userId: String, id: Int): Result<Room, Error> =
+            getLocalRoom(id)
+                    .flatRecover { client.doGet("/rooms/$id") }
+                    .flatMap { room ->
                         when {
                             room.memberUserIds.contains(userId) -> room.asSuccess()
                             else -> noRoomMembershipError(room).asFailure<Room, Error>()
@@ -41,47 +42,46 @@ internal class RoomService(
             roomStore[id]
                     .orElse { Errors.other("User not found locally") }
 
-    fun fetchUserRooms(userId: String, joinable: Boolean = false): Future<Result<List<Room>, Error>> =
+    fun fetchUserRooms(userId: String, joinable: Boolean = false):Result<List<Room>, Error> =
             client.doGet<List<Room>>("/users/$userId/rooms?joinable=$joinable")
-                    .mapResult { rooms -> rooms.also { roomStore += it } }
+                    .map { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
             creatorId: String,
             name: String,
             isPrivate: Boolean,
             userIds: List<String>
-    ): Future<Result<Room, Error>> =
+    ): Result<Room, Error> =
             RoomCreateRequest(
                     name = name,
                     private = isPrivate,
                     createdById = creatorId,
                     userIds = userIds
             ).toJson()
-                    .toFuture()
-                    .flatMapFutureResult { body -> client.doPost<Room>("/rooms", body) }
+                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
                     .saveRoomWhenReady()
 
     fun roomFor(userId: String, roomAware: HasRoom) =
             fetchRoomBy(userId, roomAware.roomId)
 
-    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
+    fun deleteRoom(roomId: Int): Result<Int, Error> =
             client.doDelete<Unit?>("/rooms/$roomId")
-                    .mapResult { roomId }
+                    .map { roomId }
                     .removeRoomWhenReady()
 
 
-    fun leaveRoom(userId: String, roomId: Int): Future<Result<Int, Error>> =
+    fun leaveRoom(userId: String, roomId: Int): Result<Int, Error> =
             client.doPost<Unit?>("/users/$userId/rooms/$roomId/leave")
-                    .mapResult { roomId }
+                    .map { roomId }
                     .removeRoomWhenReady()
 
-    fun joinRoom(userId: String, roomId: Int): Future<Result<Room, Error>> =
+    fun joinRoom(userId: String, roomId: Int): Result<Room, Error> =
             client.doPost<Room>("/users/$userId/rooms/$roomId/join")
                     .saveRoomWhenReady()
 
-    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
-            UpdateRoomRequest(name, isPrivate).toJson().toFuture()
-                    .flatMapFutureResult { body -> client.doPut<Unit>("/rooms/$roomId", body) }
+    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
+            UpdateRoomRequest(name, isPrivate).toJson()
+                    .flatMap { body -> client.doPut<Unit>("/rooms/$roomId", body) }
 
     fun subscribeToRoom(
             roomId: Int,

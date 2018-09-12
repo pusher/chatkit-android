@@ -2,63 +2,66 @@ package com.pusher.chatkit.users
 
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.util.toJson
-import com.pusher.platform.network.Futures
-import com.pusher.platform.network.map
-import com.pusher.platform.network.toFuture
 import com.pusher.util.Result
+import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.flatMapFutureResult
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Future
 
 class UserService(
         private val client: PlatformClient
 ) {
     private val knownUsers = ConcurrentHashMap<String, User>()
 
-    fun fetchUsersBy(userIds: Set<String>): Future<Result<List<User>, Error>> {
-        val users = userIds.map { id -> knownUsers[id].orElse { id } }
-        val missingUserIds = Result.failuresOf(users)
-        val localUsers = Result.successesOf(users)
-        val missingUserIdsQs =
-                missingUserIds.map { userId ->
-                    "id=${URLEncoder.encode(userId, "UTF-8")}"
-                }.joinToString(separator = "&")
+    fun fetchUsersBy(userIds: Set<String>): Result<Map<String, User>, Error> {
+        val missingUserIds = userIds.filter { id -> knownUsers[id] == null }
 
-        return when {
-            missingUserIds.isEmpty() ->
-                Futures.now(localUsers.asSuccess())
-            else ->
-                client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
-                        .map { usersResult ->
-                            usersResult.map { loadedUsers ->
-                                loadedUsers.map { user -> knownUsers.put(user.id, user) }
-                                loadedUsers + localUsers
-                            }
+        if (missingUserIds.isNotEmpty()) {
+            val missingUserIdsQs =
+                    missingUserIds.map { userId ->
+                        "id=${URLEncoder.encode(userId, "UTF-8")}"
+                    }.joinToString(separator = "&")
+
+            client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
+                    .map { loadedUsers ->
+                        loadedUsers.map { user ->
+                            knownUsers[user.id] = user
                         }
+                    }
+        }
+
+        return userIds.fold(
+                mutableMapOf<String, User>().asSuccess<MutableMap<String, User>, Error>()
+        ) { accumulator, userId ->
+            val user = knownUsers[userId]
+            if (user == null) {
+                userNotFound(userId).asFailure()
+            } else {
+                accumulator.map { it[userId] = user; it }
+            }
+        }.map {
+            // Return an immutable copy
+            it.toMap()
         }
     }
 
-    fun fetchUserBy(userId: String): Future<Result<User, Error>> =
-        fetchUsersBy(setOf(userId)).map { usersResult ->
-            usersResult.flatMap { users ->
-                users.firstOrNull().orElse { userNotFound(userId) }
+    fun fetchUserBy(userId: String): Result<User, Error> =
+        fetchUsersBy(setOf(userId)).flatMap { users ->
+                users.values.firstOrNull().orElse { userNotFound(userId) }
             }
-        }
 
     fun addUsersToRoom(roomId: Int, userIds: List<String>) =
-        UserIdsWrapper(userIds).toJson().toFuture()
-            .flatMapFutureResult { body ->
+        UserIdsWrapper(userIds).toJson()
+            .flatMap { body ->
                 client.doPut<Unit>("/rooms/$roomId/users/add", body)
             }
 
     fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
-        UserIdsWrapper(userIds).toJson().toFuture()
-            .flatMapFutureResult { body ->
+        UserIdsWrapper(userIds).toJson()
+            .flatMap { body ->
                 client.doPut<Unit>("/rooms/$roomId/users/remove", body)
             }
 
@@ -70,7 +73,6 @@ class UserService(
 
     private fun userNotFound(id: String): Error =
             Errors.other("Could not load user with id: $id")
-
 }
 
 // TODO: Unused?

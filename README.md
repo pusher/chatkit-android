@@ -150,7 +150,7 @@ val futureUser: Future<Result<CurrentUser, Error>> = chatManager.connect()
 You can observe the result from your favourite threading tool. We also provide a convenience extension that makes it more semantic to wait for the results of the future:
 
 ```kotlin
-val userResult = futureUser.wait() // waits 10 seconds by default
+val userResult = futureUser // waits 10 seconds by default
 //or
 val userResult = futureUser.wait(For(30, SECONDS))
 
@@ -161,7 +161,7 @@ val userResult = futureUser.wait(For(30, SECONDS))
 To consume the result we can do this:
 
 ```kotlin
-chatManager.connect().wait().let { result ->
+chatManager.connect().let { result ->
   when(result) { // Result<CurrentUser, Error>
     is Result.Success -> toast("User received: ${result.value.name})")
     is Result.Failure -> toast("Oops: ${result.error})")

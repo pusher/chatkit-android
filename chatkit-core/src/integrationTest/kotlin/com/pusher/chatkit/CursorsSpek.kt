@@ -26,15 +26,15 @@ class CursorsSpek : Spek({
         it("notifies when '$ALICE' reads messages") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
+            val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").assumeSuccess()
 
             val receivedCursor by pusherino
                 .subscribeRoomFor(GENERAL) { it as? RoomEvent.NewReadCursor }
 
-            alice.setReadCursor(alice.generalRoom, messageId).wait().assumeSuccess()
+            alice.setReadCursor(alice.generalRoom, messageId).wait()
 
             receivedCursor.cursor.apply {
                 assertThat(position).isEqualTo(messageId)
@@ -47,11 +47,11 @@ class CursorsSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val cursorsReceived = mutableListOf<RoomEvent.NewReadCursor>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            val firstMessageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
-            val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").wait().assumeSuccess()
+            val firstMessageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").assumeSuccess()
+            val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").assumeSuccess()
 
             val secondMessageCursor by pusherino
                 .subscribeRoomFor(GENERAL) {
@@ -62,7 +62,7 @@ class CursorsSpek : Spek({
                 }
 
             alice.setReadCursor(alice.generalRoom, firstMessageId)
-            alice.setReadCursor(alice.generalRoom, secondMessageId).wait()
+            alice.setReadCursor(alice.generalRoom, secondMessageId).wait().assumeSuccess()
 
             assertThat(cursorsReceived).containsExactly(secondMessageCursor)
         }
@@ -71,12 +71,12 @@ class CursorsSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val cursorsReceived = mutableListOf<Cursor>()
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            val firstMessageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
-            val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").wait().assumeSuccess()
-            val thirdMessageId = pusherino.sendMessage(pusherino.generalRoom, "Are you there?").wait().assumeSuccess()
+            val firstMessageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").assumeSuccess()
+            val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").assumeSuccess()
+            val thirdMessageId = pusherino.sendMessage(pusherino.generalRoom, "Are you there?").assumeSuccess()
 
             val thirdMessageCursor by pusherino
                 .subscribeRoomFor(GENERAL) {
@@ -87,9 +87,9 @@ class CursorsSpek : Spek({
                 }
 
                 alice.setReadCursor(alice.generalRoom, firstMessageId)
-                alice.setReadCursor(alice.generalRoom, secondMessageId).wait()
+                alice.setReadCursor(alice.generalRoom, secondMessageId)
                 Thread.sleep(500)
-                alice.setReadCursor(alice.generalRoom, thirdMessageId).wait()
+                alice.setReadCursor(alice.generalRoom, thirdMessageId)
 
             checkNotNull(thirdMessageCursor)
 
@@ -99,14 +99,14 @@ class CursorsSpek : Spek({
         it("should read $ALICE's cursor") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").wait().assumeSuccess()
+            val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").assumeSuccess()
 
             alice.setReadCursor(alice.generalRoom, messageId).wait().assumeSuccess()
 
-            val cursor = alice.getReadCursor(alice.generalRoom).wait().assumeSuccess()
+            val cursor = alice.getReadCursor(alice.generalRoom).assumeSuccess()
 
             assertThat(cursor.position).isEqualTo(messageId)
         }

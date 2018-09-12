@@ -17,15 +17,14 @@ import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.Futures
-import com.pusher.platform.network.Wait
-import com.pusher.platform.network.waitOr
 import com.pusher.platform.tokenProvider.TokenProvider
-import com.pusher.util.*
+import com.pusher.util.Result
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
+import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import java.util.concurrent.Future
 import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.TimeUnit
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -97,11 +96,11 @@ class ChatManager constructor(
 
     private var currentUser: CurrentUser? = null
 
-    fun connect(listeners: ChatManagerListeners): Future<Result<CurrentUser, Error>> =
+    fun connect(listeners: ChatManagerListeners): Result<CurrentUser, Error> =
             connect(listeners.toCallback())
 
     @JvmOverloads
-    fun connect(consumer: ChatManagerEventConsumer = {}): Future<Result<CurrentUser, Error>> {
+    fun connect(consumer: ChatManagerEventConsumer = {}): Result<CurrentUser, Error> {
         val futureCurrentUser = CurrentUserConsumer() // TODO: not sure about this!
         eventConsumers += futureCurrentUser
         eventConsumers += replaceCurrentUser
@@ -111,7 +110,7 @@ class ChatManager constructor(
         presenceSubscription.await()
         cursorSubscription.await()
 
-        return futureCurrentUser.get().also { logger.verbose("Current User initialised") }
+        return futureCurrentUser.get().get().also { logger.verbose("Current User initialised") }
     }
 
     private val replaceCurrentUser = { event: ChatManagerEvent ->
@@ -151,11 +150,11 @@ class ChatManager constructor(
     private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomEvent): ChatManagerEvent =
         when (event) {
             is RoomEvent.UserStartedTyping ->
-                roomService.fetchRoomBy(event.user.id, roomId).mapResult { room ->
+                roomService.fetchRoomBy(event.user.id, roomId).map { room ->
                     ChatManagerEvent.UserStartedTyping(event.user, room) as ChatManagerEvent
                 }.waitAndRecover()
             is RoomEvent.UserStoppedTyping ->
-                roomService.fetchRoomBy(event.user.id, roomId).mapResult { room ->
+                roomService.fetchRoomBy(event.user.id, roomId).map { room ->
                     ChatManagerEvent.UserStoppedTyping(event.user, room) as ChatManagerEvent
                 }.waitAndRecover()
             else ->
@@ -172,12 +171,6 @@ class ChatManager constructor(
                 // TODO we should be making use of the userService.fetchUser*s*By() method in order
                 // to fetch all users in one call to the server, and enforce a maximum wait of 10 seconds.
                 newState to userService.fetchUserBy(newState.userId)
-            }.map { (newState, futureUserResult) ->
-                // Unwrap the futures in a separate stage, so that they are
-                // all initiated before we wait for any to complete
-                newState to futureUserResult.waitOr(Wait.For(10, TimeUnit.SECONDS)) {
-                    Errors.other(it).asFailure()
-                }
             }.filter { (newState, userResult) ->
                 when (userResult) {
                     is Result.Success ->
@@ -254,13 +247,13 @@ class ChatManager constructor(
                 is UserSubscriptionEvent.RoomDeletedEvent ->
                     ChatManagerEvent.RoomDeleted(event.roomId)
                 is UserSubscriptionEvent.LeftRoomEvent ->
-                            userService.fetchUserBy(event.userId).flatMapResult { user ->
+                            userService.fetchUserBy(event.userId).flatMap { user ->
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
                                         .map<ChatManagerEvent> { room -> ChatManagerEvent.UserLeftRoom(user, room) }
                             }.waitAndRecover()
                 is UserSubscriptionEvent.JoinedRoomEvent ->
-                            userService.fetchUserBy(event.userId).flatMapResult { user ->
+                            userService.fetchUserBy(event.userId).flatMap { user ->
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
                                         .map<ChatManagerEvent> { room -> ChatManagerEvent.UserJoinedRoom(user, room) }
@@ -269,8 +262,9 @@ class ChatManager constructor(
                     ChatManagerEvent.ErrorOccurred(event.error)
             }
 
-    private fun Future<Result<ChatManagerEvent, Error>>.waitAndRecover() =
-        this.waitOr { ChatManagerEvent.ErrorOccurred(Errors.other(it)).asSuccess() }.recover { ChatManagerEvent.ErrorOccurred(it) }
+    // TODO Rename, not wait
+    private fun Result<ChatManagerEvent, Error>.waitAndRecover() =
+        this.recover { ChatManagerEvent.ErrorOccurred(it) }
 
     private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = CurrentUser(
             id = initialState.currentUser.id,
