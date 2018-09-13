@@ -175,36 +175,35 @@ class ChatManager constructor(
                 ChatManagerEvent.NoEvent
         }
 
-    private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatManagerEvent> =
-            when (event) {
-                is PresenceSubscriptionEvent.InitialState -> event.userStates
-                is PresenceSubscriptionEvent.JoinedRoom -> event.userStates
-                is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.state)
-                else -> listOf()
-            }.map { newState ->
-                // TODO we should be making use of the userService.fetchUser*s*By() method in order
-                // to fetch all users in one call to the server, and enforce a maximum wait of 10 seconds.
-                newState to userService.fetchUserBy(newState.userId)
-            }.filter { (newState, userResult) ->
-                when (userResult) {
-                    is Result.Success ->
-                        userResult.value.presence != newState.presence
-                    is Result.Failure ->
-                        true // don't filter out failures, we need to report them
-                }
-            }.map { (newState, userResult) ->
-                userResult
-                        .map { user ->
-                            user.presence = newState.presence
+    private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatManagerEvent> {
+        val newStates = when (event) {
+            is PresenceSubscriptionEvent.InitialState -> event.userStates
+            is PresenceSubscriptionEvent.JoinedRoom -> event.userStates
+            is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.state)
+            else -> listOf()
+        }
 
-                            when (newState.presence) {
-                                is Presence.Online -> ChatManagerEvent.UserCameOnline(user)
-                                is Presence.Offline -> ChatManagerEvent.UserWentOffline(user)
-                            }
-                        }.recover { error ->
-                            ChatManagerEvent.ErrorOccurred(error)
-                        }
+        return newStates.map { newState ->
+            newState.userId
+        }.let { userIDs ->
+            userService.fetchUsersBy(userIDs.toSet())
+        }.map { users ->
+            newStates.map { newState ->
+                newState to users.getValue(newState.userId)
+            }.filter { (newState, user) ->
+                newState.presence != user.presence
+            }.map { (newState, user) ->
+                user.presence = newState.presence
+
+                when (newState.presence) {
+                    is Presence.Online -> ChatManagerEvent.UserCameOnline(user)
+                    is Presence.Offline -> ChatManagerEvent.UserWentOffline(user)
+                }
             }
+        }.recover {
+            listOf(ChatManagerEvent.ErrorOccurred(it))
+        }
+    }
 
     private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): ChatManagerEvent =
                 when (event) {
