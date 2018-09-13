@@ -25,6 +25,8 @@ class ResolvableSubscription<A>(
     private val subscription = client.subscribeResuming(
             path = path,
             listeners = SubscriptionListeners.compose(
+                    loggingListeners(description, logger),
+                    listeners,
                     SubscriptionListeners(
                             onOpen = {
                                 if (!resolveOnFirstEvent) {
@@ -42,9 +44,7 @@ class ResolvableSubscription<A>(
                             onEnd = {
                                 latch.countDown()
                             }
-                    ),
-                    loggingListeners(description, logger),
-                    listeners
+                    )
             ),
             messageParser = messageParser
     )
