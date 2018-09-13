@@ -17,6 +17,7 @@ import elements.Errors
 import elements.Subscription
 
 internal class RoomService(
+        // TODO still here (see HasChat)
         override val chatManager: ChatManager,
         private val client: PlatformClient,
         private val userService: UserService,
