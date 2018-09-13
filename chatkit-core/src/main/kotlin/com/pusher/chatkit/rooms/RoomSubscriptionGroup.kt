@@ -85,8 +85,10 @@ class RoomSubscriptionGroup(
     }
 
     private fun forwardEvent(event: RoomEvent) {
-        consumers.forEach { consumer ->
-            consumer(event)
+        if (event !is RoomEvent.NoEvent) {
+            consumers.forEach { consumer ->
+                consumer(event)
+            }
         }
     }
 
@@ -121,6 +123,7 @@ class RoomSubscriptionGroup(
                     is CursorSubscriptionEvent.OnCursorSet -> RoomEvent.NewReadCursor(event.cursor)
                     is CursorSubscriptionEvent.InitialState -> RoomEvent.InitialReadCursors(event.cursors)
                     is CursorSubscriptionEvent.OnError -> RoomEvent.ErrorOccurred(event.error)
+                    is CursorSubscriptionEvent.NoEvent -> RoomEvent.NoEvent
                 }
         )
     }
