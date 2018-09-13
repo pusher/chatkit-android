@@ -3,7 +3,6 @@ package com.pusher.chatkit.util
 import com.pusher.platform.network.Futures
 import java.lang.Thread.sleep
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Used to do a trailing throttle of actions.
@@ -12,17 +11,26 @@ internal class Throttler<A, B>(
     private val delay: Long = 500,
     private val action: (A) -> B
 ) {
-    private val target = AtomicReference<A>()
-
+    private val updateLock = object{}
+    private var target: A? = null
     private var future: Future<B>? = null
 
     fun throttle(input: A): Future<B> {
-        target.set(input)
-        return future?.takeUnless { it.isDone } ?: schedule()
+        synchronized(updateLock) {
+            target = input
+            if (future == null) future = schedule()
+
+            return future!!
+        }
     }
 
     private fun schedule() = Futures.schedule {
         sleep(delay)
-        action(target.get())
-    }.also { future = it }
+        var targetNow: A? = null // ugh. removing synchronized from the language results in this
+        synchronized(updateLock) {
+            targetNow = target
+            future = null
+        }
+        action(targetNow!!)
+    }
 }
