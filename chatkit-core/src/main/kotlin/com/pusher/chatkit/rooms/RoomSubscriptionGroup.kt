@@ -48,16 +48,16 @@ class RoomSubscriptionGroup(
     )
 
     private val membershipSubscription = ResolvableSubscription(
+            resolveOnFirstEvent = true,
             client = client,
             path = "/rooms/$roomId/memberships",
             listeners = SubscriptionListeners(
-                    onEvent = { event -> consumeEvent(event.body) },
-                    onError = { error -> consumeEvent(MembershipSubscriptionEvent.ErrorOccurred(error)) }
+                    onEvent = { consumeEvent(it.body) },
+                    onError = { consumeEvent(MembershipSubscriptionEvent.ErrorOccurred(it)) }
             ),
             messageParser = MembershipSubscriptionEventParser,
-            logger = logger,
             description = "Memberships room $roomId",
-            resolveOnFirstEvent = true
+            logger = logger
     )
 
     private val cursorsSubscription = cursorService.subscribeForRoom(
@@ -65,6 +65,7 @@ class RoomSubscriptionGroup(
             this::consumeEvent
     )
 
+    // Access synchronized on itself
     private val typingTimers = HashMap<String, Future<Unit>>()
 
     override fun connect(): Subscription {
@@ -102,12 +103,11 @@ class RoomSubscriptionGroup(
                     }.recover { RoomEvent.ErrorOccurred(it) }
                 )
             is MembershipSubscriptionEvent.InitialState ->
-                // TODO we shouldn't fetch each user one at a time
-                event.userIds.map { userId ->
-                    userService.fetchUserBy(userId).map { user ->
+                userService.fetchUsersBy(event.userIds.toSet()).map { users ->
+                    users.values.map { user ->
                         RoomEvent.UserJoined(user) as RoomEvent
-                    }.recover { RoomEvent.ErrorOccurred(it) }
-                }
+                    }
+                }.recover { listOf(RoomEvent.ErrorOccurred(it)) }
             is MembershipSubscriptionEvent.ErrorOccurred ->
                 listOf(RoomEvent.ErrorOccurred(event.error))
         }
