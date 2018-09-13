@@ -86,10 +86,10 @@ class CursorsSpek : Spek({
                     }
                 }
 
-                alice.setReadCursor(alice.generalRoom, firstMessageId)
-                alice.setReadCursor(alice.generalRoom, secondMessageId)
-                Thread.sleep(500)
-                alice.setReadCursor(alice.generalRoom, thirdMessageId)
+            alice.setReadCursor(alice.generalRoom, firstMessageId)
+            alice.setReadCursor(alice.generalRoom, secondMessageId)
+            Thread.sleep(510)
+            alice.setReadCursor(alice.generalRoom, thirdMessageId).wait().assumeSuccess()
 
             checkNotNull(thirdMessageCursor)
 
