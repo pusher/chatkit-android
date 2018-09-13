@@ -166,11 +166,11 @@ class ChatManager constructor(
             is RoomEvent.UserStartedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).map { room ->
                     ChatManagerEvent.UserStartedTyping(event.user, room) as ChatManagerEvent
-                }.waitAndRecover()
+                }.recover { ChatManagerEvent.ErrorOccurred(it) }
             is RoomEvent.UserStoppedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).map { room ->
                     ChatManagerEvent.UserStoppedTyping(event.user, room) as ChatManagerEvent
-                }.waitAndRecover()
+                }.recover { ChatManagerEvent.ErrorOccurred(it) }
             else ->
                 ChatManagerEvent.NoEvent
         }
@@ -217,8 +217,6 @@ class ChatManager constructor(
     private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
-                // TODO This is a mix of apply and transform. The events should be generated in the
-                // transform step
                 val removedFrom = (roomService.roomStore.toList() - event.rooms).also {
                     roomService.roomStore -= it
                 }.map {
@@ -266,21 +264,17 @@ class ChatManager constructor(
                             userService.fetchUserBy(event.userId).flatMap { user ->
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
-                                        .map<ChatManagerEvent> { room -> ChatManagerEvent.UserLeftRoom(user, room) }
-                            }.waitAndRecover()
+                                        .map { room -> ChatManagerEvent.UserLeftRoom(user, room) as ChatManagerEvent }
+                            }.recover { ChatManagerEvent.ErrorOccurred(it) }
                 is UserSubscriptionEvent.JoinedRoomEvent ->
                             userService.fetchUserBy(event.userId).flatMap { user ->
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
-                                        .map<ChatManagerEvent> { room -> ChatManagerEvent.UserJoinedRoom(user, room) }
-                            }.waitAndRecover()
+                                        .map { room -> ChatManagerEvent.UserJoinedRoom(user, room) as ChatManagerEvent }
+                            }.recover { ChatManagerEvent.ErrorOccurred(it) }
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatManagerEvent.ErrorOccurred(event.error)
             }
-
-    // TODO Rename, not wait
-    private fun Result<ChatManagerEvent, Error>.waitAndRecover() =
-        this.recover { ChatManagerEvent.ErrorOccurred(it) }
 
     private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = CurrentUser(
             id = initialState.currentUser.id,
