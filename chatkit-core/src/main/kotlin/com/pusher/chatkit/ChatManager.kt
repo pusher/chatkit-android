@@ -16,7 +16,6 @@ import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.Instance
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
@@ -24,7 +23,7 @@ import com.pusher.util.asSuccess
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.CountDownLatch
 
 class ChatManager constructor(
     private val instanceLocator: String,
@@ -41,12 +40,14 @@ class ChatManager constructor(
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
 
-    internal val cursorService by lazy { CursorService(cursorsClient, logger) }
-    internal val userService by lazy { UserService(chatkitClient) }
-    internal val messageService by lazy { MessageService(chatkitClient, userService, filesService) }
-    internal val filesService by lazy { FilesService(filesClient) }
+    internal val cursorService = CursorService(cursorsClient, logger)
+    internal val userService = UserService(chatkitClient)
+    internal val filesService = FilesService(filesClient)
+    internal val messageService = MessageService(chatkitClient, userService, filesService)
 
-    internal val roomService by lazy {
+    private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
+
+    internal val roomService =
         RoomService(
                 this,
                 chatkitClient,
@@ -56,7 +57,6 @@ class ChatManager constructor(
                 this::consumeRoomSubscriptionEvent,
                 dependencies.logger
         )
-    }
 
     private val presenceSubscription by lazy {
         ResolvableSubscription(
@@ -92,34 +92,48 @@ class ChatManager constructor(
         cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
     }
 
-    private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
+    private var currentUser = object {
+        private val updateLock = object{}
+        private val latch = CountDownLatch(1)
+        private var currentUser: CurrentUser? = null
 
-    private var currentUser: CurrentUser? = null
+        fun get(): CurrentUser {
+            latch.await()
+            return currentUser!!
+        }
+
+        fun set(e: CurrentUser) {
+            synchronized(updateLock) {
+                if (currentUser == null) {
+                    currentUser = e
+                    latch.countDown()
+                } else {
+                    currentUser!!.close()
+                    currentUser!!.updateWithPropertiesOf(e)
+                }
+            }
+        }
+    }
 
     fun connect(listeners: ChatManagerListeners): Result<CurrentUser, Error> =
             connect(listeners.toCallback())
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Result<CurrentUser, Error> {
-        val futureCurrentUser = CurrentUserConsumer() // TODO: not sure about this!
-        eventConsumers += futureCurrentUser
-        eventConsumers += replaceCurrentUser
         eventConsumers += consumer
 
+        // Touching them constructs them. Lazy is weird
+        userSubscription
+        presenceSubscription
+        cursorSubscription
+        // Then we await the connection of all three
         userSubscription.await()
         presenceSubscription.await()
         cursorSubscription.await()
 
-        return futureCurrentUser.get().get().also { logger.verbose("Current User initialised") }
-    }
-
-    private val replaceCurrentUser = { event: ChatManagerEvent ->
-        if (event is ChatManagerEvent.CurrentUserReceived) {
-            this.currentUser?.apply {
-                close()
-                updateWithPropertiesOf(event.currentUser)
-            }
-        }
+        return currentUser.get()
+                .also { logger.verbose("Current User initialised") }
+                .asSuccess()
     }
 
     private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) =
@@ -217,6 +231,8 @@ class ChatManager constructor(
                     UserSubscriptionEvent.AddedToRoomEvent(it)
                 }
 
+                currentUser.set(createCurrentUser(event))
+
                 removedFrom + addedTo + listOf(event)
             }
             is UserSubscriptionEvent.AddedToRoomEvent ->
@@ -237,7 +253,7 @@ class ChatManager constructor(
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatManagerEvent =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
-                    ChatManagerEvent.CurrentUserReceived(createCurrentUser(event))
+                    ChatManagerEvent.CurrentUserReceived(currentUser.get())
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     ChatManagerEvent.CurrentUserAddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
@@ -274,24 +290,6 @@ class ChatManager constructor(
             chatManager = this,
             client = createPlatformClient(InstanceType.DEFAULT)
     )
-
-    private class CurrentUserConsumer: ChatManagerEventConsumer {
-        val queue = SynchronousQueue<Result<CurrentUser, Error>>()
-        var waitingForUser = true
-
-        override fun invoke(event: ChatManagerEvent) {
-            if (waitingForUser) {
-                when (event) {
-                    is ChatManagerEvent.CurrentUserReceived -> queue.put(event.currentUser.asSuccess())
-                    is ChatManagerEvent.ErrorOccurred -> queue.put(event.error.asFailure())
-                }
-            }
-        }
-
-        fun get() = Futures.schedule {
-            queue.take().also { waitingForUser = false }
-        }
-    }
 
     /**
      * Tries to close all pending subscriptions and resources
