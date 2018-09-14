@@ -35,7 +35,7 @@ class PresenceSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
-                .connectFor { (it as? ChatManagerEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
+                .connectFor { (it as? ChatEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
 
             chatFor(ALICE).connect().assumeSuccess()
 
@@ -59,7 +59,7 @@ class PresenceSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userWentOffline by chatFor(PUSHERINO)
-                .connectFor { it as? ChatManagerEvent.UserWentOffline }
+                .connectFor { it as? ChatEvent.UserWentOffline }
 
             val aliceChat = chatFor(ALICE)
             aliceChat.connect().assumeSuccess()

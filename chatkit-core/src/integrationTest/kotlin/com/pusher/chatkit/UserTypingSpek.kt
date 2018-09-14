@@ -60,7 +60,7 @@ class UserTypingSpek : Spek({
 
             val pusherino = chatFor(Users.PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(Users.ALICE).connect { event ->
-                if (event is ChatManagerEvent.UserStartedTyping) startedTypingUser = event.user
+                if (event is ChatEvent.UserStartedTyping) startedTypingUser = event.user
             }.assumeSuccess()
 
             // Even though they are reported globally, you must be subscribed to a room to see
@@ -79,7 +79,7 @@ class UserTypingSpek : Spek({
 
             val pusherino = chatFor(Users.PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(Users.ALICE).connect { event ->
-                if (event is ChatManagerEvent.UserStoppedTyping) stoppedTypingUser = event.user
+                if (event is ChatEvent.UserStoppedTyping) stoppedTypingUser = event.user
             }.assumeSuccess()
 
             // Even though they are reported globally, you must be subscribed to a room to see
