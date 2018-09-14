@@ -71,8 +71,3 @@ class UserService(
     private fun userNotFound(id: String): Error =
             Errors.other("Could not load user with id: $id")
 }
-
-// TODO: Unused?
-interface HasUser {
-    val userId: String
-}
