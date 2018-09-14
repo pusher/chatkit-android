@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.ChatEvent.*
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.users.User
@@ -9,7 +9,7 @@ import elements.Error
 /**
  * Used along with [ChatManager] to observe global changes in the chat.
  */
-data class ChatManagerListeners @JvmOverloads constructor(
+data class ChatListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},
     val onUserStartedTyping: (User, Room) -> Unit = { _, _ -> },
     val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
@@ -26,14 +26,14 @@ data class ChatManagerListeners @JvmOverloads constructor(
 )
 
 /**
- * Used to consume instances of [ChatManagerEvent]
+ * Used to consume instances of [ChatEvent]
  */
-typealias ChatManagerEventConsumer = (ChatManagerEvent) -> Unit
+typealias ChatManagerEventConsumer = (ChatEvent) -> Unit
 
 /**
- * Transforms [ChatManagerListeners] to [ChatManagerEventConsumer]
+ * Transforms [ChatListeners] to [ChatManagerEventConsumer]
  */
-internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { event ->
+internal fun ChatListeners.toCallback(): ChatManagerEventConsumer = { event ->
     when (event) {
         is CurrentUserReceived -> onCurrentUserReceived(event.currentUser)
         is UserStartedTyping -> onUserStartedTyping(event.user, event.room)
@@ -53,23 +53,21 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
 }
 
 /**
- * Same as [ChatManagerListeners] but using events instead of individual listeners.
+ * Same as [ChatListeners] but using events instead of individual listeners.
  */
-sealed class ChatManagerEvent {
-
-    data class CurrentUserReceived internal constructor(val currentUser: CurrentUser) : ChatManagerEvent()
-    data class UserStartedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-    data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-    data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-    data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatManagerEvent()
-    data class UserCameOnline internal constructor(val user: User) : ChatManagerEvent()
-    data class UserWentOffline internal constructor(val user: User) : ChatManagerEvent()
-    data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatManagerEvent()
-    data class CurrentUserRemovedFromRoom internal constructor(val roomId: Int) : ChatManagerEvent()
-    data class RoomUpdated internal constructor(val room: Room) : ChatManagerEvent()
-    data class RoomDeleted internal constructor(val roomId: Int) : ChatManagerEvent()
-    data class ErrorOccurred internal constructor(val error: elements.Error) : ChatManagerEvent()
-    data class NewReadCursor internal constructor(val cursor: Cursor) : ChatManagerEvent()
-    object NoEvent : ChatManagerEvent()
-
+sealed class ChatEvent {
+    data class CurrentUserReceived internal constructor(val currentUser: CurrentUser) : ChatEvent()
+    data class UserStartedTyping internal constructor(val user: User, val room: Room) : ChatEvent()
+    data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatEvent()
+    data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatEvent()
+    data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatEvent()
+    data class UserCameOnline internal constructor(val user: User) : ChatEvent()
+    data class UserWentOffline internal constructor(val user: User) : ChatEvent()
+    data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatEvent()
+    data class CurrentUserRemovedFromRoom internal constructor(val roomId: Int) : ChatEvent()
+    data class RoomUpdated internal constructor(val room: Room) : ChatEvent()
+    data class RoomDeleted internal constructor(val roomId: Int) : ChatEvent()
+    data class ErrorOccurred internal constructor(val error: elements.Error) : ChatEvent()
+    data class NewReadCursor internal constructor(val cursor: Cursor) : ChatEvent()
+    object NoEvent : ChatEvent()
 }
