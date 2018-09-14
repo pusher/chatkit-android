@@ -108,7 +108,6 @@ class ChatManager constructor(
                     currentUser = e
                     latch.countDown()
                 } else {
-                    currentUser!!.close()
                     currentUser!!.updateWithPropertiesOf(e)
                 }
             }
@@ -291,6 +290,7 @@ class ChatManager constructor(
         userSubscription.unsubscribe()
         presenceSubscription.unsubscribe()
         cursorSubscription.unsubscribe()
+        roomService.close()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
 
