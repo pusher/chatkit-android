@@ -3,8 +3,7 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
-import com.pusher.util.asFailure
-import com.pusher.util.asSuccess
+import com.pusher.util.collect
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
@@ -21,9 +20,9 @@ class UserService(
 
         if (missingUserIds.isNotEmpty()) {
             val missingUserIdsQs =
-                    missingUserIds.map { userId ->
-                        "id=${URLEncoder.encode(userId, "UTF-8")}"
-                    }.joinToString(separator = "&")
+                    missingUserIds.joinToString(separator = "&") {
+                        "id=${URLEncoder.encode(it, "UTF-8")}"
+                    }
 
             client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
                     .map { loadedUsers ->
@@ -33,18 +32,16 @@ class UserService(
                     }
         }
 
-        return userIds.fold(
-                mutableMapOf<String, User>().asSuccess<MutableMap<String, User>, Error>()
-        ) { accumulator, userId ->
-            val user = knownUsers[userId]
-            if (user == null) {
-                userNotFound(userId).asFailure()
-            } else {
-                accumulator.map { it[userId] = user; it }
+        return userIds.map { userId ->
+            knownUsers[userId].orElse {
+                userNotFound(userId)
+            }.map { user ->
+                userId to user
             }
-        }.map {
-            // Return an immutable copy
-            it.toMap()
+        }.collect().map { pairs ->
+            pairs.toMap()
+        }.mapFailure { errors ->
+            Errors.compose(errors)
         }
     }
 
