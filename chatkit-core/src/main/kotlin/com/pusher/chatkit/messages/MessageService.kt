@@ -6,8 +6,10 @@ import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
+import com.pusher.util.collect
 import elements.Error
-import java.net.URL
+import elements.Errors
+import okhttp3.HttpUrl
 
 internal class MessageService(
         private val client: PlatformClient,
@@ -20,41 +22,34 @@ internal class MessageService(
         initialId: Int?,
         direction: Direction
     ): Result<List<Message>, Error> =
-            // TODO mess, some errors discarded
-            fetchMessagesParams(limit, initialId, direction)
-                    .joinToString(separator = "&", prefix = "?") { (key, value) -> "$key=$value" }
-                    .let { params ->
-                        client.doGet<List<Message>>("/rooms/$roomId/messages$params").map { messages ->
-                            messages.map { message ->
-                                if (message.attachment != null) {
-                                    val queryParamsMap: Map<String, String> = (URL(message.attachment.link).query?.split("&")
-                                            ?: emptyList())
-                                            .mapNotNull { it.split("=").takeIf { it.size == 2 } }
-                                            .map { (key, value) -> key to value }
-                                            .toMap()
-                                    if (queryParamsMap["chatkit_link"] == "true") {
-                                        message.attachment.fetchRequired = true
-                                    }
-                                }
-                                // Error discarded
-                                userService.fetchUserBy(message.userId).fold(
-                                        onFailure = {},
-                                        onSuccess = { message.user = it }
-                                )
-                                message
-                            }
+            fetchMessagesParams(limit, initialId, direction).let { params ->
+                client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
+                    messages.map { message ->
+                        if (message.attachment != null) {
+                                message.attachment.fetchRequired =
+                                        HttpUrl.parse(message.attachment.link)
+                                                ?.queryParameter("chatkit_link")
+                                                ?.toLowerCase() == "true"
                         }
-                    }
 
-    private fun fetchMessagesParams(
-        limit: Int,
-        initialId: Int?,
-        direction: Direction
-    ) = listOfNotNull(
-            limit.takeIf { it > 0 }?.let { "limit" to it },
-            initialId?.let { "initial_id" to it },
-            "direction" to direction
-    )
+                        userService.fetchUserBy(message.userId).map { user ->
+                            message.user = user
+                            message
+                        }
+                    }.collect().mapFailure { errors ->
+                        Errors.compose(errors)
+                    }
+                }
+            }
+
+    private fun fetchMessagesParams(limit: Int, initialId: Int?, direction: Direction) =
+            listOfNotNull(
+                    limit.takeIf { it > 0 }?.let { "limit" to it },
+                    initialId?.let { "initial_id" to it },
+                    "direction" to direction
+            ).joinToString(separator = "&", prefix = "?") { (key, value) ->
+                "$key=$value"
+            }
 
     @JvmOverloads
     fun sendMessage(
