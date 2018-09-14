@@ -56,7 +56,6 @@ internal fun ChatManagerListeners.toCallback(): ChatManagerEventConsumer = { eve
  * Same as [ChatManagerListeners] but using events instead of individual listeners.
  */
 sealed class ChatManagerEvent {
-
     data class CurrentUserReceived internal constructor(val currentUser: CurrentUser) : ChatManagerEvent()
     data class UserStartedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
     data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatManagerEvent()
@@ -71,5 +70,4 @@ sealed class ChatManagerEvent {
     data class ErrorOccurred internal constructor(val error: elements.Error) : ChatManagerEvent()
     data class NewReadCursor internal constructor(val cursor: Cursor) : ChatManagerEvent()
     object NoEvent : ChatManagerEvent()
-
 }

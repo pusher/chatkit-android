@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.FutureValue
 
 /**
@@ -20,7 +20,7 @@ fun <A> ChatManager.connectFor(block: (ChatManagerEvent) -> A?): FutureValue<A> 
 /**
  * Same as [connectFor] but for room subs
  */
-fun <A> ChatManager.subscribeRoomFor(roomName: String, block: (RoomSubscriptionEvent) -> A?): FutureValue<A> {
+fun <A> ChatManager.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
     val currentUserEvent by connectFor { it as? ChatManagerEvent.CurrentUserReceived }
     return currentUserEvent.currentUser.subscribeRoomFor(roomName, block)
 }
@@ -28,12 +28,12 @@ fun <A> ChatManager.subscribeRoomFor(roomName: String, block: (RoomSubscriptionE
 /**
  * Same as [connectFor] but for room subs
  */
-fun <A> CurrentUser.subscribeRoomFor(roomName: String, block: (RoomSubscriptionEvent) -> A?): FutureValue<A> {
+fun <A> CurrentUser.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
     val futureValue = FutureValue<A>()
     var ready by FutureValue<Any>()
     val room = rooms.first { it.name == roomName }
     subscribeToRoom(room) {
-        if (it is RoomSubscriptionEvent.InitialReadCursors) ready = it
+        if (it is RoomEvent.InitialReadCursors) ready = it
         (block(it))?.let { futureValue.set(it) }
     }
     checkNotNull(ready)
