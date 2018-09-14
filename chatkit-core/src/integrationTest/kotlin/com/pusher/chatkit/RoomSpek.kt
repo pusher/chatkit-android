@@ -26,7 +26,6 @@ import org.jetbrains.spek.api.dsl.it
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
-    afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
     describe("Room subscription") {
