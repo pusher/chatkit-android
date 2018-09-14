@@ -49,7 +49,6 @@ class ChatManager constructor(
 
     internal val roomService =
         RoomService(
-                this,
                 chatkitClient,
                 userService,
                 cursorService,
