@@ -1,8 +1,6 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatManager
 import com.pusher.chatkit.ChatManagerEventConsumer
-import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.subscription.ChatkitSubscription
@@ -18,15 +16,13 @@ import elements.Errors
 import elements.Subscription
 
 internal class RoomService(
-        // TODO still here (see HasChat)
-        override val chatManager: ChatManager,
         private val client: PlatformClient,
         private val userService: UserService,
         private val cursorsService: CursorService,
         private val globalEventConsumers: MutableList<ChatManagerEventConsumer>,
         private val globalConsumer: (Int) -> RoomConsumer,
         private val logger: Logger
-) : HasChat {
+) {
     private val openSubscriptions = HashMap<Int, Subscription>()
     val roomStore = RoomStore()
 
@@ -61,25 +57,36 @@ internal class RoomService(
                     userIds = userIds
             ).toJson()
                     .flatMap { body -> client.doPost<Room>("/rooms", body) }
-                    .saveRoomWhenReady()
+                    .map { room ->
+                        roomStore += room
+                        userService.populateUserStore(room.memberUserIds)
+                        room
+                    }
 
     fun roomFor(userId: String, roomAware: HasRoom) =
             fetchRoomBy(userId, roomAware.roomId)
 
     fun deleteRoom(roomId: Int): Result<Int, Error> =
             client.doDelete<Unit?>("/rooms/$roomId")
-                    .map { roomId }
-                    .removeRoomWhenReady()
-
+                    .map {
+                        roomStore -= roomId
+                        roomId
+                    }
 
     fun leaveRoom(userId: String, roomId: Int): Result<Int, Error> =
             client.doPost<Unit?>("/users/$userId/rooms/$roomId/leave")
-                    .map { roomId }
-                    .removeRoomWhenReady()
+                    .map {
+                        roomStore -= roomId
+                        roomId
+                    }
 
     fun joinRoom(userId: String, roomId: Int): Result<Room, Error> =
             client.doPost<Room>("/users/$userId/rooms/$roomId/join")
-                    .saveRoomWhenReady()
+                    .map { room ->
+                        roomStore += room
+                        userService.populateUserStore(room.memberUserIds)
+                        room
+                    }
 
     fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
             UpdateRoomRequest(name, isPrivate).toJson()
