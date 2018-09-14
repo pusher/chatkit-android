@@ -16,7 +16,6 @@ import org.jetbrains.spek.api.dsl.it
 
 class UserTypingSpek : Spek({
     beforeEachTest(::tearDownInstance)
-    afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
     describe("ChatManager") {

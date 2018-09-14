@@ -16,7 +16,6 @@ import org.jetbrains.spek.api.dsl.it
 
 class PresenceSpek : Spek({
     beforeEachTest(::tearDownInstance)
-    afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
     describe("Chatkit with presence") {
