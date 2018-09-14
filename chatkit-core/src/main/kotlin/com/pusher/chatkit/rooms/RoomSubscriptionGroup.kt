@@ -1,6 +1,6 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatManagerEvent
+import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
@@ -155,20 +155,20 @@ class RoomSubscriptionGroup(
         )
     }
 
-    private fun consumeEvent(event: ChatManagerEvent) {
+    private fun consumeEvent(event: ChatEvent) {
         forwardEvent(
                 // This function must map events which we wish to report at room scope that
                 // are not received at room scope from the backend.
                 // Be careful, if you map an event where which originated here, you will create
                 // an infinite loop consuming that event.
                 when (event) {
-                    is ChatManagerEvent.RoomUpdated ->
+                    is ChatEvent.RoomUpdated ->
                         RoomEvent.RoomUpdated(event.room)
-                    is ChatManagerEvent.RoomDeleted ->
+                    is ChatEvent.RoomDeleted ->
                         RoomEvent.RoomDeleted(event.roomId)
-                    is ChatManagerEvent.UserCameOnline ->
+                    is ChatEvent.UserCameOnline ->
                         RoomEvent.UserCameOnline(event.user)
-                    is ChatManagerEvent.UserWentOffline ->
+                    is ChatEvent.UserWentOffline ->
                         RoomEvent.UserWentOffline(event.user)
                     else ->
                         RoomEvent.NoEvent

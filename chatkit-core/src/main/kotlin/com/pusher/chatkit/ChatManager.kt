@@ -113,7 +113,7 @@ class ChatManager constructor(
         }
     }
 
-    fun connect(listeners: ChatManagerListeners): Result<CurrentUser, Error> =
+    fun connect(listeners: ChatListeners): Result<CurrentUser, Error> =
             connect(listeners.toCallback())
 
     @JvmOverloads
@@ -149,9 +149,9 @@ class ChatManager constructor(
     private fun consumePresenceSubscriptionEvent(event: PresenceSubscriptionEvent) =
             consumeEvents(transformPresenceSubscriptionEvent(event))
 
-    private fun consumeEvents(events : List<ChatManagerEvent>) {
+    private fun consumeEvents(events : List<ChatEvent>) {
         events.filter { event ->
-            event !is ChatManagerEvent.NoEvent
+            event !is ChatEvent.NoEvent
         }.forEach { event ->
             eventConsumers.forEach { consumer ->
                 consumer(event)
@@ -159,21 +159,21 @@ class ChatManager constructor(
         }
     }
 
-    private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomEvent): ChatManagerEvent =
+    private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomEvent): ChatEvent =
         when (event) {
             is RoomEvent.UserStartedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).map { room ->
-                    ChatManagerEvent.UserStartedTyping(event.user, room) as ChatManagerEvent
-                }.recover { ChatManagerEvent.ErrorOccurred(it) }
+                    ChatEvent.UserStartedTyping(event.user, room) as ChatEvent
+                }.recover { ChatEvent.ErrorOccurred(it) }
             is RoomEvent.UserStoppedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).map { room ->
-                    ChatManagerEvent.UserStoppedTyping(event.user, room) as ChatManagerEvent
-                }.recover { ChatManagerEvent.ErrorOccurred(it) }
+                    ChatEvent.UserStoppedTyping(event.user, room) as ChatEvent
+                }.recover { ChatEvent.ErrorOccurred(it) }
             else ->
-                ChatManagerEvent.NoEvent
+                ChatEvent.NoEvent
         }
 
-    private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatManagerEvent> {
+    private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatEvent> {
         val newStates = when (event) {
             is PresenceSubscriptionEvent.InitialState -> event.userStates
             is PresenceSubscriptionEvent.JoinedRoom -> event.userStates
@@ -194,21 +194,21 @@ class ChatManager constructor(
                 user.presence = newState.presence
 
                 when (newState.presence) {
-                    is Presence.Online -> ChatManagerEvent.UserCameOnline(user)
-                    is Presence.Offline -> ChatManagerEvent.UserWentOffline(user)
+                    is Presence.Online -> ChatEvent.UserCameOnline(user)
+                    is Presence.Offline -> ChatEvent.UserWentOffline(user)
                 }
             }
         }.recover {
-            listOf(ChatManagerEvent.ErrorOccurred(it))
+            listOf(ChatEvent.ErrorOccurred(it))
         }
     }
 
-    private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): ChatManagerEvent =
+    private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): ChatEvent =
                 when (event) {
                     is CursorSubscriptionEvent.OnCursorSet ->
-                        ChatManagerEvent.NewReadCursor(event.cursor)
+                        ChatEvent.NewReadCursor(event.cursor)
                     else ->
-                        ChatManagerEvent.NoEvent
+                        ChatEvent.NoEvent
                 }
 
     private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
@@ -245,32 +245,32 @@ class ChatManager constructor(
             else -> listOf(event)
         }
 
-    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatManagerEvent =
+    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
-                    ChatManagerEvent.CurrentUserReceived(currentUser.get())
+                    ChatEvent.CurrentUserReceived(currentUser.get())
                 is UserSubscriptionEvent.AddedToRoomEvent ->
-                    ChatManagerEvent.CurrentUserAddedToRoom(event.room)
+                    ChatEvent.CurrentUserAddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
-                    ChatManagerEvent.CurrentUserRemovedFromRoom(event.roomId)
+                    ChatEvent.CurrentUserRemovedFromRoom(event.roomId)
                 is UserSubscriptionEvent.RoomUpdatedEvent ->
-                    ChatManagerEvent.RoomUpdated(event.room)
+                    ChatEvent.RoomUpdated(event.room)
                 is UserSubscriptionEvent.RoomDeletedEvent ->
-                    ChatManagerEvent.RoomDeleted(event.roomId)
+                    ChatEvent.RoomDeleted(event.roomId)
                 is UserSubscriptionEvent.LeftRoomEvent ->
                             userService.fetchUserBy(event.userId).flatMap { user ->
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
-                                        .map { room -> ChatManagerEvent.UserLeftRoom(user, room) as ChatManagerEvent }
-                            }.recover { ChatManagerEvent.ErrorOccurred(it) }
+                                        .map { room -> ChatEvent.UserLeftRoom(user, room) as ChatEvent }
+                            }.recover { ChatEvent.ErrorOccurred(it) }
                 is UserSubscriptionEvent.JoinedRoomEvent ->
                             userService.fetchUserBy(event.userId).flatMap { user ->
                                 roomService.roomStore[event.roomId]
                                         .orElse { Errors.other("room ${event.roomId} not found.") }
-                                        .map { room -> ChatManagerEvent.UserJoinedRoom(user, room) as ChatManagerEvent }
-                            }.recover { ChatManagerEvent.ErrorOccurred(it) }
+                                        .map { room -> ChatEvent.UserJoinedRoom(user, room) as ChatEvent }
+                            }.recover { ChatEvent.ErrorOccurred(it) }
                 is UserSubscriptionEvent.ErrorOccurred ->
-                    ChatManagerEvent.ErrorOccurred(event.error)
+                    ChatEvent.ErrorOccurred(event.error)
             }
 
     private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = CurrentUser(

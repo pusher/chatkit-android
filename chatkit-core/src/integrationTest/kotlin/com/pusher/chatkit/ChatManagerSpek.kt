@@ -1,7 +1,7 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.ChatManagerEvent.*
+import com.pusher.chatkit.ChatEvent.*
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
@@ -86,7 +86,7 @@ class ChatManagerSpek : Spek({
         it("receives current user with listeners instead of callback") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
 
-            val user = chatFor(PUSHERINO).connect(ChatManagerListeners())
+            val user = chatFor(PUSHERINO).connect(ChatListeners())
             val userId = user.assumeSuccess().id
 
             assertThat(userId).isEqualTo(PUSHERINO)
@@ -101,11 +101,11 @@ class ChatManagerSpek : Spek({
     val error = stub<elements.Error>("error")
     val roomId = 123
 
-    describe("ChatManagerListeners") {
+    describe("ChatListeners") {
 
         it("maps from callback to listeners") {
             val actual = mutableListOf<Any>()
-            val consume = ChatManagerListeners(
+            val consume = ChatListeners(
                 onErrorOccurred = { actual += "onErrorOccurred" to it },
                 onCurrentUserAddedToRoom = { actual += "onCurrentUserAddedToRoom" to it },
                 onCurrentUserReceived = { actual += "onCurrentUserReceived" to it },
