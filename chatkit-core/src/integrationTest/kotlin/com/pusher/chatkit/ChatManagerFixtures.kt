@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentLinkedQueue
 
 const val MAX_LOG_LENGTH = 300
 
@@ -51,7 +52,7 @@ class TestChatkitDependencies(
 val CurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 
-private val managers = mutableListOf<ChatManager>()
+private val managers = ConcurrentLinkedQueue<ChatManager>()
 
 fun chatFor(userName: String) = ChatManager(
     instanceLocator = INSTANCE_LOCATOR,
