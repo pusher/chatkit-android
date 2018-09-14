@@ -63,9 +63,6 @@ internal class RoomService(
                         room
                     }
 
-    fun roomFor(userId: String, roomAware: HasRoom) =
-            fetchRoomBy(userId, roomAware.roomId)
-
     fun deleteRoom(roomId: Int): Result<Int, Error> =
             client.doDelete<Unit?>("/rooms/$roomId")
                     .map {
@@ -164,17 +161,13 @@ internal class RoomService(
     }
 }
 
-internal data class UpdateRoomRequest(val name: String, val isPrivate: Boolean?)
-
-/**
- * Used by [RoomService.roomFor] so an object can say that they have a room
- */
-interface HasRoom {
-    val roomId: Int
-}
-
 private fun noRoomMembershipError(room: Room) : Error =
-    Errors.other("User is not a member of ${room.name}")
+        Errors.other("User is not a member of ${room.name}")
+
+internal data class UpdateRoomRequest(
+        val name: String,
+        val isPrivate: Boolean?
+)
 
 private data class RoomCreateRequest(
     val name: String,
