@@ -28,7 +28,6 @@ import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
-    afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
     describe("ChatManager with valid instance") {
