@@ -5,6 +5,7 @@ import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.HasChat
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -26,8 +27,8 @@ internal class RoomService(
         private val globalConsumer: (Int) -> RoomConsumer,
         private val logger: Logger
 ) : HasChat {
-
-    val roomStore by lazy { RoomStore() }
+    private val openSubscriptions = HashMap<Int, Subscription>()
+    val roomStore = RoomStore()
 
     fun fetchRoomBy(userId: String, id: Int): Result<Room, Error> =
             getLocalRoom(id)
@@ -43,7 +44,7 @@ internal class RoomService(
             roomStore[id]
                     .orElse { Errors.other("User not found locally") }
 
-    fun fetchUserRooms(userId: String, joinable: Boolean = false):Result<List<Room>, Error> =
+    fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
             client.doGet<List<Room>>("/users/$userId/rooms?joinable=$joinable")
                     .map { rooms -> rooms.also { roomStore += it } }
 
@@ -84,21 +85,46 @@ internal class RoomService(
             UpdateRoomRequest(name, isPrivate).toJson()
                     .flatMap { body -> client.doPut<Unit>("/rooms/$roomId", body) }
 
+    fun isSubscribedTo(roomId: Int) =
+            synchronized(openSubscriptions) {
+                openSubscriptions[roomId] != null
+            }
+
     fun subscribeToRoom(
             roomId: Int,
             externalConsumer: RoomConsumer,
             messageLimit: Int
-    ): Subscription =
-            RoomSubscriptionGroup(
-                    messageLimit,
-                    roomId,
-                    userService,
-                    cursorsService,
-                    globalEventConsumers,
-                    client,
-                    logger,
-                    listOf(applySideEffects(roomId), globalConsumer(roomId), externalConsumer)
-            ).connect()
+    ): Subscription {
+        synchronized(openSubscriptions) {
+            openSubscriptions[roomId]?.unsubscribe()
+        }
+
+        val sub = RoomSubscriptionGroup(
+                messageLimit = messageLimit,
+                roomId = roomId,
+                userService = userService,
+                cursorService = cursorsService,
+                globalEventConsumers = globalEventConsumers,
+                client = client,
+                logger = logger,
+                consumers = listOf(
+                        applySideEffects(roomId),
+                        globalConsumer(roomId),
+                        externalConsumer
+                )
+        )
+        synchronized(openSubscriptions) {
+            openSubscriptions[roomId] = sub
+        }
+
+        return unsubscribeProxy(sub) {
+            synchronized(openSubscriptions) {
+                if (openSubscriptions[roomId] == sub) {
+                    openSubscriptions.remove(roomId)
+                }
+            }
+        }.connect()
+    }
 
     private fun applySideEffects(roomId: Int): RoomConsumer = { event ->
         when (event) {
@@ -106,6 +132,27 @@ internal class RoomService(
                 roomStore[roomId]?.addUser(event.user.id)
             is RoomEvent.UserLeft ->
                 roomStore[roomId]?.removeUser(event.user.id)
+        }
+    }
+
+    private fun unsubscribeProxy(sub: ChatkitSubscription, hook: (Subscription) -> Unit) =
+            object : ChatkitSubscription {
+                override fun unsubscribe() {
+                    hook(sub)
+                    sub.unsubscribe()
+                }
+
+                override fun connect(): Subscription {
+                    sub.connect()
+                    return this
+                }
+            }
+
+    fun close() {
+        synchronized(openSubscriptions) {
+            openSubscriptions.forEach { (_, sub) ->
+                sub.unsubscribe()
+            }
         }
     }
 }

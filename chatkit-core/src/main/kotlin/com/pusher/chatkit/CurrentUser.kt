@@ -10,7 +10,6 @@ import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.toCallback
-import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.User
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
@@ -35,11 +34,8 @@ class CurrentUser(
                 .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
                 .map { it.values.toList() }
 
-    // TODO get rid
-    private val roomSubscriptions = mutableMapOf<Int, ChatkitSubscription>()
-
     fun isSubscribedToRoom(roomId: Int): Boolean =
-            roomSubscriptions.containsKey(roomId)
+            chatManager.roomService.isSubscribedTo(roomId)
 
     fun isSubscribedToRoom(room: Room): Boolean =
             isSubscribedToRoom(room.id)
@@ -113,7 +109,7 @@ class CurrentUser(
             room: Room,
             listeners: RoomListeners,
             messageLimit: Int = 10
-    ): ChatkitSubscription =
+    ): Subscription =
             subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
@@ -121,7 +117,7 @@ class CurrentUser(
             roomId: Int,
             listeners: RoomListeners,
             messageLimit: Int = 10
-    ): ChatkitSubscription =
+    ): Subscription =
             subscribeToRoom(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
@@ -129,7 +125,7 @@ class CurrentUser(
             room: Room,
             messageLimit: Int = 10,
             consumer: RoomConsumer
-    ): ChatkitSubscription =
+    ): Subscription =
             subscribeToRoom(room.id, messageLimit, consumer)
 
     @JvmOverloads
@@ -137,20 +133,8 @@ class CurrentUser(
             roomId: Int,
             messageLimit: Int = 10,
             consumer: RoomConsumer
-    ) = chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
-            .autoRemove(roomId)
-            .also { roomSubscriptions += roomId to it }
-
-    private fun Subscription.autoRemove(roomId: Int) = object : ChatkitSubscription {
-        override fun connect(): ChatkitSubscription {
-            return this
-        }
-
-        override fun unsubscribe() {
-            roomSubscriptions -= roomId
-            this@autoRemove.unsubscribe()
-        }
-    }
+    ): Subscription =
+            chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
 
     @JvmOverloads
     fun fetchMessages(
@@ -178,10 +162,11 @@ class CurrentUser(
     ): Result<Int, Error> =
             chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
 
+    private val typingTimeThreshold = 500
     private var lastTypingEvent: Long = 0
 
     private fun canSendTypingEvent() =
-            (System.currentTimeMillis() - lastTypingEvent) > TYPING_TIME_THRESHOLD
+            (System.currentTimeMillis() - lastTypingEvent) > typingTimeThreshold
 
     fun isTypingIn(room: Room): Result<Unit, Error> =
             isTypingIn(room.id)
@@ -205,14 +190,4 @@ class CurrentUser(
     fun usersForRoom(room: Room): Result<List<User>, Error> =
             chatManager.userService.fetchUsersBy(room.memberUserIds)
                     .map { it.values.toList() }
-
-    fun close() {
-        for (roomSub in roomSubscriptions.values) {
-            roomSub.unsubscribe()
-        }
-        roomSubscriptions.clear()
-    }
-
 }
-
-private const val TYPING_TIME_THRESHOLD = 500
