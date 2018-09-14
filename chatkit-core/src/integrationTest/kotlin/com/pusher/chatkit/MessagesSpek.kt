@@ -23,7 +23,6 @@ import java.io.File
 
 class MessagesSpek : Spek({
     beforeEachTest(::tearDownInstance)
-    afterEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
     describe("Messages for Chatkit") {
