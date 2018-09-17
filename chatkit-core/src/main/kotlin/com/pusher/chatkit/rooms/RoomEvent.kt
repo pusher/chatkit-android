@@ -16,7 +16,7 @@ typealias RoomConsumer = (RoomEvent) -> Unit
  * RoomSubscription.
  */
 sealed class RoomEvent {
-    data class NewMessage(val message: Message) : RoomEvent()
+    data class Message(val message: com.pusher.chatkit.messages.Message) : RoomEvent()
     data class UserStartedTyping(val user: User) : RoomEvent()
     data class UserStoppedTyping(val user: User) : RoomEvent()
     data class UserJoined(val user: User) : RoomEvent()
@@ -36,7 +36,7 @@ sealed class RoomEvent {
  * consuming RoomEvents.
  */
 data class RoomListeners @JvmOverloads constructor(
-        val onNewMessage: (Message) -> Unit = {},
+        val onMessage: (Message) -> Unit = {},
         val onUserStartedTyping: (User) -> Unit = {},
         val onUserStoppedTyping: (User) -> Unit = {},
         val onUserJoined: (User) -> Unit = {},
@@ -51,7 +51,7 @@ data class RoomListeners @JvmOverloads constructor(
 
 internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
     when(event) {
-        is RoomEvent.NewMessage -> onNewMessage(event.message)
+        is RoomEvent.Message -> onMessage(event.message)
         is RoomEvent.UserStartedTyping -> onUserStartedTyping(event.user)
         is RoomEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
         is RoomEvent.UserJoined -> onUserJoined(event.user)

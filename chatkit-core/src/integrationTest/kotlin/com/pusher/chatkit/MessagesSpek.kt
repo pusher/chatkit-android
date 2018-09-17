@@ -156,7 +156,7 @@ class MessagesSpek : Spek({
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
                 when (event) {
-                    is RoomEvent.NewMessage -> receivedMessage = event.message
+                    is RoomEvent.Message -> receivedMessage = event.message
                 }
             }
 
@@ -183,7 +183,7 @@ class MessagesSpek : Spek({
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
                 when (event) {
-                    is RoomEvent.NewMessage -> receivedMessage = event.message
+                    is RoomEvent.Message -> receivedMessage = event.message
                 }
             }
 
@@ -212,7 +212,7 @@ class MessagesSpek : Spek({
 
             pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
                 when (event) {
-                    is RoomEvent.NewMessage -> receivedMessage = event.message
+                    is RoomEvent.Message -> receivedMessage = event.message
                 }
             }
 

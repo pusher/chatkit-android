@@ -334,7 +334,7 @@ Using `RoomListeners`:
 currentUser.subscribeToRoom(
   roomId = someroomId,
   listeners = RoomListeners(
-    onNewMessage = { message -> toast("${message.userId} said: ${message.text}") },
+    onMessage = { message -> toast("${message.userId} said: ${message.text}") },
     onErrorOccurred = { error -> toast("Oops something bad happened: $error") }
   ),
   messageLimit = 10 // Optional, 10 by default
@@ -349,7 +349,7 @@ currentUser.subscribeToRoom(
     messageLimit = 10 // Optional, 10 by default
 ) { event ->
   when (event) {
-    is NewMessage -> toast("${event.message.userId} said: ${event.message.text}")
+    is Message -> toast("${event.message.userId} said: ${event.message.text}")
     is ErrorOccurred -> toast("Oops something bad happened: ${event.error}")
   }
 }
@@ -362,9 +362,9 @@ cancelled and replaced by the new one.
 By default when you subscribe to a room you will receive up to the 10 most
 recent messages that have been added to the room. The number of recent messages
 to fetch can be configured by setting the `messageLimit` parameter. These
-recent messages will be passed to the `onNewMessage` callback (or as
-`NewMessage` event) in the order they were sent, just as if they were being
-sent for the first time.
+recent messages will be passed to the `onMessage` callback (or as `Message`
+event) in the order they were sent, just as if they were being sent for the
+first time.
 
 #### Room events
 
@@ -375,7 +375,7 @@ the handler is registered for.
 
  | Event             | Properties   | Description                                           |
  |-------------------|--------------|-------------------------------------------------------|
- | NewMessage        | Message      | A new message has been added to the room.             |
+ | Message           | Message      | A new message has been added to the room.             |
  | UserStartedTyping | User         | User has started typing                               |
  | UserStoppedTyping | User         | User has stopped typing                               |
  | UserJoined        | Int (userId) | User has joined the room                      TODO    |
