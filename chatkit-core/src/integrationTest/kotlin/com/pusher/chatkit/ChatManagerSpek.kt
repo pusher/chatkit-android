@@ -73,7 +73,7 @@ class ChatManagerSpek : Spek({
             var messageReceived by FutureValue<Message>()
 
             pusherino.assumeSuccess().subscribeToRoom(room, RoomListeners(
-                onNewMessage = { message -> messageReceived = message },
+                onMessage = { message -> messageReceived = message },
                 onErrorOccurred = { e -> error("error: $e") }
             ))
 
@@ -166,7 +166,7 @@ class ChatManagerSpek : Spek({
                 onUserCameOnline = { actual += "onUserCameOnline" to it },
                 onUserStartedTyping = { actual += "onUserStartedTyping" to it },
                 onUserWentOffline = { actual += "onUserWentOffline" to it },
-                onNewMessage = { actual += "onNewMessage" to it },
+                onMessage = { actual += "onMessage" to it },
                 onUserJoined = { actual += "onUserJoined" to it },
                 onUserLeft = { actual += "onUserLeft" to it }
             ).toCallback()
@@ -180,7 +180,7 @@ class ChatManagerSpek : Spek({
             consume(RoomEvent.RoomDeleted(roomId))
             consume(RoomEvent.NewReadCursor(cursor))
             consume(RoomEvent.ErrorOccurred(error))
-            consume(RoomEvent.NewMessage(message))
+            consume(RoomEvent.Message(message))
 
             assertThat(actual).containsExactly(
                 "onUserStartedTyping" to user,
@@ -192,7 +192,7 @@ class ChatManagerSpek : Spek({
                 "onRoomDeleted" to roomId,
                 "onNewReadCursor" to cursor,
                 "onErrorOccurred" to error,
-                "onNewMessage" to message
+                "onMessage" to message
             )
         }
     }

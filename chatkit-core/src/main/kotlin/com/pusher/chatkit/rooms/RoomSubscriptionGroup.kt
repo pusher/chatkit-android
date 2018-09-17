@@ -145,7 +145,7 @@ class RoomSubscriptionGroup(
                     is RoomSubscriptionEvent.NewMessage ->
                         userService.fetchUserBy(event.message.userId).map { user ->
                             event.message.user = user
-                            RoomEvent.NewMessage(event.message) as RoomEvent
+                            RoomEvent.Message(event.message) as RoomEvent
                         }.recover {
                             RoomEvent.ErrorOccurred(it)
                         }
