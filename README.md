@@ -583,7 +583,7 @@ currentUser.sendMessage(
   attachment = NoAttachment // Optional, NoAttachment by default
 ).wait().let { result ->
   when(result) { // Result<Int, Error>, either the new message id or an error
-    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Success -> toast("Message successfully sent with id: ${result.value}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
 }
@@ -604,7 +604,7 @@ currentUser.sendMessage(
   )
 ).wait().let { result ->
   when(result) { // Result<Int, Error>, either the new message id or an error
-    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Success -> toast("Message successfully sent with id: ${result.value}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
 }
@@ -626,7 +626,7 @@ currentUser.sendMessage(
   )
 ).wait().let { result ->
   when(result) { // Result<Int, Error>, either the new message id or an error
-    is Result.Success -> toast("CurrentUser left room: ${result.value.name}.")
+    is Result.Success -> toast("Message successfully sent with id: ${result.value}.")
     is Result.Failure -> toast("Oops, something bad happened: ${result.error}")
   }
 }
