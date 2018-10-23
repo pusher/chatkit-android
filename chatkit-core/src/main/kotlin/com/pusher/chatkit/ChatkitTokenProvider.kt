@@ -22,13 +22,19 @@ typealias CustomData = Map<String, String>
  * */
 data class ChatkitTokenProvider
 @JvmOverloads constructor(
-    private val endpoint: String,
+    val endpoint: String,
     internal var userId: String,
     private val authData: CustomData = emptyMap(),
     private val client: OkHttpClient = OkHttpClient(),
     private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
-
 ) : TokenProvider {
+
+    private val httpUrl =
+            HttpUrl.parse(endpoint)
+                    ?.newBuilder()
+                    ?.apply { addQueryParameter("user_id", userId) }
+                    ?.build()
+                    ?: throw IllegalArgumentException("Token Provider endpoint is not valid URL")
 
     override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> {
         val cachedToken = tokenCache.getTokenFromCache()
@@ -43,24 +49,19 @@ data class ChatkitTokenProvider
     }
 
     private fun fetchTokenFromEndpoint(tokenParams: Any?): Future<Result<String, Error>> =
-        httpUrl.toFuture().flatMapFutureResult { url ->
             Futures.schedule {
-                val request = Request.Builder().apply {
-                    url(url)
-                    post(requestBody(tokenParams))
-                }.build()
-                val response = request.let { client.newCall(it).execute() }
-                when {
-                    response.isSuccessful && response.code() in 200..299 -> parseTokenResponse(response)
-                    else -> response.asError().asFailure()
+                val request = Request.Builder()
+                        .url(httpUrl)
+                        .post(requestBody(tokenParams))
+                        .build()
+                val response = client.newCall(request).execute()
+
+                if (response.isSuccessful && response.code() in 200..299) {
+                    parseTokenResponse(response)
+                } else {
+                    response.asError().asFailure()
                 }
             }
-        }
-
-    private val httpUrl: Result<HttpUrl, Error>
-        get() = HttpUrl.parse(endpoint)?.newBuilder()?.apply {
-            addQueryParameter("user_id", userId)
-        }?.build().orElse { Errors.network("Incorrect endpoint: $endpoint") }
 
     private fun requestBody(tokenParams: Any?) = FormBody.Builder().apply {
         add("grant_type", "client_credentials")
