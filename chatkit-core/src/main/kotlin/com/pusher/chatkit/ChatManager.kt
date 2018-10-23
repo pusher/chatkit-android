@@ -23,6 +23,7 @@ import com.pusher.util.asSuccess
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
+import java.net.URLEncoder
 import java.util.concurrent.CountDownLatch
 
 class ChatManager constructor(
@@ -60,7 +61,7 @@ class ChatManager constructor(
     private val presenceSubscription by lazy {
         ResolvableSubscription(
                 client = presenceClient,
-                path = "/users/$userId/presence",
+                path = "/users/${URLEncoder.encode(userId, "UTF-8")}/presence",
                 listeners = SubscriptionListeners(
                         onEvent = { consumePresenceSubscriptionEvent(it.body) },
                         onError = { error -> consumePresenceSubscriptionEvent(PresenceSubscriptionEvent.ErrorOccurred(error)) }
@@ -142,7 +143,7 @@ class ChatManager constructor(
     private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
             consumeEvents(listOf(transformCursorsSubscriptionEvent(event)))
 
-    private fun consumeRoomSubscriptionEvent(roomId: Int): RoomConsumer = { event ->
+    private fun consumeRoomSubscriptionEvent(roomId: String): RoomConsumer = { event ->
                 consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
             }
 
@@ -159,7 +160,7 @@ class ChatManager constructor(
         }
     }
 
-    private fun transformRoomSubscriptionEvent(roomId: Int, event: RoomEvent): ChatEvent =
+    private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
         when (event) {
             is RoomEvent.UserStartedTyping ->
                 roomService.fetchRoomBy(event.user.id, roomId).map { room ->
@@ -316,7 +317,7 @@ class ChatManager constructor(
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
     DEFAULT("chatkit", "v2"),
-    CURSORS("chatkit_cursors"),
     PRESENCE("chatkit_presence"),
+    CURSORS("chatkit_cursors", "v2"),
     FILES("chatkit_files")
 }

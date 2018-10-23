@@ -16,12 +16,13 @@ import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
 import elements.Subscription
+import java.net.URLEncoder
 import java.util.concurrent.Future
 
 
 class RoomSubscriptionGroup(
         messageLimit: Int,
-        roomId: Int,
+        roomId: String,
         private val userService: UserService,
         cursorService: CursorService,
         private val globalEventConsumers: MutableList<ChatManagerEventConsumer>,
@@ -37,7 +38,7 @@ class RoomSubscriptionGroup(
 
     private val roomSubscription = ResolvableSubscription(
             client = client,
-            path = "/rooms/$roomId?&message_limit=$messageLimit",
+            path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}?&message_limit=$messageLimit",
             listeners = SubscriptionListeners(
                     onEvent = { consumeEvent(it.body) },
                     onError = { consumeEvent(RoomSubscriptionEvent.ErrorOccurred(it)) }
@@ -50,7 +51,7 @@ class RoomSubscriptionGroup(
     private val membershipSubscription = ResolvableSubscription(
             resolveOnFirstEvent = true,
             client = client,
-            path = "/rooms/$roomId/memberships",
+            path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/memberships",
             listeners = SubscriptionListeners(
                     onEvent = { consumeEvent(it.body) },
                     onError = { consumeEvent(MembershipSubscriptionEvent.ErrorOccurred(it)) }

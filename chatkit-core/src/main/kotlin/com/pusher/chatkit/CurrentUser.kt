@@ -34,7 +34,7 @@ class CurrentUser(
                 .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
                 .map { it.values.toList() }
 
-    fun isSubscribedToRoom(roomId: Int): Boolean =
+    fun isSubscribedToRoom(roomId: String): Boolean =
             chatManager.roomService.isSubscribedTo(roomId)
 
     fun isSubscribedToRoom(room: Room): Boolean =
@@ -48,10 +48,10 @@ class CurrentUser(
     fun setReadCursor(room: Room, position: Int) =
             setReadCursor(room.id, position)
 
-    fun setReadCursor(roomId: Int, position: Int) =
+    fun setReadCursor(roomId: String, position: Int) =
             chatManager.cursorService.setReadCursor(id, roomId, position)
 
-    fun getReadCursor(roomId: Int): Result<Cursor, Error> =
+    fun getReadCursor(roomId: String): Result<Cursor, Error> =
             chatManager.cursorService.getReadCursor(id, roomId)
 
     fun getReadCursor(room: Room): Result<Cursor, Error> =
@@ -60,10 +60,10 @@ class CurrentUser(
     fun fetchAttachment(attachmentUrl: String): Result<FetchedAttachment, Error> =
             chatManager.filesService.fetchAttachment(attachmentUrl)
 
-    fun addUsersToRoom(roomId: Int, userIds: List<String>) =
+    fun addUsersToRoom(roomId: String, userIds: List<String>) =
             chatManager.userService.addUsersToRoom(roomId, userIds)
 
-    fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
+    fun removeUsersFromRoom(roomId: String, userIds: List<String>) =
             chatManager.userService.removeUsersFromRoom(roomId, userIds)
 
     @JvmOverloads
@@ -83,25 +83,25 @@ class CurrentUser(
             updateRoom(room.id, name, isPrivate)
 
     @JvmOverloads
-    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
+    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
             chatManager.roomService.updateRoom(roomId, name, isPrivate)
 
-    fun deleteRoom(room: Room): Result<Int, Error> =
+    fun deleteRoom(room: Room): Result<String, Error> =
             deleteRoom(room.id)
 
-    fun deleteRoom(roomId: Int): Result<Int, Error> =
+    fun deleteRoom(roomId: String): Result<String, Error> =
             chatManager.roomService.deleteRoom(roomId)
 
-    fun leaveRoom(room: Room): Result<Int, Error> =
+    fun leaveRoom(room: Room): Result<String, Error> =
             leaveRoom(room.id)
 
-    fun leaveRoom(roomId: Int): Result<Int, Error> =
+    fun leaveRoom(roomId: String): Result<String, Error> =
             chatManager.roomService.leaveRoom(id, roomId)
 
     fun joinRoom(room: Room): Result<Room, Error> =
             joinRoom(room.id)
 
-    fun joinRoom(roomId: Int): Result<Room, Error> =
+    fun joinRoom(roomId: String): Result<Room, Error> =
             chatManager.roomService.joinRoom(id, roomId)
 
     @JvmOverloads
@@ -114,7 +114,7 @@ class CurrentUser(
 
     @JvmOverloads
     fun subscribeToRoom(
-            roomId: Int,
+            roomId: String,
             listeners: RoomListeners,
             messageLimit: Int = 10
     ): Subscription =
@@ -130,7 +130,7 @@ class CurrentUser(
 
     @JvmOverloads
     fun subscribeToRoom(
-            roomId: Int,
+            roomId: String,
             messageLimit: Int = 10,
             consumer: RoomConsumer
     ): Subscription =
@@ -138,7 +138,7 @@ class CurrentUser(
 
     @JvmOverloads
     fun fetchMessages(
-            roomId: Int,
+            roomId: String,
             initialId: Int? = null,
             direction: Direction = Direction.OLDER_FIRST,
             limit: Int = 10
@@ -156,7 +156,7 @@ class CurrentUser(
 
     @JvmOverloads
     fun sendMessage(
-            roomId: Int,
+            roomId: String,
             messageText: String,
             attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
@@ -171,7 +171,7 @@ class CurrentUser(
     fun isTypingIn(room: Room): Result<Unit, Error> =
             isTypingIn(room.id)
 
-    fun isTypingIn(roomId: Int): Result<Unit, Error> =
+    fun isTypingIn(roomId: String): Result<Unit, Error> =
             if (canSendTypingEvent()) {
                 lastTypingEvent = System.currentTimeMillis()
                 client.doPost(

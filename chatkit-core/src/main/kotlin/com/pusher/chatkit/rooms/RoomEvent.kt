@@ -26,7 +26,7 @@ sealed class RoomEvent {
     data class InitialReadCursors(val cursor: List<Cursor>) : RoomEvent()
     data class NewReadCursor(val cursor: Cursor) : RoomEvent()
     data class RoomUpdated(val room: Room) : RoomEvent()
-    data class RoomDeleted(val roomId: Int) : RoomEvent()
+    data class RoomDeleted(val roomId: String) : RoomEvent()
     data class ErrorOccurred(val error: Error) : RoomEvent()
     object NoEvent : RoomEvent()
 }
@@ -45,7 +45,7 @@ data class RoomListeners @JvmOverloads constructor(
         val onUserWentOffline: (User) -> Unit = {},
         val onNewReadCursor: (Cursor) -> Unit = {},
         val onRoomUpdated: (Room) -> Unit = {},
-        val onRoomDeleted: (Int) -> Unit = {},
+        val onRoomDeleted: (String) -> Unit = {},
         val onErrorOccurred: (Error) -> Unit = {}
 )
 

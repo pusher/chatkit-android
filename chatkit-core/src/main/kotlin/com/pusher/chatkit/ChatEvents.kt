@@ -18,9 +18,9 @@ data class ChatListeners @JvmOverloads constructor(
     val onUserCameOnline: (User) -> Unit = { },
     val onUserWentOffline: (User) -> Unit = { },
     val onCurrentUserAddedToRoom: (Room) -> Unit = { },
-    val onCurrentUserRemovedFromRoom: (Int) -> Unit = { },
+    val onCurrentUserRemovedFromRoom: (String) -> Unit = { },
     val onRoomUpdated: (Room) -> Unit = { },
-    val onRoomDeleted: (Int) -> Unit = { },
+    val onRoomDeleted: (String) -> Unit = { },
     val onNewReadCursor: (Cursor) -> Unit = { },
     val onErrorOccurred: (Error) -> Unit = { }
 )
@@ -64,9 +64,9 @@ sealed class ChatEvent {
     data class UserCameOnline internal constructor(val user: User) : ChatEvent()
     data class UserWentOffline internal constructor(val user: User) : ChatEvent()
     data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatEvent()
-    data class CurrentUserRemovedFromRoom internal constructor(val roomId: Int) : ChatEvent()
+    data class CurrentUserRemovedFromRoom internal constructor(val roomId: String) : ChatEvent()
     data class RoomUpdated internal constructor(val room: Room) : ChatEvent()
-    data class RoomDeleted internal constructor(val roomId: Int) : ChatEvent()
+    data class RoomDeleted internal constructor(val roomId: String) : ChatEvent()
     data class ErrorOccurred internal constructor(val error: elements.Error) : ChatEvent()
     data class NewReadCursor internal constructor(val cursor: Cursor) : ChatEvent()
     object NoEvent : ChatEvent()

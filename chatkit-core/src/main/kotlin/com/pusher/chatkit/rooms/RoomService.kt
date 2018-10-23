@@ -14,21 +14,22 @@ import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 import elements.Subscription
+import java.net.URLEncoder
 
 internal class RoomService(
         private val client: PlatformClient,
         private val userService: UserService,
         private val cursorsService: CursorService,
         private val globalEventConsumers: MutableList<ChatManagerEventConsumer>,
-        private val globalConsumer: (Int) -> RoomConsumer,
+        private val globalConsumer: (String) -> RoomConsumer,
         private val logger: Logger
 ) {
-    private val openSubscriptions = HashMap<Int, Subscription>()
+    private val openSubscriptions = HashMap<String, Subscription>()
     val roomStore = RoomStore()
 
-    fun fetchRoomBy(userId: String, id: Int): Result<Room, Error> =
+    fun fetchRoomBy(userId: String, id: String): Result<Room, Error> =
             getLocalRoom(id)
-                    .flatRecover { client.doGet("/rooms/$id") }
+                    .flatRecover { client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}") }
                     .flatMap { room ->
                         when {
                             room.memberUserIds.contains(userId) -> room.asSuccess()
@@ -36,12 +37,12 @@ internal class RoomService(
                         }
                     }
 
-    private fun getLocalRoom(id: Int): Result<Room, Error> =
+    private fun getLocalRoom(id: String): Result<Room, Error> =
             roomStore[id]
                     .orElse { Errors.other("User not found locally") }
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet<List<Room>>("/users/$userId/rooms?joinable=$joinable")
+            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
                     .map { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
@@ -63,39 +64,39 @@ internal class RoomService(
                         room
                     }
 
-    fun deleteRoom(roomId: Int): Result<Int, Error> =
-            client.doDelete<Unit?>("/rooms/$roomId")
+    fun deleteRoom(roomId: String): Result<String, Error> =
+            client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
-    fun leaveRoom(userId: String, roomId: Int): Result<Int, Error> =
-            client.doPost<Unit?>("/users/$userId/rooms/$roomId/leave")
+    fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
+            client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
-    fun joinRoom(userId: String, roomId: Int): Result<Room, Error> =
-            client.doPost<Room>("/users/$userId/rooms/$roomId/join")
+    fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
+            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
                         room
                     }
 
-    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
+    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
             UpdateRoomRequest(name, isPrivate).toJson()
-                    .flatMap { body -> client.doPut<Unit>("/rooms/$roomId", body) }
+                    .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
 
-    fun isSubscribedTo(roomId: Int) =
+    fun isSubscribedTo(roomId: String) =
             synchronized(openSubscriptions) {
                 openSubscriptions[roomId] != null
             }
 
     fun subscribeToRoom(
-            roomId: Int,
+            roomId: String,
             externalConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription {
@@ -130,7 +131,7 @@ internal class RoomService(
         }.connect()
     }
 
-    private fun applySideEffects(roomId: Int): RoomConsumer = { event ->
+    private fun applySideEffects(roomId: String): RoomConsumer = { event ->
         when (event) {
             is RoomEvent.UserJoined ->
                 roomStore[roomId]?.addUser(event.user.id)

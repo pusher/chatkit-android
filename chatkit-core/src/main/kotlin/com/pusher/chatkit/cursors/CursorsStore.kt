@@ -19,12 +19,12 @@ class CursorsStore {
 }
 
 class UserCursorStore {
-    private val cursors = mutableMapOf<Int, Cursor>()
+    private val cursors = mutableMapOf<String, Cursor>()
 
     operator fun plusAssign(cursor: Cursor) {
         cursors[cursor.roomId] = cursor
     }
 
-    operator fun get(roomId: Int) = cursors[roomId]
+    operator fun get(roomId: String) = cursors[roomId]
 
 }

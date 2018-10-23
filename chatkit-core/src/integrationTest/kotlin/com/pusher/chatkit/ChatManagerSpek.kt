@@ -99,7 +99,7 @@ class ChatManagerSpek : Spek({
     val message = stub<Message>("message")
     val cursor = stub<Cursor>("cursor")
     val error = stub<elements.Error>("error")
-    val roomId = 123
+    val roomId = "123"
 
     describe("ChatListeners") {
 

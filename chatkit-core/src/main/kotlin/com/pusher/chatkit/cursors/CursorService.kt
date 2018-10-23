@@ -14,6 +14,7 @@ import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
 import elements.Error
 import elements.Errors
+import java.net.URLEncoder
 
 class CursorService(
         private val client: PlatformClient,
@@ -31,7 +32,7 @@ class CursorService(
 
     fun setReadCursor(
         userId: String,
-        roomId: Int,
+        roomId: String,
         position: Int
     ) =
         setReadCursorThrottler.throttle(
@@ -48,17 +49,17 @@ class CursorService(
             )
         }
 
-    fun getReadCursor(userId: String, roomId: Int) : Result<Cursor, Error> =
-        (cursorsStore[userId][roomId]?.asSuccess<Cursor, Error>() ?: notSubscribedToRoom("$roomId").asFailure())
+    fun getReadCursor(userId: String, roomId: String) : Result<Cursor, Error> =
+        (cursorsStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure())
 
     private fun notSubscribedToRoom(name: String) =
         Errors.other("Must be subscribed to room $name to access member's read cursors")
 
     fun subscribeForRoom(
-            roomId: Int,
+            roomId: String,
             externalConsumer: (CursorSubscriptionEvent) -> Unit
     ) = cursorSubscription(
-            "/cursors/0/rooms/$roomId",
+            "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}",
             listOf(::applySideEffects, externalConsumer)
     )
 
@@ -66,7 +67,7 @@ class CursorService(
             userId: String,
             externalConsumer: (CursorSubscriptionEvent) -> Unit
     ) = cursorSubscription(
-            "/cursors/0/users/$userId",
+            "/cursors/0/users/${URLEncoder.encode(userId, "UTF-8")}",
             listOf(::applySideEffects, externalConsumer)
     )
 

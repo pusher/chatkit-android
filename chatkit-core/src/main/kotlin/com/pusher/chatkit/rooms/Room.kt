@@ -3,7 +3,7 @@ package com.pusher.chatkit.rooms
 import com.google.gson.annotations.SerializedName
 
 data class Room(
-    val id: Int,
+    val id: String,
     val createdById: String,
     var name: String,
     var isPrivate: Boolean,
