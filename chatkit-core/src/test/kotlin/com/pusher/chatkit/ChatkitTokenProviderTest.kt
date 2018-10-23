@@ -30,14 +30,14 @@ internal class ChatkitTokenProviderTest : Spek({
 
     describe("ChatkitTokenProvider") {
 
-        it("provides token token") {
+        it("provides token") {
             val provider = testProvider.copy(
-                client = mock {
-                    newCall(argThat {
-                        it.url().toString() == "https://localhost/?user_id=pusherino" &&
-                            it.body().toBuffer() == "grant_type=client_credentials".toBuffer()
-                    }) returnsStub withSuccess()
-                }
+                    client = mock {
+                        newCall(argThat {
+                            it.url().toString() == "https://localhost/?user_id=pusherino" &&
+                                    it.body().toBuffer() == "grant_type=client_credentials".toBuffer()
+                        }) returnsStub withSuccess()
+                    }
             )
 
             val token = provider.fetchToken(null).wait().assumeSuccess()
@@ -134,15 +134,15 @@ internal class ChatkitTokenProviderTest : Spek({
         }
 
         it("fails with incorrect url") {
-            val provider = testProvider.copy(endpoint = "meh")
-
-            val result = provider.fetchToken(null).wait()
-
-            check(result is Result.Failure && result.error.reason == "Incorrect endpoint: meh")
+            var exception : Any? = null
+            try {
+                testProvider.copy(endpoint = "meh")
+            } catch (e : IllegalArgumentException) {
+                exception = e
+            }
+            check(exception is IllegalArgumentException)
         }
-
     }
-
 })
 
 private fun withSuccess(): Call.() -> Unit = {
@@ -154,7 +154,7 @@ private fun withSuccess(): Call.() -> Unit = {
             this!!.string() returns """
                 {
                   "access_token" : "goodToken",
-                  "expires_in" : "${Date().time + 5_000}"
+                  "expires_in" : ${Date().time + 5_000}
                 }
             """.trimIndent()
         }

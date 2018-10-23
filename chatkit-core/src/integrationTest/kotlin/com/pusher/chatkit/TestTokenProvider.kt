@@ -30,6 +30,4 @@ data class TestTokenProvider(
     )
 
     override fun clearToken(token: String?) = Unit
-
-
 }
