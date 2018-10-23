@@ -6,6 +6,7 @@ import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
 import com.pusher.util.Result
 import elements.Error
+import java.net.URLEncoder
 import java.util.concurrent.Future
 
 internal class FilesService(
@@ -13,11 +14,11 @@ internal class FilesService(
 ) {
     fun uploadFile(
             attachment: DataAttachment,
-            roomId: Int,
+            roomId: String,
             userId: String
     ): Result<AttachmentBody, Error> =
             client.upload(
-                    "/rooms/$roomId/users/$userId/files/${attachment.name}",
+                    "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/${URLEncoder.encode(userId, "UTF-8")}/files/${URLEncoder.encode(attachment.name, "UTF-8")}",
                     attachment
             )
 

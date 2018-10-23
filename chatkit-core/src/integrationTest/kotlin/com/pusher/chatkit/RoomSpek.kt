@@ -82,7 +82,7 @@ class RoomSpek : Spek({
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var deletedRoomId by FutureValue<Int>()
+            var deletedRoomId by FutureValue<String>()
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val expectedRoomId = pusherino.generalRoom.id
 
@@ -112,7 +112,7 @@ class RoomSpek : Spek({
         it("notifies when '$ALICE' is removed from '$GENERAL'") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            var roomRemovedFromId by FutureValue<Int>()
+            var roomRemovedFromId by FutureValue<String>()
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             chatFor(ALICE).connect() { event ->

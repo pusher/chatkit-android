@@ -17,7 +17,7 @@ internal class MessageService(
         private val filesService: FilesService
 ) {
     fun fetchMessages(
-        roomId: Int,
+        roomId: String,
         limit: Int,
         initialId: Int?,
         direction: Direction
@@ -53,7 +53,7 @@ internal class MessageService(
 
     @JvmOverloads
     fun sendMessage(
-        roomId: Int,
+        roomId: String,
         userId: String,
         text: String = "",
         attachment: GenericAttachment = NoAttachment
@@ -62,7 +62,7 @@ internal class MessageService(
             .flatMap { sendMessage(roomId, userId, text, it) }
 
     private fun GenericAttachment.asAttachmentBody(
-            roomId: Int,
+            roomId: String,
             userId: String
     ): Result<AttachmentBody, Error> =
             when (this) {
@@ -74,7 +74,7 @@ internal class MessageService(
             }
 
     private fun sendMessage(
-        roomId: Int,
+        roomId: String,
         userId: String,
         text: String = "",
         attachment: AttachmentBody
