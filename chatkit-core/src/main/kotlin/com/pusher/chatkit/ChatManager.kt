@@ -5,6 +5,7 @@ import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
+import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
 import com.pusher.chatkit.presence.PresenceSubscriptionEventParser
 import com.pusher.chatkit.rooms.RoomConsumer
@@ -41,37 +42,33 @@ class ChatManager constructor(
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
 
-    internal val cursorService = CursorService(cursorsClient, logger)
-    internal val userService = UserService(chatkitClient)
-    internal val filesService = FilesService(filesClient)
-    internal val messageService = MessageService(chatkitClient, userService, filesService)
-
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
-    internal val roomService =
-        RoomService(
-                chatkitClient,
-                userService,
-                cursorService,
-                this.eventConsumers,
-                this::consumeRoomSubscriptionEvent,
-                dependencies.logger
-        )
+    internal val cursorService = CursorService(cursorsClient, logger)
 
-    private val presenceSubscription by lazy {
-        ResolvableSubscription(
-                client = presenceClient,
-                path = "/users/${URLEncoder.encode(userId, "UTF-8")}/presence",
-                listeners = SubscriptionListeners(
-                        onEvent = { consumePresenceSubscriptionEvent(it.body) },
-                        onError = { error -> consumePresenceSubscriptionEvent(PresenceSubscriptionEvent.ErrorOccurred(error)) }
-                ),
-                messageParser = PresenceSubscriptionEventParser,
-                logger = logger,
-                description = "Presence for user $userId",
-                resolveOnFirstEvent = true
-        )
-    }
+    internal val filesService = FilesService(filesClient)
+
+    private val presenceService =
+            PresenceService(
+                    myUserId = userId,
+                    logger = logger,
+                    client = presenceClient,
+                    consumer = this::consumePresenceSubscriptionEvent
+            )
+
+    internal val userService = UserService(chatkitClient, presenceService)
+
+    internal val messageService = MessageService(chatkitClient, userService, filesService)
+
+    internal val roomService =
+            RoomService(
+                    chatkitClient,
+                    userService,
+                    cursorService,
+                    this.eventConsumers,
+                    this::consumeRoomSubscriptionEvent,
+                    dependencies.logger
+            )
 
     private val userSubscription by lazy {
         ResolvableSubscription(
@@ -123,11 +120,9 @@ class ChatManager constructor(
 
         // Touching them constructs them. Lazy is weird
         userSubscription
-        presenceSubscription
         cursorSubscription
-        // Then we await the connection of all three
+        // Then we await the connection of both
         userSubscription.await()
-        presenceSubscription.await()
         cursorSubscription.await()
 
         return currentUser.get()
@@ -176,9 +171,7 @@ class ChatManager constructor(
 
     private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatEvent> {
         val newStates = when (event) {
-            is PresenceSubscriptionEvent.InitialState -> event.userStates
-            is PresenceSubscriptionEvent.JoinedRoom -> event.userStates
-            is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.state)
+            is PresenceSubscriptionEvent.PresenceUpdate -> listOf(event.presence)
             else -> listOf()
         }
 
@@ -197,6 +190,7 @@ class ChatManager constructor(
                 when (newState.presence) {
                     is Presence.Online -> ChatEvent.UserCameOnline(user)
                     is Presence.Offline -> ChatEvent.UserWentOffline(user)
+                    is Presence.Unknown -> ChatEvent.NoEvent
                 }
             }
         }.recover {
@@ -288,9 +282,9 @@ class ChatManager constructor(
      */
     fun close(): Result<Unit, Error> = try {
         userSubscription.unsubscribe()
-        presenceSubscription.unsubscribe()
         cursorSubscription.unsubscribe()
         roomService.close()
+        presenceService.close()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
 
@@ -317,7 +311,7 @@ class ChatManager constructor(
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
     DEFAULT("chatkit", "v2"),
-    PRESENCE("chatkit_presence"),
     CURSORS("chatkit_cursors", "v2"),
+    PRESENCE("chatkit_presence", "v2"),
     FILES("chatkit_files")
 }

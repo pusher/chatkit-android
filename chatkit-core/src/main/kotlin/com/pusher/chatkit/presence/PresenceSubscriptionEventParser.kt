@@ -13,7 +13,9 @@ import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 
-internal object PresenceSubscriptionEventParser : DataParser<PresenceSubscriptionEvent> {
+internal class PresenceSubscriptionEventParser(
+        private val userId: String
+) : DataParser<PresenceSubscriptionEvent> {
 
     override fun invoke(body: String): Result<PresenceSubscriptionEvent, Error> =
             body.parseAs<JsonElement>()
@@ -32,9 +34,23 @@ internal object PresenceSubscriptionEventParser : DataParser<PresenceSubscriptio
 
     private fun JsonObject.parseEvent(eventName: String): Result<PresenceSubscriptionEvent, Error> =
             when (eventName) {
-                "initial_state" -> parseAs<PresenceSubscriptionEvent.InitialState>()
-                "presence_update" -> parseAs<UserPresence>().map(PresenceSubscriptionEvent::PresenceUpdate)
-                "join_room_presence_update" -> parseAs<PresenceSubscriptionEvent.JoinedRoom>()
+                "presence_state" -> parseAs<PresenceStateBody>()
+                        .map { parsedEvent ->
+                            PresenceSubscriptionEvent.PresenceUpdate(
+                                    UserPresence(
+                                            when (parsedEvent.state) {
+                                                "online" -> Presence.Online
+                                                "offline" -> Presence.Offline
+                                                else -> Presence.Unknown
+                                            },
+                                            userId
+                                    )
+                            )
+                        }
                 else -> Errors.other("Invalid event name: $eventName").asFailure()
             }.map { it } // generics -.-
 }
+
+private class PresenceStateBody(
+        val state: String
+)

@@ -1,6 +1,7 @@
 package com.pusher.chatkit.users
 
 import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
 import com.pusher.util.collect
@@ -11,7 +12,8 @@ import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
 class UserService(
-        private val client: PlatformClient
+        private val client: PlatformClient,
+        private val presenceService: PresenceService
 ) {
     private val knownUsers = ConcurrentHashMap<String, User>()
 
@@ -32,7 +34,12 @@ class UserService(
                     }
         }
 
-        return userIds.map { userId ->
+        userIds.forEach {
+            presenceService.subscribeToUser(it)
+        }
+
+        return userIds
+                .map { userId ->
             knownUsers[userId].orElse {
                 userNotFound(userId)
             }.map { user ->
@@ -50,16 +57,16 @@ class UserService(
                 users.values.firstOrNull().orElse { userNotFound(userId) }
             }
 
-    fun addUsersToRoom(roomId: Int, userIds: List<String>) =
+    fun addUsersToRoom(roomId: String, userIds: List<String>) =
         UserIdsWrapper(userIds).toJson()
             .flatMap { body ->
-                client.doPut<Unit>("/rooms/$roomId/users/add", body)
+                client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/add", body)
             }
 
-    fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
+    fun removeUsersFromRoom(roomId: String, userIds: List<String>) =
         UserIdsWrapper(userIds).toJson()
             .flatMap { body ->
-                client.doPut<Unit>("/rooms/$roomId/users/remove", body)
+                client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/remove", body)
             }
 
     internal data class UserIdsWrapper(val userIds: List<String>)
