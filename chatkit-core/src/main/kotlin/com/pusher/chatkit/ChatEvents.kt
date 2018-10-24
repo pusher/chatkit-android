@@ -7,7 +7,7 @@ import com.pusher.chatkit.users.User
 import elements.Error
 
 /**
- * Used along with [ChatManager] to observe global changes in the chat.
+ * Used along with [SynchronousChatManager] to observe global changes in the chat.
  */
 data class ChatListeners @JvmOverloads constructor(
     val onCurrentUserReceived: (CurrentUser) -> Unit = {},

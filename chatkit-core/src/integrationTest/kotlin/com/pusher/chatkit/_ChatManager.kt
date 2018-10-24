@@ -6,7 +6,7 @@ import com.pusher.chatkit.test.FutureValue
 /**
  * Waits for connection to be stabilised before waiting for a given event
  */
-fun <A> ChatManager.connectFor(block: (ChatEvent) -> A?): FutureValue<A> {
+fun <A> SynchronousChatManager.connectFor(block: (ChatEvent) -> A?): FutureValue<A> {
     val futureValue = FutureValue<A>()
     var ready by FutureValue<Any>()
     connect {
@@ -20,7 +20,7 @@ fun <A> ChatManager.connectFor(block: (ChatEvent) -> A?): FutureValue<A> {
 /**
  * Same as [connectFor] but for room subs
  */
-fun <A> ChatManager.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
+fun <A> SynchronousChatManager.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
     val currentUserEvent by connectFor { it as? ChatEvent.CurrentUserReceived }
     return currentUserEvent.currentUser.subscribeRoomFor(roomName, block)
 }

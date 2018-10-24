@@ -30,7 +30,7 @@ class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("ChatManager with valid instance") {
+    describe("SynchronousChatManager with valid instance") {
 
         it("loads current user") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))

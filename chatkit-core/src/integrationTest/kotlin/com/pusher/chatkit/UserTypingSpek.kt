@@ -18,7 +18,7 @@ class UserTypingSpek : Spek({
     beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("ChatManager") {
+    describe("SynchronousChatManager") {
         it("sends and receives started typing indicator in room") {
             setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
