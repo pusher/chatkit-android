@@ -49,7 +49,7 @@ class TestChatkitDependencies(
     }.build()
 }
 
-val CurrentUser.generalRoom
+val SynchronousCurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 
 private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()

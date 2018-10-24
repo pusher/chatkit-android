@@ -21,7 +21,7 @@ class ChatManager(
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}, callback: (Result<CurrentUser, Error>) -> Unit) {
         makeCallback(
-                f = { syncChatManager.connect(consumer) },
+                f = { syncChatManager.connect(consumer).map { CurrentUser(it) } },
                 c = callback
         )
     }
@@ -56,7 +56,7 @@ class ChatManager(
     fun blocking() = syncChatManager
 }
 
-fun <V, E: Error> makeCallback(f: () -> Result<V, E>, c: (Result<V, E>) -> Unit) {
+fun <V> makeCallback(f: () -> V, c: (V) -> Unit) {
     Futures.schedule {
         c.invoke(f())
     }

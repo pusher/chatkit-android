@@ -149,7 +149,9 @@ initial state has been received.
 val user: Result<CurrentUser, Error> = chatManager.connect()
 ```
 
-All calls in the public API which have the potential to fail return a `Result` type rather than throwing exceptions on failure. There are a couple of ways to unwrap a result:
+All calls in the public API which have the potential to fail return a `Result`
+type rather than throwing exceptions on failure. There are a couple of ways to
+unwrap a result:
 
 #### Pattern matching
 
