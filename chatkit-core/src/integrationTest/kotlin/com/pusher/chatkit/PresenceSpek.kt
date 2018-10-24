@@ -19,23 +19,11 @@ class PresenceSpek : Spek({
     afterEachTest(::closeChatManagers)
 
     describe("Chatkit with presence") {
-
         it("notifies when '$ALICE' comes online in room '$GENERAL'") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
                 .subscribeRoomFor(GENERAL) { (it as? RoomEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
-
-            chatFor(ALICE).connect().assumeSuccess()
-
-            assertThat(userCameOnline.user.id).isEqualTo(ALICE)
-        }
-
-        it("notifies when '$ALICE' comes online globally") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
-
-            val userCameOnline by chatFor(PUSHERINO)
-                .connectFor { (it as? ChatEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
 
             chatFor(ALICE).connect().assumeSuccess()
 
@@ -54,20 +42,5 @@ class PresenceSpek : Spek({
 
             assertThat(userWentOffline.user.id).isEqualTo(ALICE)
         }
-
-        it("notifies when '$ALICE' goes offline globally") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
-
-            val userWentOffline by chatFor(PUSHERINO)
-                .connectFor { it as? ChatEvent.UserWentOffline }
-
-            val aliceChat = chatFor(ALICE)
-            aliceChat.connect().assumeSuccess()
-            aliceChat.close()
-
-            assertThat(userWentOffline.user.id).isEqualTo(ALICE)
-        }
-
     }
-
 })
