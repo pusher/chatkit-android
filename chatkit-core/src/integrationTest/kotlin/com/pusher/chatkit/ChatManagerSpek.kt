@@ -93,7 +93,7 @@ class ChatManagerSpek : Spek({
         }
     }
 
-    val currentUser = stub<CurrentUser>("currentUser")
+    val currentUser = stub<SynchronousCurrentUser>("currentUser")
     val user = stub<User>("user")
     val room = stub<Room>("room")
     val message = stub<Message>("message")

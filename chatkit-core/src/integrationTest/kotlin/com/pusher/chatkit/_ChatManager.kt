@@ -28,7 +28,7 @@ fun <A> SynchronousChatManager.subscribeRoomFor(roomName: String, block: (RoomEv
 /**
  * Same as [connectFor] but for room subs
  */
-fun <A> CurrentUser.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
+fun <A> SynchronousCurrentUser.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
     val futureValue = FutureValue<A>()
     var ready by FutureValue<Any>()
     val room = rooms.first { it.name == roomName }

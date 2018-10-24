@@ -90,14 +90,14 @@ class SynchronousChatManager constructor(
     private var currentUser = object {
         private val updateLock = object{}
         private val latch = CountDownLatch(1)
-        private var currentUser: CurrentUser? = null
+        private var currentUser: SynchronousCurrentUser? = null
 
-        fun get(): CurrentUser {
+        fun get(): SynchronousCurrentUser {
             latch.await()
             return currentUser!!
         }
 
-        fun set(e: CurrentUser) {
+        fun set(e: SynchronousCurrentUser) {
             synchronized(updateLock) {
                 if (currentUser == null) {
                     currentUser = e
@@ -109,11 +109,11 @@ class SynchronousChatManager constructor(
         }
     }
 
-    fun connect(listeners: ChatListeners): Result<CurrentUser, Error> =
+    fun connect(listeners: ChatListeners): Result<SynchronousCurrentUser, Error> =
             connect(listeners.toCallback())
 
     @JvmOverloads
-    fun connect(consumer: ChatManagerEventConsumer = {}): Result<CurrentUser, Error> {
+    fun connect(consumer: ChatManagerEventConsumer = {}): Result<SynchronousCurrentUser, Error> {
         eventConsumers += consumer
 
         // Touching them constructs them. Lazy is weird
@@ -266,7 +266,7 @@ class SynchronousChatManager constructor(
                     ChatEvent.ErrorOccurred(event.error)
             }
 
-    private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = CurrentUser(
+    private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = SynchronousCurrentUser(
             id = initialState.currentUser.id,
             avatarURL = initialState.currentUser.avatarURL,
             customData = initialState.currentUser.customData,
