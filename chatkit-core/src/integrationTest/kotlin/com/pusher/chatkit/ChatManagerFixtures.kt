@@ -31,7 +31,7 @@ class TestDependencies : PlatformDependencies {
         override fun fileMediaType(file: File): String? = "image/jif"
     }
     override val sdkInfo: SdkInfo = SdkInfo(
-        product = "ChatManager Integration Tests",
+        product = "SynchronousChatManager Integration Tests",
         language = "Spek",
         platform = "JUnit",
         sdkVersion = "test"
@@ -52,9 +52,9 @@ class TestChatkitDependencies(
 val CurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 
-private val managers = ConcurrentLinkedQueue<ChatManager>()
+private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
 
-fun chatFor(userName: String) = ChatManager(
+fun chatFor(userName: String) = SynchronousChatManager(
     instanceLocator = INSTANCE_LOCATOR,
     userId = userName,
     dependencies = TestChatkitDependencies(

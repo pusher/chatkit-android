@@ -18,12 +18,12 @@ import elements.Subscription
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class CurrentUser(
-    val id: String,
-    var avatarURL: String?,
-    var customData: CustomData?,
-    var name: String?,
-    private val chatManager: ChatManager,
-    private val client: PlatformClient
+        val id: String,
+        var avatarURL: String?,
+        var customData: CustomData?,
+        var name: String?,
+        private val chatManager: SynchronousChatManager,
+        private val client: PlatformClient
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()

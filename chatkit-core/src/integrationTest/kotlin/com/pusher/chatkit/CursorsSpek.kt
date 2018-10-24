@@ -20,7 +20,7 @@ class CursorsSpek : Spek({
     beforeEachTest(InstanceSupervisor::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("ChatManager with cursors") {
+    describe("SynchronousChatManager with cursors") {
 
         it("notifies when '$ALICE' reads messages") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
