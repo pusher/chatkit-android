@@ -33,11 +33,12 @@ class PresenceSpek : Spek({
         it("notifies when '$ALICE' goes offline in room '$GENERAL'") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
+            val aliceChat = chatFor(ALICE)
+            aliceChat.connect().assumeSuccess()
+
             val userWentOffline by chatFor(PUSHERINO)
                 .subscribeRoomFor(GENERAL) { it as? RoomEvent.UserWentOffline }
 
-            val aliceChat = chatFor(ALICE)
-            aliceChat.connect().assumeSuccess()
             aliceChat.close()
 
             assertThat(userWentOffline.user.id).isEqualTo(ALICE)
