@@ -2,6 +2,7 @@ package com.pusher.chatkit.users
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.pusher.chatkit.users.UserSubscriptionEvent.*
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
@@ -12,7 +13,6 @@ import com.pusher.util.asFailure
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import com.pusher.chatkit.users.UserSubscriptionEvent.*
 
 internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> {
 
@@ -39,8 +39,6 @@ internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> 
         "room_deleted" -> parseAs<RoomDeletedEvent>()
         "user_joined" -> parseAs<JoinedRoomEvent>()
         "user_left" -> parseAs<LeftRoomEvent>()
-        "typing_start" -> parseAs<StartedTyping>()
         else -> Errors.other("Invalid event name: $eventName").asFailure()
     }.map { it } // Generics -_-
-
 }

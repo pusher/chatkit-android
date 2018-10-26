@@ -1,75 +1,65 @@
 package com.pusher.chatkit.presence
 
-import com.pusher.chatkit.*
-import com.pusher.chatkit.InstanceType.*
-import com.pusher.chatkit.util.parseAs
+import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.subscription.loggingSubscription
 import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.network.map
-import com.pusher.platform.network.toFuture
-import com.pusher.platform.network.wait
-import com.pusher.util.asFailure
-import com.pusher.util.mapResult
-import elements.Errors
+import com.pusher.platform.logger.Logger
 import elements.Subscription
-import java.util.concurrent.Future
+import java.net.URLEncoder
+import java.util.*
 
-internal class PresenceService(private val chatManager: ChatManager) {
+class PresenceService(
+        myUserId: String,
+        private val client: PlatformClient,
+        private val consumer: PresenceSubscriptionConsumer,
+        private val logger: Logger
+) {
+    private val subscriptions = HashMap<String, Subscription>()
 
-    fun subscribeToPresence(userId: String, consumeEvent: ChatManagerEventConsumer): Subscription = chatManager.subscribeResuming<ChatEvent>(
-        path = "/users/$userId/presence",
-        listeners = SubscriptionListeners(
-            onEvent = { event ->
-                val presenceEventFutures = event.body
-                    .toUserPresences()
-                    .map { presences: List<UserPresence> -> presences.map { eventForPresence(it.userId, it.presence) } }
-                    .recover { error -> listOf((ChatManagerEvent.ErrorOccurred(error) as ChatManagerEvent).toFuture()) }
+    private val registrationSub =
+            loggingSubscription(
+                    path = "/users/${URLEncoder.encode(myUserId, "UTF-8")}/register",
+                    listeners = SubscriptionListeners(),
+                    messageParser = PresenceSubscriptionEventParser(myUserId),
+                    logger = logger,
+                    client = client,
+                    description = "PresenceRegistration $myUserId"
+            )
 
-                for (presEventFuture in presenceEventFutures) {
-                    consumeEvent(presEventFuture.wait())
-                }
-            },
-            onError = { error -> consumeEvent(ChatManagerEvent.ErrorOccurred(error)) }
-        ),
-        messageParser = { it.parseAs() },
-        instanceType = PRESENCE
-    )
-
-    private fun ChatEvent.toUserPresences() = when (eventName) {
-        "presence_update" -> data.parseAs<UserPresence>().map { listOf(it) }
-        "initial_state", "join_room_presence_update" -> data.parseAs<UserPresences>().map { it.userStates }
-        else -> Errors.network("Not a valid eventName for ChatEvent: $eventName").asFailure()
+    fun subscribeToUser(userId: String) {
+        synchronized(subscriptions) {
+            if (!subscriptions.contains(userId)) {
+                subscriptions[userId] = loggingSubscription(
+                        path = "/users/$userId",
+                        listeners = SubscriptionListeners(
+                                onEvent = { consumer.invoke(it.body) }
+                        ),
+                        messageParser = PresenceSubscriptionEventParser(userId),
+                        logger = logger,
+                        client = client,
+                        description = "Presence $userId"
+                )
+            }
+        }
     }
 
-    private fun eventForPresence(userId: String, presence: Presence): Future<ChatManagerEvent> =
-        chatManager.userService.fetchUserBy(userId)
-            .mapResult { user ->
-                user.takeIf { it.presence != presence }
-                    ?.also { it.presence = presence }
-                    ?.presence
-                    .let { userPresence ->
-                        when (userPresence) {
-                            Presence.Online -> ChatManagerEvent.UserCameOnline(user)
-                            Presence.Offline -> ChatManagerEvent.UserWentOffline(user)
-                            null -> ChatManagerEvent.NoEvent
-                        }
-                    }
+    fun unsubscribeFromUser(userId: String) {
+        synchronized(subscriptions) {
+            val subscription = subscriptions[userId]
+            if (subscription != null) {
+                subscription.unsubscribe()
+                subscriptions.remove(userId)
             }
-            .map { it.recover { error -> ChatManagerEvent.ErrorOccurred(error) } }
-
-}
-
-private data class UserPresence(
-    private val state: String,
-    val lastSeenAt: String,
-    val userId: String
-) {
-
-    val presence: Presence
-        get() = when(state) {
-            "online" -> Presence.Online
-            else -> Presence.Offline
         }
+    }
 
+    fun close() {
+        synchronized(subscriptions) {
+            for (subscription in subscriptions.values) {
+                subscription.unsubscribe()
+            }
+            subscriptions.clear()
+        }
+        registrationSub.unsubscribe()
+    }
 }
-
-private data class UserPresences(val userStates: List<UserPresence>)

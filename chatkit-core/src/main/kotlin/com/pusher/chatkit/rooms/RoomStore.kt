@@ -2,12 +2,13 @@ package com.pusher.chatkit.rooms
 
 import java.util.concurrent.ConcurrentHashMap
 
-internal class RoomStore(private val roomsMap: MutableMap<Int, Room> = ConcurrentHashMap()) {
-
+internal class RoomStore(
+        private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
+) {
     fun toList() : List<Room> =
         roomsMap.values.toList()
 
-    operator fun get(id: Int): Room? =
+    operator fun get(id: String): Room? =
         roomsMap[id]
 
     operator fun plusAssign(room: Room) {
@@ -26,8 +27,7 @@ internal class RoomStore(private val roomsMap: MutableMap<Int, Room> = Concurren
         roomsMap -= rooms.map { it.id }
     }
 
-    operator fun minusAssign(roomId: Int) {
+    operator fun minusAssign(roomId: String) {
         roomsMap -= roomId
     }
-
 }
