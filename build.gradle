@@ -1,5 +1,4 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
     ext {
         kotlin_version = '1.2.71'
@@ -12,7 +11,7 @@ buildscript {
         espresso_version = '3.0.1'
         espresso_runner_version = '1.0.1'
         junit_legacy_version = '4.12'
-        pusher_platform_version = '0.4.2'
+        pusher_platform_version = '0.99SNAPSHOT'
         dokka_version = '0.9.17'
 
         bintray_user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
@@ -31,7 +30,6 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
     }
 }
-
 allprojects {
     repositories {
         google()
@@ -41,24 +39,21 @@ allprojects {
     if (tasks.findByName('bintrayUpload')) {
         task verifyBintrayCredentials {
             def out = []
-            if(bintray_user == null) out += "Missing `bintrayUser` property or BINTRAY_USER env var"
-            if(bintry_api_key == null) out += "Missing `bintrayApiKey` property or BINTRAY_API_KEY env var"
+            if (bintray_user == null) out += "Missing `bintrayUser` property or BINTRAY_USER env var"
+            if (bintry_api_key == null) out += "Missing `bintrayApiKey` property or BINTRAY_API_KEY env var"
             if (!out.isEmpty()) throw new IllegalStateException("\n" + out.join("\n"))
         }
         bintrayUpload.doFirst verifyBintrayCredentials
     }
 }
-
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
 static def tasksFor(project, tasks) {
     tasks.collect { ":$project:$it".toString() }
 }
-
 task ciBuild(type: GradleBuild) {
     tasks = tasksFor('chatkit-core', ['assemble', 'test']) +
-        tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug', 'jacocoTestReportDebug']) +
-        'codeCoverageReport'
+            tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug', 'jacocoTestReportDebug']) +
+            'codeCoverageReport'
 }
