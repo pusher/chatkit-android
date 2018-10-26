@@ -61,7 +61,7 @@ class MessagesSpek : Spek({
             assertThat(messages[0].user?.id).isEqualTo(alice.id)
         }
 
-        it("retrieves messages with attachments and sets fetchRequired to true if appropriate") {
+        it("retrieves messages with attachments") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
@@ -83,8 +83,8 @@ class MessagesSpek : Spek({
 
             val messages = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
 
-            assertThat(messages[0].attachment?.fetchRequired).isTrue()
-            assertThat(messages[1].attachment?.fetchRequired).isFalse()
+            assertThat(messages[0].attachment).isNotNull()
+            assertThat(messages[1].attachment).isNotNull()
             assertThat(messages[2].attachment).isNull()
         }
 
@@ -124,9 +124,7 @@ class MessagesSpek : Spek({
 
             val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
 
-            val fetchedAttachment = alice.fetchAttachment(firstMessage.attachment!!.link).assumeSuccess()
-
-            assertThat(fetchedAttachment.file).isNotNull()
+            assertThat(firstMessage.attachment).isNotNull()
         }
 
         it("sends message with link attachment") {
