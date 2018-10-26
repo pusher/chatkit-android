@@ -19,6 +19,27 @@ import elements.Subscription
 class CurrentUser(
         private val syncCurrentUser: SynchronousCurrentUser
 ) {
+
+    //Delegate fields for the underlying SynchronousCurrentUsers
+    val id: String
+        get() = syncCurrentUser.id
+
+    var name: String?
+        get() = syncCurrentUser.name
+        set(ignored) {}
+
+    var avatarURL: String?
+        get() = syncCurrentUser.avatarURL
+        set(ignored) {}
+
+    var customData: CustomData?
+        get() = syncCurrentUser.customData
+        set(ignored) {}
+
+    val rooms
+        get() = syncCurrentUser.rooms
+
+
     fun users(callback: (Result<List<User>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.users }, callback)
 
