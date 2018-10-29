@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.pusher.chatkit.ChatEvent.*
 import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.users.User
 import elements.Error
@@ -15,8 +16,7 @@ data class ChatListeners @JvmOverloads constructor(
         val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
         val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
         val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
-        val onUserCameOnline: (User) -> Unit = { },
-        val onUserWentOffline: (User) -> Unit = { },
+        val onPresenceChanged: (User, Presence, Presence) -> Unit = { _, _, _ -> },
         val onCurrentUserAddedToRoom: (Room) -> Unit = { },
         val onCurrentUserRemovedFromRoom: (String) -> Unit = { },
         val onRoomUpdated: (Room) -> Unit = { },
@@ -40,8 +40,7 @@ internal fun ChatListeners.toCallback(): ChatManagerEventConsumer = { event ->
         is UserStoppedTyping -> onUserStoppedTyping(event.user, event.room)
         is UserJoinedRoom -> onUserJoinedRoom(event.user, event.room)
         is UserLeftRoom -> onUserLeftRoom(event.user, event.room)
-        is UserCameOnline -> onUserCameOnline(event.user)
-        is UserWentOffline -> onUserWentOffline(event.user)
+        is PresenceChange -> onPresenceChanged(event.user, event.currentState, event.prevState)
         is CurrentUserAddedToRoom -> onCurrentUserAddedToRoom(event.room)
         is CurrentUserRemovedFromRoom -> onCurrentUserRemovedFromRoom(event.roomId)
         is RoomUpdated -> onRoomUpdated(event.room)
@@ -61,8 +60,7 @@ sealed class ChatEvent {
     data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatEvent()
     data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatEvent()
     data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatEvent()
-    data class UserCameOnline internal constructor(val user: User) : ChatEvent()
-    data class UserWentOffline internal constructor(val user: User) : ChatEvent()
+    data class PresenceChange internal constructor(val user: User, val currentState: Presence, val prevState: Presence) : ChatEvent()
     data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatEvent()
     data class CurrentUserRemovedFromRoom internal constructor(val roomId: String) : ChatEvent()
     data class RoomUpdated internal constructor(val room: Room) : ChatEvent()

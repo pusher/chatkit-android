@@ -183,11 +183,12 @@ class SynchronousChatManager constructor(
             }.filter { (newState, user) ->
                 newState.presence != user.presence
             }.map { (newState, user) ->
+                val oldState = user.presence
                 user.presence = newState.presence
 
                 when (newState.presence) {
-                    is Presence.Online -> ChatEvent.UserCameOnline(user)
-                    is Presence.Offline -> ChatEvent.UserWentOffline(user)
+                    is Presence.Online -> ChatEvent.PresenceChange(user, newState.presence, oldState)
+                    is Presence.Offline -> ChatEvent.PresenceChange(user, newState.presence, oldState)
                     is Presence.Unknown -> ChatEvent.NoEvent
                 }
             }

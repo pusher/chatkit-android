@@ -167,10 +167,8 @@ class RoomSubscriptionGroup(
                         RoomEvent.RoomUpdated(event.room)
                     is ChatEvent.RoomDeleted ->
                         RoomEvent.RoomDeleted(event.roomId)
-                    is ChatEvent.UserCameOnline ->
-                        RoomEvent.UserCameOnline(event.user)
-                    is ChatEvent.UserWentOffline ->
-                        RoomEvent.UserWentOffline(event.user)
+                    is ChatEvent.PresenceChange ->
+                        RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
                     else ->
                         RoomEvent.NoEvent
                 }

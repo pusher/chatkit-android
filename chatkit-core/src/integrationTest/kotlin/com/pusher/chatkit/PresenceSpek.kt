@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
@@ -23,7 +24,11 @@ class PresenceSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
-                .subscribeRoomFor(GENERAL) { (it as? RoomEvent.UserCameOnline)?.takeIf { it.user.id == ALICE } }
+                .subscribeRoomFor(GENERAL) { roomEvent ->
+                    (roomEvent as? RoomEvent.PresenceChange)?.takeIf { presenceEvent ->
+                        presenceEvent.user.id == ALICE && presenceEvent.currentState == Presence.Online
+                    }
+                }
 
             chatFor(ALICE).connect().assumeSuccess()
 
@@ -37,7 +42,11 @@ class PresenceSpek : Spek({
             aliceChat.connect().assumeSuccess()
 
             val userWentOffline by chatFor(PUSHERINO)
-                .subscribeRoomFor(GENERAL) { it as? RoomEvent.UserWentOffline }
+                    .subscribeRoomFor(GENERAL) { roomEvent ->
+                        (roomEvent as? RoomEvent.PresenceChange)?.takeIf { presenceEvent ->
+                            presenceEvent.user.id == ALICE && presenceEvent.currentState == Presence.Offline
+                        }
+                    }
 
             aliceChat.close()
 

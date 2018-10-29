@@ -7,6 +7,7 @@ import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomListeners
@@ -113,12 +114,11 @@ class ChatManagerSpek : Spek({
                 onNewReadCursor = { actual += "onNewReadCursor" to it },
                 onRoomDeleted = { actual += "onRoomDeleted" to it },
                 onRoomUpdated = { actual += "onRoomUpdated" to it },
-                onUserCameOnline = { actual += "onUserCameOnline" to it },
+                onPresenceChanged = { u, n, p -> actual += "onPresenceChanged" to u to n to p },
                 onUserJoinedRoom = { u, r -> actual += "onUserJoinedRoom" to u to r },
                 onUserLeftRoom = { u, r -> actual += "onUserLeftRoom" to u to r },
                 onUserStartedTyping = { u, r -> actual += "onUserStartedTyping" to u to r },
-                onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r },
-                onUserWentOffline = { actual += "onUserWentOffline" to it }
+                onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r }
             ).toCallback()
 
             consume(CurrentUserReceived(currentUser))
@@ -126,8 +126,7 @@ class ChatManagerSpek : Spek({
             consume(UserStoppedTyping(user, room))
             consume(UserJoinedRoom(user, room))
             consume(UserLeftRoom(user, room))
-            consume(UserCameOnline(user))
-            consume(UserWentOffline(user))
+            consume(PresenceChange(user, Presence.Online, Presence.Unknown))
             consume(CurrentUserAddedToRoom(room))
             consume(CurrentUserRemovedFromRoom(roomId))
             consume(RoomUpdated(room))
@@ -144,12 +143,11 @@ class ChatManagerSpek : Spek({
                 "onNewReadCursor" to cursor,
                 "onRoomDeleted" to roomId,
                 "onRoomUpdated" to room,
-                "onUserCameOnline" to user,
+                "onPresenceChanged" to user to Presence.Online to Presence.Unknown,
                 "onUserJoinedRoom" to user to room,
                 "onUserLeftRoom" to user to room,
                 "onUserStartedTyping" to user to room,
-                "onUserStoppedTyping" to user to room,
-                "onUserWentOffline" to user
+                "onUserStoppedTyping" to user to room
             )
         }
     }
@@ -163,9 +161,8 @@ class ChatManagerSpek : Spek({
                 onNewReadCursor = { actual += "onNewReadCursor" to it },
                 onRoomDeleted = { actual += "onRoomDeleted" to it },
                 onRoomUpdated = { actual += "onRoomUpdated" to it },
-                onUserCameOnline = { actual += "onUserCameOnline" to it },
+                onPresenceChange = { actual += "onPresenceChanged" to it },
                 onUserStartedTyping = { actual += "onUserStartedTyping" to it },
-                onUserWentOffline = { actual += "onUserWentOffline" to it },
                 onMessage = { actual += "onMessage" to it },
                 onUserJoined = { actual += "onUserJoined" to it },
                 onUserLeft = { actual += "onUserLeft" to it }
@@ -174,8 +171,7 @@ class ChatManagerSpek : Spek({
             consume(RoomEvent.UserStartedTyping(user))
             consume(RoomEvent.UserJoined(user))
             consume(RoomEvent.UserLeft(user))
-            consume(RoomEvent.UserCameOnline(user))
-            consume(RoomEvent.UserWentOffline(user))
+            consume(RoomEvent.PresenceChange(user, Presence.Online, Presence.Unknown))
             consume(RoomEvent.RoomUpdated(room))
             consume(RoomEvent.RoomDeleted(roomId))
             consume(RoomEvent.NewReadCursor(cursor))
@@ -186,8 +182,7 @@ class ChatManagerSpek : Spek({
                 "onUserStartedTyping" to user,
                 "onUserJoined" to user,
                 "onUserLeft" to user,
-                "onUserCameOnline" to user,
-                "onUserWentOffline" to user,
+                "onPresenceChanged" to user,
                 "onRoomUpdated" to room,
                 "onRoomDeleted" to roomId,
                 "onNewReadCursor" to cursor,

@@ -19,22 +19,18 @@ import elements.Subscription
 class CurrentUser(
         private val syncCurrentUser: SynchronousCurrentUser
 ) {
-
     //Delegate fields for the underlying SynchronousCurrentUsers
     val id: String
         get() = syncCurrentUser.id
 
-    var name: String?
+    val name: String?
         get() = syncCurrentUser.name
-        set(ignored) {}
 
-    var avatarURL: String?
+    val avatarURL: String?
         get() = syncCurrentUser.avatarURL
-        set(ignored) {}
 
-    var customData: CustomData?
+    val customData: CustomData?
         get() = syncCurrentUser.customData
-        set(ignored) {}
 
     val rooms
         get() = syncCurrentUser.rooms

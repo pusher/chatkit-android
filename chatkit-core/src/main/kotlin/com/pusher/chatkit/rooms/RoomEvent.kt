@@ -2,6 +2,7 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.users.User
 import elements.Error
 
@@ -21,8 +22,7 @@ sealed class RoomEvent {
     data class UserStoppedTyping(val user: User) : RoomEvent()
     data class UserJoined(val user: User) : RoomEvent()
     data class UserLeft(val user: User) : RoomEvent()
-    data class UserCameOnline(val user: User) : RoomEvent()
-    data class UserWentOffline(val user: User) : RoomEvent()
+    data class PresenceChange(val user: User, val currentState: Presence, val prevState: Presence) : RoomEvent()
     data class InitialReadCursors(val cursor: List<Cursor>) : RoomEvent()
     data class NewReadCursor(val cursor: Cursor) : RoomEvent()
     data class RoomUpdated(val room: Room) : RoomEvent()
@@ -41,8 +41,7 @@ data class RoomListeners @JvmOverloads constructor(
         val onUserStoppedTyping: (User) -> Unit = {},
         val onUserJoined: (User) -> Unit = {},
         val onUserLeft: (User) -> Unit = {},
-        val onUserCameOnline: (User) -> Unit = {},
-        val onUserWentOffline: (User) -> Unit = {},
+        val onPresenceChange: (User) -> Unit = {},
         val onNewReadCursor: (Cursor) -> Unit = {},
         val onRoomUpdated: (Room) -> Unit = {},
         val onRoomDeleted: (String) -> Unit = {},
@@ -56,8 +55,7 @@ internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
         is RoomEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
         is RoomEvent.UserJoined -> onUserJoined(event.user)
         is RoomEvent.UserLeft -> onUserLeft(event.user)
-        is RoomEvent.UserCameOnline -> onUserCameOnline(event.user)
-        is RoomEvent.UserWentOffline -> onUserWentOffline(event.user)
+        is RoomEvent.PresenceChange -> onPresenceChange(event.user)
         is RoomEvent.NewReadCursor -> onNewReadCursor(event.cursor)
         is RoomEvent.RoomUpdated -> onRoomUpdated(event.room)
         is RoomEvent.RoomDeleted -> onRoomDeleted(event.roomId)
