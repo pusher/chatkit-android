@@ -102,7 +102,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             chatFor(ALICE).connect() { event ->
-                if (event is ChatEvent.CurrentUserAddedToRoom) roomJoined = event.room
+                if (event is ChatEvent.AddedToRoom) roomJoined = event.room
             }.assumeSuccess()
             pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(ALICE)).assumeSuccess()
 
@@ -116,7 +116,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             chatFor(ALICE).connect() { event ->
-                if (event is ChatEvent.CurrentUserRemovedFromRoom) roomRemovedFromId = event.roomId
+                if (event is ChatEvent.RemovedFromRoom) roomRemovedFromId = event.roomId
             }.assumeSuccess()
 
             pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(ALICE)).assumeSuccess()

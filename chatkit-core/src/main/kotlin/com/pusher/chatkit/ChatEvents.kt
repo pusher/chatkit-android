@@ -17,8 +17,8 @@ data class ChatListeners @JvmOverloads constructor(
         val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
         val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
         val onPresenceChanged: (User, Presence, Presence) -> Unit = { _, _, _ -> },
-        val onCurrentUserAddedToRoom: (Room) -> Unit = { },
-        val onCurrentUserRemovedFromRoom: (String) -> Unit = { },
+        val onAddedToRoom: (Room) -> Unit = { },
+        val onRemovedFromRoom: (String) -> Unit = { },
         val onRoomUpdated: (Room) -> Unit = { },
         val onRoomDeleted: (String) -> Unit = { },
         val onNewReadCursor: (Cursor) -> Unit = { },
@@ -41,8 +41,8 @@ internal fun ChatListeners.toCallback(): ChatManagerEventConsumer = { event ->
         is UserJoinedRoom -> onUserJoinedRoom(event.user, event.room)
         is UserLeftRoom -> onUserLeftRoom(event.user, event.room)
         is PresenceChange -> onPresenceChanged(event.user, event.currentState, event.prevState)
-        is CurrentUserAddedToRoom -> onCurrentUserAddedToRoom(event.room)
-        is CurrentUserRemovedFromRoom -> onCurrentUserRemovedFromRoom(event.roomId)
+        is AddedToRoom -> onAddedToRoom(event.room)
+        is RemovedFromRoom -> onRemovedFromRoom(event.roomId)
         is RoomUpdated -> onRoomUpdated(event.room)
         is RoomDeleted -> onRoomDeleted(event.roomId)
         is ErrorOccurred -> onErrorOccurred(event.error)
@@ -61,8 +61,8 @@ sealed class ChatEvent {
     data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatEvent()
     data class UserLeftRoom internal constructor(val user: User, val room: Room) : ChatEvent()
     data class PresenceChange internal constructor(val user: User, val currentState: Presence, val prevState: Presence) : ChatEvent()
-    data class CurrentUserAddedToRoom internal constructor(val room: Room) : ChatEvent()
-    data class CurrentUserRemovedFromRoom internal constructor(val roomId: String) : ChatEvent()
+    data class AddedToRoom internal constructor(val room: Room) : ChatEvent()
+    data class RemovedFromRoom internal constructor(val roomId: String) : ChatEvent()
     data class RoomUpdated internal constructor(val room: Room) : ChatEvent()
     data class RoomDeleted internal constructor(val roomId: String) : ChatEvent()
     data class ErrorOccurred internal constructor(val error: elements.Error) : ChatEvent()

@@ -244,9 +244,9 @@ class SynchronousChatManager constructor(
                 is UserSubscriptionEvent.InitialState ->
                     ChatEvent.CurrentUserReceived(currentUser.get())
                 is UserSubscriptionEvent.AddedToRoomEvent ->
-                    ChatEvent.CurrentUserAddedToRoom(event.room)
+                    ChatEvent.AddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
-                    ChatEvent.CurrentUserRemovedFromRoom(event.roomId)
+                    ChatEvent.RemovedFromRoom(event.roomId)
                 is UserSubscriptionEvent.RoomUpdatedEvent ->
                     ChatEvent.RoomUpdated(event.room)
                 is UserSubscriptionEvent.RoomDeletedEvent ->
