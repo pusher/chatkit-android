@@ -4,202 +4,173 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.files.FetchedAttachment
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
-import com.pusher.chatkit.messages.*
-import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.messages.Direction
+import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomConsumer
+import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.users.User
-import com.pusher.platform.network.toFuture
-import com.pusher.util.*
+import com.pusher.platform.network.Futures
+import com.pusher.util.Result
 import elements.Error
 import elements.Subscription
-import java.util.concurrent.Future
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class CurrentUser(
-    val id: String,
-    var avatarURL: String?,
-    var customData: CustomData?,
-    var name: String?,
-    private val chatManager: ChatManager
+        private val syncCurrentUser: SynchronousCurrentUser
 ) {
+    //Delegate fields for the underlying SynchronousCurrentUsers
+    val id: String
+        get() = syncCurrentUser.id
 
-    val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
-        .filter { it.memberUserIds.contains(id) }
-    val users: Future<Result<List<User>, Error>>
-        get() = rooms
-        .flatMap { it.memberUserIds }
-        .let { ids -> chatManager.userService.fetchUsersBy(ids.toSet()) }
+    val name: String?
+        get() = syncCurrentUser.name
 
-    private val roomSubscriptions = mutableMapOf<Int, Subscription>()
+    val avatarURL: String?
+        get() = syncCurrentUser.avatarURL
 
-    fun isSubscribedToRoom(roomId: Int): Boolean =
-        roomSubscriptions.containsKey(roomId)
+    val customData: CustomData?
+        get() = syncCurrentUser.customData
+
+    val rooms
+        get() = syncCurrentUser.rooms
+
+
+    fun users(callback: (Result<List<User>, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.users }, callback)
+
+    fun isSubscribedToRoom(roomId: String): Boolean =
+            syncCurrentUser.isSubscribedToRoom(roomId)
 
     fun isSubscribedToRoom(room: Room): Boolean =
-        isSubscribedToRoom(room.id)
+            syncCurrentUser.isSubscribedToRoom(room)
 
-    fun updateWithPropertiesOf(newUser: User) {
-        name = newUser.name
-        customData = newUser.customData
+    fun updateWithPropertiesOf(newUser: CurrentUser) =
+            syncCurrentUser.updateWithPropertiesOf(newUser.syncCurrentUser)
+
+    fun setReadCursor(room: Room, position: Int) {
+        Futures.schedule { syncCurrentUser.setReadCursor(room.id, position) }
     }
 
-    fun setReadCursor(room: Room, position: Int): Future<Result<Unit, Error>> =
-        setReadCursor(room.id, position)
+    fun setReadCursor(roomId: String, position: Int) {
+        Futures.schedule { syncCurrentUser.setReadCursor(roomId, position) }
+    }
 
-    fun setReadCursor(roomId: Int, position: Int): Future<Result<Unit, Error>> =
-        chatManager.cursorService.setReadCursor(id, roomId, position)
+    fun getReadCursor(roomId: String): Result<Cursor, Error> =
+            syncCurrentUser.getReadCursor(roomId)
 
-    fun getReadCursor(roomId: Int) : Future<Result<Cursor, Error>> =
-        chatManager.cursorService.getReadCursor(id, roomId)
+    fun getReadCursor(room: Room): Result<Cursor, Error> =
+            syncCurrentUser.getReadCursor(room.id)
 
-    fun getReadCursor(room: Room) : Future<Result<Cursor, Error>> =
-        getReadCursor(room.id)
+    fun addUsersToRoom(roomId: String, userIds: List<String>, callback: (Result<Unit, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.addUsersToRoom(roomId, userIds) }, callback)
 
-    fun fetchAttachment(attachmentUrl: String): Future<Result<FetchedAttachment, Error>> =
-        chatManager.filesService.fetchAttachment(attachmentUrl)
-
-    fun addUsersToRoom(roomId: Int, userIds: List<String>) =
-        chatManager.userService.addUsersToRoom(roomId, userIds)
-
-    fun removeUsersFromRoom(roomId: Int, userIds: List<String>) =
-        chatManager.userService.removeUsersFromRoom(roomId, userIds)
+    fun removeUsersFromRoom(
+            roomId: String,
+            userIds: List<String>,
+            callback: (Result<Unit, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.removeUsersFromRoom(roomId, userIds) }, callback)
 
     @JvmOverloads
     fun createRoom(
-        name: String,
-        isPrivate: Boolean = false,
-        userIds: List<String> = emptyList()
-    ): Future<Result<Room, Error>> = chatManager.roomService.createRoom(
-        creatorId = id,
-        name = name,
-        isPrivate = isPrivate,
-        userIds = userIds
-    )
+            name: String,
+            isPrivate: Boolean = false,
+            userIds: List<String> = emptyList(),
+            callback: (Result<Room, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.createRoom(name, isPrivate, userIds) }, callback)
 
     @JvmOverloads
-    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
-        updateRoom(room.id, name, isPrivate)
+    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null, callback: (Result<Unit, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.updateRoom(room, name, isPrivate) }, callback)
 
     @JvmOverloads
-    fun updateRoom(roomId: Int, name: String, isPrivate: Boolean? = null): Future<Result<Unit, Error>> =
-        chatManager.roomService.updateRoom(roomId, name, isPrivate)
+    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null, callback: (Result<Unit, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.updateRoom(roomId, name, isPrivate) }, callback)
 
-    fun deleteRoom(room: Room): Future<Result<Int, Error>> =
-        deleteRoom(room.id)
+    fun deleteRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.deleteRoom(room) }, callback)
 
-    fun deleteRoom(roomId: Int): Future<Result<Int, Error>> =
-        chatManager.roomService.deleteRoom(roomId)
+    fun deleteRoom(roomId: String, callback: (Result<String, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.deleteRoom(roomId) }, callback)
 
-    fun leaveRoom(room: Room): Future<Result<Int, Error>> =
-        leaveRoom(room.id)
+    fun leaveRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.leaveRoom(room) }, callback)
 
-    fun leaveRoom(roomId: Int): Future<Result<Int, Error>> =
-        chatManager.roomService.leaveRoom(id, roomId)
+    fun leaveRoom(roomId: String, callback: (Result<String, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.leaveRoom(roomId) }, callback)
 
-    fun joinRoom(room: Room): Future<Result<Room, Error>> =
-        joinRoom(room.id)
+    fun joinRoom(room: Room, callback: (Result<Room, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.joinRoom(room) }, callback)
 
-    fun joinRoom(roomId: Int): Future<Result<Room, Error>> =
-        chatManager.roomService.joinRoom(id, roomId)
+    fun joinRoom(roomId: String, callback: (Result<Room, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.joinRoom(roomId) }, callback)
 
     @JvmOverloads
     fun subscribeToRoom(
-        room: Room,
-        listeners: RoomSubscriptionListeners,
-        messageLimit : Int = 10
-    ): Subscription =
-        subscribeToRoom(room.id, listeners, messageLimit)
+            room: Room,
+            listeners: RoomListeners,
+            messageLimit: Int = 10,
+            callback: (Subscription) -> Unit
+    ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     fun subscribeToRoom(
-        roomId: Int,
-        listeners: RoomSubscriptionListeners,
-        messageLimit : Int = 10
-    ): Subscription =
-        subscribeToRoom(roomId, messageLimit, listeners.toCallback())
+            roomId: String,
+            listeners: RoomListeners,
+            messageLimit: Int = 10,
+            callback: (Subscription) -> Unit
+    ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     fun subscribeToRoom(
-        room: Room,
-        messageLimit : Int = 10,
-        consumer: RoomSubscriptionConsumer
-    ): Subscription =
-        subscribeToRoom(room.id, messageLimit, consumer)
+            room: Room,
+            messageLimit: Int = 10,
+            consumer: RoomConsumer,
+            callback: (Subscription) -> Unit
+    ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     fun subscribeToRoom(
-        roomId: Int,
-        messageLimit : Int = 10,
-        consumer: RoomSubscriptionConsumer
-    ): Subscription =
-        chatManager.roomService.subscribeToRoom(id, roomId, consumer, messageLimit)
-            .autoRemove(roomId)
-            .also { roomSubscriptions += roomId to it }
-
-    private fun Subscription.autoRemove(roomId: Int) = object : Subscription {
-        override fun unsubscribe() {
-            roomSubscriptions -= roomId
-            this@autoRemove.unsubscribe()
-        }
-    }
+            roomId: String,
+            messageLimit: Int = 10,
+            consumer: RoomConsumer,
+            callback: (Subscription) -> Unit
+    ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     fun fetchMessages(
-        roomId: Int,
-        initialId: Int? = null,
-        direction: Direction = Direction.OLDER_FIRST,
-        limit: Int = 10
-    ): Future<Result<List<Message>, Error>> = chatManager
-        .messageService
-        .fetchMessages(roomId, limit, initialId, direction)
+            roomId: String,
+            initialId: Int? = null,
+            direction: Direction = Direction.OLDER_FIRST,
+            limit: Int = 10,
+            callback: (Result<List<Message>, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.fetchMessages(roomId, initialId, direction, limit) }, callback)
 
     @JvmOverloads
     fun sendMessage(
-        room: Room,
-        messageText: String,
-        attachment: GenericAttachment = NoAttachment
-    ): Future<Result<Int, Error>> =
-        sendMessage(room.id, messageText, attachment)
+            room: Room,
+            messageText: String,
+            attachment: GenericAttachment = NoAttachment,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendMessage(room, messageText, attachment) }, callback)
 
     @JvmOverloads
     fun sendMessage(
-        roomId: Int,
-        messageText: String,
-        attachment: GenericAttachment = NoAttachment
-    ): Future<Result<Int, Error>> =
-        chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
+            roomId: String,
+            messageText: String,
+            attachment: GenericAttachment = NoAttachment,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendMessage(roomId, messageText, attachment) }, callback)
 
-    private var lastTypingEvent: Long = 0
+    fun isTypingIn(room: Room, callback: (Result<Unit, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.isTypingIn(room) }, callback)
 
-    private fun canSendTypingEvent() =
-        (System.currentTimeMillis() - lastTypingEvent) > TYPING_TIME_THRESHOLD
+    fun isTypingIn(roomId: String, callback: (Result<Unit, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.isTypingIn(roomId) }, callback)
 
-    fun isTypingIn(room: Room): Future<Result<Unit, Error>> =
-        isTypingIn(room.id)
+    fun getJoinableRooms(callback: (Result<List<Room>, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.getJoinableRooms() }, callback)
 
-    fun isTypingIn(roomId: Int): Future<Result<Unit, Error>> = when {
-        canSendTypingEvent() -> chatManager.doPost<Unit>(
-            path ="/rooms/$roomId/events",
-            body = """{ "user_id" : "$id", "name" : "typing_start" }"""
-        ).also { lastTypingEvent = System.currentTimeMillis() }
-        else -> Unit.asSuccess<Unit, Error>().toFuture()
-    }
-
-    fun getJoinableRooms(): Future<Result<List<Room>, Error>> =
-        chatManager.roomService.fetchUserRooms(
-            userId = id,
-            joinable = true
-        )
-
-    fun usersForRoom(room: Room): Future<Result<List<User>, Error>> =
-        chatManager.userService.fetchUsersBy(room.memberUserIds)
-
-    fun close() {
-        for (roomSub in roomSubscriptions.values) {
-            roomSub.unsubscribe()
-        }
-        roomSubscriptions.clear()
-    }
-
+    fun usersForRoom(room: Room, callback: (Result<List<User>, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.usersForRoom(room) }, callback)
 }
-
-private const val TYPING_TIME_THRESHOLD = 500

@@ -4,7 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/0.2.4...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.0...HEAD)
+
+## [1.0.0](https://github.com/pusher/chatkit-android/compare/0.2.4...1.0.0) - 2018-10-30
+
+### Rewritten
+
+The library has been substantially reworked, and the public interface has
+changed in various ways. Refer to the full documentation at
+https://docs.pusher.com/chatkit/reference/android
+
+A summary of changes:
+
+### Interface
+
+- The public interface now defaults to accepting callback functions rather than
+  returning `Future`s.
+- A synchronous interface is optionally available.
+- Several event types have been renamed
+  - RoomSubscriptionEvent -> RoomEvent
+  - ChatManagerEvent -> ChatEvent
+  - Members of these types (the events and handlers) have also had naming tweaks
+- The `fetchAttachment` method has been removed. It is no longer required, as we
+  no longer serve attachment URLs which require redirection. All URLs returned
+  point directly the the content.
+
+### Semantics
+
+- Room memberships are not available until the room has been subscribed to.
+- Initial connection is not blocked on availability of presence states.
+  - You can identify events representing the initial state of a user's presence
+    because the `prevState` in the event will be `Unknown`. This can be used to
+    gracefully populate the UI without triggering effects which might be tied
+    to an `Offline` -> `Online` transition.
+  - Presence states are fetched as users become known to the client, i.e. as
+    room subscriptions are started, which reveal the room memberships.
 
 ## [0.2.4](https://github.com/pusher/chatkit-android/compare/0.2.3...0.2.4) - 2018-07-27
 
@@ -22,7 +56,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Messages with attachments that require a fetch are now identified properly over room subscriptions and when fetching messages
+- Messages with attachments that require a fetch are now identified properly
+  over room subscriptions and when fetching messages
 
 ### Changed
 

@@ -2,40 +2,36 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
-import com.pusher.chatkit.rooms.RoomSubscriptionEvent
+import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.FutureValue
-import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.users.User
-import com.pusher.platform.network.wait
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
 class UserTypingSpek : Spek({
-
-    afterEachTest(::tearDownInstance)
+    beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("ChatManager") {
-
+    describe("SynchronousChatManager") {
         it("sends and receives started typing indicator in room") {
             setUpInstanceWith(createDefaultRole(), newUsers(Users.PUSHERINO, Users.ALICE), newRoom(GENERAL, Users.PUSHERINO, Users.ALICE))
 
             var startedTypingUser by FutureValue<User>()
 
-            val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(Users.PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(Users.ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStartedTyping) startedTypingUser = event.user
+                if (event is RoomEvent.UserStartedTyping) startedTypingUser = event.user
             }
 
-            pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
+            pusherino.isTypingIn(pusherino.generalRoom).assumeSuccess()
 
             assertThat(startedTypingUser.id).isEqualTo(pusherino.id)
         }
@@ -45,14 +41,14 @@ class UserTypingSpek : Spek({
 
             var stoppedTypingUser by FutureValue<User>()
 
-            val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            val alice = chatFor(Users.ALICE).connect().wait().assumeSuccess()
+            val pusherino = chatFor(Users.PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(Users.ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                if (event is RoomSubscriptionEvent.UserStoppedTyping) stoppedTypingUser = event.user
+                if (event is RoomEvent.UserStoppedTyping) stoppedTypingUser = event.user
             }
 
-            pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
+            pusherino.isTypingIn(pusherino.generalRoom).assumeSuccess()
 
             assertThat(stoppedTypingUser.id).isEqualTo(pusherino.id)
         }
@@ -62,12 +58,16 @@ class UserTypingSpek : Spek({
 
             var startedTypingUser by FutureValue<User>()
 
-            val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            chatFor(Users.ALICE).connect { event ->
-                if (event is ChatManagerEvent.UserStartedTyping) startedTypingUser = event.user
-            }.wait().assumeSuccess()
+            val pusherino = chatFor(Users.PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(Users.ALICE).connect { event ->
+                if (event is ChatEvent.UserStartedTyping) startedTypingUser = event.user
+            }.assumeSuccess()
 
-            pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
+            // Even though they are reported globally, you must be subscribed to a room to see
+            // who is typing there
+            alice.subscribeToRoom(pusherino.generalRoom) {}
+
+            pusherino.isTypingIn(pusherino.generalRoom).assumeSuccess()
 
             assertThat(startedTypingUser.id).isEqualTo(pusherino.id)
         }
@@ -77,16 +77,18 @@ class UserTypingSpek : Spek({
 
             var stoppedTypingUser by FutureValue<User>()
 
-            val pusherino = chatFor(Users.PUSHERINO).connect().wait().assumeSuccess()
-            chatFor(Users.ALICE).connect { event ->
-                if (event is ChatManagerEvent.UserStoppedTyping) stoppedTypingUser = event.user
-            }.wait().assumeSuccess()
+            val pusherino = chatFor(Users.PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(Users.ALICE).connect { event ->
+                if (event is ChatEvent.UserStoppedTyping) stoppedTypingUser = event.user
+            }.assumeSuccess()
 
-            pusherino.isTypingIn(pusherino.generalRoom).wait().assumeSuccess()
+            // Even though they are reported globally, you must be subscribed to a room to see
+            // who is typing there
+            alice.subscribeToRoom(pusherino.generalRoom) {}
+
+            pusherino.isTypingIn(pusherino.generalRoom).assumeSuccess()
 
             assertThat(stoppedTypingUser.id).isEqualTo(pusherino.id)
         }
-
     }
-
 })

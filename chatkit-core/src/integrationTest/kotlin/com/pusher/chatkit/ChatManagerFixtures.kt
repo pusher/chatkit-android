@@ -9,24 +9,29 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import okhttp3.OkHttpClient
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentLinkedQueue
 
 const val MAX_LOG_LENGTH = 300
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {
-        override fun verbose(message: String, error: Error?) = log("V", message.take(MAX_LOG_LENGTH), error)
+        private val timeFormatter = DateTimeFormatter.ISO_TIME
+        override fun verbose(message: String, error: Error?) = Unit
         override fun debug(message: String, error: Error?) = log("D", message.take(MAX_LOG_LENGTH), error)
         override fun info(message: String, error: Error?) = log("I", message.take(MAX_LOG_LENGTH), error)
         override fun warn(message: String, error: Error?) = log("W", message.take(MAX_LOG_LENGTH), error)
         override fun error(message: String, error: Error?) = log("E", message.take(MAX_LOG_LENGTH), error)
         private fun log(type: String, message: String, error: Error?) =
-            println("$type: $message ${error?.let { "\n" + it } ?: ""}".take(MAX_LOG_LENGTH))
+            println("${ts()} $type: $message ${error?.let { "\n" + it } ?: ""}".take(MAX_LOG_LENGTH))
+        private fun ts() = timeFormatter.format(LocalDateTime.now())
     }
     override val mediaTypeResolver: MediaTypeResolver = object : MediaTypeResolver {
         override fun fileMediaType(file: File): String? = "image/jif"
     }
     override val sdkInfo: SdkInfo = SdkInfo(
-        product = "ChatManager Integration Tests",
+        product = "SynchronousChatManager Integration Tests",
         language = "Spek",
         platform = "JUnit",
         sdkVersion = "test"
@@ -44,12 +49,12 @@ class TestChatkitDependencies(
     }.build()
 }
 
-val CurrentUser.generalRoom
+val SynchronousCurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 
-private val managers = mutableListOf<ChatManager>()
+private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
 
-fun chatFor(userName: String) = ChatManager(
+fun chatFor(userName: String) = SynchronousChatManager(
     instanceLocator = INSTANCE_LOCATOR,
     userId = userName,
     dependencies = TestChatkitDependencies(
