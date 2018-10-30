@@ -21,15 +21,4 @@ internal class FilesService(
                     "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/${URLEncoder.encode(userId, "UTF-8")}/files/${URLEncoder.encode(attachment.name, "UTF-8")}",
                     attachment
             )
-
-    fun fetchAttachment(
-            attachmentUrl: String
-    ): Result<FetchedAttachment, Error> =
-            client.doRequest(
-                    options = RequestOptions(
-                        method = "GET",
-                        destination = RequestDestination.Absolute(attachmentUrl)
-                    ),
-                    responseParser = { it.parseAs<FetchedAttachment>() }
-            )
 }

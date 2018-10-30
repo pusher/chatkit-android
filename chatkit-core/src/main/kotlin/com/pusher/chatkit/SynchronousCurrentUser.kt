@@ -57,9 +57,6 @@ class SynchronousCurrentUser(
     fun getReadCursor(room: Room): Result<Cursor, Error> =
             getReadCursor(room.id)
 
-    fun fetchAttachment(attachmentUrl: String): Result<FetchedAttachment, Error> =
-            chatManager.filesService.fetchAttachment(attachmentUrl)
-
     fun addUsersToRoom(roomId: String, userIds: List<String>) =
             chatManager.userService.addUsersToRoom(roomId, userIds)
 

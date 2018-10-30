@@ -62,9 +62,6 @@ class CurrentUser(
     fun getReadCursor(room: Room): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(room.id)
 
-    fun fetchAttachment(attachmentUrl: String, callback: (Result<FetchedAttachment, Error>) -> Unit) =
-            makeCallback({ syncCurrentUser.fetchAttachment(attachmentUrl) }, callback)
-
     fun addUsersToRoom(roomId: String, userIds: List<String>, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.addUsersToRoom(roomId, userIds) }, callback)
 
