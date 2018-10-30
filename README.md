@@ -5,7 +5,8 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://raw.githubusercontent.com/pusher/chatkit-android/master/LICENSE)
 [![codecov](https://codecov.io/gh/pusher/chatkit-android/branch/master/graph/badge.svg)](https://codecov.io/gh/pusher/chatkit-android)
 [![Travis branch](https://img.shields.io/travis/pusher/chatkit-android/master.svg)](https://travis-ci.org/pusher/chatkit-android)
-[![Maven Central](https://img.shields.io/maven-central/v/com.pusher/chatkit-android.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.pusher%22%20AND%20a:%22chatkit-android)
+[![Download](https://api.bintray.com/packages/pusher/maven/chatkit-android/images/download.svg)](https://bintray.com/pusher/maven/chatkit-android/_latestVersion)
+[![Maven Central](https://img.shields.io/maven-central/v/com.pusher/chatkit-android.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.pusher%22%20AND%20a:%22chatkit-android%22)
 
 Find out more about Chatkit [here](https://pusher.com/chatkit).
 
