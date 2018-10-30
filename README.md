@@ -21,6 +21,8 @@ Please report incompatibilities with Java as bugs.
 
 The project is hosted primarily on JCenter, and synced to Maven Central.
 
+The latest release version can be seen in the badges above.
+
 ### Gradle
 
 ```
@@ -49,7 +51,7 @@ dependencies {
 <dependency>
   <groupId>com.pusher</groupId>
   <artifactId>chatkit-android</artifactId>
-  <version>1.0.0</version>
+  <version>VERSION</version>
 </dependency>
 ```
 
