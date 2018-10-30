@@ -67,6 +67,22 @@ It can be either a relative or absolute path.
 
 [1]: https://github.com/pusher/pusher-platform-android
 
+## Testing
+
+The SDK has integration tests which run against a real Chatkit server.
+In order to run them, you must provide Chatkit instance credentials in
+your Gradle `local.properties` (or as `-D` arguments to the VM executing
+the tests)
+
+*Important:* The tests may delete any and all resources associated with
+the instance you provide. Create a new one. Do not share it with any other
+use.
+
+```
+chatkit_integration_locator=<instance locator>
+chatkit_integration_key=<instance key>
+```
+
 ## Publishing
 
 ### jCenter
