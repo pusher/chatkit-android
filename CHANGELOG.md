@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.0...HEAD)
 
+### Fixed
+
+- URL Encoding of room IDs when sending typing indicators
+
 ## [1.0.0](https://github.com/pusher/chatkit-android/compare/0.2.4...1.0.0) - 2018-10-30
 
 ### Rewritten

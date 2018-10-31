@@ -15,6 +15,7 @@ import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
+import java.net.URLEncoder
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class SynchronousCurrentUser(
@@ -172,7 +173,7 @@ class SynchronousCurrentUser(
             if (canSendTypingEvent()) {
                 lastTypingEvent = System.currentTimeMillis()
                 client.doPost(
-                        path = "/rooms/$roomId/typing_indicators"
+                        path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/typing_indicators"
                 )
             } else {
                 Unit.asSuccess()
