@@ -91,7 +91,7 @@ internal class RoomService(
 
     fun updateRoom(
             roomId: String,
-            name: String,
+            name: String? = null,
             isPrivate: Boolean? = null,
             customData: CustomData? = null
     ): Result<Unit, Error> =
@@ -174,7 +174,7 @@ private fun noRoomMembershipError(room: Room) : Error =
         Errors.other("User is not a member of ${room.name}")
 
 internal data class UpdateRoomRequest(
-        val name: String,
+        val name: String?,
         val private: Boolean?,
         val customData: CustomData?
 )

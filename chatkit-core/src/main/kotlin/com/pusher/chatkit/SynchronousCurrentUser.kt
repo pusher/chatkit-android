@@ -79,11 +79,11 @@ class SynchronousCurrentUser(
     )
 
     @JvmOverloads
-    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+    fun updateRoom(room: Room, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
             this.updateRoom(room.id, name, isPrivate, customData)
 
     @JvmOverloads
-    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+    fun updateRoom(roomId: String, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
             chatManager.roomService.updateRoom(roomId, name, isPrivate, customData)
 
     fun deleteRoom(room: Room): Result<String, Error> =

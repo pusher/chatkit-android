@@ -224,7 +224,6 @@ class RoomSpek : Spek({
 
             superUser.updateRoom(
                     room = superUser.generalRoom,
-                    name = GENERAL,
                     isPrivate = true
             ).assumeSuccess()
 
@@ -252,7 +251,6 @@ class RoomSpek : Spek({
 
             superUser.updateRoom(
                     room = superUser.generalRoom,
-                    name = GENERAL,
                     customData = newCustomData
             ).assumeSuccess()
 
@@ -288,7 +286,6 @@ class RoomSpek : Spek({
 
             superUser.updateRoom(
                     room = superUser.generalRoom,
-                    name = GENERAL,
                     customData = newCustomData
             ).assumeSuccess()
 
