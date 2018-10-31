@@ -280,16 +280,18 @@ object InstanceActions {
         )
     }.withName("Create new users: ${names.joinToString(", ")}")
 
-    fun newRoom(name: String, vararg userNames: String, isPrivate: Boolean = false) = {
+    fun newRoom(name: String, vararg userNames: String, isPrivate: Boolean = false, customData: CustomData? = null) = {
         chatkitInstance.request<JsonElement>(
             options = RequestOptions(
                 path = "/rooms",
                 method = "POST",
-                body = mapOf(
-                    "name" to name,
-                    "user_ids" to userNames,
-                    "private" to isPrivate
-                ).toJson()
+                body = mutableMapOf<String, Any?>(
+                        "name" to name,
+                        "user_ids" to userNames,
+                        "private" to isPrivate
+                ).apply {
+                    if (customData != null) this += "custom_data" to customData
+                }.toJson()
             ),
             tokenProvider = sudoTokenProvider,
             responseParser = { it.parseAs() }

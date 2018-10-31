@@ -1,6 +1,7 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.ChatManagerEventConsumer
+import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.subscription.ChatkitSubscription
@@ -49,12 +50,14 @@ internal class RoomService(
             creatorId: String,
             name: String,
             isPrivate: Boolean,
+            customData: CustomData?,
             userIds: List<String>
     ): Result<Room, Error> =
             RoomCreateRequest(
                     name = name,
                     private = isPrivate,
                     createdById = creatorId,
+                    customData = customData,
                     userIds = userIds
             ).toJson()
                     .flatMap { body -> client.doPost<Room>("/rooms", body) }
@@ -86,8 +89,13 @@ internal class RoomService(
                         room
                     }
 
-    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
-            UpdateRoomRequest(name, isPrivate).toJson()
+    fun updateRoom(
+            roomId: String,
+            name: String,
+            isPrivate: Boolean? = null,
+            customData: CustomData? = null
+    ): Result<Unit, Error> =
+            UpdateRoomRequest(name, isPrivate, customData).toJson()
                     .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
 
     fun isSubscribedTo(roomId: String) =
@@ -167,12 +175,14 @@ private fun noRoomMembershipError(room: Room) : Error =
 
 internal data class UpdateRoomRequest(
         val name: String,
-        val isPrivate: Boolean?
+        val private: Boolean?,
+        val customData: CustomData?
 )
 
 private data class RoomCreateRequest(
     val name: String,
     val private: Boolean,
     val createdById: String,
+    val customData: CustomData?,
     var userIds: List<String> = emptyList()
 )
