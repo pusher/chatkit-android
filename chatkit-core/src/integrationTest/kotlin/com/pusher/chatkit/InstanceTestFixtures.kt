@@ -23,4 +23,5 @@ object Users {
 object Rooms {
     const val GENERAL = "general"
     const val NOT_GENERAL = "not-general"
+    val SAMPLE_CUSTOM_DATA = mapOf("custom" to "data")
 }

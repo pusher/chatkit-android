@@ -15,6 +15,7 @@ import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
+import java.net.URLEncoder
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class SynchronousCurrentUser(
@@ -67,21 +68,23 @@ class SynchronousCurrentUser(
     fun createRoom(
             name: String,
             isPrivate: Boolean = false,
+            customData: CustomData? = null,
             userIds: List<String> = emptyList()
     ): Result<Room, Error> = chatManager.roomService.createRoom(
             creatorId = id,
             name = name,
             isPrivate = isPrivate,
+            customData = customData,
             userIds = userIds
     )
 
     @JvmOverloads
-    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
-            updateRoom(room.id, name, isPrivate)
+    fun updateRoom(room: Room, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+            this.updateRoom(room.id, name, isPrivate, customData)
 
     @JvmOverloads
-    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null): Result<Unit, Error> =
-            chatManager.roomService.updateRoom(roomId, name, isPrivate)
+    fun updateRoom(roomId: String, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+            chatManager.roomService.updateRoom(roomId, name, isPrivate, customData)
 
     fun deleteRoom(room: Room): Result<String, Error> =
             deleteRoom(room.id)
@@ -172,7 +175,7 @@ class SynchronousCurrentUser(
             if (canSendTypingEvent()) {
                 lastTypingEvent = System.currentTimeMillis()
                 client.doPost(
-                        path = "/rooms/$roomId/typing_indicators"
+                        path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/typing_indicators"
                 )
             } else {
                 Unit.asSuccess()

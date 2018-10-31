@@ -4,6 +4,8 @@ import com.pusher.platform.network.Futures
 import com.pusher.util.Result
 import elements.Error
 
+typealias CustomData = Map<String, Any>
+
 class ChatManager(
          instanceLocator: String,
          userId: String,

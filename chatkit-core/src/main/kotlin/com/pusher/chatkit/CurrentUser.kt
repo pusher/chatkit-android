@@ -75,17 +75,27 @@ class CurrentUser(
     fun createRoom(
             name: String,
             isPrivate: Boolean = false,
+            customData: CustomData? = null,
             userIds: List<String> = emptyList(),
-            callback: (Result<Room, Error>) -> Unit) =
-            makeCallback({ syncCurrentUser.createRoom(name, isPrivate, userIds) }, callback)
+            callback: (Result<Room, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.createRoom(name, isPrivate, customData, userIds) }, callback)
 
     @JvmOverloads
-    fun updateRoom(room: Room, name: String, isPrivate: Boolean? = null, callback: (Result<Unit, Error>) -> Unit) =
-            makeCallback({ syncCurrentUser.updateRoom(room, name, isPrivate) }, callback)
+    fun updateRoom(
+            room: Room,
+            name: String,
+            isPrivate: Boolean? = null,
+            customData: CustomData? = null,
+            callback: (Result<Unit, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.updateRoom(room, name, isPrivate, customData) }, callback)
 
     @JvmOverloads
-    fun updateRoom(roomId: String, name: String, isPrivate: Boolean? = null, callback: (Result<Unit, Error>) -> Unit) =
-            makeCallback({ syncCurrentUser.updateRoom(roomId, name, isPrivate) }, callback)
+    fun updateRoom(roomId: String,
+                   name: String,
+                   isPrivate: Boolean? = null,
+                   customData: CustomData? = null,
+                   callback: (Result<Unit, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.updateRoom(roomId, name, isPrivate, customData) }, callback)
 
     fun deleteRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.deleteRoom(room) }, callback)

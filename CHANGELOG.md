@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.0...HEAD)
 
+### Fixed
+
+- URL Encoding of room IDs when sending typing indicators
+- Deserialization of Room privacy (always returned false)
+- Deserialization of User customData - was Map<String, String> when other clients were not
+  restricted to string values by the API.
+- Room name is optional when updating rooms
+
+### Added
+
+- Room objects have a custom data field which can hold a map of arbitrary data,
+  in the same way as a User object.
+
 ## [1.0.0](https://github.com/pusher/chatkit-android/compare/0.2.4...1.0.0) - 2018-10-30
 
 ### Rewritten
