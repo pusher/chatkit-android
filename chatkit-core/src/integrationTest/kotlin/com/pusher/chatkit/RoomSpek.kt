@@ -138,6 +138,20 @@ class RoomSpek : Spek({
             assertThat(room.name).isEqualTo(GENERAL)
         }
 
+        it("creates private room") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+
+            val room = pusherino.createRoom(
+                    name = GENERAL,
+                    isPrivate = true
+            ).assumeSuccess()
+
+            assertThat(room.name).isEqualTo(GENERAL)
+            assertThat(room.isPrivate).isEqualTo(true)
+        }
+
         it("updates room name") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
@@ -146,6 +160,28 @@ class RoomSpek : Spek({
             val room = superUser.updateRoom(superUser.generalRoom, NOT_GENERAL)
 
             check(room is Success) { (room as? Failure)?.error as Any }
+        }
+
+        it("updates room privacy") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            val updatedRoom by chatFor(ALICE).connectFor { event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated ->event.room
+                    else -> null
+                }
+            }
+
+            superUser.updateRoom(
+                    room = superUser.generalRoom,
+                    name = GENERAL,
+                    isPrivate = true
+            ).assumeSuccess()
+
+            assertThat(updatedRoom.name).isEqualTo(GENERAL)
+            assertThat(updatedRoom.isPrivate).isEqualTo(true)
         }
 
         it("deletes room") {

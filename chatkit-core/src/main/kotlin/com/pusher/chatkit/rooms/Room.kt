@@ -6,6 +6,7 @@ data class Room(
     val id: String,
     val createdById: String,
     var name: String,
+    @SerializedName("private")
     var isPrivate: Boolean,
     val createdAt: String,
     var updatedAt: String,
