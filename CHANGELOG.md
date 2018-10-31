@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - URL Encoding of room IDs when sending typing indicators
 - Deserialization of Room privacy (always returned false)
+- Deserialization of User customData - was Map<String, String> when other clients were not
+  restricted to string values by the API.
 - Room name is optional when updating rooms
 
 ### Added
