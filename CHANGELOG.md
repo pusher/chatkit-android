@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.1...HEAD)
 
+### Fixed
+
+- Upgrade pusher-platform-android to get fix for subscription reconnections
+
 ## [1.0.1](https://github.com/pusher/chatkit-android/compare/1.0.0...1.0.1) - 2018-10-31
 
 ### Fixed
