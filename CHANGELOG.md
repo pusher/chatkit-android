@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.2...HEAD)
 
+### Breaking
+
+- Removed the `userId` constructor argument in favour of newly added `queryParams` argument
+  to keep consistent with other client libraries.
+- Removed the `authData` constructor argument to be in line with other client SDK's.
+- Both of the above are **breaking** changes.
+
 ## [1.0.2](https://github.com/pusher/chatkit-android/compare/1.0.1...1.0.2)
 
 ### Fixed

@@ -31,7 +31,7 @@ class SynchronousChatManager constructor(
     internal val dependencies: ChatkitDependencies
 ) {
     private val tokenProvider: TokenProvider = DebounceTokenProvider(
-            dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
+            dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.queryParams?.put("user_id", userId) }
     )
 
     private val logger = dependencies.logger

@@ -23,7 +23,7 @@ import java.util.*
 
 private val testProvider = ChatkitTokenProvider(
     endpoint = "https://localhost",
-    userId = "pusherino"
+    queryParams = mutableMapOf("user_id" to "pusherino")
 )
 
 internal class ChatkitTokenProviderTest : Spek({
@@ -64,7 +64,7 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("provides CustomData as part of request") {
             val provider = testProvider.copy(
-                authData = mapOf("key" to "value"),
+                queryParams = mutableMapOf("key" to "value"),
                 client = mock {
                     newCall(argThat {
                         it.url().toString() == "https://localhost/?user_id=pusherino" &&

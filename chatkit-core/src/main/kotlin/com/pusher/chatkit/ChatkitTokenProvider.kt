@@ -14,25 +14,24 @@ import java.util.concurrent.Future
 /**
  * Simple token provider for Chatkit. Uses an in-memory cache for storing token.
  * @param endpoint location of this token provider.
- * @param authData data to be sent alongside each request to the token providing endpoint.
+ * @param queryParams Query parameters to be sent to the endpoint
  * @param client
  * @param tokenCache
  * */
 data class ChatkitTokenProvider
 @JvmOverloads constructor(
     val endpoint: String,
-    internal var userId: String,
-    private val authData: Map<String, String> = emptyMap(),
+    internal var queryParams: MutableMap<String, String> = mutableMapOf(),
     private val client: OkHttpClient = OkHttpClient(),
     private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 ) : TokenProvider {
 
     private val httpUrl =
-            HttpUrl.parse(endpoint)
-                    ?.newBuilder()
-                    ?.apply { addQueryParameter("user_id", userId) }
-                    ?.build()
-                    ?: throw IllegalArgumentException("Token Provider endpoint is not valid URL")
+        HttpUrl.parse(endpoint)
+            ?.newBuilder()
+            ?.apply { queryParams.forEach{ (k, v) -> addQueryParameter(k, v)} }
+            ?.build()
+            ?: throw IllegalArgumentException("Token Provider endpoint is not valid URL")
 
     override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> {
         val cachedToken = tokenCache.getTokenFromCache()
@@ -63,7 +62,6 @@ data class ChatkitTokenProvider
 
     private fun requestBody(tokenParams: Any?) = FormBody.Builder().apply {
         add("grant_type", "client_credentials")
-        add(authData)
         if (tokenParams is ChatkitTokenParams) add(tokenParams.extras)
     }.build()
 
