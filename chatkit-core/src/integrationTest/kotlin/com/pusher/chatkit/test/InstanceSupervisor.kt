@@ -222,7 +222,8 @@ object InstanceActions {
     fun newUser(
         id: String,
         name: String = "No name",
-        avatarUrl: String = "https://gravatar.com/img/2124"
+        avatarUrl: String = "https://gravatar.com/img/2124",
+        customData: CustomData? = null
     ): InstanceAction = {
         chatkitInstance.request<JsonElement>(
             options = RequestOptions(
@@ -231,7 +232,8 @@ object InstanceActions {
                 body = mapOf(
                     "name" to name,
                     "id" to id,
-                    "avatar_url" to avatarUrl
+                    "avatar_url" to avatarUrl,
+                    "custom_data" to customData
                 ).toJson()
             ),
             tokenProvider = sudoTokenProvider,
