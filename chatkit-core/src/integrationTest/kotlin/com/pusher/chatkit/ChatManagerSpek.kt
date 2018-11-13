@@ -31,15 +31,25 @@ class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
-    describe("SynchronousChatManager with valid instance") {
+    describe("SynchronousChatManager") {
 
         it("loads current user") {
-            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUser(
+                            id = PUSHERINO,
+                            name = "pusherino",
+                            avatarUrl = "https://example.com/face.png",
+                            customData = mapOf("custom" to "data")
+                    )
+            )
 
-            val user = chatFor(PUSHERINO).connect()
-            val userId = user.assumeSuccess().id
+            val user = chatFor(PUSHERINO).connect().assumeSuccess()
 
-            assertThat(userId).isEqualTo(PUSHERINO)
+            assertThat(user.id).isEqualTo(PUSHERINO)
+            assertThat(user.name).isEqualTo("pusherino")
+            assertThat(user.avatarURL).isEqualTo("https://example.com/face.png")
+            assertThat(user.customData).isEqualTo(mapOf("custom" to "data"))
         }
 
         it("loads user rooms") {
