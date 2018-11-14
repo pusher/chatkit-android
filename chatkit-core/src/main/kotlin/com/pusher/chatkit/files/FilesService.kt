@@ -1,13 +1,9 @@
 package com.pusher.chatkit.files
 
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.util.parseAs
-import com.pusher.platform.RequestDestination
-import com.pusher.platform.RequestOptions
 import com.pusher.util.Result
 import elements.Error
 import java.net.URLEncoder
-import java.util.concurrent.Future
 
 internal class FilesService(
         private val client: PlatformClient

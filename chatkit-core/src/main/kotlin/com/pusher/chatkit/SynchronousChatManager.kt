@@ -7,12 +7,16 @@ import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
-import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.pushnotifications.BeamsTokenProviderService
+import com.pusher.chatkit.rooms.RoomConsumer
+import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.Instance
+import com.pusher.platform.Locator
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
@@ -26,7 +30,7 @@ import java.util.concurrent.CountDownLatch
 class SynchronousChatManager constructor(
     private val instanceLocator: String,
     private val userId: String,
-    internal val dependencies: ChatkitDependencies
+    private val dependencies: ChatkitDependencies
 ) {
     private val tokenProvider: TokenProvider = DebounceTokenProvider(
             dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
@@ -37,6 +41,11 @@ class SynchronousChatManager constructor(
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
+
+    private val beams = dependencies.pushNotifications.newBeams(
+            Locator(instanceLocator).id,
+            BeamsTokenProviderService(createPlatformClient(InstanceType.BEAMS_TOKEN_PROVIDER))
+    )
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
@@ -276,6 +285,7 @@ class SynchronousChatManager constructor(
             customData = initialState.currentUser.customData,
             name = initialState.currentUser.name,
             chatManager = this,
+            pushNotifications = beams,
             client = createPlatformClient(InstanceType.DEFAULT)
     )
 
@@ -309,11 +319,17 @@ class SynchronousChatManager constructor(
                 }
             }, tokenProvider)
     }
+
+
+    fun disablePushNotifications(): Result<Unit, Error> {
+        return beams.stop()
+    }
 }
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
     DEFAULT("chatkit", "v2"),
     CURSORS("chatkit_cursors", "v2"),
     PRESENCE("chatkit_presence", "v2"),
-    FILES("chatkit_files")
+    FILES("chatkit_files"),
+    BEAMS_TOKEN_PROVIDER("chatkit_beams_token_provider")
 }

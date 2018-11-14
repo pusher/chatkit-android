@@ -1,7 +1,7 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.util.FutureValue
 
 /**
  * Waits for connection to be stabilised before waiting for a given event

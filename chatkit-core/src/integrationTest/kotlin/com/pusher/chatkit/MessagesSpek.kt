@@ -10,7 +10,7 @@ import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.util.FutureValue
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers

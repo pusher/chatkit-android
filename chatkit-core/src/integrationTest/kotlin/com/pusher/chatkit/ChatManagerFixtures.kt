@@ -1,6 +1,8 @@
 package com.pusher.chatkit
 
 import com.pusher.SdkInfo
+import com.pusher.chatkit.pushnotifications.PushNotificationsFactory
+import com.pusher.chatkit.test.NoPushNotificationFactory
 import com.pusher.chatkit.test.insecureOkHttpClient
 import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.PlatformDependencies
@@ -47,6 +49,7 @@ class TestChatkitDependencies(
             chain.proceed(chain.request().newBuilder().addHeader("Connection", "close").build())
         }
     }.build()
+    override val pushNotifications = NoPushNotificationFactory()
 }
 
 val SynchronousCurrentUser.generalRoom

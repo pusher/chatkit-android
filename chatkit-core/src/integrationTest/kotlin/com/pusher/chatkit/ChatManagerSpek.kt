@@ -12,7 +12,7 @@ import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.toCallback
-import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.util.FutureValue
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser

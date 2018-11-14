@@ -1,4 +1,4 @@
-package com.pusher.chatkit.test
+package com.pusher.chatkit.util
 
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.Wait

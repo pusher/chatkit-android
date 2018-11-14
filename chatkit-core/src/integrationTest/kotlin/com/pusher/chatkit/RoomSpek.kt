@@ -9,7 +9,7 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.test.FutureValue
+import com.pusher.chatkit.util.FutureValue
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.deleteRoom
