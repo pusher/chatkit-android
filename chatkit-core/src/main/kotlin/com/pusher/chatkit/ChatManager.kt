@@ -56,6 +56,13 @@ class ChatManager(
      *   // this line does not execute connect has completed
      */
     fun blocking() = syncChatManager
+
+    fun disablePushNotifications(callback: (Result<Unit, Error>) -> Unit) {
+      makeCallback(
+              f = { syncChatManager.disablePushNotifications() },
+              c = callback
+      )
+    }
 }
 
 fun <V> makeCallback(f: () -> V, c: (V) -> Unit) {

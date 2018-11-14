@@ -182,4 +182,7 @@ class CurrentUser(
 
     fun usersForRoom(room: Room, callback: (Result<List<User>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.usersForRoom(room) }, callback)
+
+    fun enablePushNotifications(callback: (Result<Unit, Error>) -> Unit) =
+            makeCallback({ syncCurrentUser.enablePushNotifications() } , callback)
 }

@@ -7,7 +7,10 @@ import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
-import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.pushnotifications.BeamsTokenProviderService
+import com.pusher.chatkit.rooms.RoomConsumer
+import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -24,7 +27,7 @@ import elements.Errors
 import java.util.concurrent.CountDownLatch
 
 class SynchronousChatManager constructor(
-    private val instanceLocator: String,
+    internal val instanceLocator: String,
     private val userId: String,
     internal val dependencies: ChatkitDependencies
 ) {
@@ -37,6 +40,9 @@ class SynchronousChatManager constructor(
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
+    private val beamsTokenProviderClient = createPlatformClient(InstanceType.BEAMS_TOKEN_PROVIDER)
+
+    internal val beamsTokenProviderService = BeamsTokenProviderService(beamsTokenProviderClient)
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
@@ -309,11 +315,22 @@ class SynchronousChatManager constructor(
                 }
             }, tokenProvider)
     }
+
+
+    fun disablePushNotifications(): Result<Unit, Error> {
+        val pn = dependencies.pushNotifications
+        if (pn == null) {
+          throw IllegalStateException("PushNotifications dependency not available")
+        }
+
+        return pn.stop()
+    }
 }
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
     DEFAULT("chatkit", "v2"),
     CURSORS("chatkit_cursors", "v2"),
     PRESENCE("chatkit_presence", "v2"),
-    FILES("chatkit_files")
+    FILES("chatkit_files"),
+    BEAMS_TOKEN_PROVIDER("chatkit_beams_token_provider")
 }

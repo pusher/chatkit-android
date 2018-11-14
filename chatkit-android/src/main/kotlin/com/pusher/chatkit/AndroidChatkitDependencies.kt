@@ -1,6 +1,8 @@
 package com.pusher.chatkit
 
+import android.content.Context
 import com.pusher.SdkInfo
+import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.platform.AndroidDependencies
 import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.PlatformDependencies
@@ -12,6 +14,7 @@ import okhttp3.OkHttpClient
  * [ChatkitDependencies] implementation for Android using [AndroidDependencies] to fulfil [PlatformDependencies].
  */
 data class AndroidChatkitDependencies @JvmOverloads constructor(
+    val context: Context,
     override val tokenProvider: TokenProvider,
     override val okHttpClient: OkHttpClient? = null,
     private val platformDependencies: PlatformDependencies = AndroidDependencies(),
@@ -20,6 +23,7 @@ data class AndroidChatkitDependencies @JvmOverloads constructor(
 
     override val mediaTypeResolver: MediaTypeResolver = platformDependencies.mediaTypeResolver
     override val sdkInfo: SdkInfo = chatkitSdkInfo
+    override val pushNotifications: PushNotifications? = BeamsPushNotifications(context)
 
 }
 

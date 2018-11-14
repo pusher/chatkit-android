@@ -66,6 +66,13 @@ dependencies {
     androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
+    api 'com.github.pusher:push-notifications-android:add-users-support-SNAPSHOT'
+    implementation 'net.sourceforge.streamsupport:streamsupport-cfuture:1.6.3'
+}
+
+repositories {
+    maven { url 'https://jitpack.io' }
 }
 
 bintray {

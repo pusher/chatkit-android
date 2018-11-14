@@ -14,6 +14,7 @@ import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
+import java.lang.IllegalStateException
 import java.net.URLEncoder
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
@@ -189,4 +190,15 @@ class SynchronousCurrentUser(
     fun usersForRoom(room: Room): Result<List<User>, Error> =
             chatManager.userService.fetchUsersBy(room.memberUserIds)
                     .map { it.values.toList() }
+
+    fun enablePushNotifications(): Result<Unit, Error> {
+        val pn = chatManager.dependencies.pushNotifications
+        if (pn == null) {
+            throw IllegalStateException("PushNotifications dependency not available")
+        }
+
+        return pn.start(client.platformInstance.id, chatManager.beamsTokenProviderService).flatMap {
+           pn.setUserId(id)
+        }
+    }
 }
