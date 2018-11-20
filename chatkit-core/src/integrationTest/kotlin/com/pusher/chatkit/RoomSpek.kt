@@ -202,6 +202,74 @@ class RoomSpek : Spek({
             assertThat(updatedRoom.customData).isEqualTo(SAMPLE_CUSTOM_DATA)
         }
 
+        it("user receives room updated event with new name after reconnecting (room updated when offline)") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(
+                            name = GENERAL,
+                            customData = SAMPLE_CUSTOM_DATA,
+                            userNames = *arrayOf(PUSHERINO, ALICE)
+                    )
+            )
+
+            val pusherino = chatFor(PUSHERINO)
+            pusherino.connect().assumeSuccess()
+            pusherino.close()
+
+            // update the room while pusherino is offline
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.updateRoom(
+                    room = superUser.generalRoom,
+                    name = NOT_GENERAL
+            ).assumeSuccess()
+
+            // reconnect
+            val updatedRoom by pusherino.connectFor{ event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated -> event.room
+                    else -> null
+                }
+            }
+
+            assertThat(updatedRoom.name).isEqualTo(NOT_GENERAL)
+        }
+
+        it("user receives room updated event with new custom data after reconnecting (room updated when offline)") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(
+                            name = GENERAL,
+                            customData = SAMPLE_CUSTOM_DATA,
+                            userNames = *arrayOf(PUSHERINO, ALICE)
+                    )
+            )
+
+            val pusherino = chatFor(PUSHERINO)
+            pusherino.connect().assumeSuccess()
+            pusherino.close()
+
+            val newCustomData = mapOf("foo" to "bar")
+            // update the room while pusherino is offline
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.updateRoom(
+                    room = superUser.generalRoom,
+                    customData = newCustomData
+            ).assumeSuccess()
+
+            // reconnect
+            val updatedRoom by pusherino.connectFor{ event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated -> event.room
+                    else -> null
+                }
+            }
+
+            assertThat(updatedRoom.name).isEqualTo(GENERAL)
+            assertThat(updatedRoom.customData).isEqualTo(newCustomData)
+        }
+
         it("updates room privacy") {
             setUpInstanceWith(
                     createDefaultRole(),
