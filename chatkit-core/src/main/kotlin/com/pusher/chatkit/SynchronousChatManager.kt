@@ -7,10 +7,7 @@ import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
-import com.pusher.chatkit.rooms.minus
-import com.pusher.chatkit.rooms.RoomConsumer
-import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -197,23 +194,22 @@ class SynchronousChatManager constructor(
     }
 
     private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): ChatEvent =
-                when (event) {
-                    is CursorSubscriptionEvent.OnCursorSet ->
-                        ChatEvent.NewReadCursor(event.cursor)
-                    else ->
-                        ChatEvent.NoEvent
-                }
+            when (event) {
+                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
+                else -> ChatEvent.NoEvent
+            }
 
     private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
-                val removedFrom = (roomService.roomStore.toList() - event.rooms).also {
+                val knownRooms = roomService.roomStore.toList()
+                val removedFrom = (knownRooms - event.rooms).also {
                     roomService.roomStore -= it
                 }.map {
                     UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
                 }
 
-                val addedTo = (event.rooms - roomService.roomStore.toList()).also {
+                val addedTo = (event.rooms - knownRooms).also {
                     roomService.roomStore += it
                 }.map {
                     UserSubscriptionEvent.AddedToRoomEvent(it)
@@ -229,7 +225,7 @@ class SynchronousChatManager constructor(
 
                 currentUser.set(createCurrentUser(event))
 
-                removedFrom + addedTo + listOf(event)
+                removedFrom + addedTo + updated + listOf(event)
             }
             is UserSubscriptionEvent.AddedToRoomEvent ->
                 listOf(event.also { roomService.roomStore += event.room })
