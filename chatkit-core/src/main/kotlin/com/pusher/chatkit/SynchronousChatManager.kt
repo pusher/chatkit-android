@@ -7,6 +7,7 @@ import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
+import com.pusher.chatkit.rooms.minus
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
@@ -68,24 +69,9 @@ class SynchronousChatManager constructor(
                     dependencies.logger
             )
 
-    private val userSubscription by lazy {
-        ResolvableSubscription(
-                client = chatkitClient,
-                path = "users",
-                listeners = SubscriptionListeners(
-                        onEvent = { event -> consumeUserSubscriptionEvent(event.body) },
-                        onError = { error -> consumeUserSubscriptionEvent(UserSubscriptionEvent.ErrorOccurred(error)) }
-                ),
-                messageParser = UserSubscriptionEventParser,
-                resolveOnFirstEvent = true,
-                description = "User",
-                logger = logger
-        )
-    }
+    private lateinit var userSubscription: ResolvableSubscription<UserSubscriptionEvent>
+    private lateinit var cursorSubscription: ResolvableSubscription<CursorSubscriptionEvent>
 
-    private val cursorSubscription by lazy {
-        cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
-    }
 
     private var currentUser = object {
         private val updateLock = object{}
@@ -116,10 +102,22 @@ class SynchronousChatManager constructor(
     fun connect(consumer: ChatManagerEventConsumer = {}): Result<SynchronousCurrentUser, Error> {
         eventConsumers += consumer
 
-        // Touching them constructs them. Lazy is weird
-        userSubscription
-        cursorSubscription
-        // Then we await the connection of both
+        userSubscription = ResolvableSubscription(
+                client = chatkitClient,
+                path = "users",
+                listeners = SubscriptionListeners(
+                        onEvent = { event -> consumeUserSubscriptionEvent(event.body) },
+                        onError = { error -> consumeUserSubscriptionEvent(UserSubscriptionEvent.ErrorOccurred(error)) }
+                ),
+                messageParser = UserSubscriptionEventParser,
+                resolveOnFirstEvent = true,
+                description = "User $userId",
+                logger = logger
+        )
+        cursorSubscription =
+                cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
+
+        // Await connection of both subscriptions
         userSubscription.await()
         cursorSubscription.await()
 
@@ -128,10 +126,11 @@ class SynchronousChatManager constructor(
                 .asSuccess()
     }
 
-    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) =
-            consumeEvents(
-                    applyUserSubscriptionEvent(event).map { transformUserSubscriptionEvent(it) }
-            )
+    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) {
+        consumeEvents(
+                applyUserSubscriptionEvent(event).map { transformUserSubscriptionEvent(it) }
+        )
+    }
 
     private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
             consumeEvents(listOf(transformCursorsSubscriptionEvent(event)))
@@ -218,6 +217,14 @@ class SynchronousChatManager constructor(
                     roomService.roomStore += it
                 }.map {
                     UserSubscriptionEvent.AddedToRoomEvent(it)
+                }
+
+                val updated = event.rooms.filter { nr ->
+                    knownRooms.any { kr ->
+                        kr == nr && !kr.deepEquals(nr)
+                    }
+                }.map {
+                    UserSubscriptionEvent.RoomUpdatedEvent(it)
                 }
 
                 currentUser.set(createCurrentUser(event))
