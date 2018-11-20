@@ -24,8 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - URL Encoding of room IDs when sending typing indicators
-- Deserialization of Room privacy (always returned false)
-- Deserialization of User customData - was Map<String, String> when other clients were not
+- Deserialization of `Room` privacy (always returned false)
+- Deserialization of `User` `customData` - was `Map<String, String>` when other clients were not
   restricted to string values by the API.
 - Room name is optional when updating rooms
 
@@ -56,6 +56,7 @@ A summary of changes:
 - The `fetchAttachment` method has been removed. It is no longer required, as we
   no longer serve attachment URLs which require redirection. All URLs returned
   point directly the the content.
+- Room IDs are now modelled as `String`s instead of `Int`s
 
 ### Semantics
 
