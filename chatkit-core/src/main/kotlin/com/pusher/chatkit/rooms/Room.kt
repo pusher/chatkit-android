@@ -28,4 +28,9 @@ data class Room(
     fun addUser(userId: String) {
         memberUserIds() += userId
     }
+
+    override fun equals(other: Any?) = (other is Room) && other.id == this.id
+
+    fun deepEquals(room: Room) =
+            room.name == this.name && room.customData == this.customData && room.isPrivate == this.isPrivate
 }
