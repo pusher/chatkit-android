@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.3...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.4...HEAD)
+
+## [1.0.4]https://github.com/pusher/chatkit-android/compare/1.0.3...1.0.4) - 2018-11-21
+
+## Fixed
+
+- Fixed sequence of catch up events generated when `RoomUpdated` is received when
+  client loses connectivity. It will now only generate a `RoomUpdated` event
+  when a room's properties change.
+- Fixed `close` and `connect` in `ChatManager`. Previously calling `close` and then
+  `connect` again would not create a new connection. Doing so now will close the existing
+  connection and create a new one.
 
 ## [1.0.3](https://github.com/pusher/chatkit-android/compare/1.0.2...1.0.3) - 2018-11-13
 
