@@ -67,7 +67,7 @@ internal class MessageService(
     ): Result<AttachmentBody, Error> =
             when (this) {
                 is DataAttachment -> filesService.uploadFile(this, roomId, userId)
-                is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
+                is LinkAttachment -> AttachmentBody.Resource(link, type.toString(), name)
                         .asSuccess()
                 is NoAttachment -> AttachmentBody.None
                         .asSuccess()
