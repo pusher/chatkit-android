@@ -9,7 +9,6 @@ import com.pusher.util.asSuccess
 import com.pusher.util.collect
 import elements.Error
 import elements.Errors
-import okhttp3.HttpUrl
 
 internal class MessageService(
         private val client: PlatformClient,
@@ -25,13 +24,6 @@ internal class MessageService(
             fetchMessagesParams(limit, initialId, direction).let { params ->
                 client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
                     messages.map { message ->
-                        if (message.attachment != null) {
-                                message.attachment.fetchRequired =
-                                        HttpUrl.parse(message.attachment.link)
-                                                ?.queryParameter("chatkit_link")
-                                                ?.toLowerCase() == "true"
-                        }
-
                         userService.fetchUserBy(message.userId).map { user ->
                             message.user = user
                             message
@@ -67,7 +59,7 @@ internal class MessageService(
     ): Result<AttachmentBody, Error> =
             when (this) {
                 is DataAttachment -> filesService.uploadFile(this, roomId, userId)
-                is LinkAttachment -> AttachmentBody.Resource(link, type.toString(), name)
+                is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
                         .asSuccess()
                 is NoAttachment -> AttachmentBody.None
                         .asSuccess()
