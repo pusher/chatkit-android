@@ -77,7 +77,7 @@ class MessagesSpek : Spek({
                 alice.sendMessage(
                         room,
                         "message with Chatkit attachment",
-                        DataAttachment(billMurray)
+                        DataAttachment(billMurray, "billmurray.jpeg")
                 ).assumeSuccess()
             }
 
@@ -119,7 +119,7 @@ class MessagesSpek : Spek({
             alice.sendMessage(
                 room = alice.generalRoom,
                 messageText = "Cats and dogs, living together",
-                attachment = DataAttachment(billMurray)
+                attachment = DataAttachment(billMurray, "billmurray.jpeg")
             ).assumeSuccess()
 
             val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
@@ -197,6 +197,7 @@ class MessagesSpek : Spek({
                 assertThat(attachment).isNotNull()
                 assertThat(attachment?.link).isEqualTo("https://www.fillmurray.com/284/196")
                 assertThat(attachment?.type).isEqualTo("image")
+                assertThat(attachment?.name).isEqualTo("196")
             }
         }
 
@@ -217,7 +218,7 @@ class MessagesSpek : Spek({
             alice.sendMessage(
                 room = alice.generalRoom,
                 messageText = "Cats and dogs, living together",
-                attachment = DataAttachment(billMurray)
+                attachment = DataAttachment(billMurray, "billmurray.jpeg")
             ).assumeSuccess()
 
             with(receivedMessage) {
@@ -226,6 +227,7 @@ class MessagesSpek : Spek({
                 assertThat(attachment).isNotNull()
                 assertThat(attachment?.link).isNotNull()
                 assertThat(attachment?.type).isEqualTo("image")
+                assertThat(attachment?.name).isEqualTo("billmurray.jpeg")
             }
         }
     }

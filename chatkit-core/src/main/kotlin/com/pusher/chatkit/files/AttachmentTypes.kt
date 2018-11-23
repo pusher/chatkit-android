@@ -7,7 +7,7 @@ sealed class GenericAttachment
 
 data class DataAttachment @JvmOverloads constructor(
     val file: File,
-    val name: String = "${UUID.randomUUID()}"
+    val name: String
 ): GenericAttachment()
 
 data class LinkAttachment(val link: String, val type: AttachmentType): GenericAttachment()

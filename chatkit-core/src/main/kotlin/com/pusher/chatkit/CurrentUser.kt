@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.files.FetchedAttachment
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction

@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.4...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.0.5...HEAD)
+
+## [1.0.5]https://github.com/pusher/chatkit-android/compare/1.0.4...1.0.5) - 2018-11-23
+
+- `Attachment` now contains an additional `name` attribute pointing to the name of the file.
+- Removed all logic related to `FetchedAttachment` since links returned by the server do not
+  require an additional "fetch" step.
 
 ## [1.0.4]https://github.com/pusher/chatkit-android/compare/1.0.3...1.0.4) - 2018-11-21
 
