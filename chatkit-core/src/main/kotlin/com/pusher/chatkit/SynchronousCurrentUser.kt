@@ -15,7 +15,6 @@ import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 import elements.Subscription
-import java.lang.IllegalStateException
 import java.net.URLEncoder
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
