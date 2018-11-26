@@ -2,7 +2,7 @@ package com.pusher.chatkit
 
 import android.content.Context
 import com.pusher.SdkInfo
-import com.pusher.chatkit.pushnotifications.PushNotifications
+import com.pusher.chatkit.pushnotifications.PushNotificationsFactory
 import com.pusher.platform.AndroidDependencies
 import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.PlatformDependencies
@@ -23,8 +23,7 @@ data class AndroidChatkitDependencies @JvmOverloads constructor(
 
     override val mediaTypeResolver: MediaTypeResolver = platformDependencies.mediaTypeResolver
     override val sdkInfo: SdkInfo = chatkitSdkInfo
-    override val pushNotifications: PushNotifications? = BeamsPushNotifications(context)
-
+    override val pushNotifications: PushNotificationsFactory = BeamsPushNotificationsFactory(context)
 }
 
 private val chatkitSdkInfo get() = SdkInfo(

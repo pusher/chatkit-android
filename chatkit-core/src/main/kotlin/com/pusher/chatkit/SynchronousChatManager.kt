@@ -27,9 +27,9 @@ import elements.Errors
 import java.util.concurrent.CountDownLatch
 
 class SynchronousChatManager constructor(
-    internal val instanceLocator: String,
+    private val instanceLocator: String,
     private val userId: String,
-    internal val dependencies: ChatkitDependencies
+    private val dependencies: ChatkitDependencies
 ) {
     private val tokenProvider: TokenProvider = DebounceTokenProvider(
             dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
@@ -40,9 +40,11 @@ class SynchronousChatManager constructor(
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
-    private val beamsTokenProviderClient = createPlatformClient(InstanceType.BEAMS_TOKEN_PROVIDER)
 
-    internal val beamsTokenProviderService = BeamsTokenProviderService(beamsTokenProviderClient)
+    private val beams = dependencies.pushNotifications.newBeams(
+            instanceLocator,
+            BeamsTokenProviderService(createPlatformClient(InstanceType.BEAMS_TOKEN_PROVIDER))
+    )
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
@@ -282,6 +284,7 @@ class SynchronousChatManager constructor(
             customData = initialState.currentUser.customData,
             name = initialState.currentUser.name,
             chatManager = this,
+            pushNotifications = beams,
             client = createPlatformClient(InstanceType.DEFAULT)
     )
 
@@ -318,12 +321,7 @@ class SynchronousChatManager constructor(
 
 
     fun disablePushNotifications(): Result<Unit, Error> {
-        val pn = dependencies.pushNotifications
-        if (pn == null) {
-          throw IllegalStateException("PushNotifications dependency not available")
-        }
-
-        return pn.stop()
+        return beams.stop()
     }
 }
 

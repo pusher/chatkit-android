@@ -13,7 +13,7 @@ import elements.Error
 import elements.Subscription
 
 class PlatformClient(
-        internal val platformInstance: Instance,
+        private val platformInstance: Instance,
         private val tokenProvider: TokenProvider
 ) {
 

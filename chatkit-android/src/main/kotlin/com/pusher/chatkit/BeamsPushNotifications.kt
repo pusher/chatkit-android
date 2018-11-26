@@ -13,12 +13,12 @@ import com.pusher.pushnotifications.PushNotifications as Beams
 
 // Implementation of `PushNotifications` interface using Pusher Beams!
 class BeamsPushNotifications(
-        private val context: Context
+        private val context: Context,
+        private val instanceId: String,
+        private val beamsTokenProviderService: BeamsTokenProviderService
 ) : PushNotifications {
-    override fun start(
-            instanceId: String,
-            beamsTokenProviderService: BeamsTokenProviderService
-    ): Result<Unit, Error> {
+
+    override fun start(): Result<Unit, Error> {
         val tokenProvider = object : TokenProvider {
             override fun fetchToken(userId: String): String? {
                 return beamsTokenProviderService.fetchToken(userId).map { it.token }.recover { null }
