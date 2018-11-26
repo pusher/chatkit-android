@@ -9,22 +9,40 @@ import java.net.URLEncoder
 import java.util.*
 
 class PresenceService(
-        myUserId: String,
+        private val myUserId: String,
         private val client: PlatformClient,
         private val consumer: PresenceSubscriptionConsumer,
         private val logger: Logger
 ) {
     private val subscriptions = HashMap<String, Subscription>()
+    private var registrationSub: Subscription? = null
 
-    private val registrationSub =
-            loggingSubscription(
-                    path = "/users/${URLEncoder.encode(myUserId, "UTF-8")}/register",
-                    listeners = SubscriptionListeners(),
-                    messageParser = PresenceSubscriptionEventParser(myUserId),
-                    logger = logger,
-                    client = client,
-                    description = "PresenceRegistration $myUserId"
-            )
+    init {
+        goOnline()
+    }
+
+    fun goOnline() {
+        synchronized(this) {
+            if (registrationSub == null) {
+                registrationSub =
+                        loggingSubscription(
+                                path = "/users/${URLEncoder.encode(myUserId, "UTF-8")}/register",
+                                listeners = SubscriptionListeners(),
+                                messageParser = PresenceSubscriptionEventParser(myUserId),
+                                logger = logger,
+                                client = client,
+                                description = "PresenceRegistration $myUserId"
+                        )
+            }
+        }
+    }
+
+    fun goOffline() {
+        synchronized(this) {
+            registrationSub?.unsubscribe()
+            registrationSub = null
+        }
+    }
 
     fun subscribeToUser(userId: String) {
         synchronized(subscriptions) {
@@ -60,6 +78,6 @@ class PresenceService(
             }
             subscriptions.clear()
         }
-        registrationSub.unsubscribe()
+        goOffline()
     }
 }
