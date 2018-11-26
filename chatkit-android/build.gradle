@@ -67,6 +67,7 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
     api 'com.github.pusher:push-notifications-android:add-users-support-SNAPSHOT'
 }
 

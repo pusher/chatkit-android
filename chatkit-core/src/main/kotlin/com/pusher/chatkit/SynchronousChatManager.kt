@@ -107,6 +107,11 @@ class SynchronousChatManager constructor(
     fun connect(consumer: ChatManagerEventConsumer = {}): Result<SynchronousCurrentUser, Error> {
         eventConsumers += consumer
 
+        dependencies.appHooks.register(
+                presenceService::goOffline,
+                presenceService::goOnline
+        )
+
         userSubscription = ResolvableSubscription(
                 client = chatkitClient,
                 path = "users",
@@ -122,7 +127,6 @@ class SynchronousChatManager constructor(
         cursorSubscription =
                 cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
 
-        // Await connection of both subscriptions
         userSubscription.await()
         cursorSubscription.await()
 

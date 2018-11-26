@@ -8,5 +8,6 @@ import okhttp3.OkHttpClient
 interface ChatkitDependencies : PlatformDependencies {
     val tokenProvider: TokenProvider
     val okHttpClient : OkHttpClient?
+    val appHooks: AppHooks
     val pushNotifications: PushNotificationsFactory
 }
