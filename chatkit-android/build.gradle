@@ -68,7 +68,6 @@ dependencies {
     })
 
     api 'com.github.pusher:push-notifications-android:add-users-support-SNAPSHOT'
-    implementation 'net.sourceforge.streamsupport:streamsupport-cfuture:1.6.3'
 }
 
 repositories {
