@@ -16,6 +16,7 @@ import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.Instance
+import com.pusher.platform.Locator
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
@@ -42,7 +43,7 @@ class SynchronousChatManager constructor(
     private val filesClient = createPlatformClient(InstanceType.FILES)
 
     private val beams = dependencies.pushNotifications.newBeams(
-            instanceLocator,
+            Locator(instanceLocator).id,
             BeamsTokenProviderService(createPlatformClient(InstanceType.BEAMS_TOKEN_PROVIDER))
     )
 

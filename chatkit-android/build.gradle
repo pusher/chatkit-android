@@ -44,7 +44,6 @@ android {
             details 'tree'
         }
     }
-
 }
 
 dependencies {
