@@ -1,8 +1,11 @@
 package com.pusher.chatkit
 
-interface AppHooks {
-    fun register(
-            appOpened: () -> Unit,
-            appClosed: () -> Unit
-    )
+interface AppHookEmitter {
+    fun register(listener: AppHookListener)
+    fun unregister(listener: AppHookListener)
+}
+
+interface AppHookListener {
+    fun onAppOpened()
+    fun onAppClosed()
 }

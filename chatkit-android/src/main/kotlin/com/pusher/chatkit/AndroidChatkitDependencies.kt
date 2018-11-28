@@ -21,7 +21,7 @@ data class AndroidChatkitDependencies @JvmOverloads constructor(
 
     override val mediaTypeResolver = platformDependencies.mediaTypeResolver
     override val pushNotifications = BeamsPushNotificationsFactory(context)
-    override val appHooks = AndroidAppHooks()
+    override val appHooks = AndroidAppHookEmitter()
 
     override val sdkInfo = SdkInfo(
             product = "Chatkit",

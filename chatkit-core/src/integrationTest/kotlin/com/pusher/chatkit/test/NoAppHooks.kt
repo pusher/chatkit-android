@@ -1,9 +1,9 @@
 package com.pusher.chatkit.test
 
-import com.pusher.chatkit.AppHooks
+import com.pusher.chatkit.AppHookEmitter
+import com.pusher.chatkit.AppHookListener
 
-class NoAppHooks : AppHooks {
-    override fun register(appOpened: () -> Unit, appClosed: () -> Unit) {
-        // No op
-    }
+class NoAppHooks : AppHookEmitter {
+    override fun register(listener: AppHookListener) {}
+    override fun unregister(listener: AppHookListener) {}
 }

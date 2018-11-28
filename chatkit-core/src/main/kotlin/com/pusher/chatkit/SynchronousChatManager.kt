@@ -31,7 +31,7 @@ class SynchronousChatManager constructor(
     private val instanceLocator: String,
     private val userId: String,
     private val dependencies: ChatkitDependencies
-) {
+) : AppHookListener {
     private val tokenProvider: TokenProvider = DebounceTokenProvider(
             dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
     )
@@ -108,10 +108,7 @@ class SynchronousChatManager constructor(
     fun connect(consumer: ChatManagerEventConsumer = {}): Result<SynchronousCurrentUser, Error> {
         eventConsumers += consumer
 
-        dependencies.appHooks.register(
-                appClosed = presenceService::goOffline,
-                appOpened = presenceService::goOnline
-        )
+        dependencies.appHooks.register(this)
 
         userSubscription = ResolvableSubscription(
                 client = chatkitClient,
@@ -134,6 +131,14 @@ class SynchronousChatManager constructor(
         return currentUser.get()
                 .also { logger.verbose("Current User initialised") }
                 .asSuccess()
+    }
+
+    override fun onAppOpened() {
+        presenceService.goOnline()
+    }
+
+    override fun onAppClosed() {
+        presenceService.goOffline()
     }
 
     private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) {
@@ -297,6 +302,7 @@ class SynchronousChatManager constructor(
      * Tries to close all pending subscriptions and resources
      */
     fun close(): Result<Unit, Error> = try {
+        dependencies.appHooks.unregister(this)
         userSubscription.unsubscribe()
         cursorSubscription.unsubscribe()
         roomService.close()
