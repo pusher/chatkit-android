@@ -51,7 +51,7 @@ class SynchronousChatManager constructor(
 
     internal val cursorService = CursorService(cursorsClient, logger)
 
-    internal val filesService = FilesService(filesClient)
+    private val filesService = FilesService(filesClient)
 
     private val presenceService =
             PresenceService(
