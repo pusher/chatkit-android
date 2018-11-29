@@ -3,7 +3,6 @@ package com.pusher.chatkit.subscription
 import com.pusher.chatkit.PlatformClient
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import com.pusher.platform.loggingListeners
 import com.pusher.platform.network.DataParser
 import elements.Subscription
 import java.util.concurrent.CountDownLatch

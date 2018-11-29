@@ -2,17 +2,17 @@ package com.pusher.chatkit.memberships
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.pusher.chatkit.memberships.MembershipSubscriptionEvent.*
 import com.pusher.chatkit.util.asObject
+import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.network.DataParser
 import com.pusher.util.Result
-import elements.Error
-import elements.Errors
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent.*
-import com.pusher.chatkit.util.asString
 import com.pusher.util.asFailure
 import com.pusher.util.orElse
+import elements.Error
+import elements.Errors
 
 internal object MembershipSubscriptionEventParser : DataParser<MembershipSubscriptionEvent> {
     override fun invoke(body: String): Result<MembershipSubscriptionEvent, Error> =

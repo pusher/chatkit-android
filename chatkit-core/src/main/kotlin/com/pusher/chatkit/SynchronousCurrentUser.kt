@@ -5,6 +5,7 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomListeners
@@ -23,7 +24,8 @@ class SynchronousCurrentUser(
         var customData: CustomData?,
         var name: String?,
         private val chatManager: SynchronousChatManager,
-        private val client: PlatformClient
+        private val client: PlatformClient,
+        private val pushNotifications: PushNotifications?
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
@@ -189,4 +191,15 @@ class SynchronousCurrentUser(
     fun usersForRoom(room: Room): Result<List<User>, Error> =
             chatManager.userService.fetchUsersBy(room.memberUserIds)
                     .map { it.values.toList() }
+
+    fun enablePushNotifications(): Result<Unit, Error> {
+        if (pushNotifications != null) {
+            return pushNotifications.start().flatMap {
+                pushNotifications.setUserId(id)
+            }
+        } else {
+            throw IllegalStateException("Push Notifications dependency is not available. " +
+                    "Did you provide a Context to AndroidChatkitDependencies?")
+        }
+    }
 }

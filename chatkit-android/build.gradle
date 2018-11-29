@@ -44,7 +44,6 @@ android {
             details 'tree'
         }
     }
-
 }
 
 dependencies {
@@ -66,6 +65,10 @@ dependencies {
     androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.pusher:beams-chatkit:1.1.0'
 }
 
 bintray {

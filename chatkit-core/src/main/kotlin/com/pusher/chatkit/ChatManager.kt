@@ -38,6 +38,13 @@ class ChatManager(
         )
     }
 
+    fun disablePushNotifications(callback: (Result<Unit, Error>) -> Unit) {
+        makeCallback(
+                f = { syncChatManager.disablePushNotifications() },
+                c = callback
+        )
+    }
+
     /**
      * If you would prefer calls to block and to manage your own concurrency with threading or
      * coroutines, this returns a chatmanager with synchronous interface.
