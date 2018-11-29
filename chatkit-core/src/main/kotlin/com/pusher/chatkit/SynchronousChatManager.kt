@@ -42,7 +42,7 @@ class SynchronousChatManager constructor(
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
 
-    private val beams = dependencies.pushNotifications.newBeams(
+    private val beams = dependencies.pushNotifications?.newBeams(
             Locator(instanceLocator).id,
             BeamsTokenProviderService(createPlatformClient(InstanceType.BEAMS_TOKEN_PROVIDER))
     )
@@ -330,9 +330,13 @@ class SynchronousChatManager constructor(
             }, tokenProvider)
     }
 
-
     fun disablePushNotifications(): Result<Unit, Error> {
-        return beams.stop()
+        if (beams != null) {
+            return beams.stop()
+        } else {
+            throw IllegalStateException("Push Notifications dependency is not available. " +
+                    "Did you provide a Context to AndroidChatkitDependencies?")
+        }
     }
 }
 

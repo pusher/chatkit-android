@@ -25,7 +25,7 @@ class SynchronousCurrentUser(
         var name: String?,
         private val chatManager: SynchronousChatManager,
         private val client: PlatformClient,
-        private val pushNotifications: PushNotifications
+        private val pushNotifications: PushNotifications?
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
@@ -193,8 +193,13 @@ class SynchronousCurrentUser(
                     .map { it.values.toList() }
 
     fun enablePushNotifications(): Result<Unit, Error> {
-        return pushNotifications.start().flatMap {
-            pushNotifications.setUserId(id)
+        if (pushNotifications != null) {
+            return pushNotifications.start().flatMap {
+                pushNotifications.setUserId(id)
+            }
+        } else {
+            throw IllegalStateException("Push Notifications dependency is not available. " +
+                    "Did you provide a Context to AndroidChatkitDependencies?")
         }
     }
 }

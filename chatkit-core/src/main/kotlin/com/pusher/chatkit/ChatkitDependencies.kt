@@ -9,5 +9,5 @@ interface ChatkitDependencies : PlatformDependencies {
     val tokenProvider: TokenProvider
     val okHttpClient : OkHttpClient?
     val appHooks: AppHookEmitter
-    val pushNotifications: PushNotificationsFactory
+    val pushNotifications: PushNotificationsFactory?
 }
