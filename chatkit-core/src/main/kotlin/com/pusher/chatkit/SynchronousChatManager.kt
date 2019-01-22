@@ -70,7 +70,6 @@ class SynchronousChatManager constructor(
                     chatkitClient,
                     userService,
                     cursorService,
-                    this.eventConsumers,
                     this::consumeRoomSubscriptionEvent,
                     dependencies.logger
             )
@@ -107,6 +106,9 @@ class SynchronousChatManager constructor(
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Result<SynchronousCurrentUser, Error> {
         eventConsumers += consumer
+        // The room service filters and translates some global events (e.g. RoomUpdated), forwarding
+        // them to the relevant room subscriptions
+        eventConsumers += roomService::distributeGlobalEvent
 
         dependencies.appHooks.register(this)
 
@@ -123,7 +125,7 @@ class SynchronousChatManager constructor(
                 logger = logger
         )
         cursorSubscription =
-                cursorService.subscribeForUser(userId, this::consumeCursorSubscriptionEvent)
+                cursorService.subscribeForUser(userId, this::consumeEvent)
 
         userSubscription.await()
         cursorSubscription.await()
@@ -141,14 +143,13 @@ class SynchronousChatManager constructor(
         presenceService.goOffline()
     }
 
-    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) {
-        consumeEvents(
-                applyUserSubscriptionEvent(event).map { transformUserSubscriptionEvent(it) }
-        )
-    }
-
-    private fun consumeCursorSubscriptionEvent(event: CursorSubscriptionEvent) =
-            consumeEvents(listOf(transformCursorsSubscriptionEvent(event)))
+    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) =
+            roomService.roomStore.applyUserSubscriptionEvent(event).forEach { event ->
+                if (event is UserSubscriptionEvent.InitialState) {
+                    updateCurrentUser(event)
+                }
+                consumeEvent(transformUserSubscriptionEvent(event))
+            }
 
     private fun consumeRoomSubscriptionEvent(roomId: String): RoomConsumer = { event ->
                 consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
@@ -158,14 +159,44 @@ class SynchronousChatManager constructor(
             consumeEvents(transformPresenceSubscriptionEvent(event))
 
     private fun consumeEvents(events : List<ChatEvent>) {
-        events.filter { event ->
-            event !is ChatEvent.NoEvent
-        }.forEach { event ->
+        events.forEach(this::consumeEvent)
+    }
+
+    private fun consumeEvent(event : ChatEvent) {
+        if (event !is ChatEvent.NoEvent) {
             eventConsumers.forEach { consumer ->
                 consumer(event)
             }
         }
     }
+
+    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
+            when (event) {
+                is UserSubscriptionEvent.InitialState ->
+                    ChatEvent.CurrentUserReceived(currentUser.get())
+                is UserSubscriptionEvent.AddedToRoomEvent ->
+                    ChatEvent.AddedToRoom(event.room)
+                is UserSubscriptionEvent.RemovedFromRoomEvent ->
+                    ChatEvent.RemovedFromRoom(event.roomId)
+                is UserSubscriptionEvent.RoomUpdatedEvent ->
+                    ChatEvent.RoomUpdated(event.room)
+                is UserSubscriptionEvent.RoomDeletedEvent ->
+                    ChatEvent.RoomDeleted(event.roomId)
+                is UserSubscriptionEvent.LeftRoomEvent ->
+                    userService.fetchUserBy(event.userId).flatMap { user ->
+                        roomService.roomStore[event.roomId]
+                                .orElse { Errors.other("room ${event.roomId} not found.") }
+                                .map { room -> ChatEvent.UserLeftRoom(user, room) as ChatEvent }
+                    }.recover { ChatEvent.ErrorOccurred(it) }
+                is UserSubscriptionEvent.JoinedRoomEvent ->
+                    userService.fetchUserBy(event.userId).flatMap { user ->
+                        roomService.roomStore[event.roomId]
+                                .orElse { Errors.other("room ${event.roomId} not found.") }
+                                .map { room -> ChatEvent.UserJoinedRoom(user, room) as ChatEvent }
+                    }.recover { ChatEvent.ErrorOccurred(it) }
+                is UserSubscriptionEvent.ErrorOccurred ->
+                    ChatEvent.ErrorOccurred(event.error)
+            }
 
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
         when (event) {
@@ -211,92 +242,17 @@ class SynchronousChatManager constructor(
         }
     }
 
-    private fun transformCursorsSubscriptionEvent(event: CursorSubscriptionEvent): ChatEvent =
-            when (event) {
-                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
-                else -> ChatEvent.NoEvent
-            }
-
-    private fun applyUserSubscriptionEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
-        when (event) {
-            is UserSubscriptionEvent.InitialState -> {
-                val knownRooms = roomService.roomStore.toList()
-                val removedFrom = (knownRooms - event.rooms).also {
-                    roomService.roomStore -= it
-                }.map {
-                    UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
-                }
-
-                val addedTo = (event.rooms - knownRooms).also {
-                    roomService.roomStore += it
-                }.map {
-                    UserSubscriptionEvent.AddedToRoomEvent(it)
-                }
-
-                val updated = event.rooms.filter { nr ->
-                    knownRooms.any { kr ->
-                        kr == nr && !kr.deepEquals(nr)
-                    }
-                }.map {
-                    UserSubscriptionEvent.RoomUpdatedEvent(it)
-                }
-
-                currentUser.set(createCurrentUser(event))
-
-                removedFrom + addedTo + updated + listOf(event)
-            }
-            is UserSubscriptionEvent.AddedToRoomEvent ->
-                listOf(event.also { roomService.roomStore += event.room })
-            is UserSubscriptionEvent.RoomUpdatedEvent ->
-                listOf(event.also { roomService.roomStore += event.room })
-            is UserSubscriptionEvent.RoomDeletedEvent ->
-                listOf(event.also { roomService.roomStore -= event.roomId })
-            is UserSubscriptionEvent.RemovedFromRoomEvent ->
-                listOf(event.also { roomService.roomStore -= event.roomId })
-            is UserSubscriptionEvent.LeftRoomEvent ->
-                listOf(event.also { roomService.roomStore[event.roomId]?.removeUser(event.userId) })
-            is UserSubscriptionEvent.JoinedRoomEvent ->
-                listOf(event.also { roomService.roomStore[event.roomId]?.addUser(event.userId) })
-            else -> listOf(event)
-        }
-
-    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
-            when (event) {
-                is UserSubscriptionEvent.InitialState ->
-                    ChatEvent.CurrentUserReceived(currentUser.get())
-                is UserSubscriptionEvent.AddedToRoomEvent ->
-                    ChatEvent.AddedToRoom(event.room)
-                is UserSubscriptionEvent.RemovedFromRoomEvent ->
-                    ChatEvent.RemovedFromRoom(event.roomId)
-                is UserSubscriptionEvent.RoomUpdatedEvent ->
-                    ChatEvent.RoomUpdated(event.room)
-                is UserSubscriptionEvent.RoomDeletedEvent ->
-                    ChatEvent.RoomDeleted(event.roomId)
-                is UserSubscriptionEvent.LeftRoomEvent ->
-                            userService.fetchUserBy(event.userId).flatMap { user ->
-                                roomService.roomStore[event.roomId]
-                                        .orElse { Errors.other("room ${event.roomId} not found.") }
-                                        .map { room -> ChatEvent.UserLeftRoom(user, room) as ChatEvent }
-                            }.recover { ChatEvent.ErrorOccurred(it) }
-                is UserSubscriptionEvent.JoinedRoomEvent ->
-                            userService.fetchUserBy(event.userId).flatMap { user ->
-                                roomService.roomStore[event.roomId]
-                                        .orElse { Errors.other("room ${event.roomId} not found.") }
-                                        .map { room -> ChatEvent.UserJoinedRoom(user, room) as ChatEvent }
-                            }.recover { ChatEvent.ErrorOccurred(it) }
-                is UserSubscriptionEvent.ErrorOccurred ->
-                    ChatEvent.ErrorOccurred(event.error)
-            }
-
-    private fun createCurrentUser(initialState: UserSubscriptionEvent.InitialState) = SynchronousCurrentUser(
-            id = initialState.currentUser.id,
-            avatarURL = initialState.currentUser.avatarURL,
-            customData = initialState.currentUser.customData,
-            name = initialState.currentUser.name,
-            chatManager = this,
-            pushNotifications = beams,
-            client = createPlatformClient(InstanceType.DEFAULT)
-    )
+    private fun updateCurrentUser(initialState: UserSubscriptionEvent.InitialState) {
+        currentUser.set(SynchronousCurrentUser(
+                id = initialState.currentUser.id,
+                avatarURL = initialState.currentUser.avatarURL,
+                customData = initialState.currentUser.customData,
+                name = initialState.currentUser.name,
+                chatManager = this,
+                pushNotifications = beams,
+                client = createPlatformClient(InstanceType.DEFAULT)
+        ))
+    }
 
     /**
      * Tries to close all pending subscriptions and resources

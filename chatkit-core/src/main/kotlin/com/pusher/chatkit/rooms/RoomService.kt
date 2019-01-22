@@ -1,13 +1,16 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatManagerEventConsumer
+import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
+import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.Futures
+import com.pusher.platform.network.cancel
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
@@ -16,17 +19,21 @@ import elements.Error
 import elements.Errors
 import elements.Subscription
 import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
 
 internal class RoomService(
         private val client: PlatformClient,
         private val userService: UserService,
         private val cursorsService: CursorService,
-        private val globalEventConsumers: MutableList<ChatManagerEventConsumer>,
-        private val globalConsumer: (String) -> RoomConsumer,
+        private val makeGlobalConsumer: (String) -> RoomConsumer,
         private val logger: Logger
 ) {
+    // Access synchronised on itself
     private val openSubscriptions = HashMap<String, Subscription>()
-    val roomStore = RoomStore()
+    private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
+
+    internal val roomStore = RoomStore()
 
     fun fetchRoomBy(userId: String, id: String): Result<Room, Error> =
             getLocalRoom(id)
@@ -105,29 +112,30 @@ internal class RoomService(
 
     fun subscribeToRoom(
             roomId: String,
-            externalConsumer: RoomConsumer,
+            consumer: RoomConsumer,
             messageLimit: Int
     ): Subscription {
-        synchronized(openSubscriptions) {
-            openSubscriptions[roomId]?.unsubscribe()
+        val globalConsumer = makeGlobalConsumer(roomId)
+
+        val emit = { event: RoomEvent ->
+            consumer(event)
+            globalConsumer(event)
         }
 
         val sub = RoomSubscriptionGroup(
                 messageLimit = messageLimit,
                 roomId = roomId,
-                userService = userService,
                 cursorService = cursorsService,
-                globalEventConsumers = globalEventConsumers,
+                membershipConsumer = { roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit) },
+                roomConsumer = { emit(enrichEvent(it, emit)) },
+                cursorConsumer = { emit(translateCursorEvent(it)) },
                 client = client,
-                logger = logger,
-                consumers = listOf(
-                        applySideEffects(roomId),
-                        globalConsumer(roomId),
-                        externalConsumer
-                )
+                logger = logger
         )
         synchronized(openSubscriptions) {
+            openSubscriptions[roomId]?.unsubscribe()
             openSubscriptions[roomId] = sub
+            roomConsumers[roomId] = consumer
         }
 
         return unsubscribeProxy(sub) {
@@ -136,16 +144,8 @@ internal class RoomService(
                     openSubscriptions.remove(roomId)
                 }
             }
+            roomConsumers.remove(roomId)
         }.connect()
-    }
-
-    private fun applySideEffects(roomId: String): RoomConsumer = { event ->
-        when (event) {
-            is RoomEvent.UserJoined ->
-                roomStore[roomId]?.addUser(event.user.id)
-            is RoomEvent.UserLeft ->
-                roomStore[roomId]?.removeUser(event.user.id)
-        }
     }
 
     private fun unsubscribeProxy(sub: ChatkitSubscription, hook: (Subscription) -> Unit) =
@@ -166,6 +166,108 @@ internal class RoomService(
             openSubscriptions.forEach { (_, sub) ->
                 sub.unsubscribe()
             }
+        }
+    }
+
+    private fun translateCursorEvent(event: ChatEvent): RoomEvent =
+            when (event) {
+                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
+                else -> RoomEvent.NoEvent
+            }
+
+    private fun enrichEvent(event: MembershipSubscriptionEvent): RoomEvent =
+            when (event) {
+                is MembershipSubscriptionEvent.UserJoined ->
+                    userService.fetchUserBy(event.userId).map { user ->
+                        RoomEvent.UserJoined(user) as RoomEvent
+                    }.recover {
+                        RoomEvent.ErrorOccurred(it)
+                    }
+                is MembershipSubscriptionEvent.UserLeft ->
+                    userService.fetchUserBy(event.userId).map { user ->
+                        RoomEvent.UserLeft(user) as RoomEvent
+                    }.recover {
+                        RoomEvent.ErrorOccurred(it)
+                    }
+                is MembershipSubscriptionEvent.ErrorOccurred -> {
+                    RoomEvent.ErrorOccurred(event.error)
+                }
+                is MembershipSubscriptionEvent.InitialState -> {
+                    logger.error("Should not have received membership initial state in RoomService")
+                    RoomEvent.NoEvent
+                }
+            }
+
+    private fun enrichEvent(event: RoomSubscriptionEvent, consumer: RoomConsumer): RoomEvent =
+            when (event) {
+                is RoomSubscriptionEvent.NewMessage ->
+                    userService.fetchUserBy(event.message.userId).map { user ->
+                        event.message.user = user
+                        RoomEvent.Message(event.message) as RoomEvent
+                    }.recover {
+                        RoomEvent.ErrorOccurred(it)
+                    }
+                is RoomSubscriptionEvent.UserIsTyping ->
+                    userService.fetchUserBy(event.userId).map { user ->
+                        val onStop = {
+                            consumer(RoomEvent.UserStoppedTyping(user))
+                        }
+
+                        if (scheduleStopTypingEvent(event.userId, onStop)) {
+                            RoomEvent.UserStartedTyping(user)
+                        } else {
+                            RoomEvent.NoEvent
+                        }
+                    }.recover {
+                        RoomEvent.ErrorOccurred(it)
+                    }
+                is RoomSubscriptionEvent.ErrorOccurred ->
+                    RoomEvent.ErrorOccurred(event.error)
+                is RoomSubscriptionEvent.NoEvent ->
+                    RoomEvent.NoEvent
+            }
+
+    // Access synchronized on itself
+    private val typingTimers = HashMap<String, Future<Unit>>()
+
+    private fun scheduleStopTypingEvent(userId: String, onStop: () -> Unit): Boolean {
+        synchronized(typingTimers) {
+            val new = typingTimers[userId] == null
+            if (!new) {
+                typingTimers[userId]!!.cancel()
+            }
+
+            typingTimers[userId] = Futures.schedule {
+                Thread.sleep(1_500)
+                synchronized(typingTimers) {
+                    typingTimers.remove(userId)
+                }
+
+                onStop()
+            }
+
+            return new
+        }
+    }
+
+    fun distributeGlobalEvent(event: ChatEvent) {
+        // This function must map events which we wish to report at room scope that
+        // are not received at room scope from the backend.
+        // Be careful, if you map an event where which originated here, you will create
+        // an infinite loop consuming that event.
+        when (event) {
+            is ChatEvent.RoomUpdated ->
+                roomConsumers[event.room.id]?.invoke(RoomEvent.RoomUpdated(event.room))
+            is ChatEvent.RoomDeleted ->
+                roomConsumers[event.roomId]?.invoke(RoomEvent.RoomDeleted(event.roomId))
+            is ChatEvent.PresenceChange ->
+                roomConsumers.keys.forEach { roomId ->
+                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
+                        roomConsumers[roomId]?.invoke(
+                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
+                        )
+                    }
+                }
         }
     }
 }
