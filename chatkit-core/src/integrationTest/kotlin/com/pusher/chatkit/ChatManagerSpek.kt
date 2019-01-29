@@ -104,6 +104,39 @@ class ChatManagerSpek : Spek({
         }
     }
 
+    describe("ChatManager") {
+        it("connects when listeners and a callback are provided") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUser(id = PUSHERINO, name = "pusherino")
+            )
+
+            val chatManager = ChatManager(
+                    instanceLocator = INSTANCE_LOCATOR,
+                    userId = PUSHERINO,
+                    dependencies = TestChatkitDependencies(
+                            tokenProvider = TestTokenProvider(INSTANCE_ID, PUSHERINO, AUTH_KEY_ID, AUTH_KEY_SECRET)
+                    )
+            )
+
+            val futureValue = FutureValue<Result<CurrentUser, elements.Error>>()
+
+            chatManager.connect(
+                    listeners = ChatListeners(
+                            onAddedToRoom = { room -> println(room) }
+                    ),
+                    callback = { result ->
+                        futureValue.set(result)
+                    }
+            )
+
+            val result = futureValue.get()
+            val user = result.assumeSuccess()
+            assertThat(user.id).isEqualTo(PUSHERINO)
+            assertThat(user.name).isEqualTo("pusherino")
+        }
+    }
+
     val currentUser = stub<SynchronousCurrentUser>("currentUser")
     val user = stub<User>("user")
     val room = stub<Room>("room")
