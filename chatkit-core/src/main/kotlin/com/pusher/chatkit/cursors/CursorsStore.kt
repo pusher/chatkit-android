@@ -38,6 +38,8 @@ class CursorsStore {
                         }
                     }
                 }
+            }.filterNot {
+                it is CursorSubscriptionEvent.NoEvent
             }
 }
 
