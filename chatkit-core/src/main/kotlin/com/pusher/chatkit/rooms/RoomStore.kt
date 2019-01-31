@@ -3,10 +3,13 @@ package com.pusher.chatkit.rooms
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class RoomStore(
         private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
 ) {
+    private var initialized = AtomicBoolean(false)
+
     fun toList() : List<Room> =
         roomsMap.values.toList()
 
@@ -31,6 +34,11 @@ internal class RoomStore(
 
     operator fun minusAssign(roomId: String) {
         roomsMap -= roomId
+    }
+
+    fun clear() {
+        roomsMap.clear()
+        initialized.set(false)
     }
 
     fun applyUserSubscriptionEvent(
@@ -65,7 +73,11 @@ internal class RoomStore(
                     UserSubscriptionEvent.RoomUpdatedEvent(it)
                 }
 
-                listOf(event) + removedFrom + addedTo + updated
+                if (initialized.getAndSet(true)) {
+                    listOf(event) + removedFrom + addedTo + updated
+                } else {
+                    listOf(event)
+                }
             }
             is UserSubscriptionEvent.AddedToRoomEvent ->
                 listOf(event.also { this += event.room })

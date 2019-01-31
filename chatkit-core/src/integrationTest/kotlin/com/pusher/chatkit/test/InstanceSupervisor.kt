@@ -19,6 +19,8 @@ import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
 import org.junit.runner.notification.Failure
+import java.net.URLEncoder
+import java.text.FieldPosition
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -95,8 +97,17 @@ private val authorizerInstance by lazy {
     Instance(
         locator = INSTANCE_LOCATOR,
         serviceName = "chatkit_authorizer",
-        serviceVersion = "v1",
+        serviceVersion = "v2",
         dependencies = TestDependencies()
+    )
+}
+
+private val cursorsInstance by lazy {
+    Instance(
+            locator = INSTANCE_LOCATOR,
+            serviceName = "chatkit_cursors",
+            serviceVersion = "v2",
+            dependencies = TestDependencies()
     )
 }
 
@@ -299,6 +310,18 @@ object InstanceActions {
             responseParser = { it.parseAs() }
         )
     }.withName("Create new room: $name for users: ${userNames.joinToString(", ")}")
+
+    fun setCursor(userId: String, roomId: String, position: Int) = {
+        cursorsInstance.request<JsonElement>(
+                options = RequestOptions(
+                        path = "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/${URLEncoder.encode(userId, "UTF-8")}",
+                        method = "PUT",
+                        body = mutableMapOf<String, Any?>("position" to position).toJson()
+                ),
+                tokenProvider = sudoTokenProvider,
+                responseParser = { it.parseAs() }
+        ).also { response -> println(response) }
+    }.withName("Set cursor")
 
     fun tearDown(): InstanceAction = {
         chatkitInstance.request<JsonElement>(

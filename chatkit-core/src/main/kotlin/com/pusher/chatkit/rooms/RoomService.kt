@@ -170,6 +170,7 @@ internal class RoomService(
                 sub.unsubscribe()
             }
         }
+        roomStore.clear()
     }
 
     private fun translateCursorEvent(event: ChatEvent): RoomEvent =

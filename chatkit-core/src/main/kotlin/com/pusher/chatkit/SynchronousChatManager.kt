@@ -265,6 +265,7 @@ class SynchronousChatManager constructor(
         cursorSubscription.unsubscribe()
         roomService.close()
         presenceService.close()
+        cursorService.close()
         dependencies.okHttpClient?.connectionPool()?.evictAll()
         eventConsumers.clear()
 

@@ -5,6 +5,7 @@ import com.pusher.chatkit.ChatEvent.*
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
+import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.presence.Presence
@@ -12,19 +13,22 @@ import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.toCallback
-import com.pusher.chatkit.util.FutureValue
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUser
 import com.pusher.chatkit.test.InstanceActions.newUsers
+import com.pusher.chatkit.test.InstanceActions.setCursor
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
+import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
+import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result
 import mockitox.stub
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.util.concurrent.ConcurrentLinkedQueue
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
@@ -95,7 +99,11 @@ class ChatManagerSpek : Spek({
         }
 
         it("receives current user with listeners instead of callback") {
-            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL)
+            )
 
             val user = chatFor(PUSHERINO).connect(ChatListeners())
             val userId = user.assumeSuccess().id
@@ -105,12 +113,14 @@ class ChatManagerSpek : Spek({
     }
 
     describe("ChatManager") {
-        it("connects even when an exception is raised in a callback invoked during connect") {
+        it("should not receive any events related to initial state") {
             setUpInstanceWith(
                     createDefaultRole(),
-                    newUser(id = PUSHERINO, name = "pusherino"),
-                    newRoom("test", PUSHERINO)
+                    newUsers(PUSHERINO),
+                    newRoom(GENERAL, PUSHERINO, SUPER_USER)
             )
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            setCursor(PUSHERINO, superUser.generalRoom.id, 2).run()
 
             val chatManager = ChatManager(
                     instanceLocator = INSTANCE_LOCATOR,
@@ -120,22 +130,65 @@ class ChatManagerSpek : Spek({
                     )
             )
 
-            val futureValue = FutureValue<Result<CurrentUser, elements.Error>>()
+            val currentUser = FutureValue<Result<CurrentUser, elements.Error>>()
+            val events = ConcurrentLinkedQueue<ChatEvent>()
 
             chatManager.connect(
-                    listeners = ChatListeners(
-                            onAddedToRoom = { room -> throw NullPointerException("oops!") }
-                    ),
+                    consumer = { e -> events.add(e) },
                     callback = { result ->
-                        futureValue.set(result)
+                        currentUser.set(result)
                     }
             )
 
-            val result = futureValue.get()
-            val user = result.assumeSuccess()
-            assertThat(user.id).isEqualTo(PUSHERINO)
-            assertThat(user.name).isEqualTo("pusherino")
+            currentUser.get().assumeSuccess()
+            assertThat(events).hasSize(1)
+            val event = events.poll()
+            when (event) {
+                is ChatEvent.CurrentUserReceived -> {} // Pass
+                else -> throw IllegalStateException("$event is not the expected ChatEvent.CurrentUserReceived")
+            }
         }
+
+        it("should not receive any events related to initial state, on reconnect") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO),
+                    newRoom(GENERAL, PUSHERINO, SUPER_USER)
+            )
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.setReadCursor(superUser.generalRoom, 1)
+
+            setCursor(PUSHERINO, superUser.generalRoom.id, 2).run()
+
+            val chatManager = ChatManager(
+                    instanceLocator = INSTANCE_LOCATOR,
+                    userId = PUSHERINO,
+                    dependencies = TestChatkitDependencies(
+                            tokenProvider = TestTokenProvider(INSTANCE_ID, PUSHERINO, AUTH_KEY_ID, AUTH_KEY_SECRET)
+                    )
+            ).blocking()
+
+            chatManager.connect()
+
+            // And again
+            chatManager.close()
+
+            val events = ConcurrentLinkedQueue<ChatEvent>()
+
+            chatManager.connect(
+                    consumer = { e -> events.add(e) }
+            )
+
+            assertThat(events).hasSize(1)
+            val event = events.poll()
+            when (event) {
+                is ChatEvent.CurrentUserReceived -> {} // Pass
+                else -> throw IllegalStateException("$event is not the expected ChatEvent.CurrentUserReceived")
+            }
+
+        }
+
     }
 
     val currentUser = stub<SynchronousCurrentUser>("currentUser")
@@ -236,4 +289,3 @@ class ChatManagerSpek : Spek({
         }
     }
 })
-
