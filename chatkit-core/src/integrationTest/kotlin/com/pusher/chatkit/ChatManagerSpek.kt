@@ -105,10 +105,11 @@ class ChatManagerSpek : Spek({
     }
 
     describe("ChatManager") {
-        it("connects when listeners and a callback are provided") {
+        it("connects even when an exception is raised in a callback invoked during connect") {
             setUpInstanceWith(
                     createDefaultRole(),
-                    newUser(id = PUSHERINO, name = "pusherino")
+                    newUser(id = PUSHERINO, name = "pusherino"),
+                    newRoom("test", PUSHERINO)
             )
 
             val chatManager = ChatManager(
@@ -123,7 +124,7 @@ class ChatManagerSpek : Spek({
 
             chatManager.connect(
                     listeners = ChatListeners(
-                            onAddedToRoom = { room -> println(room) }
+                            onAddedToRoom = { room -> throw NullPointerException("oops!") }
                     ),
                     callback = { result ->
                         futureValue.set(result)

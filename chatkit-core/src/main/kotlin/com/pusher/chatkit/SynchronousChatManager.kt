@@ -15,6 +15,7 @@ import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEventParser
+import com.pusher.chatkit.util.makeSafe
 import com.pusher.platform.Instance
 import com.pusher.platform.Locator
 import com.pusher.platform.SubscriptionListeners
@@ -105,9 +106,10 @@ class SynchronousChatManager constructor(
 
     @JvmOverloads
     fun connect(consumer: ChatManagerEventConsumer = {}): Result<SynchronousCurrentUser, Error> {
-        eventConsumers += consumer
+        eventConsumers += { event -> makeSafe(logger) { consumer(event) } }
         // The room service filters and translates some global events (e.g. RoomUpdated), forwarding
         // them to the relevant room subscriptions
+        // The room service has ensured the safety of its own consumers.
         eventConsumers += roomService::distributeGlobalEvent
 
         dependencies.appHooks.register(this)

@@ -7,6 +7,7 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Futures
@@ -112,10 +113,12 @@ internal class RoomService(
 
     fun subscribeToRoom(
             roomId: String,
-            consumer: RoomConsumer,
+            unsafeConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription {
+        // This consumer is made safe by the layer providing it
         val globalConsumer = makeGlobalConsumer(roomId)
+        val consumer: RoomConsumer = { event -> makeSafe(logger) { unsafeConsumer(event) } }
 
         val emit = { event: RoomEvent ->
             consumer(event)
