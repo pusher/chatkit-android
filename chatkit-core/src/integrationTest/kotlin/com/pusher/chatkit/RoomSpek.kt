@@ -21,9 +21,14 @@ import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
+import com.pusher.util.asSuccess
+import com.sun.org.apache.bcel.internal.generic.PUSH
+import elements.Subscription
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -123,6 +128,35 @@ class RoomSpek : Spek({
             assertThat(roomRemovedFromId).isEqualTo(pusherino.generalRoom.id)
         }
 
+        it("does not emit any events before the supporting entities are ready") {
+            // NB: This test covers a race condition, it may never fail consistently, but flakey
+            // behaviour must always be investigated in full.
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val message1Id = pusherino.sendMessage(pusherino.generalRoom, "Message 1").assumeSuccess()
+            pusherino.sendMessage(pusherino.generalRoom, "Message 2").assumeSuccess()
+            pusherino.setReadCursor(pusherino.generalRoom, message1Id).get().assumeSuccess()
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            val badEvents = ConcurrentLinkedQueue<RoomEvent>()
+            alice.subscribeToRoom(alice.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.Message ->
+                        if (!alice.generalRoom.memberUserIds.contains(event.message.userId)) {
+                            badEvents.add(event)
+                        }
+                    is RoomEvent.NewReadCursor ->
+                        if (!alice.generalRoom.memberUserIds.contains(event.cursor.userId)) {
+                            badEvents.add(event)
+                        }
+                }
+            }
+
+            assertThat(badEvents).isEmpty()
+        }
     }
 
     describe("currentUser '$PUSHERINO'") {

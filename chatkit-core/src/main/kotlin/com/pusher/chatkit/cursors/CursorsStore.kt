@@ -8,7 +8,7 @@ class CursorsStore {
     private val initialized = AtomicBoolean(false)
 
     operator fun get(userId: String) =
-        map[userId] ?: UserCursorStore().also { map[userId] = it }
+            map[userId] ?: UserCursorStore().also { map[userId] = it }
 
     operator fun set(userId: String, cursor: Cursor) {
         get(userId) += cursor
@@ -30,8 +30,13 @@ class CursorsStore {
                 is CursorSubscriptionEvent.InitialState -> {
                     val events = event.cursors.map { cursor ->
                         when (this[cursor.userId][cursor.roomId]) {
-                            cursor -> CursorSubscriptionEvent.NoEvent
-                            else -> CursorSubscriptionEvent.OnCursorSet(cursor)
+                            cursor -> {
+                                CursorSubscriptionEvent.NoEvent
+                            }
+                            else -> {
+                                this[cursor.userId] += cursor
+                                CursorSubscriptionEvent.OnCursorSet(cursor)
+                            }
                         }
                     }
                     if (initialized.getAndSet(true)) {
@@ -41,15 +46,12 @@ class CursorsStore {
                     }
                 }
                 else -> {
-                    listOf(event)
-                }
-            }.also { events ->
-                events.forEach { event ->
-                    when (event) {
-                        is CursorSubscriptionEvent.OnCursorSet -> {
-                            this[event.cursor.userId] += event.cursor
+                    listOf(event.also {
+                        when (it) {
+                            is CursorSubscriptionEvent.OnCursorSet ->
+                                this[it.cursor.userId] += it.cursor
                         }
-                    }
+                    })
                 }
             }.filterNot {
                 it is CursorSubscriptionEvent.NoEvent

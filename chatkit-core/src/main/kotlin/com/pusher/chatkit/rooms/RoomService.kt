@@ -21,6 +21,7 @@ import elements.Errors
 import elements.Subscription
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
 internal class RoomService(
@@ -120,9 +121,18 @@ internal class RoomService(
         val globalConsumer = makeGlobalConsumer(roomId)
         val consumer: RoomConsumer = { event -> makeSafe(logger) { unsafeConsumer(event) } }
 
+        val buffer = ArrayList<RoomEvent>()
+        var ready = false
         val emit = { event: RoomEvent ->
-            consumer(event)
-            globalConsumer(event)
+            synchronized(buffer) {
+                if (ready) {
+                    consumer(event)
+                    globalConsumer(event)
+                } else {
+                    buffer.add(event)
+                }
+            }
+            Unit
         }
 
         val sub = RoomSubscriptionGroup(
@@ -141,7 +151,7 @@ internal class RoomService(
             roomConsumers[roomId] = consumer
         }
 
-        return unsubscribeProxy(sub) {
+        val proxiedSub = unsubscribeProxy(sub) {
             synchronized(openSubscriptions) {
                 if (openSubscriptions[roomId] == sub) {
                     openSubscriptions.remove(roomId)
@@ -149,6 +159,17 @@ internal class RoomService(
             }
             roomConsumers.remove(roomId)
         }.connect()
+
+        synchronized(buffer) {
+            buffer.forEach { event ->
+                consumer(event)
+                globalConsumer(event)
+            }
+            buffer.clear()
+            ready = true
+        }
+
+        return proxiedSub
     }
 
     private fun unsubscribeProxy(sub: ChatkitSubscription, hook: (Subscription) -> Unit) =

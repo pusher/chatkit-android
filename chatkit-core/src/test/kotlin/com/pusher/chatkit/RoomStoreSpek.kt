@@ -15,16 +15,21 @@ class RoomStoreSpek : Spek({
         describe("on receiving new InitialState User event") {
             val subject = RoomStore()
 
-            subject += listOf(
-                    Room("1", "ham", "one", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("2", "ham", "two", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("3", "ham", "three", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("4", "ham", "four", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("5", "ham", "five", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("7", "ham", "seven", false, mapOf("pre" to "set", "custom" to "data"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("8", "ham", "eight", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
-                    Room("9", "ham", "nine", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
+            val initialState = UserSubscriptionEvent.InitialState(
+                    rooms = listOf(
+                            Room("1", "ham", "one", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("2", "ham", "two", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("3", "ham", "three", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("4", "ham", "four", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("5", "ham", "five", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("7", "ham", "seven", false, mapOf("pre" to "set", "custom" to "data"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("8", "ham", "eight", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
+                            Room("9", "ham", "nine", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
+                    ),
+                    currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )
+
+            subject.applyUserSubscriptionEvent(initialState)
 
             val replacementState = UserSubscriptionEvent.InitialState(
                     rooms = listOf(
@@ -40,10 +45,10 @@ class RoomStoreSpek : Spek({
                     currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )
 
-            val events = subject.applyUserSubscriptionEvent(replacementState)
+            val replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
 
             it("should emit expected hooks") {
-                assertThat(events).containsExactly(
+                assertThat(replacementEvents).containsExactly(
                         UserSubscriptionEvent.RemovedFromRoomEvent("2"),
                         UserSubscriptionEvent.RoomUpdatedEvent(Room("3", "ham", "three", true, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")),
                         UserSubscriptionEvent.RoomUpdatedEvent(Room("4", "ham", "four", false, mapOf("set" to "now"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")),
