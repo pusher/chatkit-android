@@ -1,5 +1,6 @@
 package com.pusher.chatkit.cursors
 
+
 class CursorsStore {
     private val map = mutableMapOf<String, UserCursorStore>()
 
@@ -16,6 +17,30 @@ class CursorsStore {
         }
     }
 
+    fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
+            when (event) {
+                is CursorSubscriptionEvent.InitialState -> {
+                    event.cursors.map { cursor ->
+                        when (this[cursor.userId][cursor.roomId]) {
+                            cursor -> CursorSubscriptionEvent.NoEvent
+                            else -> CursorSubscriptionEvent.OnCursorSet(cursor)
+                        }
+                    }
+                }
+                else -> {
+                    listOf(event)
+                }
+            }.also { events ->
+                events.forEach { event ->
+                    when (event) {
+                        is CursorSubscriptionEvent.OnCursorSet -> {
+                            this[event.cursor.userId] += event.cursor
+                        }
+                    }
+                }
+            }.filterNot {
+                it is CursorSubscriptionEvent.NoEvent
+            }
 }
 
 class UserCursorStore {
@@ -26,5 +51,4 @@ class UserCursorStore {
     }
 
     operator fun get(roomId: String) = cursors[roomId]
-
 }

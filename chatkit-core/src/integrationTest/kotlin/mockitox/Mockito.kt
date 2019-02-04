@@ -20,5 +20,3 @@ inline infix fun <reified T> T.returnsStub(f: T.() -> Unit) {
     given(this).willReturn(mock)
     f(mock)
 }
-
-

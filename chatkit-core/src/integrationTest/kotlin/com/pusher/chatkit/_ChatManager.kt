@@ -30,12 +30,9 @@ fun <A> SynchronousChatManager.subscribeRoomFor(roomName: String, block: (RoomEv
  */
 fun <A> SynchronousCurrentUser.subscribeRoomFor(roomName: String, block: (RoomEvent) -> A?): FutureValue<A> {
     val futureValue = FutureValue<A>()
-    var ready by FutureValue<Any>()
     val room = rooms.first { it.name == roomName }
     subscribeToRoom(room) {
-        if (it is RoomEvent.InitialReadCursors) ready = it
         (block(it))?.let { futureValue.set(it) }
     }
-    checkNotNull(ready)
     return futureValue
 }

@@ -39,8 +39,6 @@ class RoomSpek : Spek({
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.subscribeToRoom(alice.generalRoom) { event ->
-                // TODO this represents a change in behaviour
-                // Previously we didn't report users joined and left from the initial state
                 if (event is RoomEvent.UserJoined && event.user.id == PUSHERINO) userJoined = event.user
             }
 

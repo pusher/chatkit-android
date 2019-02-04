@@ -1,6 +1,8 @@
 package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
+import com.pusher.chatkit.ChatEvent
+import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.util.Throttler
@@ -34,8 +36,7 @@ class CursorService(
         userId: String,
         roomId: String,
         position: Int
-    ) =
-        setReadCursorThrottler.throttle(
+    ) = setReadCursorThrottler.throttle(
                 RequestOptions(
                         method = "PUT",
                         path = "/cursors/0/rooms/$roomId/users/$userId",
@@ -57,41 +58,38 @@ class CursorService(
 
     fun subscribeForRoom(
             roomId: String,
-            externalConsumer: (CursorSubscriptionEvent) -> Unit
-    ) = cursorSubscription(
+            consumer: (ChatEvent) -> Unit
+    ) = subscribe(
             "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}",
-            listOf(::applySideEffects, externalConsumer)
+            consumer
     )
 
     fun subscribeForUser(
             userId: String,
-            externalConsumer: (CursorSubscriptionEvent) -> Unit
-    ) = cursorSubscription(
+            consumer: (ChatEvent) -> Unit
+    ) = subscribe(
             "/cursors/0/users/${URLEncoder.encode(userId, "UTF-8")}",
-            listOf(::applySideEffects, externalConsumer)
+            consumer
     )
 
-    private fun cursorSubscription(
+    private fun subscribe(
             path: String,
-            consumers: List<CursorSubscriptionConsumer>
+            consumer: ChatManagerEventConsumer
     ) = ResolvableSubscription(
             client = client,
             path = path,
             listeners = SubscriptionListeners(
-                    onEvent = { event -> consumers.forEach { consumer -> consumer(event.body) } },
-                    onError = { error -> consumers.forEach { consumer -> consumer(CursorSubscriptionEvent.OnError(error)) } }
+                    onEvent = { event -> cursorsStore.applyEvent(event.body).map(::enrichEvent).forEach(consumer) },
+                    onError = { error -> cursorsStore.applyEvent(CursorSubscriptionEvent.OnError(error)).map(::enrichEvent).forEach(consumer) }
             ),
             messageParser = CursorSubscriptionEventParser,
-            description = "Cursor $path",
+            description = "Cursor user $path",
             logger = logger
     )
 
-    private fun applySideEffects(event: CursorSubscriptionEvent) {
-        when (event) {
-            is CursorSubscriptionEvent.OnCursorSet ->
-                cursorsStore[event.cursor.userId] += event.cursor
-            is CursorSubscriptionEvent.InitialState ->
-                cursorsStore += event.cursors
-        }
-    }
+    private fun enrichEvent(event: CursorSubscriptionEvent): ChatEvent =
+            when (event) {
+                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
+                else -> ChatEvent.NoEvent
+            }
 }
