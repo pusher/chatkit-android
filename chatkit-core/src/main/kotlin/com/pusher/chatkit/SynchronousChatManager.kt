@@ -101,6 +101,36 @@ class SynchronousChatManager constructor(
         }
     }
 
+    // Holds events emitted during connection until we're initialised fully
+    private val eventBuffer = object {
+        private val buffer = ArrayList<ChatEvent>()
+        private var released = false
+
+        fun queue(event: ChatEvent) {
+            synchronized(buffer) {
+                if (released) {
+                    emit(event)
+                } else {
+                    buffer.add(event)
+                }
+            }
+        }
+
+        private fun emit(event: ChatEvent) {
+            eventConsumers.forEach { consumer ->
+                consumer(event)
+            }
+        }
+
+        fun release() {
+            synchronized(buffer) {
+                buffer.forEach { emit(it) }
+                buffer.clear()
+                released = true
+            }
+        }
+    }
+
     fun connect(listeners: ChatListeners): Result<SynchronousCurrentUser, Error> =
             connect(listeners.toCallback())
 
@@ -127,13 +157,14 @@ class SynchronousChatManager constructor(
                 logger = logger
         )
         cursorSubscription =
-                cursorService.subscribeForUser(userId, this::consumeEvent)
+                cursorService.subscribeForUser(userId, eventBuffer::queue)
 
         userSubscription.await()
         cursorSubscription.await()
 
         return currentUser.get()
                 .also { logger.verbose("Current User initialised") }
+                .also { eventBuffer.release() }
                 .asSuccess()
     }
 
@@ -150,7 +181,7 @@ class SynchronousChatManager constructor(
                 if (event is UserSubscriptionEvent.InitialState) {
                     updateCurrentUser(event)
                 }
-                consumeEvent(transformUserSubscriptionEvent(event))
+                eventBuffer.queue(transformUserSubscriptionEvent(event))
             }
 
     private fun consumeRoomSubscriptionEvent(roomId: String): RoomConsumer = { event ->
@@ -161,15 +192,7 @@ class SynchronousChatManager constructor(
             consumeEvents(transformPresenceSubscriptionEvent(event))
 
     private fun consumeEvents(events : List<ChatEvent>) {
-        events.forEach(this::consumeEvent)
-    }
-
-    private fun consumeEvent(event : ChatEvent) {
-        if (event !is ChatEvent.NoEvent) {
-            eventConsumers.forEach { consumer ->
-                consumer(event)
-            }
-        }
+        events.forEach(eventBuffer::queue)
     }
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
