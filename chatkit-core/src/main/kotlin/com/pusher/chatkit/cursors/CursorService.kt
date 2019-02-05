@@ -32,6 +32,10 @@ class CursorService(
                 )
             }
 
+    fun close() {
+        cursorsStore.clear()
+    }
+
     fun setReadCursor(
         userId: String,
         roomId: String,
@@ -92,4 +96,5 @@ class CursorService(
                 is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
                 else -> ChatEvent.NoEvent
             }
+
 }

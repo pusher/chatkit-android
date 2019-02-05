@@ -7,6 +7,7 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.Futures
@@ -20,6 +21,7 @@ import elements.Errors
 import elements.Subscription
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
 internal class RoomService(
@@ -112,14 +114,25 @@ internal class RoomService(
 
     fun subscribeToRoom(
             roomId: String,
-            consumer: RoomConsumer,
+            unsafeConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription {
+        // This consumer is made safe by the layer providing it
         val globalConsumer = makeGlobalConsumer(roomId)
+        val consumer: RoomConsumer = { event -> makeSafe(logger) { unsafeConsumer(event) } }
 
+        val buffer = ArrayList<RoomEvent>()
+        var ready = false
         val emit = { event: RoomEvent ->
-            consumer(event)
-            globalConsumer(event)
+            synchronized(buffer) {
+                if (ready) {
+                    consumer(event)
+                    globalConsumer(event)
+                } else {
+                    buffer.add(event)
+                }
+            }
+            Unit
         }
 
         val sub = RoomSubscriptionGroup(
@@ -138,7 +151,7 @@ internal class RoomService(
             roomConsumers[roomId] = consumer
         }
 
-        return unsubscribeProxy(sub) {
+        val proxiedSub = unsubscribeProxy(sub) {
             synchronized(openSubscriptions) {
                 if (openSubscriptions[roomId] == sub) {
                     openSubscriptions.remove(roomId)
@@ -146,6 +159,17 @@ internal class RoomService(
             }
             roomConsumers.remove(roomId)
         }.connect()
+
+        synchronized(buffer) {
+            buffer.forEach { event ->
+                consumer(event)
+                globalConsumer(event)
+            }
+            buffer.clear()
+            ready = true
+        }
+
+        return proxiedSub
     }
 
     private fun unsubscribeProxy(sub: ChatkitSubscription, hook: (Subscription) -> Unit) =
@@ -167,6 +191,7 @@ internal class RoomService(
                 sub.unsubscribe()
             }
         }
+        roomStore.clear()
     }
 
     private fun translateCursorEvent(event: ChatEvent): RoomEvent =
