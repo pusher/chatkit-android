@@ -5,7 +5,7 @@ import java.util.*
 
 sealed class GenericAttachment
 
-data class DataAttachment @JvmOverloads constructor(
+data class DataAttachment constructor(
         val file: File,
         val name: String
 ) : GenericAttachment()
