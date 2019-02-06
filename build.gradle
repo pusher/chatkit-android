@@ -33,6 +33,7 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
     }
 }
+
 allprojects {
     repositories {
         mavenLocal()
@@ -50,14 +51,16 @@ allprojects {
         bintrayUpload.doFirst verifyBintrayCredentials
     }
 }
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
 static def tasksFor(project, tasks) {
     tasks.collect { ":$project:$it".toString() }
 }
+
 task ciBuild(type: GradleBuild) {
     tasks = tasksFor('chatkit-core', ['assemble', 'test']) +
-            tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug', 'jacocoTestReportDebug']) +
-            'codeCoverageReport'
+            tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug'])
 }
