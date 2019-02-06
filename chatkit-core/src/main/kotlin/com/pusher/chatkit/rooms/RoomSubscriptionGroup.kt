@@ -30,7 +30,7 @@ internal class RoomSubscriptionGroup(
         roomConsumer: RoomSubscriptionConsumer,
         client: PlatformClient,
         logger: Logger
-): ChatkitSubscription {
+) : ChatkitSubscription {
     init {
         check(messageLimit >= 0) { "messageLimit must be greater than or equal to 0" }
     }

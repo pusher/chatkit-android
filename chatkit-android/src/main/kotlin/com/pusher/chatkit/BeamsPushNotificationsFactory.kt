@@ -7,7 +7,7 @@ import com.pusher.chatkit.pushnotifications.PushNotificationsFactory
 
 class BeamsPushNotificationsFactory(
         private val context: Context
-): PushNotificationsFactory {
+) : PushNotificationsFactory {
 
     override fun newBeams(
             instanceId: String,

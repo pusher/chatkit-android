@@ -24,7 +24,7 @@ internal class PresenceSubscriptionEventParser(
                     .flatMap { json: JsonObject -> json.toPresenceSubscriptionEvent() }
 
     private fun JsonObject.toPresenceSubscriptionEvent(): Result<PresenceSubscriptionEvent, Error> =
-            eventName.flatMap { eventName: String -> data.flatMap { it.parseEvent(eventName) }  }
+            eventName.flatMap { eventName: String -> data.flatMap { it.parseEvent(eventName) } }
 
     private inline val JsonObject.eventName: Result<String, Error>
         get() = getValue("event_name").flatMap { it.asString() }

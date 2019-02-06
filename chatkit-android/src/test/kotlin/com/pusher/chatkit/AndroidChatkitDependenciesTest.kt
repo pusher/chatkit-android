@@ -10,18 +10,18 @@ internal class AndroidChatkitDependenciesTest {
     @Test
     fun `sdkInfo is injected`() {
         val dependencies = AndroidChatkitDependencies(
-            context = stub(),
-            tokenProvider = stub(),
-            okHttpClient = stub(),
-            logger = stub(),
-            platformDependencies = stub()
+                context = stub(),
+                tokenProvider = stub(),
+                okHttpClient = stub(),
+                logger = stub(),
+                platformDependencies = stub()
         )
 
         assertThat(dependencies.sdkInfo).isEqualTo(SdkInfo(
-            product = "Chatkit",
-            sdkVersion = BuildConfig.VERSION_NAME,
-            platform = "Android",
-            language = "Kotlin/Java"
+                product = "Chatkit",
+                sdkVersion = BuildConfig.VERSION_NAME,
+                platform = "Android",
+                language = "Kotlin/Java"
         ))
     }
 

@@ -20,9 +20,10 @@ val sslContext: SSLContext = SSLContext.getInstance("SSL").apply {
     init(null, trustAllCerts, SecureRandom())
 }
 
-val insecureOkHttpClient: OkHttpClient get() {
-    Logger.getLogger(OkHttpClient::class.java.name).level = Level.ALL
-    return OkHttpClient.Builder().apply {
-        sslSocketFactory(sslContext.socketFactory, trustyCertificate)
-    }.build()
-}
+val insecureOkHttpClient: OkHttpClient
+    get() {
+        Logger.getLogger(OkHttpClient::class.java.name).level = Level.ALL
+        return OkHttpClient.Builder().apply {
+            sslSocketFactory(sslContext.socketFactory, trustyCertificate)
+        }.build()
+    }

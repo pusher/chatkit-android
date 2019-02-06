@@ -40,34 +40,34 @@ class UserService(
 
         return userIds
                 .map { userId ->
-            knownUsers[userId].orElse {
-                userNotFound(userId)
-            }.map { user ->
-                userId to user
-            }
-        }.collect().map { pairs ->
-            pairs.toMap()
-        }.mapFailure { errors ->
-            Errors.compose(errors)
-        }
+                    knownUsers[userId].orElse {
+                        userNotFound(userId)
+                    }.map { user ->
+                        userId to user
+                    }
+                }.collect().map { pairs ->
+                    pairs.toMap()
+                }.mapFailure { errors ->
+                    Errors.compose(errors)
+                }
     }
 
     fun fetchUserBy(userId: String): Result<User, Error> =
-        fetchUsersBy(setOf(userId)).flatMap { users ->
+            fetchUsersBy(setOf(userId)).flatMap { users ->
                 users.values.firstOrNull().orElse { userNotFound(userId) }
             }
 
     fun addUsersToRoom(roomId: String, userIds: List<String>) =
-        UserIdsWrapper(userIds).toJson()
-            .flatMap { body ->
-                client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/add", body)
-            }
+            UserIdsWrapper(userIds).toJson()
+                    .flatMap { body ->
+                        client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/add", body)
+                    }
 
     fun removeUsersFromRoom(roomId: String, userIds: List<String>) =
-        UserIdsWrapper(userIds).toJson()
-            .flatMap { body ->
-                client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/remove", body)
-            }
+            UserIdsWrapper(userIds).toJson()
+                    .flatMap { body ->
+                        client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/remove", body)
+                    }
 
     internal data class UserIdsWrapper(val userIds: List<String>)
 

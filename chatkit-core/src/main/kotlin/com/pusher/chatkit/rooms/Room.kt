@@ -14,12 +14,13 @@ data class Room(
         var updatedAt: String,
         var deletedAt: String
 ) {
-    @SerializedName("member_user_ids") private var _memberUserIds: MutableSet<String>? = null
+    @SerializedName("member_user_ids")
+    private var _memberUserIds: MutableSet<String>? = null
     val memberUserIds: Set<String>
         get() = memberUserIds()
 
     private fun memberUserIds(): MutableSet<String> = _memberUserIds
-        ?: mutableSetOf<String>().also { _memberUserIds = it }
+            ?: mutableSetOf<String>().also { _memberUserIds = it }
 
     fun removeUser(userId: String) {
         memberUserIds() -= userId

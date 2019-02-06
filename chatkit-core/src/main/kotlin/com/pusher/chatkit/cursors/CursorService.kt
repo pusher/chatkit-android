@@ -37,28 +37,28 @@ class CursorService(
     }
 
     fun setReadCursor(
-        userId: String,
-        roomId: String,
-        position: Int
+            userId: String,
+            roomId: String,
+            position: Int
     ) = setReadCursorThrottler.throttle(
-                RequestOptions(
-                        method = "PUT",
-                        path = "/cursors/0/rooms/$roomId/users/$userId",
-                        body = """{ "position" : $position }"""
-                )
-        ).mapResult {
-            cursorsStore[userId] += Cursor(
-                    userId = userId,
-                    roomId = roomId,
-                    position = position
+            RequestOptions(
+                    method = "PUT",
+                    path = "/cursors/0/rooms/$roomId/users/$userId",
+                    body = """{ "position" : $position }"""
             )
-        }
+    ).mapResult {
+        cursorsStore[userId] += Cursor(
+                userId = userId,
+                roomId = roomId,
+                position = position
+        )
+    }
 
-    fun getReadCursor(userId: String, roomId: String) : Result<Cursor, Error> =
-        (cursorsStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure())
+    fun getReadCursor(userId: String, roomId: String): Result<Cursor, Error> =
+            (cursorsStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure())
 
     private fun notSubscribedToRoom(name: String) =
-        Errors.other("Must be subscribed to room $name to access member's read cursors")
+            Errors.other("Must be subscribed to room $name to access member's read cursors")
 
     fun subscribeForRoom(
             roomId: String,

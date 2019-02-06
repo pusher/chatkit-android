@@ -31,7 +31,7 @@ class CursorsSpek : Spek({
             val messageId = pusherino.sendMessage(pusherino.generalRoom, "Hey there").assumeSuccess()
 
             val receivedCursor by pusherino
-                .subscribeRoomFor(GENERAL) { it as? RoomEvent.NewReadCursor }
+                    .subscribeRoomFor(GENERAL) { it as? RoomEvent.NewReadCursor }
 
             alice.setReadCursor(alice.generalRoom, messageId).wait()
 
@@ -53,12 +53,12 @@ class CursorsSpek : Spek({
             val secondMessageId = pusherino.sendMessage(pusherino.generalRoom, "How are you doing?").assumeSuccess()
 
             val secondMessageCursor by pusherino
-                .subscribeRoomFor(GENERAL) {
-                    (it as? RoomEvent.NewReadCursor)?.takeIf { event ->
-                        cursorsReceived += event
-                        event.cursor.position == secondMessageId
+                    .subscribeRoomFor(GENERAL) {
+                        (it as? RoomEvent.NewReadCursor)?.takeIf { event ->
+                            cursorsReceived += event
+                            event.cursor.position == secondMessageId
+                        }
                     }
-                }
 
             alice.setReadCursor(alice.generalRoom, firstMessageId)
             alice.setReadCursor(alice.generalRoom, secondMessageId).wait().assumeSuccess()
@@ -78,12 +78,12 @@ class CursorsSpek : Spek({
             val thirdMessageId = pusherino.sendMessage(pusherino.generalRoom, "Are you there?").assumeSuccess()
 
             val thirdMessageCursor by pusherino
-                .subscribeRoomFor(GENERAL) {
-                    (it as? RoomEvent.NewReadCursor)?.takeIf { event ->
-                        cursorsReceived += event.cursor
-                        event.cursor.position == thirdMessageId
+                    .subscribeRoomFor(GENERAL) {
+                        (it as? RoomEvent.NewReadCursor)?.takeIf { event ->
+                            cursorsReceived += event.cursor
+                            event.cursor.position == thirdMessageId
+                        }
                     }
-                }
 
             alice.setReadCursor(alice.generalRoom, firstMessageId)
             alice.setReadCursor(alice.generalRoom, secondMessageId)

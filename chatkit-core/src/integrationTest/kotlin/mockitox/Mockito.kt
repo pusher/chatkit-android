@@ -3,13 +3,13 @@ package mockitox
 import org.mockito.BDDMockito.*
 
 inline fun <reified T> mock(f: T.(T) -> Unit): T =
-    mock(T::class.java).also { it.f(it) }
+        mock(T::class.java).also { it.f(it) }
 
 inline fun <reified T> stub(): T =
-    mock(T::class.java, withSettings().stubOnly())
+        mock(T::class.java, withSettings().stubOnly())
 
 inline fun <reified T> stub(name: String): T =
-    mock(T::class.java, withSettings().stubOnly().name(name))
+        mock(T::class.java, withSettings().stubOnly().name(name))
 
 infix fun <T> T.returns(value: T) {
     given(this).willReturn(value)

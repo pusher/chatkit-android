@@ -219,7 +219,7 @@ class RoomSpek : Spek({
 
             val updatedRoom by chatFor(ALICE).connectFor { event ->
                 when (event) {
-                    is ChatEvent.RoomUpdated ->event.room
+                    is ChatEvent.RoomUpdated -> event.room
                     else -> null
                 }
             }
@@ -249,7 +249,7 @@ class RoomSpek : Spek({
 
             val updatedRoom by chatFor(ALICE).connectFor { event ->
                 when (event) {
-                    is ChatEvent.RoomUpdated ->event.room
+                    is ChatEvent.RoomUpdated -> event.room
                     else -> null
                 }
             }
@@ -271,7 +271,7 @@ class RoomSpek : Spek({
 
             val updatedRoom by chatFor(ALICE).connectFor { event ->
                 when (event) {
-                    is ChatEvent.RoomUpdated ->event.room
+                    is ChatEvent.RoomUpdated -> event.room
                     else -> null
                 }
             }
@@ -306,7 +306,7 @@ class RoomSpek : Spek({
 
             val updatedRoom by chatFor(ALICE).connectFor { event ->
                 when (event) {
-                    is ChatEvent.RoomUpdated ->event.room
+                    is ChatEvent.RoomUpdated -> event.room
                     else -> null
                 }
             }
@@ -341,7 +341,7 @@ class RoomSpek : Spek({
 
             val updatedRoom by chatFor(ALICE).connectFor { event ->
                 when (event) {
-                    is ChatEvent.RoomUpdated ->event.room
+                    is ChatEvent.RoomUpdated -> event.room
                     else -> null
                 }
             }
@@ -371,7 +371,7 @@ class RoomSpek : Spek({
 
             val updatedRoom by chatFor(ALICE).connectFor { event ->
                 when (event) {
-                    is ChatEvent.RoomUpdated ->event.room
+                    is ChatEvent.RoomUpdated -> event.room
                     else -> null
                 }
             }

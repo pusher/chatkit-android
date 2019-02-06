@@ -49,7 +49,7 @@ data class RoomListeners @JvmOverloads constructor(
 )
 
 internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
-    when(event) {
+    when (event) {
         is RoomEvent.Message -> onMessage(event.message)
         is RoomEvent.UserStartedTyping -> onUserStartedTyping(event.user)
         is RoomEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)

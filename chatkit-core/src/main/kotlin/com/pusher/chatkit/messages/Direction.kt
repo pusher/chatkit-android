@@ -13,7 +13,7 @@ enum class Direction {
      */
     OLDER_FIRST;
 
-    override fun toString() = when(this) {
+    override fun toString() = when (this) {
         NEWER_FIRST -> "newer"
         OLDER_FIRST -> "older"
     }

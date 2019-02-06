@@ -10,11 +10,11 @@ internal class RoomStore(
 ) {
     private var initialized = AtomicBoolean(false)
 
-    fun toList() : List<Room> =
-        roomsMap.values.toList()
+    fun toList(): List<Room> =
+            roomsMap.values.toList()
 
     operator fun get(id: String): Room? =
-        roomsMap[id]
+            roomsMap[id]
 
     operator fun plusAssign(room: Room) {
         roomsMap += (room.id to room)
@@ -44,56 +44,56 @@ internal class RoomStore(
     fun applyUserSubscriptionEvent(
             event: UserSubscriptionEvent
     ): List<UserSubscriptionEvent> =
-        when (event) {
-            is UserSubscriptionEvent.InitialState -> {
-                val knownRooms = this.toList()
-                val removedFrom = knownRooms.filterNot {
-                    event.rooms.contains(it)
-                }.onEach {
-                    this -= it
-                }.map {
-                    UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
-                }
-
-                val addedTo = event.rooms.filterNot {
-                    knownRooms.contains(it)
-                }.onEach {
-                    this += it
-                }.map {
-                    UserSubscriptionEvent.AddedToRoomEvent(it)
-                }
-
-                val updated = event.rooms.filter { nr ->
-                    knownRooms.any { kr ->
-                        kr == nr && !kr.deepEquals(nr)
+            when (event) {
+                is UserSubscriptionEvent.InitialState -> {
+                    val knownRooms = this.toList()
+                    val removedFrom = knownRooms.filterNot {
+                        event.rooms.contains(it)
+                    }.onEach {
+                        this -= it
+                    }.map {
+                        UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
                     }
-                }.onEach {
-                    this += it
-                }.map {
-                    UserSubscriptionEvent.RoomUpdatedEvent(it)
-                }
 
-                if (initialized.getAndSet(true)) {
-                    listOf(event) + removedFrom + addedTo + updated
-                } else {
-                    listOf(event)
+                    val addedTo = event.rooms.filterNot {
+                        knownRooms.contains(it)
+                    }.onEach {
+                        this += it
+                    }.map {
+                        UserSubscriptionEvent.AddedToRoomEvent(it)
+                    }
+
+                    val updated = event.rooms.filter { nr ->
+                        knownRooms.any { kr ->
+                            kr == nr && !kr.deepEquals(nr)
+                        }
+                    }.onEach {
+                        this += it
+                    }.map {
+                        UserSubscriptionEvent.RoomUpdatedEvent(it)
+                    }
+
+                    if (initialized.getAndSet(true)) {
+                        listOf(event) + removedFrom + addedTo + updated
+                    } else {
+                        listOf(event)
+                    }
                 }
+                is UserSubscriptionEvent.AddedToRoomEvent ->
+                    listOf(event.also { this += event.room })
+                is UserSubscriptionEvent.RoomUpdatedEvent ->
+                    listOf(event.also { this += event.room })
+                is UserSubscriptionEvent.RoomDeletedEvent ->
+                    listOf(event.also { this -= event.roomId })
+                is UserSubscriptionEvent.RemovedFromRoomEvent ->
+                    listOf(event.also { this -= event.roomId })
+                is UserSubscriptionEvent.LeftRoomEvent ->
+                    listOf(event.also { this[event.roomId]?.removeUser(event.userId) })
+                is UserSubscriptionEvent.JoinedRoomEvent ->
+                    listOf(event.also { this[event.roomId]?.addUser(event.userId) })
+                else -> listOf(event)
             }
-            is UserSubscriptionEvent.AddedToRoomEvent ->
-                listOf(event.also { this += event.room })
-            is UserSubscriptionEvent.RoomUpdatedEvent ->
-                listOf(event.also { this += event.room })
-            is UserSubscriptionEvent.RoomDeletedEvent ->
-                listOf(event.also { this -= event.roomId })
-            is UserSubscriptionEvent.RemovedFromRoomEvent ->
-                listOf(event.also { this -= event.roomId })
-            is UserSubscriptionEvent.LeftRoomEvent ->
-                listOf(event.also { this[event.roomId]?.removeUser(event.userId) })
-            is UserSubscriptionEvent.JoinedRoomEvent ->
-                listOf(event.also { this[event.roomId]?.addUser(event.userId) })
-            else -> listOf(event)
-        }
-    
+
     fun applyMembershipEvent(
             roomId: String,
             event: MembershipSubscriptionEvent

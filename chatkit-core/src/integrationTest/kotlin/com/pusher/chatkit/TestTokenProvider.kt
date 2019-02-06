@@ -11,22 +11,22 @@ import java.util.*
 import java.util.concurrent.Future
 
 data class TestTokenProvider(
-    private val instanceId: String,
-    private val userId: String,
-    private val keyId: String,
-    private val secret: String,
-    private val su: Boolean = false
+        private val instanceId: String,
+        private val userId: String,
+        private val keyId: String,
+        private val secret: String,
+        private val su: Boolean = false
 ) : TokenProvider {
     override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = Futures.now(
-        JWT.create()
-            .withClaim("instance", instanceId)
-            .withClaim("iss", "api_keys/$keyId")
-            .withClaim("iat", Date())
-            .withClaim("exp", Date(Date().time + 3_600_000))
-            .withClaim("sub", userId)
-            .withClaim("su", su)
-            .sign(HMAC256(secret))
-            .asSuccess()
+            JWT.create()
+                    .withClaim("instance", instanceId)
+                    .withClaim("iss", "api_keys/$keyId")
+                    .withClaim("iat", Date())
+                    .withClaim("exp", Date(Date().time + 3_600_000))
+                    .withClaim("sub", userId)
+                    .withClaim("su", su)
+                    .sign(HMAC256(secret))
+                    .asSuccess()
     )
 
     override fun clearToken(token: String?) = Unit

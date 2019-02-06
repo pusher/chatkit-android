@@ -14,7 +14,7 @@ import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
 
-internal object RoomSubscriptionEventParser: DataParser<RoomSubscriptionEvent> {
+internal object RoomSubscriptionEventParser : DataParser<RoomSubscriptionEvent> {
     override fun invoke(body: String): Result<RoomSubscriptionEvent, Error> =
             body.parseAs<JsonElement>()
                     .map { it.takeIf { it.isJsonObject }?.asJsonObject }

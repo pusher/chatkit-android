@@ -27,23 +27,25 @@ class TestDependencies : PlatformDependencies {
         override fun warn(message: String, error: Error?) = log("W", message.take(MAX_LOG_LENGTH), error)
         override fun error(message: String, error: Error?) = log("E", message.take(MAX_LOG_LENGTH), error)
         private fun log(type: String, message: String, error: Error?) =
-            println("${ts()} $type: $message ${error?.let { "\n" + it } ?: ""}".take(MAX_LOG_LENGTH))
+                println("${ts()} $type: $message ${error?.let { "\n" + it }
+                        ?: ""}".take(MAX_LOG_LENGTH))
+
         private fun ts() = timeFormatter.format(LocalDateTime.now())
     }
     override val mediaTypeResolver: MediaTypeResolver = object : MediaTypeResolver {
         override fun fileMediaType(file: File): String? = "image/jif"
     }
     override val sdkInfo: SdkInfo = SdkInfo(
-        product = "SynchronousChatManager Integration Tests",
-        language = "Spek",
-        platform = "JUnit",
-        sdkVersion = "test"
+            product = "SynchronousChatManager Integration Tests",
+            language = "Spek",
+            platform = "JUnit",
+            sdkVersion = "test"
     )
 }
 
 class TestChatkitDependencies(
-    override val tokenProvider: TokenProvider,
-    platformDependencies: PlatformDependencies = TestDependencies()
+        override val tokenProvider: TokenProvider,
+        platformDependencies: PlatformDependencies = TestDependencies()
 ) : ChatkitDependencies, PlatformDependencies by platformDependencies {
     override val okHttpClient: OkHttpClient = insecureOkHttpClient.newBuilder().apply {
         addInterceptor { chain ->
@@ -60,11 +62,11 @@ val SynchronousCurrentUser.generalRoom
 private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
 
 fun chatFor(userName: String) = SynchronousChatManager(
-    instanceLocator = INSTANCE_LOCATOR,
-    userId = userName,
-    dependencies = TestChatkitDependencies(
-        tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
-    )
+        instanceLocator = INSTANCE_LOCATOR,
+        userId = userName,
+        dependencies = TestChatkitDependencies(
+                tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
+        )
 ).also { managers += it }
 
 fun closeChatManagers() {

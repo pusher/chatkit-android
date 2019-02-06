@@ -29,9 +29,9 @@ import elements.Errors
 import java.util.concurrent.CountDownLatch
 
 class SynchronousChatManager constructor(
-    private val instanceLocator: String,
-    private val userId: String,
-    private val dependencies: ChatkitDependencies
+        private val instanceLocator: String,
+        private val userId: String,
+        private val dependencies: ChatkitDependencies
 ) : AppHookListener {
     private val tokenProvider: TokenProvider = DebounceTokenProvider(
             dependencies.tokenProvider.also { (it as? ChatkitTokenProvider)?.userId = userId }
@@ -80,7 +80,7 @@ class SynchronousChatManager constructor(
 
 
     private var currentUser = object {
-        private val updateLock = object{}
+        private val updateLock = object {}
         private val latch = CountDownLatch(1)
         private var currentUser: SynchronousCurrentUser? = null
 
@@ -185,13 +185,13 @@ class SynchronousChatManager constructor(
             }
 
     private fun consumeRoomSubscriptionEvent(roomId: String): RoomConsumer = { event ->
-                consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
-            }
+        consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
+    }
 
     private fun consumePresenceSubscriptionEvent(event: PresenceSubscriptionEvent) =
             consumeEvents(transformPresenceSubscriptionEvent(event))
 
-    private fun consumeEvents(events : List<ChatEvent>) {
+    private fun consumeEvents(events: List<ChatEvent>) {
         events.forEach(eventBuffer::queue)
     }
 
@@ -224,18 +224,18 @@ class SynchronousChatManager constructor(
             }
 
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
-        when (event) {
-            is RoomEvent.UserStartedTyping ->
-                roomService.fetchRoomBy(event.user.id, roomId).map { room ->
-                    ChatEvent.UserStartedTyping(event.user, room) as ChatEvent
-                }.recover { ChatEvent.ErrorOccurred(it) }
-            is RoomEvent.UserStoppedTyping ->
-                roomService.fetchRoomBy(event.user.id, roomId).map { room ->
-                    ChatEvent.UserStoppedTyping(event.user, room) as ChatEvent
-                }.recover { ChatEvent.ErrorOccurred(it) }
-            else ->
-                ChatEvent.NoEvent
-        }
+            when (event) {
+                is RoomEvent.UserStartedTyping ->
+                    roomService.fetchRoomBy(event.user.id, roomId).map { room ->
+                        ChatEvent.UserStartedTyping(event.user, room) as ChatEvent
+                    }.recover { ChatEvent.ErrorOccurred(it) }
+                is RoomEvent.UserStoppedTyping ->
+                    roomService.fetchRoomBy(event.user.id, roomId).map { room ->
+                        ChatEvent.UserStoppedTyping(event.user, room) as ChatEvent
+                    }.recover { ChatEvent.ErrorOccurred(it) }
+                else ->
+                    ChatEvent.NoEvent
+            }
 
     private fun transformPresenceSubscriptionEvent(event: PresenceSubscriptionEvent): List<ChatEvent> {
         val newStates = when (event) {
@@ -303,13 +303,13 @@ class SynchronousChatManager constructor(
                 serviceName = type.serviceName,
                 serviceVersion = type.version,
                 dependencies = dependencies
-            )
+        )
         return PlatformClient(dependencies.okHttpClient.let { client ->
-                when (client) {
-                    null -> instance
-                    else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
-                }
-            }, tokenProvider)
+            when (client) {
+                null -> instance
+                else -> instance.copy(baseClient = instance.baseClient.copy(client = client))
+            }
+        }, tokenProvider)
     }
 
     fun disablePushNotifications(): Result<Unit, Error> {

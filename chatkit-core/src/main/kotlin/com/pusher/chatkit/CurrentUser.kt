@@ -184,5 +184,5 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.usersForRoom(room) }, callback)
 
     fun enablePushNotifications(callback: (Result<Unit, Error>) -> Unit) =
-            makeCallback({ syncCurrentUser.enablePushNotifications() } , callback)
+            makeCallback({ syncCurrentUser.enablePushNotifications() }, callback)
 }

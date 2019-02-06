@@ -24,11 +24,11 @@ class PresenceSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val userCameOnline by chatFor(PUSHERINO)
-                .subscribeRoomFor(GENERAL) { roomEvent ->
-                    (roomEvent as? RoomEvent.PresenceChange)?.takeIf { presenceEvent ->
-                        presenceEvent.user.id == ALICE && presenceEvent.currentState == Presence.Online
+                    .subscribeRoomFor(GENERAL) { roomEvent ->
+                        (roomEvent as? RoomEvent.PresenceChange)?.takeIf { presenceEvent ->
+                            presenceEvent.user.id == ALICE && presenceEvent.currentState == Presence.Online
+                        }
                     }
-                }
 
             chatFor(ALICE).connect().assumeSuccess()
 

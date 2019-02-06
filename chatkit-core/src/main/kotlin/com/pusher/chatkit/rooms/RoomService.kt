@@ -297,7 +297,7 @@ internal class RoomService(
     }
 }
 
-private fun noRoomMembershipError(room: Room) : Error =
+private fun noRoomMembershipError(room: Room): Error =
         Errors.other("User is not a member of ${room.name}")
 
 internal data class UpdateRoomRequest(
@@ -307,9 +307,9 @@ internal data class UpdateRoomRequest(
 )
 
 private data class RoomCreateRequest(
-    val name: String,
-    val private: Boolean,
-    val createdById: String,
-    val customData: CustomData?,
-    var userIds: List<String> = emptyList()
+        val name: String,
+        val private: Boolean,
+        val createdById: String,
+        val customData: CustomData?,
+        var userIds: List<String> = emptyList()
 )

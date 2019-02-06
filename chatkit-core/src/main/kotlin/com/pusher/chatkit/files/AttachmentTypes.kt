@@ -6,17 +6,17 @@ import java.util.*
 sealed class GenericAttachment
 
 data class DataAttachment @JvmOverloads constructor(
-    val file: File,
-    val name: String
-): GenericAttachment()
+        val file: File,
+        val name: String
+) : GenericAttachment()
 
-data class LinkAttachment(val link: String, val type: AttachmentType): GenericAttachment()
+data class LinkAttachment(val link: String, val type: AttachmentType) : GenericAttachment()
 
 enum class AttachmentType {
     IMAGE, VIDEO, AUDIO, FILE;
 
     companion object {
-        operator fun invoke(value: String) = when(value) {
+        operator fun invoke(value: String) = when (value) {
             "image" -> IMAGE
             "video" -> VIDEO
             "audio" -> AUDIO
@@ -24,7 +24,7 @@ enum class AttachmentType {
         }
     }
 
-    override fun toString() = when(this) {
+    override fun toString() = when (this) {
         IMAGE -> "image"
         VIDEO -> "video"
         AUDIO -> "audio"

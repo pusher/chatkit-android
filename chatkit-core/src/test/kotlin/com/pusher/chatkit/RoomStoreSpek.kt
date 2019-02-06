@@ -84,7 +84,7 @@ class RoomStoreSpek : Spek({
         describe("On receiving new InitialState Membership event") {
             val subject = RoomStore()
 
-            val room =  Room("1", "ham", "one", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
+            val room = Room("1", "ham", "one", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
             setOf("callum", "mike", "alice").forEach { room.addUser(it) }
 
             subject += room

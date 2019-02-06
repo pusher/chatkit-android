@@ -19,11 +19,11 @@ import java.util.concurrent.Future
  * */
 data class ChatkitTokenProvider
 @JvmOverloads constructor(
-    val endpoint: String,
-    internal var userId: String,
-    private val authData: Map<String, String> = emptyMap(),
-    private val client: OkHttpClient = OkHttpClient(),
-    private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
+        val endpoint: String,
+        internal var userId: String,
+        private val authData: Map<String, String> = emptyMap(),
+        private val client: OkHttpClient = OkHttpClient(),
+        private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 ) : TokenProvider {
 
     private val httpUrl =
@@ -73,33 +73,33 @@ data class ChatkitTokenProvider
     }
 
     private fun Response.asError(): Error = Errors.response(
-        statusCode = code(),
-        headers = headers().toMultimap(),
-        error = body()?.string() ?: ""
+            statusCode = code(),
+            headers = headers().toMultimap(),
+            error = body()?.string() ?: ""
     )
 
     private fun parseTokenResponse(response: Response): Result<String, Error> {
         return response.body()
-            ?.string()
-            ?.parseAs<TokenResponse>()
-            .orElse { Errors.network("Could not parse token from response: $response") }
-            .flatten()
-            .map { token ->
-                tokenCache.cache(token.accessToken, token.expiresIn.toLong())
-                token.accessToken
-            }
+                ?.string()
+                ?.parseAs<TokenResponse>()
+                .orElse { Errors.network("Could not parse token from response: $response") }
+                .flatten()
+                .map { token ->
+                    tokenCache.cache(token.accessToken, token.expiresIn.toLong())
+                    token.accessToken
+                }
     }
 }
 
 data class TokenResponse(
-    val accessToken: String,
-    val tokenType: String,
-    val expiresIn: String,
-    val refreshToken: String
+        val accessToken: String,
+        val tokenType: String,
+        val expiresIn: String,
+        val refreshToken: String
 )
 
 data class ChatkitTokenParams(
-    val extras: Map<String, String> = emptyMap()
+        val extras: Map<String, String> = emptyMap()
 )
 
 /**

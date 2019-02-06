@@ -16,13 +16,13 @@ import elements.Errors
 
 internal object MembershipSubscriptionEventParser : DataParser<MembershipSubscriptionEvent> {
     override fun invoke(body: String): Result<MembershipSubscriptionEvent, Error> =
-        body.parseAs<JsonElement>()
-            .map { it.takeIf { it.isJsonObject }?.asJsonObject }
-            .flatMap { it.orElse { Errors.other("") } }
-            .flatMap { json: JsonObject -> json.toMembershipSubscriptionEvent() }
+            body.parseAs<JsonElement>()
+                    .map { it.takeIf { it.isJsonObject }?.asJsonObject }
+                    .flatMap { it.orElse { Errors.other("") } }
+                    .flatMap { json: JsonObject -> json.toMembershipSubscriptionEvent() }
 
     private fun JsonObject.toMembershipSubscriptionEvent(): Result<MembershipSubscriptionEvent, Error> =
-        eventName.flatMap { eventName: String -> data.flatMap { it.parseEvent(eventName) } }
+            eventName.flatMap { eventName: String -> data.flatMap { it.parseEvent(eventName) } }
 
     private inline val JsonObject.eventName: Result<String, Error>
         get() = getValue("event_name").flatMap { it.asString() }
@@ -31,10 +31,10 @@ internal object MembershipSubscriptionEventParser : DataParser<MembershipSubscri
         get() = getValue("data").flatMap { it.asObject() }
 
     private fun JsonObject.parseEvent(eventName: String): Result<MembershipSubscriptionEvent, Error> =
-        when(eventName) {
-            "initial_state" -> parseAs<InitialState>()
-            "user_joined" -> parseAs<UserJoined>()
-            "user_left" -> parseAs<UserLeft>()
-            else -> Errors.other("Invalid event name: $eventName").asFailure()
-        }.map { it }
+            when (eventName) {
+                "initial_state" -> parseAs<InitialState>()
+                "user_joined" -> parseAs<UserJoined>()
+                "user_left" -> parseAs<UserLeft>()
+                else -> Errors.other("Invalid event name: $eventName").asFailure()
+            }.map { it }
 }

@@ -88,8 +88,8 @@ class ChatManagerSpek : Spek({
             var messageReceived by FutureValue<Message>()
 
             pusherino.assumeSuccess().subscribeToRoom(room, RoomListeners(
-                onMessage = { message -> messageReceived = message },
-                onErrorOccurred = { e -> error("error: $e") }
+                    onMessage = { message -> messageReceived = message },
+                    onErrorOccurred = { e -> error("error: $e") }
             ))
 
             val messageResult = alice.assumeSuccess().sendMessage(room, "message text")
@@ -144,7 +144,8 @@ class ChatManagerSpek : Spek({
             assertThat(events).hasSize(1)
             val event = events.poll()
             when (event) {
-                is ChatEvent.CurrentUserReceived -> {} // Pass
+                is ChatEvent.CurrentUserReceived -> {
+                } // Pass
                 else -> throw IllegalStateException("$event is not the expected ChatEvent.CurrentUserReceived")
             }
         }
@@ -183,7 +184,8 @@ class ChatManagerSpek : Spek({
             assertThat(events).hasSize(1)
             val event = events.poll()
             when (event) {
-                is ChatEvent.CurrentUserReceived -> {} // Pass
+                is ChatEvent.CurrentUserReceived -> {
+                } // Pass
                 else -> throw IllegalStateException("$event is not the expected ChatEvent.CurrentUserReceived")
             }
 
@@ -204,18 +206,18 @@ class ChatManagerSpek : Spek({
         it("maps from callback to listeners") {
             val actual = mutableListOf<Any>()
             val consume = ChatListeners(
-                onErrorOccurred = { actual += "onErrorOccurred" to it },
-                onAddedToRoom = { actual += "onAddedToRoom" to it },
-                onRemovedFromRoom = { actual += "onRemovedFromRoom" to it },
-                onCurrentUserReceived = { actual += "onCurrentUserReceived" to it },
-                onNewReadCursor = { actual += "onNewReadCursor" to it },
-                onRoomDeleted = { actual += "onRoomDeleted" to it },
-                onRoomUpdated = { actual += "onRoomUpdated" to it },
-                onPresenceChanged = { u, n, p -> actual += "onPresenceChanged" to u to n to p },
-                onUserJoinedRoom = { u, r -> actual += "onUserJoinedRoom" to u to r },
-                onUserLeftRoom = { u, r -> actual += "onUserLeftRoom" to u to r },
-                onUserStartedTyping = { u, r -> actual += "onUserStartedTyping" to u to r },
-                onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r }
+                    onErrorOccurred = { actual += "onErrorOccurred" to it },
+                    onAddedToRoom = { actual += "onAddedToRoom" to it },
+                    onRemovedFromRoom = { actual += "onRemovedFromRoom" to it },
+                    onCurrentUserReceived = { actual += "onCurrentUserReceived" to it },
+                    onNewReadCursor = { actual += "onNewReadCursor" to it },
+                    onRoomDeleted = { actual += "onRoomDeleted" to it },
+                    onRoomUpdated = { actual += "onRoomUpdated" to it },
+                    onPresenceChanged = { u, n, p -> actual += "onPresenceChanged" to u to n to p },
+                    onUserJoinedRoom = { u, r -> actual += "onUserJoinedRoom" to u to r },
+                    onUserLeftRoom = { u, r -> actual += "onUserLeftRoom" to u to r },
+                    onUserStartedTyping = { u, r -> actual += "onUserStartedTyping" to u to r },
+                    onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r }
             ).toCallback()
 
             consume(CurrentUserReceived(currentUser))
@@ -233,18 +235,18 @@ class ChatManagerSpek : Spek({
             consume(ErrorOccurred(error))
 
             assertThat(actual).containsExactly(
-                "onErrorOccurred" to error,
-                "onCurrentUserReceived" to currentUser,
-                "onAddedToRoom" to room,
-                "onRemovedFromRoom" to roomId,
-                "onNewReadCursor" to cursor,
-                "onRoomDeleted" to roomId,
-                "onRoomUpdated" to room,
-                "onPresenceChanged" to user to Presence.Online to Presence.Unknown,
-                "onUserJoinedRoom" to user to room,
-                "onUserLeftRoom" to user to room,
-                "onUserStartedTyping" to user to room,
-                "onUserStoppedTyping" to user to room
+                    "onErrorOccurred" to error,
+                    "onCurrentUserReceived" to currentUser,
+                    "onAddedToRoom" to room,
+                    "onRemovedFromRoom" to roomId,
+                    "onNewReadCursor" to cursor,
+                    "onRoomDeleted" to roomId,
+                    "onRoomUpdated" to room,
+                    "onPresenceChanged" to user to Presence.Online to Presence.Unknown,
+                    "onUserJoinedRoom" to user to room,
+                    "onUserLeftRoom" to user to room,
+                    "onUserStartedTyping" to user to room,
+                    "onUserStoppedTyping" to user to room
             )
         }
     }
@@ -254,15 +256,15 @@ class ChatManagerSpek : Spek({
             val actual = mutableListOf<Any>()
 
             val consume = RoomListeners(
-                onErrorOccurred = { actual += "onErrorOccurred" to it },
-                onNewReadCursor = { actual += "onNewReadCursor" to it },
-                onRoomDeleted = { actual += "onRoomDeleted" to it },
-                onRoomUpdated = { actual += "onRoomUpdated" to it },
-                onPresenceChange = { actual += "onPresenceChanged" to it },
-                onUserStartedTyping = { actual += "onUserStartedTyping" to it },
-                onMessage = { actual += "onMessage" to it },
-                onUserJoined = { actual += "onUserJoined" to it },
-                onUserLeft = { actual += "onUserLeft" to it }
+                    onErrorOccurred = { actual += "onErrorOccurred" to it },
+                    onNewReadCursor = { actual += "onNewReadCursor" to it },
+                    onRoomDeleted = { actual += "onRoomDeleted" to it },
+                    onRoomUpdated = { actual += "onRoomUpdated" to it },
+                    onPresenceChange = { actual += "onPresenceChanged" to it },
+                    onUserStartedTyping = { actual += "onUserStartedTyping" to it },
+                    onMessage = { actual += "onMessage" to it },
+                    onUserJoined = { actual += "onUserJoined" to it },
+                    onUserLeft = { actual += "onUserLeft" to it }
             ).toCallback()
 
             consume(RoomEvent.UserStartedTyping(user))
@@ -276,15 +278,15 @@ class ChatManagerSpek : Spek({
             consume(RoomEvent.Message(message))
 
             assertThat(actual).containsExactly(
-                "onUserStartedTyping" to user,
-                "onUserJoined" to user,
-                "onUserLeft" to user,
-                "onPresenceChanged" to user,
-                "onRoomUpdated" to room,
-                "onRoomDeleted" to roomId,
-                "onNewReadCursor" to cursor,
-                "onErrorOccurred" to error,
-                "onMessage" to message
+                    "onUserStartedTyping" to user,
+                    "onUserJoined" to user,
+                    "onUserLeft" to user,
+                    "onPresenceChanged" to user,
+                    "onRoomUpdated" to room,
+                    "onRoomDeleted" to roomId,
+                    "onNewReadCursor" to cursor,
+                    "onErrorOccurred" to error,
+                    "onMessage" to message
             )
         }
     }

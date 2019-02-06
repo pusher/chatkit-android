@@ -7,9 +7,9 @@ import elements.Error
 typealias CustomData = Map<String, Any>
 
 class ChatManager(
-         instanceLocator: String,
-         userId: String,
-         dependencies: ChatkitDependencies
+        instanceLocator: String,
+        userId: String,
+        dependencies: ChatkitDependencies
 ) {
     private val syncChatManager = SynchronousChatManager(
             instanceLocator,

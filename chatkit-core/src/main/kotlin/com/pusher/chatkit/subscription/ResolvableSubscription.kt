@@ -11,14 +11,14 @@ import java.util.concurrent.CountDownLatch
 // either on opening a subscription (default behaviour) or
 // on receiving the first event on the subscription
 class ResolvableSubscription<A>(
-    path: String,
-    client: PlatformClient,
-    listeners: SubscriptionListeners<A>,
-    messageParser: DataParser<A>,
-    logger: Logger,
-    description: String,
-    resolveOnFirstEvent: Boolean = false
-): Subscription {
+        path: String,
+        client: PlatformClient,
+        listeners: SubscriptionListeners<A>,
+        messageParser: DataParser<A>,
+        logger: Logger,
+        description: String,
+        resolveOnFirstEvent: Boolean = false
+) : Subscription {
     private val latch = CountDownLatch(1)
 
     private val subscription = loggingSubscription(

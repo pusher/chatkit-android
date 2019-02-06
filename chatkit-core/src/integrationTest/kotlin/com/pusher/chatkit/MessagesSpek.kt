@@ -103,11 +103,11 @@ class MessagesSpek : Spek({
             }
 
             val messages = pusherino.fetchMessages(
-                roomId = pusherino.generalRoom.id,
-                direction = Direction.NEWER_FIRST
+                    roomId = pusherino.generalRoom.id,
+                    direction = Direction.NEWER_FIRST
             ).assumeSuccess()
 
-            assertThat(messages).isOrdered( Comparator { a: Message, b: Message -> a.createdAt.compareTo(b.createdAt) } )
+            assertThat(messages).isOrdered(Comparator { a: Message, b: Message -> a.createdAt.compareTo(b.createdAt) })
         }
 
         it("sends message with attachment") {
@@ -117,9 +117,9 @@ class MessagesSpek : Spek({
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.sendMessage(
-                room = alice.generalRoom,
-                messageText = "Cats and dogs, living together",
-                attachment = DataAttachment(billMurray, "billmurray.jpeg")
+                    room = alice.generalRoom,
+                    messageText = "Cats and dogs, living together",
+                    attachment = DataAttachment(billMurray, "billmurray.jpeg")
             ).assumeSuccess()
 
             val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
@@ -134,9 +134,9 @@ class MessagesSpek : Spek({
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.sendMessage(
-                room = alice.generalRoom,
-                messageText = "Cats and dogs, living together",
-                attachment = LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
+                    room = alice.generalRoom,
+                    messageText = "Cats and dogs, living together",
+                    attachment = LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
             ).assumeSuccess()
 
             val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
@@ -159,8 +159,8 @@ class MessagesSpek : Spek({
             }
 
             alice.sendMessage(
-                room = alice.generalRoom,
-                messageText = "Cats and dogs, living together"
+                    room = alice.generalRoom,
+                    messageText = "Cats and dogs, living together"
             ).assumeSuccess()
 
             with(receivedMessage) {
@@ -186,9 +186,9 @@ class MessagesSpek : Spek({
             }
 
             alice.sendMessage(
-                room = alice.generalRoom,
-                messageText = "Cats and dogs, living together",
-                attachment = LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
+                    room = alice.generalRoom,
+                    messageText = "Cats and dogs, living together",
+                    attachment = LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
             ).assumeSuccess()
 
             with(receivedMessage) {
@@ -216,9 +216,9 @@ class MessagesSpek : Spek({
             }
 
             alice.sendMessage(
-                room = alice.generalRoom,
-                messageText = "Cats and dogs, living together",
-                attachment = DataAttachment(billMurray, "billmurray.jpeg")
+                    room = alice.generalRoom,
+                    messageText = "Cats and dogs, living together",
+                    attachment = DataAttachment(billMurray, "billmurray.jpeg")
             ).assumeSuccess()
 
             with(receivedMessage) {

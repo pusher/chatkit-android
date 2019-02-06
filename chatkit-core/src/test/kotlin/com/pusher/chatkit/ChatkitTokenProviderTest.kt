@@ -22,8 +22,8 @@ import org.mockito.ArgumentMatchers.notNull
 import java.util.*
 
 private val testProvider = ChatkitTokenProvider(
-    endpoint = "https://localhost",
-    userId = "pusherino"
+        endpoint = "https://localhost",
+        userId = "pusherino"
 )
 
 internal class ChatkitTokenProviderTest : Spek({
@@ -47,16 +47,16 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("provides ChatkitTokenParams as part of request") {
             val provider = testProvider.copy(
-                client = mock {
-                    newCall(argThat {
-                        it.url().toString() == "https://localhost/?user_id=pusherino" &&
-                            it.body().toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
-                    }) returnsStub withSuccess()
-                }
+                    client = mock {
+                        newCall(argThat {
+                            it.url().toString() == "https://localhost/?user_id=pusherino" &&
+                                    it.body().toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
+                        }) returnsStub withSuccess()
+                    }
             )
 
             val token = provider.fetchToken(ChatkitTokenParams(
-                mapOf("key" to "value")
+                    mapOf("key" to "value")
             )).wait().assumeSuccess()
 
             assertThat(token).isEqualTo("goodToken")
@@ -64,13 +64,13 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("provides CustomData as part of request") {
             val provider = testProvider.copy(
-                authData = mapOf("key" to "value"),
-                client = mock {
-                    newCall(argThat {
-                        it.url().toString() == "https://localhost/?user_id=pusherino" &&
-                            it.body().toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
-                    }) returnsStub withSuccess()
-                }
+                    authData = mapOf("key" to "value"),
+                    client = mock {
+                        newCall(argThat {
+                            it.url().toString() == "https://localhost/?user_id=pusherino" &&
+                                    it.body().toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
+                        }) returnsStub withSuccess()
+                    }
             )
 
             val token = provider.fetchToken(null).wait().assumeSuccess()
@@ -80,10 +80,10 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("provides an error when the request fails") {
             val provider = testProvider.copy(
-                client = mock {
-                    newCall(notNull()) returnsStub withFailure()
-                },
-                tokenCache = stub()
+                    client = mock {
+                        newCall(notNull()) returnsStub withFailure()
+                    },
+                    tokenCache = stub()
             )
 
             val result = provider.fetchToken(null).wait()
@@ -93,10 +93,10 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("provides an error when the request is successful but not 2XX.") {
             val provider = testProvider.copy(
-                client = mock {
-                    newCall(notNull()) returnsStub withNotOkResponse()
-                },
-                tokenCache = stub()
+                    client = mock {
+                        newCall(notNull()) returnsStub withNotOkResponse()
+                    },
+                    tokenCache = stub()
             )
 
             val result = provider.fetchToken(null).wait()
@@ -106,10 +106,10 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("gets token from cache") {
             val provider = testProvider.copy(
-                client = mock {
-                    newCall(notNull()) returnsStub withSuccess()
-                    newCall(notNull()) returnsStub withFailure() // fail on second request
-                }
+                    client = mock {
+                        newCall(notNull()) returnsStub withSuccess()
+                        newCall(notNull()) returnsStub withFailure() // fail on second request
+                    }
             )
 
             val firstResult = provider.fetchToken(null).wait().assumeSuccess()
@@ -120,10 +120,10 @@ internal class ChatkitTokenProviderTest : Spek({
 
         it("clears the cache") {
             val provider = testProvider.copy(
-                client = mock {
-                    newCall(notNull()) returnsStub withSuccess()
-                    newCall(notNull()) returnsStub withFailure() // fail on second request
-                }
+                    client = mock {
+                        newCall(notNull()) returnsStub withSuccess()
+                        newCall(notNull()) returnsStub withFailure() // fail on second request
+                    }
             )
 
             provider.fetchToken(null).wait().assumeSuccess()
@@ -134,10 +134,10 @@ internal class ChatkitTokenProviderTest : Spek({
         }
 
         it("fails with incorrect url") {
-            var exception : Any? = null
+            var exception: Any? = null
             try {
                 testProvider.copy(endpoint = "meh")
-            } catch (e : IllegalArgumentException) {
+            } catch (e: IllegalArgumentException) {
                 exception = e
             }
             check(exception is IllegalArgumentException)
@@ -184,10 +184,10 @@ private fun withNotOkResponse(): Call.() -> Unit = {
 }
 
 private fun RequestBody?.toBuffer() =
-    Buffer().also { this?.writeTo(it) }
+        Buffer().also { this?.writeTo(it) }
 
 private fun String.toBuffer() =
-    Buffer().also { it.writeUtf8(this) }
+        Buffer().also { it.writeUtf8(this) }
 
 
 val badResponse = Errors.response(500, emptyMap(), "Bad Response").asFailure<String, Error>()

@@ -7,7 +7,7 @@ import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 
-class NoPushNotificationFactory: PushNotificationsFactory {
+class NoPushNotificationFactory : PushNotificationsFactory {
     override fun newBeams(instanceId: String, beamsTokenProviderService: BeamsTokenProviderService): PushNotifications {
         return object : PushNotifications {
             override fun start(): Result<Unit, Error> {

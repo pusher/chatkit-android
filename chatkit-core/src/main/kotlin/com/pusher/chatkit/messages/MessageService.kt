@@ -16,10 +16,10 @@ internal class MessageService(
         private val filesService: FilesService
 ) {
     fun fetchMessages(
-        roomId: String,
-        limit: Int,
-        initialId: Int?,
-        direction: Direction
+            roomId: String,
+            limit: Int,
+            initialId: Int?,
+            direction: Direction
     ): Result<List<Message>, Error> =
             fetchMessagesParams(limit, initialId, direction).let { params ->
                 client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
@@ -45,13 +45,13 @@ internal class MessageService(
 
     @JvmOverloads
     fun sendMessage(
-        roomId: String,
-        userId: String,
-        text: String = "",
-        attachment: GenericAttachment = NoAttachment
+            roomId: String,
+            userId: String,
+            text: String = "",
+            attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
-        attachment.asAttachmentBody(roomId, userId)
-            .flatMap { sendMessage(roomId, userId, text, it) }
+            attachment.asAttachmentBody(roomId, userId)
+                    .flatMap { sendMessage(roomId, userId, text, it) }
 
     private fun GenericAttachment.asAttachmentBody(
             roomId: String,
@@ -66,17 +66,17 @@ internal class MessageService(
             }
 
     private fun sendMessage(
-        roomId: String,
-        userId: String,
-        text: String = "",
-        attachment: AttachmentBody
-    ) : Result<Int, Error> =
+            roomId: String,
+            userId: String,
+            text: String = "",
+            attachment: AttachmentBody
+    ): Result<Int, Error> =
             MessageRequest(text, userId, attachment.takeIf { it !== AttachmentBody.None })
                     .toJson()
                     .flatMap { body ->
                         client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
                     }.map {
-                            it.messageId
+                        it.messageId
                     }
 }
 

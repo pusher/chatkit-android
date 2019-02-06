@@ -17,13 +17,13 @@ import elements.Errors
 internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> {
 
     override fun invoke(body: String): Result<UserSubscriptionEvent, Error> =
-        body.parseAs<JsonElement>()
-            .map { it.takeIf { it.isJsonObject }?.asJsonObject }
-            .flatMap { it.orElse { Errors.other("") } }
-            .flatMap { json: JsonObject -> json.toUserSubscriptionEvent() }
+            body.parseAs<JsonElement>()
+                    .map { it.takeIf { it.isJsonObject }?.asJsonObject }
+                    .flatMap { it.orElse { Errors.other("") } }
+                    .flatMap { json: JsonObject -> json.toUserSubscriptionEvent() }
 
     private fun JsonObject.toUserSubscriptionEvent(): Result<UserSubscriptionEvent, Error> =
-        eventName.flatMap { eventName: String -> data.flatMap { it.parseEvent(eventName) }  }
+            eventName.flatMap { eventName: String -> data.flatMap { it.parseEvent(eventName) } }
 
     private inline val JsonObject.eventName: Result<String, Error>
         get() = getValue("event_name").flatMap { it.asString() }
