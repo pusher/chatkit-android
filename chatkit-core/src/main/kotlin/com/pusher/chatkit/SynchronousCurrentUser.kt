@@ -5,6 +5,7 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.request.Part
 import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
@@ -162,6 +163,30 @@ class SynchronousCurrentUser(
             attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
             chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
+
+    fun sendSimpleMessage(
+            room: Room,
+            messageText: String
+    ): Result<Int, Error> =
+            sendSimpleMessage(room.id, messageText)
+
+    fun sendSimpleMessage(
+            roomId: String,
+            messageText: String
+    ): Result<Int, Error> =
+        sendMultipartMessage(roomId, listOf(Part.Inline(messageText)))
+
+    fun sendMultipartMessage(
+            room: Room,
+            parts: List<Part>
+    ): Result<Int, Error> =
+            sendMultipartMessage(room.id, parts)
+
+    fun sendMultipartMessage(
+            roomId: String,
+            parts: List<Part>
+    ): Result<Int, Error> =
+            chatManager.messageService.sendMultipartMessage(roomId, parts)
 
     private val typingTimeThreshold = 500
     private var lastTypingEvent: Long = 0

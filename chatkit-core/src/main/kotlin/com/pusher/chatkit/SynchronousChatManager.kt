@@ -38,7 +38,8 @@ class SynchronousChatManager constructor(
     )
 
     private val logger = dependencies.logger
-    private val chatkitClient = createPlatformClient(InstanceType.DEFAULT)
+    private val v2chatkitClient = createPlatformClient(InstanceType.SERVER_V2)
+    private val v3chatkitClient = createPlatformClient(InstanceType.SERVER_V3)
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
@@ -62,13 +63,14 @@ class SynchronousChatManager constructor(
                     consumer = this::consumePresenceSubscriptionEvent
             )
 
-    internal val userService = UserService(chatkitClient, presenceService)
+    internal val userService = UserService(v3chatkitClient, presenceService)
 
-    internal val messageService = MessageService(chatkitClient, userService, filesService)
+    internal val messageService = MessageService(v2chatkitClient, v3chatkitClient, userService, filesService)
 
     internal val roomService =
             RoomService(
-                    chatkitClient,
+                    v2chatkitClient,
+                    v3chatkitClient,
                     userService,
                     cursorService,
                     this::consumeRoomSubscriptionEvent,
@@ -145,7 +147,7 @@ class SynchronousChatManager constructor(
         dependencies.appHooks.register(this)
 
         userSubscription = ResolvableSubscription(
-                client = chatkitClient,
+                client = v3chatkitClient,
                 path = "users",
                 listeners = SubscriptionListeners(
                         onEvent = { event -> consumeUserSubscriptionEvent(event.body) },
@@ -275,7 +277,7 @@ class SynchronousChatManager constructor(
                 name = initialState.currentUser.name,
                 chatManager = this,
                 pushNotifications = beams,
-                client = createPlatformClient(InstanceType.DEFAULT)
+                client = createPlatformClient(InstanceType.SERVER_V3)
         ))
     }
 
@@ -323,7 +325,8 @@ class SynchronousChatManager constructor(
 }
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
-    DEFAULT("chatkit", "v2"),
+    SERVER_V2("chatkit", "v2"),
+    SERVER_V3("chatkit", "v3"),
     CURSORS("chatkit_cursors", "v2"),
     PRESENCE("chatkit_presence", "v2"),
     FILES("chatkit_files"),
