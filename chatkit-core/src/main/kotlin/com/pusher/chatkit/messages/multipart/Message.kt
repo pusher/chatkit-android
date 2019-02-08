@@ -87,7 +87,7 @@ class UrlRefresher(
                     RequestOptions(RequestDestination.Absolute(attachment.refreshUrl)),
                     { it.parseAs<Attachment>() }
             ).get().map { newAttachment ->
-                attachment.downloadUrl = newAttachment.refreshUrl
+                attachment.downloadUrl = newAttachment.downloadUrl
                 attachment.expiration = newAttachment.expiration
             }
 }
