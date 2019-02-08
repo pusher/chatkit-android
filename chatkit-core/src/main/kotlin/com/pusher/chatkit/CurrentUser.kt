@@ -5,6 +5,7 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.request.Part
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomListeners
@@ -170,6 +171,30 @@ class CurrentUser(
             attachment: GenericAttachment = NoAttachment,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMessage(roomId, messageText, attachment) }, callback)
+
+    fun sendSimpleMessage(
+            roomId: String,
+            messageText: String,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendSimpleMessage(roomId, messageText) }, callback)
+
+    fun sendSimpleMessage(
+            room: Room,
+            messageText: String,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendSimpleMessage(room, messageText) }, callback)
+
+    fun sendMultipartMessage(
+            room: Room,
+            parts: List<Part>,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendMultipartMessage(room, parts) }, callback)
+
+    fun sendMultipartMessage(
+            roomId: String,
+            parts: List<Part>,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendMultipartMessage(roomId, parts) }, callback)
 
     fun isTypingIn(room: Room, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.isTypingIn(room) }, callback)

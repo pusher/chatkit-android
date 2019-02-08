@@ -9,6 +9,7 @@ import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.request.Part
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -118,7 +119,7 @@ class MessagesSpek : Spek({
 
             alice.sendMessage(
                     room = alice.generalRoom,
-                    messageText = "Cats and dogs, living together",
+                    messageText = "Dogs and cats, living together",
                     attachment = DataAttachment(billMurray, "billmurray.jpeg")
             ).assumeSuccess()
 
@@ -135,13 +136,67 @@ class MessagesSpek : Spek({
 
             alice.sendMessage(
                     room = alice.generalRoom,
-                    messageText = "Cats and dogs, living together",
+                    messageText = "Dogs and cats, living together",
                     attachment = LinkAttachment("https://www.fillmurray.com/284/196", IMAGE)
             ).assumeSuccess()
 
             val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
 
             assertThat(firstMessage.attachment?.link).isNotNull()
+        }
+
+        it("sends multipart message with one text part") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(Part.Inline("Dogs and cats, living together", "text/plain"))
+            ).assumeSuccess()
+
+            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
+
+            assertThat(firstMessage.text).isEqualTo("Dogs and cats, living together")
+        }
+
+        it("sends multipart message with several text part") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+//            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(
+                            Part.Inline("Fire and brimstone coming down from the skies. Rivers and seas boiling.", "text/plain"),
+                            Part.Inline("Forty years of darkness. Earthquakes, volcanoes...", "text/plain"),
+                            Part.Inline("The dead rising from the grave.", "text/plain"),
+                            Part.Inline("Dogs and cats, living together!", "text/plain")
+                    )
+            ).assumeSuccess()
+
+            // TODO test retrieval once it is implemented
+//            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
+//
+//            assertThat(firstMessage.text).isEqualTo("Cats and dogs, living together")
+        }
+
+        it("sends multipart simple message") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            alice.sendSimpleMessage(
+                    room = alice.generalRoom,
+                    messageText = "Cats and dogs, living together"
+            ).assumeSuccess()
+
+            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
+
+            assertThat(firstMessage.text).isEqualTo("Cats and dogs, living together")
         }
 
         it("receives message sent") {

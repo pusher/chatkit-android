@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
 internal class RoomService(
-        private val client: PlatformClient,
+        private val v2client: PlatformClient,
+        private val v3client: PlatformClient,
         private val userService: UserService,
         private val cursorsService: CursorService,
         private val makeGlobalConsumer: (String) -> RoomConsumer,
@@ -39,7 +40,7 @@ internal class RoomService(
 
     fun fetchRoomBy(userId: String, id: String): Result<Room, Error> =
             getLocalRoom(id)
-                    .flatRecover { client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}") }
+                    .flatRecover { v3client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}") }
                     .flatMap { room ->
                         when {
                             room.memberUserIds.contains(userId) -> room.asSuccess()
@@ -52,7 +53,7 @@ internal class RoomService(
                     .orElse { Errors.other("User not found locally") }
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
+            v3client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
                     .map { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
@@ -69,7 +70,7 @@ internal class RoomService(
                     customData = customData,
                     userIds = userIds
             ).toJson()
-                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
+                    .flatMap { body -> v3client.doPost<Room>("/rooms", body) }
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
@@ -77,21 +78,21 @@ internal class RoomService(
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
-            client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
+            v3client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
-            client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
+            v3client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+            v3client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
@@ -105,7 +106,7 @@ internal class RoomService(
             customData: CustomData? = null
     ): Result<Unit, Error> =
             UpdateRoomRequest(name, isPrivate, customData).toJson()
-                    .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+                    .flatMap { body -> v3client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
 
     fun isSubscribedTo(roomId: String) =
             synchronized(openSubscriptions) {
@@ -142,7 +143,7 @@ internal class RoomService(
                 membershipConsumer = { roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit) },
                 roomConsumer = { emit(enrichEvent(it, emit)) },
                 cursorConsumer = { emit(translateCursorEvent(it)) },
-                client = client,
+                client = v2client,
                 logger = logger
         )
         synchronized(openSubscriptions) {

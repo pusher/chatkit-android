@@ -11,7 +11,8 @@ import elements.Error
 import elements.Errors
 
 internal class MessageService(
-        private val client: PlatformClient,
+        private val v2client: PlatformClient,
+        private val v3client: PlatformClient,
         private val userService: UserService,
         private val filesService: FilesService
 ) {
@@ -22,7 +23,7 @@ internal class MessageService(
             direction: Direction
     ): Result<List<Message>, Error> =
             fetchMessagesParams(limit, initialId, direction).let { params ->
-                client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
+                v2client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
                     messages.map { message ->
                         userService.fetchUserBy(message.userId).map { user ->
                             message.user = user
@@ -43,7 +44,6 @@ internal class MessageService(
                 "$key=$value"
             }
 
-    @JvmOverloads
     fun sendMessage(
             roomId: String,
             userId: String,
@@ -51,7 +51,19 @@ internal class MessageService(
             attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
             attachment.asAttachmentBody(roomId, userId)
-                    .flatMap { sendMessage(roomId, userId, text, it) }
+                    .flatMap { sendMessage(roomId, text, it) }
+
+    fun sendMultipartMessage(
+            roomId: String,
+            parts: List<com.pusher.chatkit.messages.multipart.request.Part>
+    ): Result<Int, Error> =
+            com.pusher.chatkit.messages.multipart.request.Message(parts)
+                    .toJson()
+                    .flatMap { body ->
+                        v3client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                    }.map {
+                        it.messageId
+                    }
 
     private fun GenericAttachment.asAttachmentBody(
             roomId: String,
@@ -67,14 +79,13 @@ internal class MessageService(
 
     private fun sendMessage(
             roomId: String,
-            userId: String,
             text: String = "",
             attachment: AttachmentBody
     ): Result<Int, Error> =
-            MessageRequest(text, userId, attachment.takeIf { it !== AttachmentBody.None })
+            MessageRequest(text, attachment.takeIf { it !== AttachmentBody.None })
                     .toJson()
                     .flatMap { body ->
-                        client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                        v2client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
                     }.map {
                         it.messageId
                     }
@@ -86,6 +97,5 @@ private data class MessageSendingResponse(
 
 private data class MessageRequest(
         val text: String? = null,
-        val userId: String,
         val attachment: AttachmentBody? = null
 )
