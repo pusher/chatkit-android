@@ -5,11 +5,13 @@ import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
+import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
 import com.pusher.util.Result
@@ -27,6 +29,7 @@ import java.util.concurrent.Future
 internal class RoomService(
         private val v2client: PlatformClient,
         private val v3client: PlatformClient,
+        private val urlRefresher: UrlRefresher,
         private val userService: UserService,
         private val cursorsService: CursorService,
         private val makeGlobalConsumer: (String) -> RoomConsumer,
@@ -117,6 +120,22 @@ internal class RoomService(
             roomId: String,
             unsafeConsumer: RoomConsumer,
             messageLimit: Int
+    ): Subscription =
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v2client, RoomSubscriptionEventParserV2)
+
+    fun subscribeToRoomMultipart(
+            roomId: String,
+            unsafeConsumer: RoomConsumer,
+            messageLimit: Int
+    ): Subscription =
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v3client, RoomSubscriptionEventParserV3(urlRefresher))
+
+    private fun subscribeToRoom(
+            roomId: String,
+            unsafeConsumer: RoomConsumer,
+            messageLimit: Int,
+            client: PlatformClient,
+            parser: DataParser<RoomSubscriptionEvent>
     ): Subscription {
         // This consumer is made safe by the layer providing it
         val globalConsumer = makeGlobalConsumer(roomId)
@@ -143,7 +162,8 @@ internal class RoomService(
                 membershipConsumer = { roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit) },
                 roomConsumer = { emit(enrichEvent(it, emit)) },
                 cursorConsumer = { emit(translateCursorEvent(it)) },
-                client = v2client,
+                client = client,
+                messageParser = parser,
                 logger = logger
         )
         synchronized(openSubscriptions) {
@@ -230,6 +250,13 @@ internal class RoomService(
                     userService.fetchUserBy(event.message.userId).map { user ->
                         event.message.user = user
                         RoomEvent.Message(event.message) as RoomEvent
+                    }.recover {
+                        RoomEvent.ErrorOccurred(it)
+                    }
+                is RoomSubscriptionEvent.NewMultipartMessage ->
+                    userService.fetchUserBy(event.message.senderId).map { user ->
+                        event.message.sender = user
+                        RoomEvent.MultipartMessage(event.message) as RoomEvent
                     }.recover {
                         RoomEvent.ErrorOccurred(it)
                     }

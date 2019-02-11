@@ -1,6 +1,7 @@
 package com.pusher.chatkit.messages.multipart
 
 import com.pusher.chatkit.CustomData
+import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.parseAs
@@ -10,6 +11,8 @@ import com.pusher.platform.RequestOptions
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
+import java.net.URL
+import java.time.LocalDateTime
 import java.util.*
 
 
@@ -44,13 +47,13 @@ sealed class Payload {
 
     data class UrlPayload(
             val type: String,
-            val url: String
+            val url: URL
     ) : Payload()
 
     class AttachmentPayload(
             val type: String,
             val size: Int,
-            val name: String,
+            val name: String?,
             val customData: CustomData,
             private val refresher: UrlRefresher,
             internal val refreshUrl: String,
@@ -80,13 +83,13 @@ data class Attachment(
 )
 
 class UrlRefresher(
-        private val client: Instance
+        private val client: PlatformClient
 ) {
     fun refresh(attachment: Payload.AttachmentPayload) =
-            client.request(
+            client.doRequest(
                     RequestOptions(RequestDestination.Absolute(attachment.refreshUrl)),
                     { it.parseAs<Attachment>() }
-            ).get().map { newAttachment ->
+            ).map { newAttachment ->
                 attachment.downloadUrl = newAttachment.downloadUrl
                 attachment.expiration = newAttachment.expiration
             }

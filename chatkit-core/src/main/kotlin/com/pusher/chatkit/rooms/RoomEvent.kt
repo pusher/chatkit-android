@@ -18,6 +18,7 @@ typealias RoomConsumer = (RoomEvent) -> Unit
  */
 sealed class RoomEvent {
     data class Message(val message: com.pusher.chatkit.messages.Message) : RoomEvent()
+    data class MultipartMessage(val message: com.pusher.chatkit.messages.multipart.Message) : RoomEvent()
     data class UserStartedTyping(val user: User) : RoomEvent()
     data class UserStoppedTyping(val user: User) : RoomEvent()
     data class UserJoined(val user: User) : RoomEvent()

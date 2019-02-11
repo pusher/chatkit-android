@@ -14,6 +14,7 @@ import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
 import elements.Subscription
@@ -29,6 +30,7 @@ internal class RoomSubscriptionGroup(
         membershipConsumer: MembershipSubscriptionConsumer,
         roomConsumer: RoomSubscriptionConsumer,
         client: PlatformClient,
+        messageParser: DataParser<RoomSubscriptionEvent>,
         logger: Logger
 ) : ChatkitSubscription {
     init {
@@ -42,7 +44,7 @@ internal class RoomSubscriptionGroup(
                     onEvent = { roomConsumer(it.body) },
                     onError = { roomConsumer(RoomSubscriptionEvent.ErrorOccurred(it)) }
             ),
-            messageParser = RoomSubscriptionEventParser,
+            messageParser = messageParser,
             description = "Room $roomId",
             logger = logger
     )

@@ -9,6 +9,8 @@ import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.PartType
+import com.pusher.chatkit.messages.multipart.Payload
 import com.pusher.chatkit.messages.multipart.request.Part
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.util.FutureValue
@@ -21,6 +23,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.io.File
+import java.net.URL
 
 class MessagesSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -145,7 +148,7 @@ class MessagesSpek : Spek({
             assertThat(firstMessage.attachment?.link).isNotNull()
         }
 
-        it("sends multipart message with one text part") {
+        it("sends multipart message with one text part, retrieves v2") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
@@ -223,6 +226,78 @@ class MessagesSpek : Spek({
                 assertThat(roomId).isEqualTo(alice.generalRoom.id)
                 assertThat(attachment).isNull()
                 assertThat(user?.id).isEqualTo(alice.id)
+            }
+        }
+
+        it("receives (v2) message sent via multipart") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            var receivedMessage by FutureValue<Message>()
+
+            pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.Message -> receivedMessage = event.message
+                }
+            }
+
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(Part.Inline("Dogs and cats, living together", "text/plain"))
+            ).assumeSuccess()
+
+            with(receivedMessage) {
+                assertThat(text).isEqualTo("Dogs and cats, living together")
+                assertThat(roomId).isEqualTo(alice.generalRoom.id)
+                assertThat(attachment).isNull()
+                assertThat(user?.id).isEqualTo(alice.id)
+            }
+        }
+
+        it("receives (v3) message sent via multipart") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            var receivedMessage by FutureValue<com.pusher.chatkit.messages.multipart.Message>()
+
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.MultipartMessage -> receivedMessage = event.message
+                }
+            }
+
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(
+                            Part.Inline("Fire and brimstone coming down from the skies. Rivers and seas boiling.", "text/plain"),
+                            Part.Inline("Forty years of darkness. Earthquakes, volcanoes...", "text/plain"),
+                            Part.Inline("The dead rising from the grave.", "text/plain"),
+                            Part.Inline("Dogs and cats, living together!", "text/plain"),
+                            Part.Url("https://www.rottentomatoes.com/m/ghostbusters/quotes/", "text/html")
+                    )
+            ).assumeSuccess()
+
+            with(receivedMessage) {
+                assertThat(roomId).isEqualTo(alice.generalRoom.id)
+                assertThat(sender?.id).isEqualTo(alice.id)
+                assertThat(parts.map { it.partType }).containsExactly(
+                        PartType.InlinePayload,
+                        PartType.InlinePayload,
+                        PartType.InlinePayload,
+                        PartType.InlinePayload,
+                        PartType.UrlPayload
+                )
+                assertThat(parts.map { it.payload }).containsExactly(
+                        Payload.InlinePayload("text/plain", "Fire and brimstone coming down from the skies. Rivers and seas boiling."),
+                        Payload.InlinePayload("text/plain", "Forty years of darkness. Earthquakes, volcanoes..."),
+                        Payload.InlinePayload("text/plain", "The dead rising from the grave."),
+                        Payload.InlinePayload("text/plain", "Dogs and cats, living together!"),
+                        Payload.UrlPayload("text/html", URL("https://www.rottentomatoes.com/m/ghostbusters/quotes/"))
+                )
             }
         }
 

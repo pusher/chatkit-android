@@ -4,6 +4,7 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
+import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.presence.PresenceSubscriptionEvent
@@ -71,6 +72,7 @@ class SynchronousChatManager constructor(
             RoomService(
                     v2chatkitClient,
                     v3chatkitClient,
+                    UrlRefresher(v3chatkitClient),
                     userService,
                     cursorService,
                     this::consumeRoomSubscriptionEvent,
