@@ -139,6 +139,38 @@ class SynchronousCurrentUser(
             chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
 
     @JvmOverloads
+    fun subscribeToRoomMultipart(
+            room: Room,
+            listeners: RoomListeners,
+            messageLimit: Int = 10
+    ): Subscription =
+            subscribeToRoomMultipart(room.id, listeners, messageLimit)
+
+    @JvmOverloads
+    fun subscribeToRoomMultipart(
+            roomId: String,
+            listeners: RoomListeners,
+            messageLimit: Int = 10
+    ): Subscription =
+            subscribeToRoomMultipart(roomId, messageLimit, listeners.toCallback())
+
+    @JvmOverloads
+    fun subscribeToRoomMultipart(
+            room: Room,
+            messageLimit: Int = 10,
+            consumer: RoomConsumer
+    ): Subscription =
+            subscribeToRoomMultipart(room.id, messageLimit, consumer)
+
+    @JvmOverloads
+    fun subscribeToRoomMultipart(
+            roomId: String,
+            messageLimit: Int = 10,
+            consumer: RoomConsumer
+    ): Subscription =
+            chatManager.roomService.subscribeToRoomMultipart(roomId, consumer, messageLimit)
+
+    @JvmOverloads
     fun fetchMessages(
             roomId: String,
             initialId: Int? = null,
