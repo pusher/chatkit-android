@@ -180,8 +180,8 @@ class SynchronousChatManager constructor(
         presenceService.goOffline()
     }
 
-    private fun consumeUserSubscriptionEvent(event: UserSubscriptionEvent) =
-            roomService.roomStore.applyUserSubscriptionEvent(event).forEach { event ->
+    private fun consumeUserSubscriptionEvent(incomingEvent: UserSubscriptionEvent) =
+            roomService.roomStore.applyUserSubscriptionEvent(incomingEvent).forEach { event ->
                 if (event is UserSubscriptionEvent.InitialState) {
                     updateCurrentUser(event)
                 }

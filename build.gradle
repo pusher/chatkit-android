@@ -14,7 +14,7 @@ buildscript {
         espresso_version = '3.0.1'
         espresso_runner_version = '1.0.1'
         junit_legacy_version = '4.12'
-        pusher_platform_version = '1.0.3'
+        pusher_platform_version = '1.0.4'
         dokka_version = '0.9.17'
 
         bintray_user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')

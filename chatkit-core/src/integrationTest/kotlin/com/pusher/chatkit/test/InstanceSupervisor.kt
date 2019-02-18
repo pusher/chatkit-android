@@ -320,7 +320,7 @@ object InstanceActions {
                 ),
                 tokenProvider = sudoTokenProvider,
                 responseParser = { it.parseAs() }
-        ).also { response -> println(response) }
+        )
     }.withName("Set cursor")
 
     fun tearDown(): InstanceAction = {
@@ -333,7 +333,6 @@ object InstanceActions {
                 responseParser = { it.parseAs() }
         )
     }.withName("Tear down")
-
 }
 
 private fun <A> A.toJson(): String {

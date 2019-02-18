@@ -1,14 +1,21 @@
 package com.pusher.chatkit.messages
 
+import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.files.*
+import com.pusher.chatkit.messages.multipart.NewPart
+import com.pusher.chatkit.messages.multipart.request.AttachmentId
+import com.pusher.chatkit.messages.multipart.request.Part
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import com.pusher.util.collect
 import elements.Error
 import elements.Errors
+import java.io.ByteArrayOutputStream
+import java.net.URLEncoder
 
 internal class MessageService(
         private val v2client: PlatformClient,
@@ -55,15 +62,76 @@ internal class MessageService(
 
     fun sendMultipartMessage(
             roomId: String,
-            parts: List<com.pusher.chatkit.messages.multipart.request.Part>
+            parts: List<NewPart>
     ): Result<Int, Error> =
-            com.pusher.chatkit.messages.multipart.request.Message(parts)
-                    .toJson()
-                    .flatMap { body ->
-                        v3client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
-                    }.map {
-                        it.messageId
+            parts.map {
+                toPartRequest(roomId, it)
+            }.collect(
+            ).flatMap { requestParts ->
+                com.pusher.chatkit.messages.multipart.request.Message(requestParts)
+                        .toJson()
+                        .flatMap { body ->
+                            v3client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                        }.map {
+                            it.messageId
+                        }
+            }
+
+    private fun toPartRequest(
+            roomId: String,
+            part: NewPart
+    ): Result<Part, Error> =
+            when (part) {
+                is NewPart.Inline ->
+                    Part.Inline(part.content, part.type).asSuccess()
+                is NewPart.Url ->
+                    Part.Url(part.url, part.type).asSuccess()
+                is NewPart.Attachment ->
+                    uploadAttachment(roomId, part).map { attachmentId ->
+                        Part.Attachment(part.type, AttachmentId(attachmentId), part.name, part.customData)
                     }
+            }
+
+    private fun uploadAttachment(
+            roomId: String,
+            part: NewPart.Attachment
+    ): Result<String, Error> {
+        val baos = ByteArrayOutputStream()
+        val length = part.file.copyTo(baos)
+
+        return AttachmentRequest(
+                contentType = part.type,
+                contentLength = length,
+                name = part.name,
+                customData = part.customData
+        ).toJson().flatMap { body ->
+            v3client.doPost<AttachmentResponse>(
+                    path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/attachments",
+                    body = body
+            ).flatMap { attachmentResponse ->
+                v3client.externalUpload<Unit>(
+                        attachmentResponse.uploadUrl,
+                        mimeType = part.type,
+                        data = baos.toByteArray(),
+                        responseParser = { it.parseAs() }
+                ).map {
+                    attachmentResponse.attachmentId
+                }
+            }
+        }
+    }
+
+    private data class AttachmentRequest(
+            val contentType: String,
+            val contentLength: Long,
+            val name: String? = null,
+            val customData: CustomData? = null
+    )
+
+    private data class AttachmentResponse(
+            val attachmentId: String,
+            val uploadUrl: String
+    )
 
     private fun GenericAttachment.asAttachmentBody(
             roomId: String,

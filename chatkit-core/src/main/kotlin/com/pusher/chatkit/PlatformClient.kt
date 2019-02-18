@@ -4,6 +4,7 @@ import com.pusher.chatkit.files.AttachmentBody
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
+import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.DataParser
@@ -11,6 +12,8 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import elements.Error
 import elements.Subscription
+import java.io.File
+import java.net.URL
 
 class PlatformClient(
         private val platformInstance: Instance,
@@ -66,6 +69,21 @@ class PlatformClient(
             platformInstance.request(
                     options = options,
                     tokenProvider = tokenProvider,
+                    responseParser = responseParser
+            ).get()
+
+    @Suppress("unused") // public API
+    fun <A> externalUpload(
+            url: String,
+            mimeType: String,
+            data: ByteArray,
+            responseParser: DataParser<A>
+    ): Result<A, Error> =
+            platformInstance.externalUpload(
+                    url = url,
+                    method = "PUT",
+                    data = data,
+                    mimeType = mimeType,
                     responseParser = responseParser
             ).get()
 
