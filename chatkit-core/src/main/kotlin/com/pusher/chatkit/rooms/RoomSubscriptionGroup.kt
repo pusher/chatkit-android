@@ -1,25 +1,18 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.cursors.CursorSubscriptionConsumer
 import com.pusher.chatkit.memberships.MembershipSubscriptionConsumer
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.memberships.MembershipSubscriptionEventParser
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
-import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.DataParser
-import com.pusher.platform.network.Futures
-import com.pusher.platform.network.cancel
 import elements.Subscription
 import java.net.URLEncoder
-import java.util.concurrent.Future
 
 
 internal class RoomSubscriptionGroup(

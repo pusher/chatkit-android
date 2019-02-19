@@ -5,7 +5,7 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
-import com.pusher.chatkit.messages.multipart.request.Part
+import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomListeners
@@ -186,13 +186,13 @@ class CurrentUser(
 
     fun sendMultipartMessage(
             room: Room,
-            parts: List<Part>,
+            parts: List<NewPart>,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(room, parts) }, callback)
 
     fun sendMultipartMessage(
             roomId: String,
-            parts: List<Part>,
+            parts: List<NewPart>,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(roomId, parts) }, callback)
 

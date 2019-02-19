@@ -4,13 +4,13 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.pusher.chatkit.*
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
 import com.pusher.chatkit.test.InstanceActions.tearDown
 import com.pusher.chatkit.users.User
+import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.network.Futures
@@ -20,7 +20,6 @@ import com.pusher.util.Result
 import elements.Error
 import org.junit.runner.notification.Failure
 import java.net.URLEncoder
-import java.text.FieldPosition
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -320,7 +319,7 @@ object InstanceActions {
                 ),
                 tokenProvider = sudoTokenProvider,
                 responseParser = { it.parseAs() }
-        ).also { response -> println(response) }
+        )
     }.withName("Set cursor")
 
     fun tearDown(): InstanceAction = {
@@ -333,7 +332,6 @@ object InstanceActions {
                 responseParser = { it.parseAs() }
         )
     }.withName("Tear down")
-
 }
 
 private fun <A> A.toJson(): String {

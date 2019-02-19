@@ -5,7 +5,7 @@ import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
-import com.pusher.chatkit.messages.multipart.UrlRefresher
+import com.pusher.chatkit.messages.multipart.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.makeSafe
@@ -14,16 +14,13 @@ import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
-import com.pusher.util.Result
-import com.pusher.util.asFailure
-import com.pusher.util.asSuccess
-import com.pusher.util.orElse
+import com.pusher.util.*
 import elements.Error
 import elements.Errors
 import elements.Subscription
+import java.net.URL
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
 internal class RoomService(
@@ -128,7 +125,7 @@ internal class RoomService(
             unsafeConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription =
-            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v3client, RoomSubscriptionEventParserV3(urlRefresher))
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v3client, RoomSubscriptionEventParserV3)
 
     private fun subscribeToRoom(
             roomId: String,
@@ -254,9 +251,21 @@ internal class RoomService(
                         RoomEvent.ErrorOccurred(it)
                     }
                 is RoomSubscriptionEvent.NewMultipartMessage ->
-                    userService.fetchUserBy(event.message.senderId).map { user ->
-                        event.message.sender = user
-                        RoomEvent.MultipartMessage(event.message) as RoomEvent
+                    userService.fetchUserBy(event.message.userId).flatMap { user ->
+                        fetchRoomBy(event.message.userId, event.message.roomId).flatMap { room ->
+                            event.message.parts.map(::makePart).collect().map { parts ->
+                                RoomEvent.MultipartMessage(
+                                        Message(
+                                                id = event.message.id,
+                                                parts = parts,
+                                                room = room,
+                                                sender = user,
+                                                createdAt = event.message.createdAt,
+                                                updatedAt = event.message.updatedAt
+                                        )
+                                ) as RoomEvent
+                            }
+                        }
                     }.recover {
                         RoomEvent.ErrorOccurred(it)
                     }
@@ -278,6 +287,46 @@ internal class RoomService(
                     RoomEvent.ErrorOccurred(event.error)
                 is RoomSubscriptionEvent.NoEvent ->
                     RoomEvent.NoEvent
+            }
+
+    private fun makePart(body: V3PartBody): Result<Part, Error> =
+            try {
+                when {
+                    body.content != null ->
+                        Part(
+                                partType = PartType.InlinePayload,
+                                payload = Payload.Inline(
+                                        type = body.type,
+                                        content = body.content
+                                )
+                        ).asSuccess()
+                    body.url != null ->
+                        Part(
+                                partType = PartType.UrlPayload,
+                                payload = Payload.Url(
+                                        type = body.type,
+                                        url = URL(body.url)
+                                )
+                        ).asSuccess()
+                    body.attachment != null ->
+                        Part(
+                                partType = PartType.AttachmentPayload,
+                                payload = Payload.Attachment(
+                                        type = body.type,
+                                        size = body.attachment.size,
+                                        name = body.attachment.name,
+                                        customData = body.attachment.customData,
+                                        refreshUrl = body.attachment.refreshUrl,
+                                        downloadUrl = body.attachment.downloadUrl,
+                                        expiration = body.attachment.expiration,
+                                        refresher = urlRefresher
+                                )
+                        ).asSuccess()
+                    else ->
+                        Errors.other("Invalid part entity, no content, url or attachment found.").asFailure()
+                }
+            } catch (e: Exception) {
+                Errors.other(e).asFailure()
             }
 
     // Access synchronized on itself

@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.pusher.SdkInfo
-import com.pusher.chatkit.pushnotifications.PushNotificationsFactory
 import com.pusher.chatkit.test.NoAppHooks
 import com.pusher.chatkit.test.NoPushNotificationFactory
 import com.pusher.chatkit.test.insecureOkHttpClient
