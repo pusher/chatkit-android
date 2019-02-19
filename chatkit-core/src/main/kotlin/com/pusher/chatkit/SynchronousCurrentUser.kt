@@ -181,6 +181,16 @@ class SynchronousCurrentUser(
             .fetchMessages(roomId, limit, initialId, direction)
 
     @JvmOverloads
+    fun fetchMultipartMessages(
+            roomId: String,
+            initialId: Int? = null,
+            direction: Direction = Direction.OLDER_FIRST,
+            limit: Int = 10
+    ): Result<List<com.pusher.chatkit.messages.multipart.Message>, Error> = chatManager
+            .messageService
+            .fetchMultipartMessages(roomId, limit, initialId, direction)
+
+    @JvmOverloads
     fun sendMessage(
             room: Room,
             messageText: String,

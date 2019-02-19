@@ -2,14 +2,18 @@ package com.pusher.chatkit.messages.multipart
 
 import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.users.User
+import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
 import com.pusher.util.Result
+import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
+import com.pusher.util.collect
 import elements.Error
+import elements.Errors
 import java.io.InputStream
 import java.net.URL
 import java.util.*
@@ -110,3 +114,67 @@ sealed class NewPart {
             val customData: CustomData? = null
     ) : NewPart()
 }
+
+internal fun upgradeMessageV3(
+        message: V3MessageBody,
+        roomService: RoomService,
+        userService: UserService,
+        urlRefresher: UrlRefresher
+): Result<Message, Error> =
+        userService.fetchUserBy(message.userId).flatMap { user ->
+            roomService.fetchRoom(message.roomId).flatMap { room ->
+                message.parts.map { makePart(it, urlRefresher) }.collect().map { parts ->
+                    Message(
+                            id = message.id,
+                            parts = parts,
+                            room = room,
+                            sender = user,
+                            createdAt = message.createdAt,
+                            updatedAt = message.updatedAt
+                    )
+                }
+            }
+        }
+
+internal fun makePart(
+        body: V3PartBody,
+        urlRefresher: UrlRefresher
+): Result<Part, Error> =
+        try {
+            when {
+                body.content != null ->
+                    Part(
+                            partType = PartType.InlinePayload,
+                            payload = Payload.Inline(
+                                    type = body.type,
+                                    content = body.content
+                            )
+                    ).asSuccess()
+                body.url != null ->
+                    Part(
+                            partType = PartType.UrlPayload,
+                            payload = Payload.Url(
+                                    type = body.type,
+                                    url = URL(body.url)
+                            )
+                    ).asSuccess()
+                body.attachment != null ->
+                    Part(
+                            partType = PartType.AttachmentPayload,
+                            payload = Payload.Attachment(
+                                    type = body.type,
+                                    size = body.attachment.size,
+                                    name = body.attachment.name,
+                                    customData = body.attachment.customData,
+                                    refreshUrl = body.attachment.refreshUrl,
+                                    downloadUrl = body.attachment.downloadUrl,
+                                    expiration = body.attachment.expiration,
+                                    refresher = urlRefresher
+                            )
+                    ).asSuccess()
+                else ->
+                    Errors.other("Invalid part entity, no content, url or attachment found.").asFailure()
+            }
+        } catch (e: Exception) {
+            Errors.other(e).asFailure()
+        }

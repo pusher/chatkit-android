@@ -9,11 +9,13 @@ class AndroidAppHookEmitter : AppHookEmitter {
     override fun register(listener: AppHookListener) {
         val lifecycleObserver = object : LifecycleObserver {
             @OnLifecycleEvent(Lifecycle.Event.ON_START)
+            @Suppress("unused_parameter")
             fun onStart(source: LifecycleOwner) {
                 listener.onAppOpened()
             }
 
             @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+            @Suppress("unused_parameter")
             fun onStop(source: LifecycleOwner) {
                 listener.onAppClosed()
             }

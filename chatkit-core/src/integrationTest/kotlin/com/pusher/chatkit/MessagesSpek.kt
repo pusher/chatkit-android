@@ -175,7 +175,7 @@ class MessagesSpek : Spek({
         it("sends (v3) message with several text parts, retrieves (v3)") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-//            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
             alice.sendMultipartMessage(
@@ -188,10 +188,14 @@ class MessagesSpek : Spek({
                     )
             ).assumeSuccess()
 
-            // TODO test retrieval once it is implemented
-//            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
-//
-//            assertThat(firstMessage.text).isEqualTo("Cats and dogs, living together")
+            val (firstMessage) = pusherino.fetchMultipartMessages(pusherino.generalRoom.id).assumeSuccess()
+
+            assertThat(firstMessage.parts.map { (it.payload as Payload.Inline).content } ).containsExactly(
+                    "Fire and brimstone coming down from the skies. Rivers and seas boiling.",
+                    "Forty years of darkness. Earthquakes, volcanoes...",
+                    "The dead rising from the grave.",
+                    "Dogs and cats, living together!"
+            )
         }
 
         it("sends (v3) multipart message with media attachment, retrieves (v3)") {
@@ -199,7 +203,7 @@ class MessagesSpek : Spek({
 
             val bytes = "This is a test attachment".toByteArray(Charsets.UTF_8)
 
-//            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
             alice.sendMultipartMessage(
@@ -215,25 +219,24 @@ class MessagesSpek : Spek({
                     )
             ).assumeSuccess()
 
-            // TODO test retrieval once it is implemented
-//            val (firstMessage) = pusherino.fetchMessages(pusherino.generalRoom.id).assumeSuccess()
-//
-//            with(firstMessage) {
-//                assertThat(parts.map { it.partType }).containsExactly(
-//                        PartType.Inline,
-//                        PartType.Attachment
-//                )
-//
-//                with(parts[0].payload as Payload.Inline) {
-//                    assertThat(type).isEqualTo("text/plain")
-//                    assertThat(content).isEqualTo("Here comes the media")
-//                }
-//
-//                with(parts[1].payload as Payload.Attachment) {
-//                    assertThat(type).isEqualTo("application/octet-stream")
-//                    assertThat(url().map { fetch(it) }.assumeSuccess()).isEqualTo(bytes)
-//                }
-//            }
+            val (firstMessage) = pusherino.fetchMultipartMessages(pusherino.generalRoom.id).assumeSuccess()
+
+            with(firstMessage) {
+                assertThat(parts.map { it.partType }).containsExactly(
+                        PartType.InlinePayload,
+                        PartType.AttachmentPayload
+                )
+
+                with(parts[0].payload as Payload.Inline) {
+                    assertThat(type).isEqualTo("text/plain")
+                    assertThat(content).isEqualTo("Here comes the media")
+                }
+
+                with(parts[1].payload as Payload.Attachment) {
+                    assertThat(type).isEqualTo("application/octet-stream")
+                    assertThat(url().map { fetch(it) }.assumeSuccess()).isEqualTo(bytes)
+                }
+            }
         }
 
         it("sends (v3) text only message using helper, retrieves (v2)") {
