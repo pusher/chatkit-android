@@ -97,10 +97,12 @@ sealed class NewPart {
             val content: String,
             val type: String = "text/plain"
     ) : NewPart()
+
     data class Url(
             val url: String,
             val type: String
     ) : NewPart()
+
     data class Attachment @JvmOverloads constructor(
             val type: String,
             val file: InputStream,

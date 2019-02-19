@@ -206,7 +206,7 @@ class SynchronousCurrentUser(
             roomId: String,
             messageText: String
     ): Result<Int, Error> =
-        sendMultipartMessage(roomId, listOf(NewPart.Inline(messageText)))
+            sendMultipartMessage(roomId, listOf(NewPart.Inline(messageText)))
 
     fun sendMultipartMessage(
             room: Room,

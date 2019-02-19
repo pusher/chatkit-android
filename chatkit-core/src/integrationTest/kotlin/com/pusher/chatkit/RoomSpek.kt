@@ -9,7 +9,6 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.util.FutureValue
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.deleteRoom
@@ -19,16 +18,13 @@ import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
+import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
-import com.pusher.util.asSuccess
-import com.sun.org.apache.bcel.internal.generic.PUSH
-import elements.Subscription
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicReference
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)

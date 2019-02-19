@@ -9,9 +9,9 @@ import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.messages.multipart.PartType
 import com.pusher.chatkit.messages.multipart.Payload
-import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
