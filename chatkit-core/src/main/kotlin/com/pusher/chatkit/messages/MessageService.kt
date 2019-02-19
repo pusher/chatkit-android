@@ -96,8 +96,8 @@ internal class MessageService(
             roomId: String,
             part: NewPart.Attachment
     ): Result<String, Error> {
-        val baos = ByteArrayOutputStream()
-        val length = part.file.copyTo(baos)
+        val outputStream = ByteArrayOutputStream()
+        val length = part.file.copyTo(outputStream)
 
         return AttachmentRequest(
                 contentType = part.type,
@@ -112,7 +112,7 @@ internal class MessageService(
                 v3client.externalUpload<Unit>(
                         attachmentResponse.uploadUrl,
                         mimeType = part.type,
-                        data = baos.toByteArray(),
+                        data = outputStream.toByteArray(),
                         responseParser = { it.parseAs() }
                 ).map {
                     attachmentResponse.attachmentId
