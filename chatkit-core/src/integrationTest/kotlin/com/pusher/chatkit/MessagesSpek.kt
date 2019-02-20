@@ -201,7 +201,7 @@ class MessagesSpek : Spek({
         it("sends (v3) multipart message with media attachment, retrieves (v3)") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val bytes = "This is a test attachment".toByteArray(Charsets.UTF_8)
+            val bytes = "<body>This is a test attachment</body>".toByteArray(Charsets.UTF_8)
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
@@ -211,9 +211,7 @@ class MessagesSpek : Spek({
                     parts = listOf(
                             NewPart.Inline("Here comes the media", "text/plain"),
                             NewPart.Attachment(
-                                    type = "application/octet-stream",
-                                    name = "some_blob.bin",
-                                    customData = mapOf("key" to "value"),
+                                    type = "text/html",
                                     file = ByteArrayInputStream(bytes)
                             )
                     )
@@ -233,7 +231,75 @@ class MessagesSpek : Spek({
                 }
 
                 with(parts[1].payload as Payload.Attachment) {
-                    assertThat(type).isEqualTo("application/octet-stream")
+                    assertThat(type).isEqualTo("text/html")
+                    assertThat(url().map { fetch(it) }.assumeSuccess()).isEqualTo(bytes)
+                }
+            }
+        }
+
+        it("sends (v3) multipart message with media attachment with name, retrieves (v3)") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val bytes = "<body>This is a test attachment</body>".toByteArray(Charsets.UTF_8)
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(
+                            NewPart.Attachment(
+                                    type = "text/html",
+                                    name = "some_blob.bin",
+                                    file = ByteArrayInputStream(bytes)
+                            )
+                    )
+            ).assumeSuccess()
+
+            val (firstMessage) = pusherino.fetchMultipartMessages(pusherino.generalRoom.id).assumeSuccess()
+
+            with(firstMessage) {
+                assertThat(parts.map { it.partType }).containsExactly(
+                        PartType.AttachmentPayload
+                )
+
+                with(parts[0].payload as Payload.Attachment) {
+                    assertThat(type).isEqualTo("text/html")
+                    assertThat(name).isEqualTo("some_blob.bin")
+                    assertThat(url().map { fetch(it) }.assumeSuccess()).isEqualTo(bytes)
+                }
+            }
+        }
+
+        it("sends (v3) multipart message with media attachment with custom data, retrieves (v3)") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val bytes = "<body>This is a test attachment</body>".toByteArray(Charsets.UTF_8)
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(
+                            NewPart.Attachment(
+                                    type = "text/html",
+                                    customData = mapOf("custom" to "data"),
+                                    file = ByteArrayInputStream(bytes)
+                            )
+                    )
+            ).assumeSuccess()
+
+            val (firstMessage) = pusherino.fetchMultipartMessages(pusherino.generalRoom.id).assumeSuccess()
+
+            with(firstMessage) {
+                assertThat(parts.map { it.partType }).containsExactly(
+                        PartType.AttachmentPayload
+                )
+
+                with(parts[0].payload as Payload.Attachment) {
+                    assertThat(type).isEqualTo("text/html")
+                    assertThat(customData).isEqualTo(mapOf("custom" to "data"))
                     assertThat(url().map { fetch(it) }.assumeSuccess()).isEqualTo(bytes)
                 }
             }
