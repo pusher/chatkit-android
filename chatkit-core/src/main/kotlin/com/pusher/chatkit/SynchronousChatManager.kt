@@ -52,6 +52,8 @@ class SynchronousChatManager constructor(
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
+    private val urlRefresher = UrlRefresher(v3chatkitClient)
+
     internal val cursorService = CursorService(cursorsClient, logger)
 
     private val filesService = FilesService(filesClient)
@@ -66,18 +68,25 @@ class SynchronousChatManager constructor(
 
     internal val userService = UserService(v3chatkitClient, presenceService)
 
-    internal val messageService = MessageService(v2chatkitClient, v3chatkitClient, userService, filesService)
-
     internal val roomService =
             RoomService(
                     v2chatkitClient,
                     v3chatkitClient,
-                    UrlRefresher(v3chatkitClient),
+                    urlRefresher,
                     userService,
                     cursorService,
                     this::consumeRoomSubscriptionEvent,
                     dependencies.logger
             )
+
+    internal val messageService = MessageService(
+            v2chatkitClient,
+            v3chatkitClient,
+            userService,
+            roomService,
+            urlRefresher,
+            filesService
+    )
 
     private lateinit var userSubscription: ResolvableSubscription<UserSubscriptionEvent>
     private lateinit var cursorSubscription: ResolvableSubscription<CursorSubscriptionEvent>
@@ -230,11 +239,11 @@ class SynchronousChatManager constructor(
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
             when (event) {
                 is RoomEvent.UserStartedTyping ->
-                    roomService.fetchRoomBy(event.user.id, roomId).map { room ->
+                    roomService.fetchRoom(roomId).map { room ->
                         ChatEvent.UserStartedTyping(event.user, room) as ChatEvent
                     }.recover { ChatEvent.ErrorOccurred(it) }
                 is RoomEvent.UserStoppedTyping ->
-                    roomService.fetchRoomBy(event.user.id, roomId).map { room ->
+                    roomService.fetchRoom(roomId).map { room ->
                         ChatEvent.UserStoppedTyping(event.user, room) as ChatEvent
                     }.recover { ChatEvent.ErrorOccurred(it) }
                 else ->

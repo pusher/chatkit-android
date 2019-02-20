@@ -157,6 +157,15 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.fetchMessages(roomId, initialId, direction, limit) }, callback)
 
     @JvmOverloads
+    fun fetchMultipartMessages(
+            roomId: String,
+            initialId: Int? = null,
+            direction: Direction = Direction.OLDER_FIRST,
+            limit: Int = 10,
+            callback: (Result<List<com.pusher.chatkit.messages.multipart.Message>, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.fetchMultipartMessages(roomId, initialId, direction, limit) }, callback)
+
+    @JvmOverloads
     fun sendMessage(
             room: Room,
             messageText: String,

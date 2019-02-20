@@ -4,8 +4,12 @@ import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.files.*
 import com.pusher.chatkit.messages.multipart.NewPart
+import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.request.AttachmentId
 import com.pusher.chatkit.messages.multipart.request.Part
+import com.pusher.chatkit.messages.multipart.upgradeMessageV3
+import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.rooms.V3MessageBody
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.util.toJson
@@ -21,6 +25,8 @@ internal class MessageService(
         private val v2client: PlatformClient,
         private val v3client: PlatformClient,
         private val userService: UserService,
+        private val roomService: RoomService,
+        private val urlRefresher: UrlRefresher,
         private val filesService: FilesService
 ) {
     fun fetchMessages(
@@ -36,6 +42,27 @@ internal class MessageService(
                             message.user = user
                             message
                         }
+                    }.collect().mapFailure { errors ->
+                        Errors.compose(errors)
+                    }
+                }
+            }
+
+    fun fetchMultipartMessages(
+            roomId: String,
+            limit: Int,
+            initialId: Int?,
+            direction: Direction
+    ): Result<List<com.pusher.chatkit.messages.multipart.Message>, Error> =
+            fetchMessagesParams(limit, initialId, direction).let { params ->
+                v3client.doGet<List<V3MessageBody>>("/rooms/$roomId/messages$params").flatMap { messages ->
+                    messages.map { message ->
+                        upgradeMessageV3(
+                                message,
+                                roomService,
+                                userService,
+                                urlRefresher
+                        )
                     }.collect().mapFailure { errors ->
                         Errors.compose(errors)
                     }
