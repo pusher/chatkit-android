@@ -8,6 +8,7 @@ import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestDestination
 import com.pusher.platform.RequestOptions
+import com.pusher.platform.network.Futures
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
@@ -66,6 +67,14 @@ sealed class Payload {
                 } else {
                     refresher.refresh(this)
                 }
+
+        fun url(callback: (Result<String, Error>) -> Unit) {
+            Futures.schedule {
+                callback.invoke(
+                    url()
+                )
+            }
+        }
 
         fun urlExpiry(): Date =
                 expiration
