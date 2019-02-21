@@ -116,6 +116,7 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.joinRoom(roomId) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             listeners: RoomListeners,
@@ -124,6 +125,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             listeners: RoomListeners,
@@ -132,6 +134,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             messageLimit: Int = 10,
@@ -140,6 +143,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             messageLimit: Int = 10,
@@ -148,6 +152,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     @JvmOverloads
+    @Deprecated("use fetchMultipartMessages")
     fun fetchMessages(
             roomId: String,
             initialId: Int? = null,
@@ -166,6 +171,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.fetchMultipartMessages(roomId, initialId, direction, limit) }, callback)
 
     @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             room: Room,
             messageText: String,
@@ -174,6 +180,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.sendMessage(room, messageText, attachment) }, callback)
 
     @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             roomId: String,
             messageText: String,

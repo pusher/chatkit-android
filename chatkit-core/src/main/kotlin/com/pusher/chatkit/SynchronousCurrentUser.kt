@@ -107,6 +107,7 @@ class SynchronousCurrentUser(
             chatManager.roomService.joinRoom(id, roomId)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             listeners: RoomListeners,
@@ -115,6 +116,7 @@ class SynchronousCurrentUser(
             subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             listeners: RoomListeners,
@@ -123,6 +125,7 @@ class SynchronousCurrentUser(
             subscribeToRoom(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             messageLimit: Int = 10,
@@ -131,6 +134,7 @@ class SynchronousCurrentUser(
             subscribeToRoom(room.id, messageLimit, consumer)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             messageLimit: Int = 10,
@@ -171,6 +175,7 @@ class SynchronousCurrentUser(
             chatManager.roomService.subscribeToRoomMultipart(roomId, consumer, messageLimit)
 
     @JvmOverloads
+    @Deprecated("use fetchMultipartMessages")
     fun fetchMessages(
             roomId: String,
             initialId: Int? = null,
@@ -191,6 +196,7 @@ class SynchronousCurrentUser(
             .fetchMultipartMessages(roomId, limit, initialId, direction)
 
     @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             room: Room,
             messageText: String,
@@ -199,6 +205,7 @@ class SynchronousCurrentUser(
             sendMessage(room.id, messageText, attachment)
 
     @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             roomId: String,
             messageText: String,
