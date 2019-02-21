@@ -37,7 +37,8 @@ sealed class RoomEvent {
  * consuming RoomEvents.
  */
 data class RoomListeners @JvmOverloads constructor(
-        val onMessage: (Message) -> Unit = {},
+        val onMessage: (com.pusher.chatkit.messages.Message) -> Unit = {},
+        val onMultipartMessage: (com.pusher.chatkit.messages.multipart.Message) -> Unit = {},
         val onUserStartedTyping: (User) -> Unit = {},
         val onUserStoppedTyping: (User) -> Unit = {},
         val onUserJoined: (User) -> Unit = {},
@@ -52,6 +53,7 @@ data class RoomListeners @JvmOverloads constructor(
 internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
     when (event) {
         is RoomEvent.Message -> onMessage(event.message)
+        is RoomEvent.MultipartMessage -> onMultipartMessage(event.message)
         is RoomEvent.UserStartedTyping -> onUserStartedTyping(event.user)
         is RoomEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
         is RoomEvent.UserJoined -> onUserJoined(event.user)

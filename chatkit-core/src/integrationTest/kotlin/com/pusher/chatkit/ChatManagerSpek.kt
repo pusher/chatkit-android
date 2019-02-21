@@ -7,7 +7,7 @@ import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.Message
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
@@ -85,7 +85,7 @@ class ChatManagerSpek : Spek({
 
             val room = pusherino.assumeSuccess().generalRoom
 
-            var messageReceived by FutureValue<Message>()
+            var messageReceived by FutureValue<com.pusher.chatkit.messages.Message>()
 
             pusherino.assumeSuccess().subscribeToRoom(room, RoomListeners(
                     onMessage = { message -> messageReceived = message },
@@ -196,7 +196,8 @@ class ChatManagerSpek : Spek({
     val currentUser = stub<SynchronousCurrentUser>("currentUser")
     val user = stub<User>("user")
     val room = stub<Room>("room")
-    val message = stub<Message>("message")
+    val v2message = stub<com.pusher.chatkit.messages.Message>("message")
+    val v3message = stub<Message>("message")
     val cursor = stub<Cursor>("cursor")
     val error = stub<elements.Error>("error")
     val roomId = "123"
@@ -262,6 +263,7 @@ class ChatManagerSpek : Spek({
                     onRoomUpdated = { actual += "onRoomUpdated" to it },
                     onPresenceChange = { actual += "onPresenceChanged" to it },
                     onUserStartedTyping = { actual += "onUserStartedTyping" to it },
+                    onMultipartMessage = { actual += "onMultipartMessage" to it },
                     onMessage = { actual += "onMessage" to it },
                     onUserJoined = { actual += "onUserJoined" to it },
                     onUserLeft = { actual += "onUserLeft" to it }
@@ -275,7 +277,8 @@ class ChatManagerSpek : Spek({
             consume(RoomEvent.RoomDeleted(roomId))
             consume(RoomEvent.NewReadCursor(cursor))
             consume(RoomEvent.ErrorOccurred(error))
-            consume(RoomEvent.Message(message))
+            consume(RoomEvent.Message(v2message))
+            consume(RoomEvent.MultipartMessage(v3message))
 
             assertThat(actual).containsExactly(
                     "onUserStartedTyping" to user,
@@ -286,7 +289,8 @@ class ChatManagerSpek : Spek({
                     "onRoomDeleted" to roomId,
                     "onNewReadCursor" to cursor,
                     "onErrorOccurred" to error,
-                    "onMessage" to message
+                    "onMessage" to v2message,
+                    "onMultipartMessage" to v3message
             )
         }
     }
