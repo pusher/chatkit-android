@@ -221,8 +221,8 @@ class MessagesSpek : Spek({
 
             with(firstMessage) {
                 assertThat(parts.map { it.partType }).containsExactly(
-                        PartType.InlinePayload,
-                        PartType.AttachmentPayload
+                        PartType.Inline,
+                        PartType.Attachment
                 )
 
                 with(parts[0].payload as Payload.Inline) {
@@ -260,7 +260,7 @@ class MessagesSpek : Spek({
 
             with(firstMessage) {
                 assertThat(parts.map { it.partType }).containsExactly(
-                        PartType.AttachmentPayload
+                        PartType.Attachment
                 )
 
                 with(parts[0].payload as Payload.Attachment) {
@@ -294,7 +294,7 @@ class MessagesSpek : Spek({
 
             with(firstMessage) {
                 assertThat(parts.map { it.partType }).containsExactly(
-                        PartType.AttachmentPayload
+                        PartType.Attachment
                 )
 
                 with(parts[0].payload as Payload.Attachment) {
@@ -542,11 +542,11 @@ class MessagesSpek : Spek({
                 assertThat(room.id).isEqualTo(alice.generalRoom.id)
                 assertThat(sender.id).isEqualTo(alice.id)
                 assertThat(parts.map { it.partType }).containsExactly(
-                        PartType.InlinePayload,
-                        PartType.InlinePayload,
-                        PartType.InlinePayload,
-                        PartType.InlinePayload,
-                        PartType.UrlPayload
+                        PartType.Inline,
+                        PartType.Inline,
+                        PartType.Inline,
+                        PartType.Inline,
+                        PartType.Url
                 )
                 assertThat(parts.map { it.payload }).containsExactly(
                         Payload.Inline("text/plain", "Fire and brimstone coming down from the skies. Rivers and seas boiling."),
@@ -588,8 +588,8 @@ class MessagesSpek : Spek({
 
             with(receivedMessage) {
                 assertThat(parts.map { it.partType }).containsExactly(
-                        PartType.InlinePayload,
-                        PartType.AttachmentPayload
+                        PartType.Inline,
+                        PartType.Attachment
                 )
 
                 with(parts[0].payload as Payload.Inline) {
@@ -631,7 +631,7 @@ class MessagesSpek : Spek({
 
             with(receivedMessage) {
                 assertThat(parts.map { it.partType }).containsExactly(
-                        PartType.AttachmentPayload
+                        PartType.Attachment
                 )
 
                 with(parts[0].payload as Payload.Attachment) {

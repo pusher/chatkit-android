@@ -29,9 +29,9 @@ data class Message(
 )
 
 enum class PartType {
-    InlinePayload,
-    UrlPayload,
-    AttachmentPayload
+    Inline,
+    Url,
+    Attachment
 }
 
 data class Part(
@@ -144,7 +144,7 @@ internal fun makePart(
             when {
                 body.content != null ->
                     Part(
-                            partType = PartType.InlinePayload,
+                            partType = PartType.Inline,
                             payload = Payload.Inline(
                                     type = body.type,
                                     content = body.content
@@ -152,7 +152,7 @@ internal fun makePart(
                     ).asSuccess()
                 body.url != null ->
                     Part(
-                            partType = PartType.UrlPayload,
+                            partType = PartType.Url,
                             payload = Payload.Url(
                                     type = body.type,
                                     url = URL(body.url)
@@ -160,7 +160,7 @@ internal fun makePart(
                     ).asSuccess()
                 body.attachment != null ->
                     Part(
-                            partType = PartType.AttachmentPayload,
+                            partType = PartType.Attachment,
                             payload = Payload.Attachment(
                                     type = body.type,
                                     size = body.attachment.size,
