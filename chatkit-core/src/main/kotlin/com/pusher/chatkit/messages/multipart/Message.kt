@@ -62,7 +62,7 @@ sealed class Payload {
             internal var expiration: Date
     ) : Payload() {
         fun url(): Result<String, Error> =
-                if (Date().time - expiration.time > 30 * 60 * 1000) {
+                if (expiration.time - Date().time > 30 * 60 * 1000) {
                     downloadUrl.asSuccess()
                 } else {
                     refresher.refresh(this)
