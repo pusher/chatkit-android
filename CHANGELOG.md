@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.1.1...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.2.0...HEAD)
+
+## [1.2.0](https://github.com/pusher/chatkit-android/compare/1.1.1...1.2.0) - 2019-03-08
+
+## Added
+
+- Multipart messaging support:
+  - `sendMultipartMessage`, `sendSimpleMessage`, `subscribeToRoomMultipart` and
+    `fetchMultipartMessages` methods
+  - `onMultipartMessage` listener
+
+## Deprecated
+
+- `sendMessage`, `subscribeToRoom` and `fetchMessages` are deprecated in favour of
+  their multipart counterparts. They will be removed in a future major release.
 
 ## [1.1.1](https://github.com/pusher/chatkit-android/compare/1.1.0...1.1.1) - 2019-02-06
 
