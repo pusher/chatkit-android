@@ -5,6 +5,7 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomListeners
@@ -115,6 +116,7 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.joinRoom(roomId) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             listeners: RoomListeners,
@@ -123,6 +125,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             listeners: RoomListeners,
@@ -131,6 +134,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             messageLimit: Int = 10,
@@ -139,6 +143,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             messageLimit: Int = 10,
@@ -147,6 +152,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     @JvmOverloads
+    @Deprecated("use fetchMultipartMessages")
     fun fetchMessages(
             roomId: String,
             initialId: Int? = null,
@@ -156,6 +162,16 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.fetchMessages(roomId, initialId, direction, limit) }, callback)
 
     @JvmOverloads
+    fun fetchMultipartMessages(
+            roomId: String,
+            initialId: Int? = null,
+            direction: Direction = Direction.OLDER_FIRST,
+            limit: Int = 10,
+            callback: (Result<List<com.pusher.chatkit.messages.multipart.Message>, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.fetchMultipartMessages(roomId, initialId, direction, limit) }, callback)
+
+    @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             room: Room,
             messageText: String,
@@ -164,12 +180,37 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.sendMessage(room, messageText, attachment) }, callback)
 
     @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             roomId: String,
             messageText: String,
             attachment: GenericAttachment = NoAttachment,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMessage(roomId, messageText, attachment) }, callback)
+
+    fun sendSimpleMessage(
+            roomId: String,
+            messageText: String,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendSimpleMessage(roomId, messageText) }, callback)
+
+    fun sendSimpleMessage(
+            room: Room,
+            messageText: String,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendSimpleMessage(room, messageText) }, callback)
+
+    fun sendMultipartMessage(
+            room: Room,
+            parts: List<NewPart>,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendMultipartMessage(room, parts) }, callback)
+
+    fun sendMultipartMessage(
+            roomId: String,
+            parts: List<NewPart>,
+            callback: (Result<Int, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.sendMultipartMessage(roomId, parts) }, callback)
 
     fun isTypingIn(room: Room, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.isTypingIn(room) }, callback)

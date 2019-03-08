@@ -69,6 +69,21 @@ class PlatformClient(
                     responseParser = responseParser
             ).get()
 
+    @Suppress("unused") // public API
+    fun <A> externalUpload(
+            url: String,
+            mimeType: String,
+            data: ByteArray,
+            responseParser: DataParser<A>
+    ): Result<A, Error> =
+            platformInstance.externalUpload(
+                    url = url,
+                    method = "PUT",
+                    data = data,
+                    mimeType = mimeType,
+                    responseParser = responseParser
+            ).get()
+
     @Suppress("UNCHECKED_CAST")
     internal fun upload(
             path: String,

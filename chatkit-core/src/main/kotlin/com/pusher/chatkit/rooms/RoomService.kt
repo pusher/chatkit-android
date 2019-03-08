@@ -5,11 +5,14 @@ import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
+import com.pusher.chatkit.messages.multipart.UrlRefresher
+import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
+import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
 import com.pusher.util.Result
@@ -21,11 +24,12 @@ import elements.Errors
 import elements.Subscription
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
 internal class RoomService(
-        private val client: PlatformClient,
+        private val v2client: PlatformClient,
+        private val v3client: PlatformClient,
+        private val urlRefresher: UrlRefresher,
         private val userService: UserService,
         private val cursorsService: CursorService,
         private val makeGlobalConsumer: (String) -> RoomConsumer,
@@ -37,22 +41,17 @@ internal class RoomService(
 
     internal val roomStore = RoomStore()
 
-    fun fetchRoomBy(userId: String, id: String): Result<Room, Error> =
-            getLocalRoom(id)
-                    .flatRecover { client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}") }
-                    .flatMap { room ->
-                        when {
-                            room.memberUserIds.contains(userId) -> room.asSuccess()
-                            else -> noRoomMembershipError(room).asFailure<Room, Error>()
-                        }
-                    }
+    fun fetchRoom(id: String): Result<Room, Error> =
+            getLocalRoom(id).flatRecover {
+                v3client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")
+            }
 
     private fun getLocalRoom(id: String): Result<Room, Error> =
             roomStore[id]
-                    .orElse { Errors.other("User not found locally") }
+                    .orElse { Errors.other("Room not found locally") }
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
+            v3client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
                     .map { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
@@ -69,7 +68,7 @@ internal class RoomService(
                     customData = customData,
                     userIds = userIds
             ).toJson()
-                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
+                    .flatMap { body -> v3client.doPost<Room>("/rooms", body) }
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
@@ -77,21 +76,21 @@ internal class RoomService(
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
-            client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
+            v3client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
-            client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
+            v3client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+            v3client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
@@ -105,7 +104,7 @@ internal class RoomService(
             customData: CustomData? = null
     ): Result<Unit, Error> =
             UpdateRoomRequest(name, isPrivate, customData).toJson()
-                    .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+                    .flatMap { body -> v3client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
 
     fun isSubscribedTo(roomId: String) =
             synchronized(openSubscriptions) {
@@ -116,6 +115,22 @@ internal class RoomService(
             roomId: String,
             unsafeConsumer: RoomConsumer,
             messageLimit: Int
+    ): Subscription =
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v2client, RoomSubscriptionEventParserV2)
+
+    fun subscribeToRoomMultipart(
+            roomId: String,
+            unsafeConsumer: RoomConsumer,
+            messageLimit: Int
+    ): Subscription =
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v3client, RoomSubscriptionEventParserV3)
+
+    private fun subscribeToRoom(
+            roomId: String,
+            unsafeConsumer: RoomConsumer,
+            messageLimit: Int,
+            client: PlatformClient,
+            parser: DataParser<RoomSubscriptionEvent>
     ): Subscription {
         // This consumer is made safe by the layer providing it
         val globalConsumer = makeGlobalConsumer(roomId)
@@ -143,6 +158,7 @@ internal class RoomService(
                 roomConsumer = { emit(enrichEvent(it, emit)) },
                 cursorConsumer = { emit(translateCursorEvent(it)) },
                 client = client,
+                messageParser = parser,
                 logger = logger
         )
         synchronized(openSubscriptions) {
@@ -229,6 +245,17 @@ internal class RoomService(
                     userService.fetchUserBy(event.message.userId).map { user ->
                         event.message.user = user
                         RoomEvent.Message(event.message) as RoomEvent
+                    }.recover {
+                        RoomEvent.ErrorOccurred(it)
+                    }
+                is RoomSubscriptionEvent.NewMultipartMessage ->
+                    upgradeMessageV3(
+                            event.message,
+                            this,
+                            userService,
+                            urlRefresher
+                    ).map {
+                        RoomEvent.MultipartMessage(it) as RoomEvent
                     }.recover {
                         RoomEvent.ErrorOccurred(it)
                     }

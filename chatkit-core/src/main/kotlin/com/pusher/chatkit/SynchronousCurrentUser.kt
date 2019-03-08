@@ -5,6 +5,7 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
+import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
@@ -106,6 +107,7 @@ class SynchronousCurrentUser(
             chatManager.roomService.joinRoom(id, roomId)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             listeners: RoomListeners,
@@ -114,6 +116,7 @@ class SynchronousCurrentUser(
             subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             listeners: RoomListeners,
@@ -122,6 +125,7 @@ class SynchronousCurrentUser(
             subscribeToRoom(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             room: Room,
             messageLimit: Int = 10,
@@ -130,6 +134,7 @@ class SynchronousCurrentUser(
             subscribeToRoom(room.id, messageLimit, consumer)
 
     @JvmOverloads
+    @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
             roomId: String,
             messageLimit: Int = 10,
@@ -138,6 +143,39 @@ class SynchronousCurrentUser(
             chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
 
     @JvmOverloads
+    fun subscribeToRoomMultipart(
+            room: Room,
+            listeners: RoomListeners,
+            messageLimit: Int = 10
+    ): Subscription =
+            subscribeToRoomMultipart(room.id, listeners, messageLimit)
+
+    @JvmOverloads
+    fun subscribeToRoomMultipart(
+            roomId: String,
+            listeners: RoomListeners,
+            messageLimit: Int = 10
+    ): Subscription =
+            subscribeToRoomMultipart(roomId, messageLimit, listeners.toCallback())
+
+    @JvmOverloads
+    fun subscribeToRoomMultipart(
+            room: Room,
+            messageLimit: Int = 10,
+            consumer: RoomConsumer
+    ): Subscription =
+            subscribeToRoomMultipart(room.id, messageLimit, consumer)
+
+    @JvmOverloads
+    fun subscribeToRoomMultipart(
+            roomId: String,
+            messageLimit: Int = 10,
+            consumer: RoomConsumer
+    ): Subscription =
+            chatManager.roomService.subscribeToRoomMultipart(roomId, consumer, messageLimit)
+
+    @JvmOverloads
+    @Deprecated("use fetchMultipartMessages")
     fun fetchMessages(
             roomId: String,
             initialId: Int? = null,
@@ -148,6 +186,17 @@ class SynchronousCurrentUser(
             .fetchMessages(roomId, limit, initialId, direction)
 
     @JvmOverloads
+    fun fetchMultipartMessages(
+            roomId: String,
+            initialId: Int? = null,
+            direction: Direction = Direction.OLDER_FIRST,
+            limit: Int = 10
+    ): Result<List<com.pusher.chatkit.messages.multipart.Message>, Error> = chatManager
+            .messageService
+            .fetchMultipartMessages(roomId, limit, initialId, direction)
+
+    @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             room: Room,
             messageText: String,
@@ -156,12 +205,37 @@ class SynchronousCurrentUser(
             sendMessage(room.id, messageText, attachment)
 
     @JvmOverloads
+    @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
             roomId: String,
             messageText: String,
             attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
             chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
+
+    fun sendSimpleMessage(
+            room: Room,
+            messageText: String
+    ): Result<Int, Error> =
+            sendSimpleMessage(room.id, messageText)
+
+    fun sendSimpleMessage(
+            roomId: String,
+            messageText: String
+    ): Result<Int, Error> =
+            sendMultipartMessage(roomId, listOf(NewPart.Inline(messageText)))
+
+    fun sendMultipartMessage(
+            room: Room,
+            parts: List<NewPart>
+    ): Result<Int, Error> =
+            sendMultipartMessage(room.id, parts)
+
+    fun sendMultipartMessage(
+            roomId: String,
+            parts: List<NewPart>
+    ): Result<Int, Error> =
+            chatManager.messageService.sendMultipartMessage(roomId, parts)
 
     private val typingTimeThreshold = 500
     private var lastTypingEvent: Long = 0

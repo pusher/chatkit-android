@@ -1,7 +1,6 @@
 package com.pusher.chatkit.files
 
 import java.io.File
-import java.util.*
 
 sealed class GenericAttachment
 

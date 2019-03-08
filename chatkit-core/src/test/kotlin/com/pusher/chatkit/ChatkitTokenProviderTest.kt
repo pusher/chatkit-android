@@ -1,15 +1,15 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import mockitox.mock
-import mockitox.returns
-import mockitox.returnsStub
-import mockitox.stub
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import elements.Error
 import elements.Errors
+import mockitox.mock
+import mockitox.returns
+import mockitox.returnsStub
+import mockitox.stub
 import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.RequestBody

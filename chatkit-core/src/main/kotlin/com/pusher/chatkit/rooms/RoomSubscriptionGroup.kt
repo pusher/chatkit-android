@@ -1,24 +1,18 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.cursors.CursorSubscriptionConsumer
 import com.pusher.chatkit.memberships.MembershipSubscriptionConsumer
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.memberships.MembershipSubscriptionEventParser
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
-import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.User
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import com.pusher.platform.network.Futures
-import com.pusher.platform.network.cancel
+import com.pusher.platform.network.DataParser
 import elements.Subscription
 import java.net.URLEncoder
-import java.util.concurrent.Future
 
 
 internal class RoomSubscriptionGroup(
@@ -29,6 +23,7 @@ internal class RoomSubscriptionGroup(
         membershipConsumer: MembershipSubscriptionConsumer,
         roomConsumer: RoomSubscriptionConsumer,
         client: PlatformClient,
+        messageParser: DataParser<RoomSubscriptionEvent>,
         logger: Logger
 ) : ChatkitSubscription {
     init {
@@ -42,7 +37,7 @@ internal class RoomSubscriptionGroup(
                     onEvent = { roomConsumer(it.body) },
                     onError = { roomConsumer(RoomSubscriptionEvent.ErrorOccurred(it)) }
             ),
-            messageParser = RoomSubscriptionEventParser,
+            messageParser = messageParser,
             description = "Room $roomId",
             logger = logger
     )
