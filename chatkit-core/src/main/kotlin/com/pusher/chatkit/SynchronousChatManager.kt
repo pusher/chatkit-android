@@ -14,6 +14,7 @@ import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.chatkit.util.makeSafe
@@ -88,30 +89,8 @@ class SynchronousChatManager constructor(
             filesService
     )
 
-    private lateinit var userSubscription: ResolvableSubscription<UserSubscriptionEvent>
-
-
-    private var currentUser = object {
-        private val updateLock = object {}
-        private val latch = CountDownLatch(1)
-        private var currentUser: SynchronousCurrentUser? = null
-
-        fun get(): SynchronousCurrentUser {
-            latch.await()
-            return currentUser!!
-        }
-
-        fun set(e: SynchronousCurrentUser) {
-            synchronized(updateLock) {
-                if (currentUser == null) {
-                    currentUser = e
-                    latch.countDown()
-                } else {
-                    currentUser!!.updateWithPropertiesOf(e)
-                }
-            }
-        }
-    }
+    private lateinit var userSubscription: UserSubscription
+    private lateinit var currentUser: SynchronousCurrentUser
 
     // Holds events emitted during connection until we're initialised fully
     private val eventBuffer = object {
@@ -156,24 +135,20 @@ class SynchronousChatManager constructor(
 
         dependencies.appHooks.register(this)
 
-        userSubscription = ResolvableSubscription(
+        userSubscription = UserSubscription(
+                userId = userId,
                 client = v3chatkitClient,
-                path = "users",
-                listeners = SubscriptionListeners(
-                        onEvent = { event -> consumeUserSubscriptionEvent(event.body) },
-                        onError = { error -> consumeUserSubscriptionEvent(UserSubscriptionEvent.ErrorOccurred(error)) }
-                ),
-                messageParser = UserSubscriptionEventParser,
-                resolveOnFirstEvent = true,
-                description = "User $userId",
+                listeners = ::consumeUserSubscriptionEvent,
                 logger = logger
         )
-        userSubscription.await()
 
-        return currentUser.get()
-                .also { logger.verbose("Current User initialised") }
-                .also { eventBuffer.release() }
-                .asSuccess()
+        return userSubscription.initialState().map { initialState ->
+            currentUser = newCurrentUser(initialState)
+            logger.verbose("Current User initialised")
+            consumeUserSubscriptionEvent(initialState)
+            eventBuffer.release()
+            currentUser
+        }
     }
 
     override fun onAppOpened() {
@@ -190,7 +165,7 @@ class SynchronousChatManager constructor(
 
         return appliedEvents.forEach { event ->
             if (event is UserSubscriptionEvent.InitialState) {
-                updateCurrentUser(event)
+                currentUser.updateWithPropertiesOf(newCurrentUser(event))
             }
             eventBuffer.queue(transformUserSubscriptionEvent(event))
         }
@@ -210,7 +185,7 @@ class SynchronousChatManager constructor(
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
-                    ChatEvent.CurrentUserReceived(currentUser.get())
+                    ChatEvent.CurrentUserReceived(currentUser)
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     ChatEvent.AddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
@@ -269,8 +244,8 @@ class SynchronousChatManager constructor(
         }
     }
 
-    private fun updateCurrentUser(initialState: UserSubscriptionEvent.InitialState) {
-        currentUser.set(SynchronousCurrentUser(
+    private fun newCurrentUser(initialState: UserSubscriptionEvent.InitialState) =
+        SynchronousCurrentUser(
                 id = initialState.currentUser.id,
                 avatarURL = initialState.currentUser.avatarURL,
                 customData = initialState.currentUser.customData,
@@ -278,8 +253,7 @@ class SynchronousChatManager constructor(
                 chatManager = this,
                 pushNotifications = beams,
                 client = createPlatformClient(InstanceType.SERVER_V4)
-        ))
-    }
+        )
 
     /**
      * Tries to close all pending subscriptions and resources

@@ -26,6 +26,7 @@ class RoomStoreSpek : Spek({
                             Room("8", "ham", "eight", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("9", "ham", "nine", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
                     ),
+                    cursors = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )
 
@@ -42,6 +43,7 @@ class RoomStoreSpek : Spek({
                             Room("8", "ham", "eight", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("9", "ham", "9ine", true, mapOf("pre" to "set", "and" to "updated"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
                     ),
+                    cursors = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )
 

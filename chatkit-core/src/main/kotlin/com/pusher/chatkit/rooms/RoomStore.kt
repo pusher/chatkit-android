@@ -87,10 +87,6 @@ internal class RoomStore(
                     listOf(event.also { this -= event.roomId })
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
                     listOf(event.also { this -= event.roomId })
-                is UserSubscriptionEvent.LeftRoomEvent ->
-                    listOf(event.also { this[event.roomId]?.removeUser(event.userId) })
-                is UserSubscriptionEvent.JoinedRoomEvent ->
-                    listOf(event.also { this[event.roomId]?.addUser(event.userId) })
                 else -> listOf(event)
             }
 
