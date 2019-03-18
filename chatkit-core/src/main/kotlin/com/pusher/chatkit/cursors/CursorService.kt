@@ -33,6 +33,10 @@ class CursorService(
                 )
             }
 
+    internal fun populateInitial(cursors: List<Cursor>) {
+        cursorsStore.initialiseContents(cursors)
+    }
+
     fun close() {
         cursorsStore.clear()
     }

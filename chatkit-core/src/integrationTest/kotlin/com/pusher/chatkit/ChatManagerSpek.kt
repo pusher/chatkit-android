@@ -56,6 +56,32 @@ class ChatManagerSpek : Spek({
             assertThat(user.customData).isEqualTo(mapOf("custom" to "data"))
         }
 
+        it("loads current user and reports via event") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUser(
+                            id = PUSHERINO,
+                            name = "pusherino",
+                            avatarUrl = "https://example.com/face.png",
+                            customData = mapOf("custom" to "data")
+                    )
+            )
+
+            var firstEvent by FutureValue<ChatEvent>()
+
+            chatFor(PUSHERINO).connect(
+                    consumer = { e: ChatEvent -> firstEvent = e }
+            )
+
+            assertThat(firstEvent is CurrentUserReceived).isTrue()
+            with (firstEvent as CurrentUserReceived) {
+                assertThat(currentUser.id).isEqualTo(PUSHERINO)
+                assertThat(currentUser.name).isEqualTo("pusherino")
+                assertThat(currentUser.avatarURL).isEqualTo("https://example.com/face.png")
+                assertThat(currentUser.customData).isEqualTo(mapOf("custom" to "data"))
+            }
+        }
+
         it("loads user rooms") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 

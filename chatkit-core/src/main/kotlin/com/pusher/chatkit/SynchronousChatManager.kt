@@ -145,7 +145,9 @@ class SynchronousChatManager constructor(
         return userSubscription.initialState().map { initialState ->
             currentUser = newCurrentUser(initialState)
             logger.verbose("Current User initialised")
-            consumeUserSubscriptionEvent(initialState)
+            roomService.populateInitial(initialState.rooms)
+            cursorService.populateInitial(initialState.cursors)
+            consumeEvents(listOf(ChatEvent.CurrentUserReceived(currentUser)))
             eventBuffer.release()
             currentUser
         }

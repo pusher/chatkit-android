@@ -1,12 +1,10 @@
 package com.pusher.chatkit.cursors
 
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import java.util.concurrent.atomic.AtomicBoolean
 
 
 class CursorsStore {
     private val map = mutableMapOf<String, UserCursorStore>()
-    private val initialized = AtomicBoolean(false)
 
     operator fun get(userId: String) =
             map[userId] ?: UserCursorStore().also { map[userId] = it }
@@ -23,7 +21,11 @@ class CursorsStore {
 
     fun clear() {
         map.clear()
-        initialized.set(false)
+    }
+
+    fun initialiseContents(cursors: List<Cursor>) {
+        clear()
+        this += cursors
     }
 
     fun applyEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
@@ -48,22 +50,15 @@ class CursorsStore {
                 it is CursorSubscriptionEvent.NoEvent
             }
 
-    private fun integrateCursors(newState: List<Cursor>): List<Cursor> {
-        val newCursors = newState.mapNotNull { cursor ->
-            if (this[cursor.userId][cursor.roomId]?.position == cursor.position) {
-                null
-            } else {
-                this[cursor.userId] += cursor
-                cursor
+    private fun integrateCursors(newState: List<Cursor>): List<Cursor> =
+            newState.mapNotNull { cursor ->
+                if (this[cursor.userId][cursor.roomId]?.position == cursor.position) {
+                    null
+                } else {
+                    this[cursor.userId] += cursor
+                    cursor
+                }
             }
-        }
-
-        return if (initialized.getAndSet(true)) {
-            newCursors
-        } else {
-            listOf()
-        }
-    }
 }
 
 class UserCursorStore {
