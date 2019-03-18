@@ -107,7 +107,7 @@ class SynchronousChatManager constructor(
             }
         }
 
-        private fun emit(event: ChatEvent) {
+        fun emit(event: ChatEvent) {
             eventConsumers.forEach { consumer ->
                 consumer(event)
             }
@@ -147,8 +147,11 @@ class SynchronousChatManager constructor(
             logger.verbose("Current User initialised")
             roomService.populateInitial(initialState.rooms)
             cursorService.populateInitial(initialState.cursors)
-            consumeEvents(listOf(ChatEvent.CurrentUserReceived(currentUser)))
+            // Ensure this is the first event propagated
+            eventBuffer.emit(ChatEvent.CurrentUserReceived(currentUser))
+            // Release any other events
             eventBuffer.release()
+
             currentUser
         }
     }
