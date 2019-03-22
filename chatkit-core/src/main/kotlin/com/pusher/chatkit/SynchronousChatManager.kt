@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
@@ -12,23 +11,18 @@ import com.pusher.chatkit.pushnotifications.BeamsTokenProviderService
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.platform.Instance
 import com.pusher.platform.Locator
-import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import java.util.concurrent.CountDownLatch
 
 class SynchronousChatManager constructor(
         private val instanceLocator: String,
@@ -41,7 +35,7 @@ class SynchronousChatManager constructor(
 
     private val logger = dependencies.logger
     private val v2chatkitClient = createPlatformClient(InstanceType.SERVER_V2)
-    private val v3chatkitClient = createPlatformClient(InstanceType.SERVER_V4)
+    private val chatkitClient = createPlatformClient(InstanceType.SERVER_V4)
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
@@ -53,7 +47,7 @@ class SynchronousChatManager constructor(
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
-    private val urlRefresher = UrlRefresher(v3chatkitClient)
+    private val urlRefresher = UrlRefresher(chatkitClient)
 
     internal val cursorService = CursorService(cursorsClient, logger)
 
@@ -67,12 +61,12 @@ class SynchronousChatManager constructor(
                     consumer = this::consumePresenceSubscriptionEvent
             )
 
-    internal val userService = UserService(v3chatkitClient, presenceService)
+    internal val userService = UserService(chatkitClient, presenceService)
 
     internal val roomService =
             RoomService(
                     v2chatkitClient,
-                    v3chatkitClient,
+                    chatkitClient,
                     urlRefresher,
                     userService,
                     cursorService,
@@ -82,7 +76,7 @@ class SynchronousChatManager constructor(
 
     internal val messageService = MessageService(
             v2chatkitClient,
-            v3chatkitClient,
+            chatkitClient,
             userService,
             roomService,
             urlRefresher,
@@ -137,7 +131,7 @@ class SynchronousChatManager constructor(
 
         userSubscription = UserSubscription(
                 userId = userId,
-                client = v3chatkitClient,
+                client = chatkitClient,
                 listeners = ::consumeUserSubscriptionEvent,
                 logger = logger
         )
