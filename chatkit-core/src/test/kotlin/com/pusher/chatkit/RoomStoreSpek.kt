@@ -15,8 +15,7 @@ class RoomStoreSpek : Spek({
         describe("on receiving new InitialState User event") {
             val subject = RoomStore()
 
-            val initialState = UserSubscriptionEvent.InitialState(
-                    rooms = listOf(
+            val initialState = listOf(
                             Room("1", "ham", "one", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("2", "ham", "two", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("3", "ham", "three", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
@@ -25,11 +24,9 @@ class RoomStoreSpek : Spek({
                             Room("7", "ham", "seven", false, mapOf("pre" to "set", "custom" to "data"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("8", "ham", "eight", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("9", "ham", "nine", false, mapOf("pre" to "set"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
-                    ),
-                    currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
-            )
+                    )
 
-            subject.applyUserSubscriptionEvent(initialState)
+            subject.initialiseContents(initialState)
 
             val replacementState = UserSubscriptionEvent.InitialState(
                     rooms = listOf(
@@ -42,6 +39,7 @@ class RoomStoreSpek : Spek({
                             Room("8", "ham", "eight", false, null, "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", ""),
                             Room("9", "ham", "9ine", true, mapOf("pre" to "set", "and" to "updated"), "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", "")
                     ),
+                    cursors = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )
 

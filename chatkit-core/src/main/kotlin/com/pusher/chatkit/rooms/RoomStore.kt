@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class RoomStore(
         private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
 ) {
-    private var initialized = AtomicBoolean(false)
-
     fun toList(): List<Room> =
             roomsMap.values.toList()
 
@@ -38,7 +36,11 @@ internal class RoomStore(
 
     fun clear() {
         roomsMap.clear()
-        initialized.set(false)
+    }
+
+    fun initialiseContents(rooms: List<Room>) {
+        clear()
+        rooms.forEach { this += it }
     }
 
     fun applyUserSubscriptionEvent(
@@ -73,11 +75,7 @@ internal class RoomStore(
                         UserSubscriptionEvent.RoomUpdatedEvent(it)
                     }
 
-                    if (initialized.getAndSet(true)) {
-                        listOf(event) + removedFrom + addedTo + updated
-                    } else {
-                        listOf(event)
-                    }
+                    listOf(event) + removedFrom + addedTo + updated
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     listOf(event.also { this += event.room })
@@ -87,10 +85,6 @@ internal class RoomStore(
                     listOf(event.also { this -= event.roomId })
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
                     listOf(event.also { this -= event.roomId })
-                is UserSubscriptionEvent.LeftRoomEvent ->
-                    listOf(event.also { this[event.roomId]?.removeUser(event.userId) })
-                is UserSubscriptionEvent.JoinedRoomEvent ->
-                    listOf(event.also { this[event.roomId]?.addUser(event.userId) })
                 else -> listOf(event)
             }
 
