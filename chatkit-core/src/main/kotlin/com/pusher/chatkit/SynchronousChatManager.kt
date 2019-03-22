@@ -189,8 +189,6 @@ class SynchronousChatManager constructor(
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
             when (event) {
-                is UserSubscriptionEvent.InitialState ->
-                    ChatEvent.CurrentUserReceived(currentUser)
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     ChatEvent.AddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
@@ -203,6 +201,8 @@ class SynchronousChatManager constructor(
                     ChatEvent.NewReadCursor(event.cursor)
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatEvent.ErrorOccurred(event.error)
+                is UserSubscriptionEvent.InitialState ->
+                    ChatEvent.NoEvent // This is emitted specially on connect
             }
 
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =

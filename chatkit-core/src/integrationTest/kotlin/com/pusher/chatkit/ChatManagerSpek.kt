@@ -29,6 +29,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
@@ -80,6 +81,39 @@ class ChatManagerSpek : Spek({
                 assertThat(currentUser.avatarURL).isEqualTo("https://example.com/face.png")
                 assertThat(currentUser.customData).isEqualTo(mapOf("custom" to "data"))
             }
+        }
+
+        it("emits only one current user received event") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUser(
+                            id = PUSHERINO,
+                            name = "pusherino",
+                            avatarUrl = "https://example.com/face.png",
+                            customData = mapOf("custom" to "data")
+                    ),
+                    newRoom(GENERAL, SUPER_USER)
+            )
+
+            val events = mutableListOf<ChatEvent>()
+            val done = CountDownLatch(1)
+
+            chatFor(PUSHERINO).connect(
+                    consumer = { e: ChatEvent ->
+                        events.add(e)
+                        if (e is ChatEvent.AddedToRoom) {
+                            done.countDown()
+                        }
+                    }
+            ).assumeSuccess()
+
+            // We'll just use this event to mark that the initialisation really is over and we're
+            // received an event which happened after the user connected
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.addUsersToRoom(superUser.generalRoom.id, listOf(PUSHERINO))
+
+            done.await()
+            assertThat(events.count { it is ChatEvent.CurrentUserReceived }).isEqualTo(1)
         }
 
         it("loads user rooms") {
