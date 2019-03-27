@@ -125,6 +125,18 @@ class ChatManagerSpek : Spek({
             assertThat(roomNames).containsExactly(GENERAL)
         }
 
+        it("loads user rooms with unread message counts") {
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "message1").assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
+
+            val user = chatFor(PUSHERINO).connect().assumeSuccess()
+            assertThat(user.rooms[0].unreadCount).isEqualTo(2)
+            assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
+        }
+
         it("loads users related to current user") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
