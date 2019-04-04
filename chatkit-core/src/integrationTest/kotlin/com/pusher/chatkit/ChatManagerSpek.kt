@@ -8,6 +8,8 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.multipart.Message
+import com.pusher.chatkit.messages.multipart.PartType
+import com.pusher.chatkit.messages.multipart.Payload
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
@@ -137,11 +139,29 @@ class ChatManagerSpek : Spek({
             assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
         }
 
+        it("notifies of new messages") {
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "message1").assumeSuccess()
+
+            var updatedEvent by FutureValue<ChatEvent.RoomUpdated>()
+            val user = chatFor(PUSHERINO).connect { event ->
+                if (event is ChatEvent.RoomUpdated) updatedEvent = event
+            }.assumeSuccess()
+
+            superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
+
+            assertThat(updatedEvent.room.unreadCount).isEqualTo(2)
+            assertThat(user.rooms[0].unreadCount).isEqualTo(2)
+            assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
+        }
+
         it("loads users related to current user") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val user = chatFor(PUSHERINO).connect().assumeSuccess()
-            user.rooms.forEach { room -> user.subscribeToRoom(room) { } }
+            user.rooms.forEach { room -> user.subscribeToRoomMultipart(room) { } }
 
             val users = user.users
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
@@ -157,17 +177,20 @@ class ChatManagerSpek : Spek({
 
             val room = pusherino.assumeSuccess().generalRoom
 
-            var messageReceived by FutureValue<com.pusher.chatkit.messages.Message>()
+            var messageReceived by FutureValue<com.pusher.chatkit.messages.multipart.Message>()
 
-            pusherino.assumeSuccess().subscribeToRoom(room, RoomListeners(
-                    onMessage = { message -> messageReceived = message },
+            pusherino.assumeSuccess().subscribeToRoomMultipart(room, RoomListeners(
+                    onMultipartMessage = { message -> messageReceived = message },
                     onErrorOccurred = { e -> error("error: $e") }
             ))
 
             val messageResult = alice.assumeSuccess().sendMessage(room, "message text")
 
             check(messageResult is Result.Success)
-            assertThat(messageReceived.text).isEqualTo("message text")
+            assertThat(messageReceived.parts[0].partType).isEqualTo(PartType.Inline)
+            with (messageReceived.parts[0].payload as Payload.Inline) {
+                assertThat(content).isEqualTo("message text")
+            }
         }
 
         it("receives current user with listeners instead of callback") {
