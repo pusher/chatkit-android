@@ -10,6 +10,8 @@ data class Room(
         @SerializedName("private")
         var isPrivate: Boolean,
         var customData: CustomData?,
+        val unreadCount: Int?,
+        val lastMessageAt: String?,
         val createdAt: String,
         var updatedAt: String,
         var deletedAt: String
@@ -32,6 +34,10 @@ data class Room(
 
     override fun equals(other: Any?) = (other is Room) && other.id == this.id
 
+    override fun hashCode(): Int { return id.hashCode() }
+
     fun deepEquals(room: Room) =
-            room.name == this.name && room.customData == this.customData && room.isPrivate == this.isPrivate
+            room.name == this.name &&
+                    room.customData == this.customData &&
+                    room.isPrivate == this.isPrivate
 }
