@@ -4,7 +4,7 @@ import android.content.Context
 import com.pusher.chatkit.pushnotifications.BeamsTokenProviderService
 import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.util.FutureValue
-import com.pusher.pushnotifications.Callback
+import com.pusher.pushnotifications.BeamsCallback
 import com.pusher.pushnotifications.PusherCallbackError
 import com.pusher.pushnotifications.auth.TokenProvider
 import com.pusher.util.Result
@@ -19,14 +19,8 @@ class BeamsPushNotifications(
 ) : PushNotifications {
 
     override fun start(): Result<Unit, Error> {
-        val tokenProvider = object : TokenProvider {
-            override fun fetchToken(userId: String): String? {
-                return beamsTokenProviderService.fetchToken(userId).map { it.token }.recover { null }
-            }
-        }
-
         return try {
-            Beams.start(context, instanceId, tokenProvider)
+            Beams.start(context, instanceId)
             Result.success(Unit)
         } catch (ex: ClassNotFoundException) {
             Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))
@@ -38,7 +32,25 @@ class BeamsPushNotifications(
     override fun setUserId(userId: String): Result<Unit, Error> {
         val f = FutureValue<Result<Unit, Error>>()
         try {
-            Beams.setUserId(userId, object : Callback<Void, PusherCallbackError> {
+            val tokenProvider = object : TokenProvider {
+                override fun fetchToken(userId: String): String {
+                    val token = beamsTokenProviderService.fetchToken(userId).map { it.token }
+                    when(token) {
+                        is Result.Success -> {
+                            val tokenString = token.value
+                            if (tokenString == null) {
+                                throw Exception("Could not get auth token for push notification service")
+                            }
+                            return tokenString
+                        }
+                        is Result.Failure -> {
+                            throw Exception("Could not authenticate with push notifications service: ${token.error}")
+                        }
+                    }
+                }
+            }
+
+            Beams.setUserId(userId, tokenProvider, object : BeamsCallback<Void, PusherCallbackError> {
                 override fun onFailure(error: PusherCallbackError) {
                     f.set(Result.failure(elements.OtherError(error.message, error.cause)))
                 }
@@ -59,15 +71,7 @@ class BeamsPushNotifications(
     override fun stop(): Result<Unit, Error> {
         val f = FutureValue<Result<Unit, Error>>()
         try {
-            Beams.stop(object : Callback<Void, PusherCallbackError> {
-                override fun onFailure(error: PusherCallbackError) {
-                    f.set(Result.failure(elements.OtherError(error.message, error.cause)))
-                }
-
-                override fun onSuccess(vararg values: Void) {
-                    f.set(Result.success(Unit))
-                }
-            })
+            Beams.stop()
         } catch (ex: ClassNotFoundException) {
             return Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))
         } catch (ex: Throwable) {
