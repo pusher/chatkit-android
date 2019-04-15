@@ -69,7 +69,6 @@ class BeamsPushNotifications(
     }
 
     override fun stop(): Result<Unit, Error> {
-        val f = FutureValue<Result<Unit, Error>>()
         try {
             Beams.stop()
         } catch (ex: ClassNotFoundException) {
@@ -77,7 +76,6 @@ class BeamsPushNotifications(
         } catch (ex: Throwable) {
             return Result.failure(elements.OtherError(ex.message ?: "Unknown error", ex.cause))
         }
-
-        return f.get()
+        return Result.success(Unit)
     }
 }
