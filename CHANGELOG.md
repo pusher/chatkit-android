@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.2.0...HEAD)
 
+## Changed
+- Uses latest Push Notifications Android SDK (1.4.0)
+
 ## [1.2.0](https://github.com/pusher/chatkit-android/compare/1.1.1...1.2.0) - 2019-03-08
 
 ## Added
