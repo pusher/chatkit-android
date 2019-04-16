@@ -35,7 +35,8 @@ class CursorsStore {
                 is UserSubscriptionEvent.NewCursor ->
                     integrateCursors(listOf(event.cursor)).map(UserSubscriptionEvent::NewCursor)
                 else ->
-                    listOf(event)
+                    // Do not "apply" events which don't relate to cursors
+                    listOf()
             }
 
     fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
