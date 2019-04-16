@@ -18,6 +18,11 @@ class BeamsPushNotifications(
         private val beamsTokenProviderService: BeamsTokenProviderService
 ) : PushNotifications {
 
+    private val tokenProvider = object : TokenProvider {
+        override fun fetchToken(userId: String): String =
+                beamsTokenProviderService.fetchToken(userId)
+    }
+
     override fun start(): Result<Unit, Error> {
         return try {
             Beams.start(context, instanceId)
@@ -32,24 +37,6 @@ class BeamsPushNotifications(
     override fun setUserId(userId: String): Result<Unit, Error> {
         val f = FutureValue<Result<Unit, Error>>()
         try {
-            val tokenProvider = object : TokenProvider {
-                override fun fetchToken(userId: String): String {
-                    val token = beamsTokenProviderService.fetchToken(userId).map { it.token }
-                    when(token) {
-                        is Result.Success -> {
-                            val tokenString = token.value
-                            if (tokenString == null) {
-                                throw Exception("Could not get auth token for push notification service")
-                            }
-                            return tokenString
-                        }
-                        is Result.Failure -> {
-                            throw Exception("Could not authenticate with push notifications service: ${token.error}")
-                        }
-                    }
-                }
-            }
-
             Beams.setUserId(userId, tokenProvider, object : BeamsCallback<Void, PusherCallbackError> {
                 override fun onFailure(error: PusherCallbackError) {
                     f.set(Result.failure(elements.OtherError(error.message, error.cause)))
