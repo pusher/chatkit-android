@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.2.0...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.3.0...HEAD)
+
+## [1.3.0](https://github.com/pusher/chatkit-android/compare/1.2.0...1.3.0)
+
+## Added
+
+- Room entities have two new properties:
+  - `unreadCount` - the number of unread messages in the room
+  - `lastMessageAt` - timestamp of the most recent message in the room
+
+Both are nullable, because you do not have access to the messages for a room
+unless you are a member. The last message timestamp will also be `null` if
+there are no messages in the room.
+
+When you are a member of a room, these values are available for that room
+immediately on initial connection and real-time changes to them are
+communicated via room updated events.
+
+There is no need to subscribe to a room to recieve them.
 
 ## [1.2.0](https://github.com/pusher/chatkit-android/compare/1.1.1...1.2.0) - 2019-03-08
 

@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.messages.MessageService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
@@ -12,22 +11,18 @@ import com.pusher.chatkit.pushnotifications.BeamsTokenProviderService
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.platform.Instance
 import com.pusher.platform.Locator
-import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
-import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import java.util.concurrent.CountDownLatch
 
 class SynchronousChatManager constructor(
         private val instanceLocator: String,
@@ -40,7 +35,7 @@ class SynchronousChatManager constructor(
 
     private val logger = dependencies.logger
     private val v2chatkitClient = createPlatformClient(InstanceType.SERVER_V2)
-    private val v3chatkitClient = createPlatformClient(InstanceType.SERVER_V3)
+    private val chatkitClient = createPlatformClient(InstanceType.SERVER_V4)
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
@@ -52,7 +47,7 @@ class SynchronousChatManager constructor(
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
-    private val urlRefresher = UrlRefresher(v3chatkitClient)
+    private val urlRefresher = UrlRefresher(chatkitClient)
 
     internal val cursorService = CursorService(cursorsClient, logger)
 
@@ -66,12 +61,12 @@ class SynchronousChatManager constructor(
                     consumer = this::consumePresenceSubscriptionEvent
             )
 
-    internal val userService = UserService(v3chatkitClient, presenceService)
+    internal val userService = UserService(chatkitClient, presenceService)
 
     internal val roomService =
             RoomService(
                     v2chatkitClient,
-                    v3chatkitClient,
+                    chatkitClient,
                     urlRefresher,
                     userService,
                     cursorService,
@@ -81,38 +76,15 @@ class SynchronousChatManager constructor(
 
     internal val messageService = MessageService(
             v2chatkitClient,
-            v3chatkitClient,
+            chatkitClient,
             userService,
             roomService,
             urlRefresher,
             filesService
     )
 
-    private lateinit var userSubscription: ResolvableSubscription<UserSubscriptionEvent>
-    private lateinit var cursorSubscription: ResolvableSubscription<CursorSubscriptionEvent>
-
-
-    private var currentUser = object {
-        private val updateLock = object {}
-        private val latch = CountDownLatch(1)
-        private var currentUser: SynchronousCurrentUser? = null
-
-        fun get(): SynchronousCurrentUser {
-            latch.await()
-            return currentUser!!
-        }
-
-        fun set(e: SynchronousCurrentUser) {
-            synchronized(updateLock) {
-                if (currentUser == null) {
-                    currentUser = e
-                    latch.countDown()
-                } else {
-                    currentUser!!.updateWithPropertiesOf(e)
-                }
-            }
-        }
-    }
+    private lateinit var userSubscription: UserSubscription
+    private lateinit var currentUser: SynchronousCurrentUser
 
     // Holds events emitted during connection until we're initialised fully
     private val eventBuffer = object {
@@ -129,7 +101,7 @@ class SynchronousChatManager constructor(
             }
         }
 
-        private fun emit(event: ChatEvent) {
+        fun emit(event: ChatEvent) {
             eventConsumers.forEach { consumer ->
                 consumer(event)
             }
@@ -157,28 +129,25 @@ class SynchronousChatManager constructor(
 
         dependencies.appHooks.register(this)
 
-        userSubscription = ResolvableSubscription(
-                client = v3chatkitClient,
-                path = "users",
-                listeners = SubscriptionListeners(
-                        onEvent = { event -> consumeUserSubscriptionEvent(event.body) },
-                        onError = { error -> consumeUserSubscriptionEvent(UserSubscriptionEvent.ErrorOccurred(error)) }
-                ),
-                messageParser = UserSubscriptionEventParser,
-                resolveOnFirstEvent = true,
-                description = "User $userId",
+        userSubscription = UserSubscription(
+                userId = userId,
+                client = chatkitClient,
+                listeners = ::consumeUserSubscriptionEvent,
                 logger = logger
         )
-        cursorSubscription =
-                cursorService.subscribeForUser(userId, eventBuffer::queue)
 
-        userSubscription.await()
-        cursorSubscription.await()
+        return userSubscription.initialState().map { initialState ->
+            currentUser = newCurrentUser(initialState)
+            logger.verbose("Current User initialised")
+            roomService.populateInitial(initialState.rooms)
+            cursorService.populateInitial(initialState.cursors)
+            // Ensure this is the first event propagated
+            eventBuffer.emit(ChatEvent.CurrentUserReceived(currentUser))
+            // Release any other events
+            eventBuffer.release()
 
-        return currentUser.get()
-                .also { logger.verbose("Current User initialised") }
-                .also { eventBuffer.release() }
-                .asSuccess()
+            currentUser
+        }
     }
 
     override fun onAppOpened() {
@@ -189,13 +158,17 @@ class SynchronousChatManager constructor(
         presenceService.goOffline()
     }
 
-    private fun consumeUserSubscriptionEvent(incomingEvent: UserSubscriptionEvent) =
-            roomService.roomStore.applyUserSubscriptionEvent(incomingEvent).forEach { event ->
-                if (event is UserSubscriptionEvent.InitialState) {
-                    updateCurrentUser(event)
-                }
-                eventBuffer.queue(transformUserSubscriptionEvent(event))
+    private fun consumeUserSubscriptionEvent(incomingEvent: UserSubscriptionEvent) {
+        val appliedEvents = roomService.roomStore.applyUserSubscriptionEvent(incomingEvent) +
+                cursorService.applyEvent(incomingEvent)
+
+        return appliedEvents.forEach { event ->
+            if (event is UserSubscriptionEvent.InitialState) {
+                currentUser.updateWithPropertiesOf(newCurrentUser(event))
             }
+            eventBuffer.queue(transformUserSubscriptionEvent(event))
+        }
+    }
 
     private fun consumeRoomSubscriptionEvent(roomId: String): RoomConsumer = { event ->
         consumeEvents(listOf(transformRoomSubscriptionEvent(roomId, event)))
@@ -210,8 +183,6 @@ class SynchronousChatManager constructor(
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
             when (event) {
-                is UserSubscriptionEvent.InitialState ->
-                    ChatEvent.CurrentUserReceived(currentUser.get())
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     ChatEvent.AddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
@@ -220,20 +191,12 @@ class SynchronousChatManager constructor(
                     ChatEvent.RoomUpdated(event.room)
                 is UserSubscriptionEvent.RoomDeletedEvent ->
                     ChatEvent.RoomDeleted(event.roomId)
-                is UserSubscriptionEvent.LeftRoomEvent ->
-                    userService.fetchUserBy(event.userId).flatMap { user ->
-                        roomService.roomStore[event.roomId]
-                                .orElse { Errors.other("room ${event.roomId} not found.") }
-                                .map { room -> ChatEvent.UserLeftRoom(user, room) as ChatEvent }
-                    }.recover { ChatEvent.ErrorOccurred(it) }
-                is UserSubscriptionEvent.JoinedRoomEvent ->
-                    userService.fetchUserBy(event.userId).flatMap { user ->
-                        roomService.roomStore[event.roomId]
-                                .orElse { Errors.other("room ${event.roomId} not found.") }
-                                .map { room -> ChatEvent.UserJoinedRoom(user, room) as ChatEvent }
-                    }.recover { ChatEvent.ErrorOccurred(it) }
+                is UserSubscriptionEvent.NewCursor ->
+                    ChatEvent.NewReadCursor(event.cursor)
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatEvent.ErrorOccurred(event.error)
+                is UserSubscriptionEvent.InitialState ->
+                    ChatEvent.NoEvent // This is emitted specially on connect
             }
 
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
@@ -280,17 +243,16 @@ class SynchronousChatManager constructor(
         }
     }
 
-    private fun updateCurrentUser(initialState: UserSubscriptionEvent.InitialState) {
-        currentUser.set(SynchronousCurrentUser(
+    private fun newCurrentUser(initialState: UserSubscriptionEvent.InitialState) =
+        SynchronousCurrentUser(
                 id = initialState.currentUser.id,
                 avatarURL = initialState.currentUser.avatarURL,
                 customData = initialState.currentUser.customData,
                 name = initialState.currentUser.name,
                 chatManager = this,
                 pushNotifications = beams,
-                client = createPlatformClient(InstanceType.SERVER_V3)
-        ))
-    }
+                client = createPlatformClient(InstanceType.SERVER_V4)
+        )
 
     /**
      * Tries to close all pending subscriptions and resources
@@ -298,7 +260,6 @@ class SynchronousChatManager constructor(
     fun close(): Result<Unit, Error> = try {
         dependencies.appHooks.unregister(this)
         userSubscription.unsubscribe()
-        cursorSubscription.unsubscribe()
         roomService.close()
         presenceService.close()
         cursorService.close()
@@ -337,7 +298,7 @@ class SynchronousChatManager constructor(
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
     SERVER_V2("chatkit", "v2"),
-    SERVER_V3("chatkit", "v3"),
+    SERVER_V4("chatkit", "v4"),
     CURSORS("chatkit_cursors", "v2"),
     PRESENCE("chatkit_presence", "v2"),
     FILES("chatkit_files"),

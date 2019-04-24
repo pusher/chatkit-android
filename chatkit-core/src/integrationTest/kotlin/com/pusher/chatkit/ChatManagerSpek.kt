@@ -8,6 +8,8 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.multipart.Message
+import com.pusher.chatkit.messages.multipart.PartType
+import com.pusher.chatkit.messages.multipart.Payload
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
@@ -29,6 +31,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
 import elements.Error as ElementsError
 
 class ChatManagerSpek : Spek({
@@ -56,6 +59,65 @@ class ChatManagerSpek : Spek({
             assertThat(user.customData).isEqualTo(mapOf("custom" to "data"))
         }
 
+        it("loads current user and reports via event") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUser(
+                            id = PUSHERINO,
+                            name = "pusherino",
+                            avatarUrl = "https://example.com/face.png",
+                            customData = mapOf("custom" to "data")
+                    )
+            )
+
+            var firstEvent by FutureValue<ChatEvent>()
+
+            chatFor(PUSHERINO).connect(
+                    consumer = { e: ChatEvent -> firstEvent = e }
+            )
+
+            assertThat(firstEvent is CurrentUserReceived).isTrue()
+            with (firstEvent as CurrentUserReceived) {
+                assertThat(currentUser.id).isEqualTo(PUSHERINO)
+                assertThat(currentUser.name).isEqualTo("pusherino")
+                assertThat(currentUser.avatarURL).isEqualTo("https://example.com/face.png")
+                assertThat(currentUser.customData).isEqualTo(mapOf("custom" to "data"))
+            }
+        }
+
+        it("emits only one current user received event") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUser(
+                            id = PUSHERINO,
+                            name = "pusherino",
+                            avatarUrl = "https://example.com/face.png",
+                            customData = mapOf("custom" to "data")
+                    ),
+                    newRoom(GENERAL, SUPER_USER)
+            )
+
+            val events = mutableListOf<ChatEvent>()
+            val done = CountDownLatch(1)
+
+            chatFor(PUSHERINO).connect(
+                    consumer = { e: ChatEvent ->
+                        events.add(e)
+                        if (e is ChatEvent.AddedToRoom) {
+                            done.countDown()
+                        }
+                    }
+            ).assumeSuccess()
+
+            // We'll just use this event to mark that the initialisation really is over and we're
+            // received an event which happened after the user connected
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.addUsersToRoom(superUser.generalRoom.id, listOf(PUSHERINO))
+
+            done.await()
+            assertThat(events.count { it is ChatEvent.CurrentUserReceived }).isEqualTo(1)
+        }
+
         it("loads user rooms") {
             setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
@@ -65,11 +127,41 @@ class ChatManagerSpek : Spek({
             assertThat(roomNames).containsExactly(GENERAL)
         }
 
+        it("loads user rooms with unread message counts") {
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "message1").assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
+
+            val user = chatFor(PUSHERINO).connect().assumeSuccess()
+            assertThat(user.rooms[0].unreadCount).isEqualTo(2)
+            assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
+        }
+
+        it("notifies of new messages") {
+            setUpInstanceWith(createDefaultRole(), newUser(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "message1").assumeSuccess()
+
+            var updatedEvent by FutureValue<ChatEvent.RoomUpdated>()
+            val user = chatFor(PUSHERINO).connect { event ->
+                if (event is ChatEvent.RoomUpdated) updatedEvent = event
+            }.assumeSuccess()
+
+            superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
+
+            assertThat(updatedEvent.room.unreadCount).isEqualTo(2)
+            assertThat(user.rooms[0].unreadCount).isEqualTo(2)
+            assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
+        }
+
         it("loads users related to current user") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val user = chatFor(PUSHERINO).connect().assumeSuccess()
-            user.rooms.forEach { room -> user.subscribeToRoom(room) { } }
+            user.rooms.forEach { room -> user.subscribeToRoomMultipart(room) { } }
 
             val users = user.users
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
@@ -85,17 +177,20 @@ class ChatManagerSpek : Spek({
 
             val room = pusherino.assumeSuccess().generalRoom
 
-            var messageReceived by FutureValue<com.pusher.chatkit.messages.Message>()
+            var messageReceived by FutureValue<com.pusher.chatkit.messages.multipart.Message>()
 
-            pusherino.assumeSuccess().subscribeToRoom(room, RoomListeners(
-                    onMessage = { message -> messageReceived = message },
+            pusherino.assumeSuccess().subscribeToRoomMultipart(room, RoomListeners(
+                    onMultipartMessage = { message -> messageReceived = message },
                     onErrorOccurred = { e -> error("error: $e") }
             ))
 
             val messageResult = alice.assumeSuccess().sendMessage(room, "message text")
 
             check(messageResult is Result.Success)
-            assertThat(messageReceived.text).isEqualTo("message text")
+            assertThat(messageReceived.parts[0].partType).isEqualTo(PartType.Inline)
+            with (messageReceived.parts[0].payload as Payload.Inline) {
+                assertThat(content).isEqualTo("message text")
+            }
         }
 
         it("receives current user with listeners instead of callback") {

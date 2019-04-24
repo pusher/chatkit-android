@@ -41,6 +41,10 @@ internal class RoomService(
 
     internal val roomStore = RoomStore()
 
+    internal fun populateInitial(rooms: List<Room>) {
+        roomStore.initialiseContents(rooms)
+    }
+
     fun fetchRoom(id: String): Result<Room, Error> =
             getLocalRoom(id).flatRecover {
                 v3client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")

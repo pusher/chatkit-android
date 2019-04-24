@@ -79,6 +79,23 @@ class RoomSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(NOT_GENERAL)
         }
 
+        it("notifies '$ALICE' when room '$GENERAL' receives a new message") {
+            setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, ALICE, PUSHERINO))
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+            val originalCount = alice.generalRoom.unreadCount!!
+
+            var updatedCount by FutureValue<Int>()
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
+                if (event is RoomEvent.RoomUpdated) updatedCount = event.room.unreadCount!!
+            }
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
+
+            assertThat(updatedCount).isEqualTo(originalCount + 1)
+        }
+
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 

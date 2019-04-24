@@ -5,6 +5,7 @@ import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ResolvableSubscription
+import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
@@ -31,6 +32,10 @@ class CursorService(
                         responseParser = { it.parseAs() }
                 )
             }
+
+    internal fun populateInitial(cursors: List<Cursor>) {
+        cursorsStore.initialiseContents(cursors)
+    }
 
     fun close() {
         cursorsStore.clear()
@@ -68,14 +73,6 @@ class CursorService(
             consumer
     )
 
-    fun subscribeForUser(
-            userId: String,
-            consumer: (ChatEvent) -> Unit
-    ) = subscribe(
-            "/cursors/0/users/${URLEncoder.encode(userId, "UTF-8")}",
-            consumer
-    )
-
     private fun subscribe(
             path: String,
             consumer: ChatManagerEventConsumer
@@ -83,18 +80,23 @@ class CursorService(
             client = client,
             path = path,
             listeners = SubscriptionListeners(
-                    onEvent = { event -> cursorsStore.applyEvent(event.body).map(::enrichEvent).forEach(consumer) },
-                    onError = { error -> cursorsStore.applyEvent(CursorSubscriptionEvent.OnError(error)).map(::enrichEvent).forEach(consumer) }
+                    onEvent = { event -> applyEvent(event.body).forEach(consumer) },
+                    onError = { error -> applyEvent(CursorSubscriptionEvent.OnError(error)).forEach(consumer) }
             ),
             messageParser = CursorSubscriptionEventParser,
             description = "Cursor user $path",
             logger = logger
     )
 
+    fun applyEvent(event: CursorSubscriptionEvent) =
+            cursorsStore.applyEvent(event).map(::enrichEvent)
+
+    fun applyEvent(event: UserSubscriptionEvent) =
+            cursorsStore.applyEvent(event)
+
     private fun enrichEvent(event: CursorSubscriptionEvent): ChatEvent =
             when (event) {
                 is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
                 else -> ChatEvent.NoEvent
             }
-
 }
