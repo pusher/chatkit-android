@@ -60,6 +60,12 @@ class SynchronousCurrentUser(
     fun getReadCursor(room: Room): Result<Cursor, Error> =
             getReadCursor(room.id)
 
+    fun getReadCursor(roomId: String, userId: String): Result<Cursor, Error> =
+            chatManager.cursorService.getReadCursor(userId, roomId)
+
+    fun getReadCursor(room: Room, user: User): Result<Cursor, Error> =
+            getReadCursor(room.id, user.id)
+
     fun addUsersToRoom(roomId: String, userIds: List<String>) =
             chatManager.userService.addUsersToRoom(roomId, userIds)
 

@@ -62,6 +62,12 @@ class CurrentUser(
     fun getReadCursor(room: Room): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(room.id)
 
+    fun getReadCursor(roomId: String, userId: String): Result<Cursor, Error> =
+            syncCurrentUser.getReadCursor(roomId, userId)
+
+    fun getReadCursor(room: Room, user: User): Result<Cursor, Error> =
+            syncCurrentUser.getReadCursor(room.id, user.id)
+
     fun addUsersToRoom(roomId: String, userIds: List<String>, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.addUsersToRoom(roomId, userIds) }, callback)
 
