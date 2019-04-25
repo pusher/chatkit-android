@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/1.3.0...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.3.1...HEAD)
 
-## [1.3.0](https://github.com/pusher/chatkit-android/compare/1.2.0...1.3.0)
+## [1.3.1](https://github.com/pusher/chatkit-android/compare/v1.3.0...v1.3.1) - 2019-04-25
+
+## Fixed
+
+- Missing signatures for `getReadCursor(room, user)` exposed
+
+## [1.3.0](https://github.com/pusher/chatkit-android/compare/v1.2.0...v1.3.0) - 2019-04-24
 
 ## Added
 
@@ -24,7 +30,7 @@ communicated via room updated events.
 
 There is no need to subscribe to a room to recieve them.
 
-## [1.2.0](https://github.com/pusher/chatkit-android/compare/1.1.1...1.2.0) - 2019-03-08
+## [1.2.0](https://github.com/pusher/chatkit-android/compare/v1.1.1...v1.2.0) - 2019-03-08
 
 ## Added
 
@@ -38,14 +44,14 @@ There is no need to subscribe to a room to recieve them.
 - `sendMessage`, `subscribeToRoom` and `fetchMessages` are deprecated in favour of
   their multipart counterparts. They will be removed in a future major release.
 
-## [1.1.1](https://github.com/pusher/chatkit-android/compare/1.1.0...1.1.1) - 2019-02-06
+## [1.1.1](https://github.com/pusher/chatkit-android/compare/v1.1.0...v1.1.1) - 2019-02-06
 
 ## Fixed
 
 - Emit correct events when reconciling state after transient disconnections
 - Do not emit events before initial connection, or room subscriptions are complete
 
-## [1.1.0](https://github.com/pusher/chatkit-android/compare/1.0.4...1.1.0)
+## [1.1.0](https://github.com/pusher/chatkit-android/compare/v1.0.4...v1.1.0)
 
 ## Added
 
@@ -56,13 +62,13 @@ There is no need to subscribe to a room to recieve them.
 - Presence state is marked offline as soon as the app is placed in the
   background, not when it is killed by the OS
 
-## [1.0.5](https://github.com/pusher/chatkit-android/compare/1.0.4...1.0.5) - 2018-11-23
+## [1.0.5](https://github.com/pusher/chatkit-android/compare/v1.0.4...v1.0.5) - 2018-11-23
 
 - `Attachment` now contains an additional `name` attribute pointing to the name of the file.
 - Removed all logic related to `FetchedAttachment` since links returned by the server do not
   require an additional "fetch" step.
 
-## [1.0.4](https://github.com/pusher/chatkit-android/compare/1.0.3...1.0.4) - 2018-11-21
+## [1.0.4](https://github.com/pusher/chatkit-android/compare/v1.0.3...v1.0.4) - 2018-11-21
 
 ## Fixed
 
@@ -73,20 +79,20 @@ There is no need to subscribe to a room to recieve them.
   `connect` again would not create a new connection. Doing so now will close the existing
   connection and create a new one.
 
-## [1.0.3](https://github.com/pusher/chatkit-android/compare/1.0.2...1.0.3) - 2018-11-13
+## [1.0.3](https://github.com/pusher/chatkit-android/compare/v1.0.2...v1.0.3) - 2018-11-13
 
 ### Fixed
 
 - Fixed deserialisation of the `avatarURL` field on User objects. Was
   previously always `null`.
 
-## [1.0.2](https://github.com/pusher/chatkit-android/compare/1.0.1...1.0.2)
+## [1.0.2](https://github.com/pusher/chatkit-android/compare/v1.0.1...v1.0.2)
 
 ### Fixed
 
 - Upgrade pusher-platform-android to get fix for subscription reconnections
 
-## [1.0.1](https://github.com/pusher/chatkit-android/compare/1.0.0...1.0.1) - 2018-10-31
+## [1.0.1](https://github.com/pusher/chatkit-android/compare/v1.0.0...v1.0.1) - 2018-10-31
 
 ### Fixed
 
@@ -101,7 +107,7 @@ There is no need to subscribe to a room to recieve them.
 - Room objects have a custom data field which can hold a map of arbitrary data,
   in the same way as a User object.
 
-## [1.0.0](https://github.com/pusher/chatkit-android/compare/0.2.4...1.0.0) - 2018-10-30
+## [1.0.0](https://github.com/pusher/chatkit-android/compare/0.2.4...v1.0.0) - 2018-10-30
 
 ### Rewritten
 
