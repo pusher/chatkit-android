@@ -16,8 +16,6 @@ import com.pusher.platform.network.DataParser
 import com.pusher.platform.network.Futures
 import com.pusher.platform.network.cancel
 import com.pusher.util.Result
-import com.pusher.util.asFailure
-import com.pusher.util.asSuccess
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
@@ -28,7 +26,7 @@ import java.util.concurrent.Future
 
 internal class RoomService(
         private val v2client: PlatformClient,
-        private val v3client: PlatformClient,
+        private val client: PlatformClient,
         private val urlRefresher: UrlRefresher,
         private val userService: UserService,
         private val cursorsService: CursorService,
@@ -47,7 +45,7 @@ internal class RoomService(
 
     fun fetchRoom(id: String): Result<Room, Error> =
             getLocalRoom(id).flatRecover {
-                v3client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")
+                client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")
             }
 
     private fun getLocalRoom(id: String): Result<Room, Error> =
@@ -55,7 +53,7 @@ internal class RoomService(
                     .orElse { Errors.other("Room not found locally") }
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            v3client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
+            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
                     .map { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
@@ -72,7 +70,7 @@ internal class RoomService(
                     customData = customData,
                     userIds = userIds
             ).toJson()
-                    .flatMap { body -> v3client.doPost<Room>("/rooms", body) }
+                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
@@ -80,21 +78,21 @@ internal class RoomService(
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
-            v3client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
+            client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
-            v3client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
+            client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
                         roomStore -= roomId
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            v3client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { room ->
                         roomStore += room
                         userService.populateUserStore(room.memberUserIds)
@@ -108,7 +106,7 @@ internal class RoomService(
             customData: CustomData? = null
     ): Result<Unit, Error> =
             UpdateRoomRequest(name, isPrivate, customData).toJson()
-                    .flatMap { body -> v3client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+                    .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
 
     fun isSubscribedTo(roomId: String) =
             synchronized(openSubscriptions) {
@@ -127,7 +125,7 @@ internal class RoomService(
             unsafeConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription =
-            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v3client, RoomSubscriptionEventParserV3)
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, client, RoomSubscriptionEventParserV3)
 
     private fun subscribeToRoom(
             roomId: String,
