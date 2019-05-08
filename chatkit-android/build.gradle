@@ -71,7 +71,7 @@ dependencies {
 
 bintray {
     user = bintray_user
-    key = bintry_api_key
+    key = bintray_api_key
     publish = true
     override = true
     publications = ['Release']
