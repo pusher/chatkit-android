@@ -261,6 +261,8 @@ internal class RoomService(
                     }.recover {
                         RoomEvent.ErrorOccurred(it)
                     }
+                is RoomSubscriptionEvent.MessageDeleted ->
+                    RoomEvent.MessageDeleted(event.messageId)
                 is RoomSubscriptionEvent.UserIsTyping ->
                     userService.fetchUserBy(event.userId).map { user ->
                         val onStop = {

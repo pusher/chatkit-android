@@ -87,7 +87,7 @@ private val chatkitInstance by lazy {
     Instance(
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit",
-            serviceVersion = "v2",
+            serviceVersion = "v5",
             dependencies = TestDependencies()
     )
 }
@@ -321,6 +321,18 @@ object InstanceActions {
                 responseParser = { it.parseAs() }
         )
     }.withName("Set cursor")
+
+    fun deleteMessage(roomId: String, messageId: Int) = {
+        chatkitInstance.request<JsonElement>(
+                options = RequestOptions(
+                        path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/messages/$messageId",
+                        method = "DELETE"
+
+                ),
+                tokenProvider = sudoTokenProvider,
+                responseParser = { it.parseAs() }
+        )
+    }.withName("Deleting message $messageId")
 
     fun tearDown(): InstanceAction = {
         chatkitInstance.request<JsonElement>(

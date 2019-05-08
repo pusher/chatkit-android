@@ -13,11 +13,14 @@ import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.messages.multipart.PartType
 import com.pusher.chatkit.messages.multipart.Payload
 import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
+import com.pusher.chatkit.test.InstanceActions.deleteMessage
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
+import com.pusher.chatkit.test.run
 import com.pusher.chatkit.util.FutureValue
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -643,6 +646,44 @@ class MessagesSpek : Spek({
                     assertThat(urlExpiry()).isAtLeast(Date(Date().time + 30 * 60 * 1000))
                 }
             }
+        }
+
+        it("fires the message deleted hook if a message is deleted") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            var receivedMessageId by FutureValue<Int>()
+            var deletedMessageId by FutureValue<Int>()
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.MultipartMessage -> {
+                        receivedMessageId = event.message.id
+                        deleteMessage(
+                                roomId =  pusherino.generalRoom.id,
+                                messageId = event.message.id
+                        ).run()
+                    }
+                    is RoomEvent.MessageDeleted -> {
+                        deletedMessageId = event.messageId
+                    }
+                }
+            }
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+            alice.sendMultipartMessage(
+                    room = alice.generalRoom,
+                    parts = listOf(
+                            NewPart.Inline(
+                                    type = "text/plain",
+                                    content = "Hello"
+                            )
+                    )
+            ).assumeSuccess()
+
+            with(receivedMessageId) {
+                assertThat(receivedMessageId).isEqualTo(deletedMessageId)
+            }
+
         }
 
     }
