@@ -74,7 +74,8 @@ internal data class V3MessageBody(
         val roomId: String,
         val parts: List<V3PartBody>,
         val createdAt: Date,
-        val updatedAt: Date
+        val updatedAt: Date,
+        val deletedAt: Date?
 )
 
 internal data class V3PartBody(

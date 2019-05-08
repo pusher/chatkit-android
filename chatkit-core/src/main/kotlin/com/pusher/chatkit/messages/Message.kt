@@ -11,7 +11,8 @@ data class Message(
         val text: String? = null,
         val attachment: Attachment? = null,
         val createdAt: String,
-        val updatedAt: String
+        val updatedAt: String,
+        val deletedAt: String? = null
 ) {
     var user: User? = null
 }
