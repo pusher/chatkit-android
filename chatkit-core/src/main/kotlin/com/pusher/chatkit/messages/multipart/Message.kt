@@ -26,7 +26,8 @@ data class Message(
         val room: Room,
         val parts: List<Part>,
         val createdAt: Date,
-        val updatedAt: Date
+        val updatedAt: Date,
+        val deletedAt: Date?
 )
 
 enum class PartType {
@@ -139,7 +140,8 @@ internal fun upgradeMessageV3(
                             room = room,
                             sender = user,
                             createdAt = message.createdAt,
-                            updatedAt = message.updatedAt
+                            updatedAt = message.updatedAt,
+                            deletedAt = message.deletedAt
                     )
                 }
             }
