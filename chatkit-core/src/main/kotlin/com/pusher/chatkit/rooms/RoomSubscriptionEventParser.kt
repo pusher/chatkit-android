@@ -61,6 +61,7 @@ internal object RoomSubscriptionEventParserV3 : DataParser<RoomSubscriptionEvent
                     "new_message" ->
                         parseAs<V3MessageBody>().map(RoomSubscriptionEvent::NewMultipartMessage)
                     "is_typing" -> parseAs<RoomSubscriptionEvent.UserIsTyping>()
+                    "message_deleted" -> parseAs<RoomSubscriptionEvent.MessageDeleted>()
                     else -> Errors.other("Invalid event name: $eventName").asFailure()
                 }.map { it } // generics :O
             } catch (e: Throwable) {
