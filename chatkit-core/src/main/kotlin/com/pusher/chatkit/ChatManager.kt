@@ -2,7 +2,9 @@ package com.pusher.chatkit
 
 import com.pusher.platform.network.Futures
 import com.pusher.util.Result
+import com.pusher.util.asFailure
 import elements.Error
+import elements.Errors
 
 typealias CustomData = Map<String, Any>
 
@@ -65,8 +67,18 @@ class ChatManager(
     fun blocking() = syncChatManager
 }
 
-fun <V> makeCallback(f: () -> V, c: (V) -> Unit) {
+fun <V> makeCallback(f: () -> Result<V, Error>, c: (Result<V, Error>) -> Unit) {
     Futures.schedule {
-        c.invoke(f())
+        c.invoke(try {
+            f()
+        } catch (e: Throwable) {
+            Errors.other(e).asFailure<V, Error>()
+        })
+    }
+}
+
+fun <V> makeSingleCallback(f: () -> V, c: (V) -> Unit) {
+    Futures.schedule {
+            c.invoke(f())
     }
 }

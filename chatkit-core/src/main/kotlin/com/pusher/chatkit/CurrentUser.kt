@@ -128,7 +128,7 @@ class CurrentUser(
             listeners: RoomListeners,
             messageLimit: Int = 10,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, listeners, messageLimit) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
@@ -137,7 +137,7 @@ class CurrentUser(
             listeners: RoomListeners,
             messageLimit: Int = 10,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, listeners, messageLimit) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
@@ -146,7 +146,7 @@ class CurrentUser(
             messageLimit: Int = 10,
             consumer: RoomConsumer,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoom(room, messageLimit, consumer) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
@@ -155,7 +155,7 @@ class CurrentUser(
             messageLimit: Int = 10,
             consumer: RoomConsumer,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
@@ -163,7 +163,7 @@ class CurrentUser(
             listeners: RoomListeners,
             messageLimit: Int = 10,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoomMultipart(room, listeners, messageLimit) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
@@ -171,7 +171,7 @@ class CurrentUser(
             listeners: RoomListeners,
             messageLimit: Int = 10,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoomMultipart(roomId, listeners, messageLimit) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
@@ -180,7 +180,7 @@ class CurrentUser(
             messageLimit: Int = 10,
             consumer: RoomConsumer,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoomMultipart(room, messageLimit, consumer) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
@@ -189,7 +189,7 @@ class CurrentUser(
             messageLimit: Int = 10,
             consumer: RoomConsumer,
             callback: (Subscription) -> Unit
-    ) = makeCallback({ syncCurrentUser.subscribeToRoomMultipart(roomId, messageLimit, consumer) }, callback)
+    ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(roomId, messageLimit, consumer) }, callback)
     
     @JvmOverloads
     @Deprecated("use fetchMultipartMessages")
