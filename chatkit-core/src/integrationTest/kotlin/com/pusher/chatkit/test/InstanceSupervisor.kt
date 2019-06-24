@@ -87,6 +87,15 @@ private val chatkitInstance by lazy {
     Instance(
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit",
+            serviceVersion = "v5",
+            dependencies = TestDependencies()
+    )
+}
+
+private val chatkitInstanceV2 by lazy {
+    Instance(
+            locator = INSTANCE_LOCATOR,
+            serviceName = "chatkit",
             serviceVersion = "v2",
             dependencies = TestDependencies()
     )
@@ -264,7 +273,7 @@ object InstanceActions {
     }.withName("Changing name of room ${room.name} to $newName ")
 
     fun deleteRoom(room: Room): InstanceAction = {
-        chatkitInstance.request<JsonElement>(
+        chatkitInstanceV2.request<JsonElement>(
                 options = RequestOptions(
                         path = "/rooms/${room.id}",
                         method = "DELETE"
@@ -321,6 +330,18 @@ object InstanceActions {
                 responseParser = { it.parseAs() }
         )
     }.withName("Set cursor")
+
+    fun deleteMessage(roomId: String, messageId: Int) = {
+        chatkitInstance.request<JsonElement>(
+                options = RequestOptions(
+                        path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/messages/$messageId",
+                        method = "DELETE"
+
+                ),
+                tokenProvider = sudoTokenProvider,
+                responseParser = { it.parseAs() }
+        )
+    }.withName("Deleting message $messageId")
 
     fun tearDown(): InstanceAction = {
         chatkitInstance.request<JsonElement>(

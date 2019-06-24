@@ -23,7 +23,7 @@ import java.net.URLEncoder
 
 internal class MessageService(
         private val v2client: PlatformClient,
-        private val v3client: PlatformClient,
+        private val client: PlatformClient,
         private val userService: UserService,
         private val roomService: RoomService,
         private val urlRefresher: UrlRefresher,
@@ -55,7 +55,7 @@ internal class MessageService(
             direction: Direction
     ): Result<List<com.pusher.chatkit.messages.multipart.Message>, Error> =
             fetchMessagesParams(limit, initialId, direction).let { params ->
-                v3client.doGet<List<V3MessageBody>>("/rooms/$roomId/messages$params").flatMap { messages ->
+                client.doGet<List<V3MessageBody>>("/rooms/$roomId/messages$params").flatMap { messages ->
                     messages.map { message ->
                         upgradeMessageV3(
                                 message,
@@ -98,7 +98,7 @@ internal class MessageService(
                 com.pusher.chatkit.messages.multipart.request.Message(requestParts)
                         .toJson()
                         .flatMap { body ->
-                            v3client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                            client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
                         }.map {
                             it.messageId
                         }
@@ -132,11 +132,11 @@ internal class MessageService(
                 name = part.name,
                 customData = part.customData
         ).toJson().flatMap { body ->
-            v3client.doPost<AttachmentResponse>(
+            client.doPost<AttachmentResponse>(
                     path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/attachments",
                     body = body
             ).flatMap { attachmentResponse ->
-                v3client.externalUpload<Unit>(
+                client.externalUpload<Unit>(
                         attachmentResponse.uploadUrl,
                         mimeType = part.type,
                         data = outputStream.toByteArray(),
