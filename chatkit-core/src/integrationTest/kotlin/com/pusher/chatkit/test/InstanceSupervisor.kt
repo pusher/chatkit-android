@@ -92,6 +92,15 @@ private val chatkitInstance by lazy {
     )
 }
 
+private val chatkitInstanceV2 by lazy {
+    Instance(
+            locator = INSTANCE_LOCATOR,
+            serviceName = "chatkit",
+            serviceVersion = "v2",
+            dependencies = TestDependencies()
+    )
+}
+
 private val authorizerInstance by lazy {
     Instance(
             locator = INSTANCE_LOCATOR,
@@ -264,7 +273,7 @@ object InstanceActions {
     }.withName("Changing name of room ${room.name} to $newName ")
 
     fun deleteRoom(room: Room): InstanceAction = {
-        chatkitInstance.request<JsonElement>(
+        chatkitInstanceV2.request<JsonElement>(
                 options = RequestOptions(
                         path = "/rooms/${room.id}",
                         method = "DELETE"

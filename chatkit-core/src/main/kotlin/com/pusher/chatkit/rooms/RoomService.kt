@@ -78,7 +78,7 @@ internal class RoomService(
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
-            client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
+            v2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
                         roomStore -= roomId
                         roomId
