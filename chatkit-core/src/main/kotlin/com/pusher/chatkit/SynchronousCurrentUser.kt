@@ -74,12 +74,14 @@ class SynchronousCurrentUser(
 
     @JvmOverloads
     fun createRoom(
+            id: String? = null,
             name: String,
             isPrivate: Boolean = false,
             customData: CustomData? = null,
             userIds: List<String> = emptyList()
     ): Result<Room, Error> = chatManager.roomService.createRoom(
-            creatorId = id,
+            id = id,
+            creatorId = this.id,
             name = name,
             isPrivate = isPrivate,
             customData = customData,

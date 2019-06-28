@@ -79,12 +79,13 @@ class CurrentUser(
 
     @JvmOverloads
     fun createRoom(
+            id: String? = null,
             name: String,
             isPrivate: Boolean = false,
             customData: CustomData? = null,
             userIds: List<String> = emptyList(),
             callback: (Result<Room, Error>) -> Unit
-    ) = makeCallback({ syncCurrentUser.createRoom(name, isPrivate, customData, userIds) }, callback)
+    ) = makeCallback({ syncCurrentUser.createRoom(id, name, isPrivate, customData, userIds) }, callback)
 
     @JvmOverloads
     fun updateRoom(

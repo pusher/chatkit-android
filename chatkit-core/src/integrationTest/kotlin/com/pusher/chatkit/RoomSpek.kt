@@ -174,14 +174,27 @@ class RoomSpek : Spek({
 
     describe("currentUser '$PUSHERINO'") {
 
-        it("creates room") {
+        it("creates room without a user supplied id") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
-            val room = pusherino.createRoom(GENERAL).assumeSuccess()
+            val room = pusherino.createRoom(name =  GENERAL).assumeSuccess()
 
             assertThat(room.name).isEqualTo(GENERAL)
+            assertThat(room.id).isNotEmpty()
+        }
+
+        it("creates room with a user supplied id") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+
+            val roomID = "#general"
+            val room = pusherino.createRoom(roomID, GENERAL).assumeSuccess()
+
+            assertThat(room.name).isEqualTo(GENERAL)
+            assertThat(room.id).isEqualTo(roomID)
         }
 
         it("creates private room") {
@@ -209,6 +222,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
             val room = pusherino.createRoom(
+                    id = null,
                     name = GENERAL,
                     customData = customData
             ).assumeSuccess()
