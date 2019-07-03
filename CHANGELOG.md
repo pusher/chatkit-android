@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.4.0...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.5.0...HEAD)
+
+## [1.5.0](https://github.com/pusher/chatkit-android/compare/v1.4.0...v1.5.0) - 2019-07-03
+
+## Changed
+
+- Support for user provided room IDs. `createRoom` now takes an extra `id` parameter that
+  allows supplying a string room ID. If an `id` is not provided, the server will return a
+  generated string ID that are not numeric.
+- Moves tha api version to v6.
 
 ## [1.4.0](https://github.com/pusher/chatkit-android/compare/v1.3.4...v1.4.0) - 2019-06-24
 

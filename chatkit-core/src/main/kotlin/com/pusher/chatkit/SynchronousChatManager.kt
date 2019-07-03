@@ -35,7 +35,7 @@ class SynchronousChatManager constructor(
 
     private val logger = dependencies.logger
     private val v2chatkitClient = createPlatformClient(InstanceType.SERVER_V2)
-    private val chatkitClient = createPlatformClient(InstanceType.SERVER_V5)
+    private val chatkitClient = createPlatformClient(InstanceType.SERVER_V6)
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
@@ -251,7 +251,7 @@ class SynchronousChatManager constructor(
                 name = initialState.currentUser.name,
                 chatManager = this,
                 pushNotifications = beams,
-                client = createPlatformClient(InstanceType.SERVER_V5)
+                client = createPlatformClient(InstanceType.SERVER_V6)
         )
 
     /**
@@ -298,7 +298,7 @@ class SynchronousChatManager constructor(
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
     SERVER_V2("chatkit", "v2"),
-    SERVER_V5("chatkit", "v5"),
+    SERVER_V6("chatkit", "v6"),
     CURSORS("chatkit_cursors", "v2"),
     PRESENCE("chatkit_presence", "v2"),
     FILES("chatkit_files"),

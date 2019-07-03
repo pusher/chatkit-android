@@ -57,6 +57,7 @@ internal class RoomService(
                     .map { rooms -> rooms.also { roomStore += it } }
 
     fun createRoom(
+            id: String?,
             creatorId: String,
             name: String,
             isPrivate: Boolean,
@@ -64,6 +65,7 @@ internal class RoomService(
             userIds: List<String>
     ): Result<Room, Error> =
             RoomCreateRequest(
+                    id = id,
                     name = name,
                     private = isPrivate,
                     createdById = creatorId,
@@ -338,6 +340,7 @@ internal data class UpdateRoomRequest(
 )
 
 private data class RoomCreateRequest(
+        val id: String?,
         val name: String,
         val private: Boolean,
         val createdById: String,
