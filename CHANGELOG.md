@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.5.0...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.6.0...HEAD)
+
+## [1.6.0](https://github.com/pusher/chatkit-android/compare/v1.5.0...v1.6.0) - 2019-07-16
+
+No changes in this version. Previous versions from 1.4.0 onwards were released incorrectly
+and this release rectifies the issue. Please upgrade to 1.6.0 if you were previously on
+1.4.0 or 1.5.0.
 
 ## [1.5.0](https://github.com/pusher/chatkit-android/compare/v1.4.0...v1.5.0) - 2019-07-03
 
