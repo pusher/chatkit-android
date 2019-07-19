@@ -83,6 +83,8 @@ bintray {
     }
 }
 
+bintrayUpload.dependsOn(['checkIfPusherPlatformLocalIsSet', 'verifyBintrayCredentials'])
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
