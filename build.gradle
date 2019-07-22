@@ -41,14 +41,22 @@ allprojects {
         jcenter()
         mavenCentral()
     }
-    if (tasks.findByName('bintrayUpload')) {
-        task verifyBintrayCredentials {
+
+    task verifyBintrayCredentials {
+        doFirst {
             def out = []
             if (bintray_user == null) out += "Missing `bintrayUser` property or BINTRAY_USER env var"
             if (bintray_api_key == null) out += "Missing `bintrayApiKey` property or BINTRAY_API_KEY env var"
             if (!out.isEmpty()) throw new IllegalStateException("\n" + out.join("\n"))
         }
-        bintrayUpload.doFirst verifyBintrayCredentials
+    }
+
+    task checkIfPusherPlatformLocalIsSet {
+        doFirst {
+            if (rootProject.properties.containsKey('pusher_platform_local')) {
+                throw new Exception("Please unset `pusher_platform_local` in the global gradle.properties file")
+            }
+        }
     }
 }
 
