@@ -170,6 +170,39 @@ class RoomSpek : Spek({
 
             assertThat(badEvents).isEmpty()
         }
+
+        it("always has the correct memberUserIds after $PUSHERINO leaves, joins, leaves, joins room $GENERAL") {
+            // NB: This test covers a race condition, it may never fail consistently, but flakey
+            // behaviour must always be investigated in full.
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            val badEvents = ConcurrentLinkedQueue<RoomEvent>()
+            alice.subscribeToRoom(alice.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.UserJoined ->
+                        if (!alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
+                            badEvents.add(event)
+                        }
+                    is RoomEvent.UserLeft ->
+                        if (alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
+                            badEvents.add(event)
+                        }
+                }
+            }
+
+            pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+
+
+            assertThat(badEvents).isEmpty()
+        }
+
+
     }
 
     describe("currentUser '$PUSHERINO'") {
