@@ -179,27 +179,44 @@ class RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
+
             val badEvents = ConcurrentLinkedQueue<RoomEvent>()
+            var countEvents = 0
             alice.subscribeToRoom(alice.generalRoom) { event ->
                 when (event) {
                     is RoomEvent.UserJoined ->
-                        if (!alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
-                            badEvents.add(event)
-                        }
+                        if (event.user.id.contains("pusherino")){
+                            countEvents++
+                                if (!alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
+                                badEvents.add(event)
+                        }}
                     is RoomEvent.UserLeft ->
+                        if (event.user.id.contains("pusherino")){
+                            countEvents++
                         if (alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
                             badEvents.add(event)
-                        }
+                        }}
                 }
             }
 
-            pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
-            pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
-            pusherino.removeUsersFromRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
-            pusherino.addUsersToRoom(pusherino.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            alice.removeUsersFromRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            alice.addUsersToRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            alice.removeUsersFromRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            alice.addUsersToRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
 
 
-            assertThat(badEvents).isEmpty()
+            if (countEvents >= 4) {
+                assertThat(badEvents).isEmpty()
+            }
+            else
+            {
+                assertThat(countEvents >= 4)
+            }
+
+
+
+
+
         }
 
 
