@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.6.0...HEAD)
 
+### Added
+
+- Support for `PushNotificationTitleOverride` field in the Room model
+
 ## [1.6.0](https://github.com/pusher/chatkit-android/compare/v1.5.0...v1.6.0) - 2019-07-16
 
 No changes in this version. Previous versions from 1.4.0 onwards were released incorrectly
