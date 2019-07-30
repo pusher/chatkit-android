@@ -81,11 +81,12 @@ class CurrentUser(
     fun createRoom(
             id: String? = null,
             name: String,
+            pushNotificationTitleOverride: String? = null,
             isPrivate: Boolean = false,
             customData: CustomData? = null,
             userIds: List<String> = emptyList(),
             callback: (Result<Room, Error>) -> Unit
-    ) = makeCallback({ syncCurrentUser.createRoom(id, name, isPrivate, customData, userIds) }, callback)
+    ) = makeCallback({ syncCurrentUser.createRoom(id, name, pushNotificationTitleOverride, isPrivate, customData, userIds) }, callback)
 
     @JvmOverloads
     fun updateRoom(
@@ -96,6 +97,15 @@ class CurrentUser(
             callback: (Result<Unit, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.updateRoom(room, name, isPrivate, customData) }, callback)
 
+    fun updateRoom(
+            room: Room,
+            name: String,
+            pushNotificationTitleOverride: String,
+            isPrivate: Boolean? = null,
+            customData: CustomData? = null,
+            callback: (Result<Unit, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.updateRoom(room, name, pushNotificationTitleOverride, isPrivate, customData) }, callback)
+
     @JvmOverloads
     fun updateRoom(roomId: String,
                    name: String,
@@ -103,6 +113,14 @@ class CurrentUser(
                    customData: CustomData? = null,
                    callback: (Result<Unit, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.updateRoom(roomId, name, isPrivate, customData) }, callback)
+
+    fun updateRoom(roomId: String,
+                   name: String,
+                   pushNotificationTitleOverride: String,
+                   isPrivate: Boolean? = null,
+                   customData: CustomData? = null,
+                   callback: (Result<Unit, Error>) -> Unit
+    ) = makeCallback({ syncCurrentUser.updateRoom(roomId, name, pushNotificationTitleOverride, isPrivate, customData) }, callback)
 
     fun deleteRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.deleteRoom(room) }, callback)

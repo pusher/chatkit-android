@@ -301,13 +301,14 @@ object InstanceActions {
         )
     }.withName("Create new users: ${names.joinToString(", ")}")
 
-    fun newRoom(name: String, vararg userNames: String, isPrivate: Boolean = false, customData: CustomData? = null) = {
+    fun newRoom(name: String, vararg userNames: String, pushNotificationTitleOverride: String? = null, isPrivate: Boolean = false, customData: CustomData? = null) = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
                         path = "/rooms",
                         method = "POST",
                         body = mutableMapOf<String, Any?>(
                                 "name" to name,
+                                "push_notification_title_override" to pushNotificationTitleOverride,
                                 "user_ids" to userNames,
                                 "private" to isPrivate
                         ).apply {

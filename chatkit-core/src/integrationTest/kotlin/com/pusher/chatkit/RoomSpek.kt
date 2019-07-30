@@ -231,6 +231,23 @@ class RoomSpek : Spek({
             assertThat(room.customData).isEqualTo(customData)
         }
 
+        it("creates room with pn title override") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
+
+            val pnTitleOverride = "my app name"
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+
+            val room = pusherino.createRoom(
+                    id = null,
+                    name = GENERAL,
+                    pushNotificationTitleOverride = pnTitleOverride
+            ).assumeSuccess()
+
+            assertThat(room.name).isEqualTo(GENERAL)
+            assertThat(room.pushNotificationTitleOverride).isEqualTo(pnTitleOverride)
+        }
+
         it("updates room name") {
             setUpInstanceWith(
                     createDefaultRole(),
@@ -381,6 +398,60 @@ class RoomSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(GENERAL)
             assertThat(updatedRoom.isPrivate).isEqualTo(false)
             assertThat(updatedRoom.customData).isEqualTo(emptyMap<String, Any?>())
+        }
+
+        it("updates room pn title override") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            val updatedRoom by chatFor(ALICE).connectFor { event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated -> event.room
+                    else -> null
+                }
+            }
+
+            val pnTitleOverride = "my app name"
+
+            superUser.updateRoom(
+                room = superUser.generalRoom,
+                pushNotificationTitleOverride = pnTitleOverride
+            ).assumeSuccess()
+
+            assertThat(updatedRoom.name).isEqualTo(GENERAL)
+            assertThat(updatedRoom.isPrivate).isEqualTo(false)
+            assertThat(updatedRoom.pushNotificationTitleOverride).isEqualTo(pnTitleOverride)
+        }
+
+        it("updates to remove pn title override") {
+            setUpInstanceWith(
+                createDefaultRole(),
+                newUsers(PUSHERINO, ALICE),
+                newRoom(
+                    name = GENERAL,
+                    pushNotificationTitleOverride = "my app name",
+                    userNames = *arrayOf(PUSHERINO, ALICE)
+                )
+            )
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            val updatedRoom by chatFor(ALICE).connectFor { event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated -> event.room
+                    else -> null
+                }
+            }
+
+            superUser.updateRoom(
+                room = superUser.generalRoom,
+                pushNotificationTitleOverride = null
+            ).assumeSuccess()
+
+            assertThat(updatedRoom.name).isEqualTo(GENERAL)
+            assertThat(updatedRoom.isPrivate).isEqualTo(false)
+            assertThat(updatedRoom.pushNotificationTitleOverride).isEqualTo(null)
         }
 
         it("updates all the room fields") {

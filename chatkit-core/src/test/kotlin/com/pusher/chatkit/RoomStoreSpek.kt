@@ -14,7 +14,7 @@ class RoomStoreSpek : Spek({
     describe("RoomStore") {
 
         fun simpleRoom(id: String, name: String, isPrivate: Boolean, customData: CustomData?) =
-                Room(id, "ham", name, isPrivate, customData, null, "2017-04-13T14:10:38Z",
+                Room(id, "ham", name, null, isPrivate, customData, null, "2017-04-13T14:10:38Z",
                         "2017-04-13T14:10:38Z",
                         "2017-04-13T14:10:38Z",
                         "2017-04-13T14:10:38Z")

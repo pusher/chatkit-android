@@ -60,6 +60,7 @@ internal class RoomService(
             id: String?,
             creatorId: String,
             name: String,
+            pushNotificationTitleOverride: String?,
             isPrivate: Boolean,
             customData: CustomData?,
             userIds: List<String>
@@ -67,6 +68,7 @@ internal class RoomService(
             RoomCreateRequest(
                     id = id,
                     name = name,
+                    pushNotificationTitleOverride = pushNotificationTitleOverride,
                     private = isPrivate,
                     createdById = creatorId,
                     customData = customData,
@@ -108,6 +110,16 @@ internal class RoomService(
             customData: CustomData? = null
     ): Result<Unit, Error> =
             UpdateRoomRequest(name, isPrivate, customData).toJson()
+                    .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+
+    fun updateRoom(
+            roomId: String,
+            name: String? = null,
+            pushNotificationTitleOverride: String?,
+            isPrivate: Boolean? = null,
+            customData: CustomData? = null
+    ): Result<Unit, Error> =
+        UpdateRoomRequestWithPNTitleOverride(name, pushNotificationTitleOverride, isPrivate, customData).toJson()
                     .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
 
     fun isSubscribedTo(roomId: String) =
@@ -339,9 +351,17 @@ internal data class UpdateRoomRequest(
         val customData: CustomData?
 )
 
+internal data class UpdateRoomRequestWithPNTitleOverride(
+        val name: String?,
+        val pushNotificationTitleOverride: String?,
+        val private: Boolean?,
+        val customData: CustomData?
+)
+
 private data class RoomCreateRequest(
         val id: String?,
         val name: String,
+        val pushNotificationTitleOverride: String?,
         val private: Boolean,
         val createdById: String,
         val customData: CustomData?,

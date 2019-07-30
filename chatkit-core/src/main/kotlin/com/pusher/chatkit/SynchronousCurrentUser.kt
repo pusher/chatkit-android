@@ -76,6 +76,7 @@ class SynchronousCurrentUser(
     fun createRoom(
             id: String? = null,
             name: String,
+            pushNotificationTitleOverride: String? = null,
             isPrivate: Boolean = false,
             customData: CustomData? = null,
             userIds: List<String> = emptyList()
@@ -83,6 +84,7 @@ class SynchronousCurrentUser(
             id = id,
             creatorId = this.id,
             name = name,
+            pushNotificationTitleOverride = pushNotificationTitleOverride,
             isPrivate = isPrivate,
             customData = customData,
             userIds = userIds
@@ -95,6 +97,12 @@ class SynchronousCurrentUser(
     @JvmOverloads
     fun updateRoom(roomId: String, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
             chatManager.roomService.updateRoom(roomId, name, isPrivate, customData)
+
+    fun updateRoom(room: Room, name: String? = null, pushNotificationTitleOverride: String?, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+            this.updateRoom(room.id, name, pushNotificationTitleOverride, isPrivate, customData)
+
+    fun updateRoom(roomId: String, name: String? = null, pushNotificationTitleOverride: String?, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+            chatManager.roomService.updateRoom(roomId, name, pushNotificationTitleOverride, isPrivate, customData)
 
     fun deleteRoom(room: Room): Result<String, Error> =
             deleteRoom(room.id)
