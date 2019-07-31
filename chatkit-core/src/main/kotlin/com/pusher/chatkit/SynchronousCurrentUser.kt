@@ -7,9 +7,7 @@ import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.pushnotifications.PushNotifications
-import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.RoomConsumer
-import com.pusher.chatkit.rooms.RoomListeners
+import com.pusher.chatkit.rooms.*
 import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.users.User
 import com.pusher.util.Result
@@ -76,6 +74,7 @@ class SynchronousCurrentUser(
     fun createRoom(
             id: String? = null,
             name: String,
+            pushNotificationTitleOverride: String? = null,
             isPrivate: Boolean = false,
             customData: CustomData? = null,
             userIds: List<String> = emptyList()
@@ -83,18 +82,19 @@ class SynchronousCurrentUser(
             id = id,
             creatorId = this.id,
             name = name,
+            pushNotificationTitleOverride = pushNotificationTitleOverride,
             isPrivate = isPrivate,
             customData = customData,
             userIds = userIds
     )
 
     @JvmOverloads
-    fun updateRoom(room: Room, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
-            this.updateRoom(room.id, name, isPrivate, customData)
+    fun updateRoom(room: Room, name: String? = null, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+            this.updateRoom(room.id, name, pushNotificationTitleOverride, isPrivate, customData)
 
     @JvmOverloads
-    fun updateRoom(roomId: String, name: String? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
-            chatManager.roomService.updateRoom(roomId, name, isPrivate, customData)
+    fun updateRoom(roomId: String, name: String? = null, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result<Unit, Error> =
+            chatManager.roomService.updateRoom(roomId, name, pushNotificationTitleOverride, isPrivate, customData)
 
     fun deleteRoom(room: Room): Result<String, Error> =
             deleteRoom(room.id)

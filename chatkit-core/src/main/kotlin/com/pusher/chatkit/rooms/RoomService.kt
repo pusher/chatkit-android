@@ -24,6 +24,11 @@ import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
+sealed class RoomPushNotificationTitle {
+  data class Override(val title: String): RoomPushNotificationTitle()
+  object NoOverride : RoomPushNotificationTitle()
+}
+
 internal class RoomService(
         private val v2client: PlatformClient,
         private val client: PlatformClient,
@@ -60,6 +65,7 @@ internal class RoomService(
             id: String?,
             creatorId: String,
             name: String,
+            pushNotificationTitleOverride: String?,
             isPrivate: Boolean,
             customData: CustomData?,
             userIds: List<String>
@@ -67,6 +73,7 @@ internal class RoomService(
             RoomCreateRequest(
                     id = id,
                     name = name,
+                    pushNotificationTitleOverride = pushNotificationTitleOverride,
                     private = isPrivate,
                     createdById = creatorId,
                     customData = customData,
@@ -104,11 +111,26 @@ internal class RoomService(
     fun updateRoom(
             roomId: String,
             name: String? = null,
+            pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
             isPrivate: Boolean? = null,
             customData: CustomData? = null
-    ): Result<Unit, Error> =
-            UpdateRoomRequest(name, isPrivate, customData).toJson()
-                    .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+    ): Result<Unit, Error> {
+      val request: Any =
+        if (pushNotificationTitleOverride == null) {
+          UpdateRoomRequest(name, isPrivate, customData)
+        } else {
+          when (pushNotificationTitleOverride) {
+            is RoomPushNotificationTitle.NoOverride ->
+              UpdateRoomRequestWithPNTitleOverride(name, null, isPrivate, customData)
+            is RoomPushNotificationTitle.Override ->
+              UpdateRoomRequestWithPNTitleOverride(name, pushNotificationTitleOverride.title, isPrivate, customData)
+          }
+        }
+
+      return request
+          .toJson()
+          .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+    }
 
     fun isSubscribedTo(roomId: String) =
             synchronized(openSubscriptions) {
@@ -339,9 +361,17 @@ internal data class UpdateRoomRequest(
         val customData: CustomData?
 )
 
+internal data class UpdateRoomRequestWithPNTitleOverride(
+        val name: String?,
+        val pushNotificationTitleOverride: String?,
+        val private: Boolean?,
+        val customData: CustomData?
+)
+
 private data class RoomCreateRequest(
         val id: String?,
         val name: String,
+        val pushNotificationTitleOverride: String?,
         val private: Boolean,
         val createdById: String,
         val customData: CustomData?,

@@ -12,6 +12,7 @@ import elements.Errors
 
 private val GSON = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .serializeNulls()
         .create()
 
 internal inline fun <reified A> typeToken() =

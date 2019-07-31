@@ -7,6 +7,7 @@ data class Room(
         val id: String,
         val createdById: String,
         var name: String,
+        var pushNotificationTitleOverride: String?,
         @SerializedName("private")
         var isPrivate: Boolean,
         var customData: CustomData?,
@@ -38,6 +39,7 @@ data class Room(
 
     fun deepEquals(room: Room) =
             room.name == this.name &&
+                    room.pushNotificationTitleOverride == this.pushNotificationTitleOverride &&
                     room.customData == this.customData &&
                     room.isPrivate == this.isPrivate
 }
