@@ -9,6 +9,7 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.rooms.RoomPushNotificationTitle
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.deleteRoom
@@ -412,7 +413,7 @@ class RoomSpek : Spek({
                 }
             }
 
-            val pnTitleOverride = "my app name"
+            val pnTitleOverride = RoomPushNotificationTitle.Override("my app name")
 
             superUser.updateRoom(
                 room = superUser.generalRoom,
@@ -421,7 +422,7 @@ class RoomSpek : Spek({
 
             assertThat(updatedRoom.name).isEqualTo(GENERAL)
             assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.pushNotificationTitleOverride).isEqualTo(pnTitleOverride)
+            assertThat(updatedRoom.pushNotificationTitleOverride).isEqualTo(pnTitleOverride.title)
         }
 
         it("updates to remove pn title override") {
@@ -446,7 +447,7 @@ class RoomSpek : Spek({
 
             superUser.updateRoom(
                 room = superUser.generalRoom,
-                pushNotificationTitleOverride = null
+                pushNotificationTitleOverride = RoomPushNotificationTitle.NoOverride
             ).assumeSuccess()
 
             assertThat(updatedRoom.name).isEqualTo(GENERAL)

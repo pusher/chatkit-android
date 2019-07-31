@@ -9,6 +9,7 @@ import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomListeners
+import com.pusher.chatkit.rooms.RoomPushNotificationTitle
 import com.pusher.chatkit.users.User
 import com.pusher.platform.network.Futures
 import com.pusher.util.Result
@@ -92,15 +93,7 @@ class CurrentUser(
     fun updateRoom(
             room: Room,
             name: String,
-            isPrivate: Boolean? = null,
-            customData: CustomData? = null,
-            callback: (Result<Unit, Error>) -> Unit
-    ) = makeCallback({ syncCurrentUser.updateRoom(room, name, isPrivate, customData) }, callback)
-
-    fun updateRoom(
-            room: Room,
-            name: String,
-            pushNotificationTitleOverride: String,
+            pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
             isPrivate: Boolean? = null,
             customData: CustomData? = null,
             callback: (Result<Unit, Error>) -> Unit
@@ -109,14 +102,7 @@ class CurrentUser(
     @JvmOverloads
     fun updateRoom(roomId: String,
                    name: String,
-                   isPrivate: Boolean? = null,
-                   customData: CustomData? = null,
-                   callback: (Result<Unit, Error>) -> Unit
-    ) = makeCallback({ syncCurrentUser.updateRoom(roomId, name, isPrivate, customData) }, callback)
-
-    fun updateRoom(roomId: String,
-                   name: String,
-                   pushNotificationTitleOverride: String,
+                   pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
                    isPrivate: Boolean? = null,
                    customData: CustomData? = null,
                    callback: (Result<Unit, Error>) -> Unit
