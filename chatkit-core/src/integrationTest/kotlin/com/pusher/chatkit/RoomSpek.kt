@@ -2,29 +2,19 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
-import com.pusher.chatkit.Rooms.NOT_GENERAL
-import com.pusher.chatkit.Rooms.SAMPLE_CUSTOM_DATA
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
-import com.pusher.chatkit.test.InstanceActions.deleteRoom
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
-import com.pusher.chatkit.test.run
-import com.pusher.chatkit.users.User
-import com.pusher.chatkit.util.FutureValue
-import com.pusher.util.Result.Failure
-import com.pusher.util.Result.Success
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -171,46 +161,47 @@ class RoomSpek : Spek({
             assertThat(badEvents).isEmpty()
         }
 
-        it("always has the correct memberUserIds after $PUSHERINO leaves, joins, leaves, joins room $GENERAL") {
-            // NB: This test covers a race condition, it may never fail consistently, but flakey
-            // behaviour must always be investigated in full.
+        it("always has the correct memberUserIds after room data is changed") {
 
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            val roomUpdated = CountDownLatch(1)
 
-            val alice = chatFor(ALICE).connect().assumeSuccess()
-
-            val badEvents = ConcurrentLinkedQueue<RoomEvent>()
-            var countEvents = 0
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
                 when (event) {
-                    is RoomEvent.UserJoined ->
-                        if (event.user.id.contains("pusherino")) {
-                            countEvents++
-                            if (!alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
-                                badEvents.add(event)
-                            }
-                        }
-                    is RoomEvent.UserLeft ->
-                        if (event.user.id.contains("pusherino")) {
-                            countEvents++
-                            if (alice.generalRoom.memberUserIds.contains("PUSHERINO")) {
-                                badEvents.add(event)
-                            }
-                        }
+                    is RoomEvent.RoomUpdated -> {
+                        roomUpdated.countDown()
+                    }
                 }
             }
 
-            alice.removeUsersFromRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
-            alice.addUsersToRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
-            alice.removeUsersFromRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
-            alice.addUsersToRoom(alice.generalRoom.id, listOf(PUSHERINO)).assumeSuccess()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
+            superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data") ).assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
-            if (countEvents >= 4) {
-                assertThat(badEvents).isEmpty()
-            } else {
-                assertThat(countEvents >= 4)
-            }
         }
+
+        it("always has the correct memberUserIds after message is sent to a room") {
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            val roomUpdated = CountDownLatch(1)
+
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.MultipartMessage -> {
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
+            superUser.sendSimpleMessage(superUser.generalRoom, "hello" ).assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
+        }
+
     }
 
     describe("currentUser '$PUSHERINO'") {
