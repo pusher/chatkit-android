@@ -189,7 +189,7 @@ class RoomSpek : Spek({
             }
 
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
-            superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data") ).assumeSuccess()
+            superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
             roomUpdated.await()
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
@@ -214,7 +214,7 @@ class RoomSpek : Spek({
             }
 
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
-            superUser.sendSimpleMessage(superUser.generalRoom, "hello" ).assumeSuccess()
+            superUser.sendSimpleMessage(superUser.generalRoom, "hello").assumeSuccess()
             roomUpdated.await()
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
         }
