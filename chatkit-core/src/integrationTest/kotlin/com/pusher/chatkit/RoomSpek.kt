@@ -2,18 +2,30 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
+import com.pusher.chatkit.Rooms.NOT_GENERAL
+import com.pusher.chatkit.Rooms.SAMPLE_CUSTOM_DATA
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
+import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
+import com.pusher.chatkit.test.InstanceActions.deleteRoom
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
+import com.pusher.chatkit.test.run
+import com.pusher.chatkit.users.User
+import com.pusher.chatkit.util.FutureValue
+import com.pusher.util.Result
+import com.pusher.util.Result.Failure
+import com.pusher.util.Result.Success
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 
 class RoomSpek : Spek({
