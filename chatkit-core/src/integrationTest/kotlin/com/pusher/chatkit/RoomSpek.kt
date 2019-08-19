@@ -198,11 +198,14 @@ class RoomSpek : Spek({
 
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-            val roomUpdated = CountDownLatch(1)
+            val roomUpdated = CountDownLatch(2)
 
             superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
                 when (event) {
                     is RoomEvent.MultipartMessage -> {
+                        roomUpdated.countDown()
+                    }
+                    is RoomEvent.RoomUpdated -> {
                         roomUpdated.countDown()
                     }
                 }
