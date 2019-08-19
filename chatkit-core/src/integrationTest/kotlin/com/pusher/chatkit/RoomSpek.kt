@@ -182,8 +182,8 @@ class RoomSpek : Spek({
             superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
                 when (event) {
                     is RoomEvent.RoomUpdated -> {
-                        roomUpdated.countDown()
                         assertThat(event.room.memberUserIds.size).isEqualTo(2)
+                        roomUpdated.countDown()
                     }
                 }
             }
@@ -207,8 +207,8 @@ class RoomSpek : Spek({
                         roomUpdated.countDown()
                     }
                     is RoomEvent.RoomUpdated -> {
-                        roomUpdated.countDown()
                         assertThat(event.room.memberUserIds.size).isEqualTo(2)
+                        roomUpdated.countDown()
                     }
                 }
             }
