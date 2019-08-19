@@ -32,6 +32,10 @@ data class Room(
         memberUserIds() += userId
     }
 
+    fun addAllUsers(userIds: Set<String>) {
+        memberUserIds().addAll(userIds)
+    }
+
     override fun equals(other: Any?) = (other is Room) && other.id == this.id
 
     override fun hashCode(): Int { return id.hashCode() }
