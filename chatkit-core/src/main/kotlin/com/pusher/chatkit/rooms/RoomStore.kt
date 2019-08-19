@@ -81,7 +81,7 @@ internal class RoomStore(
                     listOf(event.also { this += event.room })
                 is UserSubscriptionEvent.RoomUpdatedEvent ->
                     listOf(event.also {
-                        //member user ids seem to get lost here, so append whatever we had saved last time
+                        //memberUserIds are null in this case, so append whatever we had saved last time
                         event.room.addAllUsers(roomsMap[event.room.id]?.memberUserIds.orEmpty())
                         this += event.room})
                 is UserSubscriptionEvent.RoomDeletedEvent ->
