@@ -344,27 +344,33 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val updatedRoom by chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> event.room
-                    else -> null
-                }
-            }
+            val roomUpdated = CountDownLatch(1)
 
             val newCustomData = mapOf(
                     "added" to "some",
                     "custom" to "data"
             )
 
+            chatFor(ALICE).connectFor { event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated -> {
+                        assertThat(event.room.name).isEqualTo(GENERAL)
+                        assertThat(event.room.isPrivate).isEqualTo(false)
+                        assertThat(event.room.customData).isEqualTo(newCustomData)
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
             superUser.updateRoom(
                     room = superUser.generalRoom,
                     customData = newCustomData
             ).assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.name).isEqualTo(GENERAL)
+            assertThat(superUser.generalRoom.isPrivate).isEqualTo(false)
+            assertThat(superUser.generalRoom.customData).isEqualTo(newCustomData)
 
-            assertThat(updatedRoom.name).isEqualTo(GENERAL)
-            assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.customData).isEqualTo(newCustomData)
         }
 
         it("updates existing room customData") {
