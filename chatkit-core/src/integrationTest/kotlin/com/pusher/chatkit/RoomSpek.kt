@@ -183,6 +183,7 @@ class RoomSpek : Spek({
                 when (event) {
                     is RoomEvent.RoomUpdated -> {
                         roomUpdated.countDown()
+                        assertThat(event.room.memberUserIds.size).isEqualTo(2)
                     }
                 }
             }
@@ -207,6 +208,7 @@ class RoomSpek : Spek({
                     }
                     is RoomEvent.RoomUpdated -> {
                         roomUpdated.countDown()
+                        assertThat(event.room.memberUserIds.size).isEqualTo(2)
                     }
                 }
             }
