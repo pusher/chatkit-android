@@ -60,6 +60,7 @@ internal class RoomStore(
                     val addedTo = event.rooms.filterNot {
                         knownRooms.contains(it)
                     }.onEach {
+                        it.addAllUsers(roomsMap[it.id]?.memberUserIds.orEmpty())
                         this += it
                     }.map {
                         UserSubscriptionEvent.AddedToRoomEvent(it)
@@ -70,6 +71,7 @@ internal class RoomStore(
                             kr == nr && !kr.deepEquals(nr)
                         }
                     }.onEach {
+                        it.addAllUsers(roomsMap[it.id]?.memberUserIds.orEmpty())
                         this += it
                     }.map {
                         UserSubscriptionEvent.RoomUpdatedEvent(it)
@@ -78,7 +80,10 @@ internal class RoomStore(
                     listOf(event) + removedFrom + addedTo + updated
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent ->
-                    listOf(event.also { this += event.room })
+                    listOf(event.also {
+                        event.room.addAllUsers(roomsMap[event.room.id]?.memberUserIds.orEmpty())
+                        this += event.room
+                    })
                 is UserSubscriptionEvent.RoomUpdatedEvent ->
                     listOf(event.also {
                         //memberUserIDs are not populated in Rooms we have just deserialised from the
