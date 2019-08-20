@@ -216,6 +216,33 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
         }
 
+        it("always has the correct memberUserIds after added to room") {
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
+            val roomUpdated = CountDownLatch(2)
+
+            val alice = chatFor(ALICE).connect { event ->
+                if (event is ChatEvent.AddedToRoom) {
+                    assertThat(event.room.memberUserIds).isEqualTo(2)
+                    roomUpdated.countDown()
+                }
+            }.assumeSuccess()
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            superUser.subscribeToRoomMultipart(superUser.generalRoom){ event ->
+                when (event) {
+                    is RoomEvent.UserJoined -> {
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(1)
+            superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE)).assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
+            assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
+        }
     }
 
     describe("currentUser '$PUSHERINO'") {
