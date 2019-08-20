@@ -86,6 +86,56 @@ class RoomStoreSpek : Spek({
             }
         }
 
+        describe("Member user ids are consistent") {
+
+            val subject = RoomStore()
+
+            val roomWithMembersUpdated = simpleRoom("10", "updated", false, null)
+            roomWithMembersUpdated.addUser("user1")
+
+            val roomOne = simpleRoom("1", "one", true, null)
+            roomOne.addUser("user1")
+
+            val initialState = listOf(roomOne)
+            subject.initialiseContents(initialState)
+
+            val roomOneUpdated = simpleRoom("1", "new", true, null)
+            val roomTwo = simpleRoom("2", "two", true, null)
+            roomTwo.addUser("user2")
+
+            val replacementState = UserSubscriptionEvent.InitialState(
+                    rooms = listOf(roomOneUpdated, roomTwo),
+                    cursors = listOf(),
+                    currentUser = User("viv", "2017-04-13T14:10:04Z",
+                            "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
+            )
+
+            val replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
+
+            it("when the room is updated") {
+                for (event in replacementEvents) {
+                    when (event) {
+                        is UserSubscriptionEvent.RoomUpdatedEvent -> {
+                            assertThat(event.room.name).isEqualTo("new")
+                            assertThat(event.room.memberUserIds.size).isEqualTo(1)
+                        }
+                    }
+                }
+            }
+
+            it("when added to the room") {
+                for (event in replacementEvents) {
+                    when (event) {
+                        is UserSubscriptionEvent.AddedToRoomEvent -> {
+                            assertThat(event.room.name).isEqualTo("two")
+                            assertThat(event.room.memberUserIds.size).isEqualTo(2)
+                        }
+                    }
+                }
+            }
+
+        }
+
         describe("On receiving new InitialState Membership event") {
             val subject = RoomStore()
 

@@ -61,6 +61,7 @@ internal class RoomStore(
                         knownRooms.contains(it)
                     }.onEach {
                         it.addAllUsers(roomsMap[it.id]?.memberUserIds.orEmpty())
+                        it.addUser(event.currentUser.id)
                         this += it
                     }.map {
                         UserSubscriptionEvent.AddedToRoomEvent(it)
