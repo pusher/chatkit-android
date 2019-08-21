@@ -60,8 +60,6 @@ internal class RoomStore(
                     val addedTo = event.rooms.filterNot {
                         knownRooms.contains(it)
                     }.onEach {
-                        it.addAllUsers(roomsMap[it.id]?.memberUserIds.orEmpty())
-                        it.addUser(event.currentUser.id)
                         this += it
                     }.map {
                         UserSubscriptionEvent.AddedToRoomEvent(it)

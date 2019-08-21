@@ -90,21 +90,23 @@ class RoomStoreSpek : Spek({
 
             val subject = RoomStore()
 
-            val roomWithMembersUpdated = simpleRoom("10", "updated", false, null)
-            roomWithMembersUpdated.addUser("user1")
-
             val roomOne = simpleRoom("1", "one", true, null)
-            roomOne.addUser("user1")
 
             val initialState = listOf(roomOne)
             subject.initialiseContents(initialState)
 
+            subject.applyMembershipEvent(
+                    "1",
+                    MembershipSubscriptionEvent.InitialState(
+                            listOf("viv", "mike")
+                    )
+            )
+
             val roomOneUpdated = simpleRoom("1", "new", true, null)
-            val roomTwo = simpleRoom("2", "two", true, null)
-            roomTwo.addUser("user2")
+            val roomTwoNew = simpleRoom("2", "wasn't there before", false, null)
 
             val replacementState = UserSubscriptionEvent.InitialState(
-                    rooms = listOf(roomOneUpdated, roomTwo),
+                    rooms = listOf(roomOneUpdated, roomTwoNew),
                     cursors = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z",
                             "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
@@ -112,28 +114,23 @@ class RoomStoreSpek : Spek({
 
             val replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
 
-            it("when the room is updated") {
-                for (event in replacementEvents) {
-                    when (event) {
-                        is UserSubscriptionEvent.RoomUpdatedEvent -> {
-                            assertThat(event.room.name).isEqualTo("new")
-                            assertThat(event.room.memberUserIds.size).isEqualTo(1)
-                        }
+            assertThat(replacementEvents).hasSize(3)
+
+            for (event in replacementEvents) {
+                when (event) {
+                    is UserSubscriptionEvent.RoomUpdatedEvent -> {
+                        assertThat(event.room.name).isEqualTo("new")
+                        assertThat(event.room.memberUserIds).containsExactly("viv", "mike")
+                    }
+                    is UserSubscriptionEvent.AddedToRoomEvent -> {
+                        assertThat(event.room.name).isEqualTo("wasn't there before")
+                        assertThat(event.room.memberUserIds.size).isEqualTo(0)
+                    }
+                    is UserSubscriptionEvent.InitialState -> {}
+                    else -> { // todo fail!
                     }
                 }
             }
-
-            it("when added to the room") {
-                for (event in replacementEvents) {
-                    when (event) {
-                        is UserSubscriptionEvent.AddedToRoomEvent -> {
-                            assertThat(event.room.name).isEqualTo("two")
-                            assertThat(event.room.memberUserIds.size).isEqualTo(2)
-                        }
-                    }
-                }
-            }
-
         }
 
         describe("On receiving new InitialState Membership event") {
