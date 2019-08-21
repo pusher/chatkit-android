@@ -217,30 +217,30 @@ class RoomSpek : Spek({
         }
 
         it("always has the correct memberUserIds after added to room") {
+            //todo: this test passes as the current server implementation permits, but as soon as
+            // we change the backend implementation this test will need to be updated.
 
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
-            val roomUpdated = CountDownLatch(2)
 
+            val addedEvent = FutureValue<ChatEvent.AddedToRoom>()
             val alice = chatFor(ALICE).connect { event ->
-                if (event is ChatEvent.AddedToRoom) {
-                    assertThat(event.room.memberUserIds).isEqualTo(2)
-                    roomUpdated.countDown()
-                }
+                if (event is ChatEvent.AddedToRoom)
+                    addedEvent.set(event)
             }.assumeSuccess()
 
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-            superUser.subscribeToRoomMultipart(superUser.generalRoom){ event ->
-                when (event) {
-                    is RoomEvent.UserJoined -> {
-                        roomUpdated.countDown()
-                    }
-                }
+            val joinedEvent = superUser.subscribeRoomFor(GENERAL) { event ->
+                event.takeIf { it is RoomEvent.UserJoined && it.user.id == ALICE }
             }
 
+            assertThat(alice.rooms.size).isEqualTo(0)
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(1)
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE)).assumeSuccess()
-            roomUpdated.await()
+            joinedEvent.get()
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
+
+            assertThat(alice.rooms.size).isEqualTo(1)
+            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(2)
             assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
         }
     }
