@@ -70,6 +70,7 @@ internal class RoomStore(
                             kr == nr && !kr.deepEquals(nr)
                         }
                     }.onEach {
+                        it.addAllUsers(roomsMap[it.id]?.memberUserIds.orEmpty())
                         this += it
                     }.map {
                         UserSubscriptionEvent.RoomUpdatedEvent(it)
@@ -78,9 +79,17 @@ internal class RoomStore(
                     listOf(event) + removedFrom + addedTo + updated
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent ->
-                    listOf(event.also { this += event.room })
+                    listOf(event.also {
+                        this += event.room
+                    })
                 is UserSubscriptionEvent.RoomUpdatedEvent ->
-                    listOf(event.also { this += event.room })
+                    listOf(event.also {
+                        //memberUserIDs are not populated in Rooms we have just deserialised from the
+                        // server because we receive them separately via membership subscriptions,
+                        // so we must copy the set we have been tracking on our previous instance
+                        // of the Room on to this new instance
+                        event.room.addAllUsers(roomsMap[event.room.id]?.memberUserIds.orEmpty())
+                        this += event.room})
                 is UserSubscriptionEvent.RoomDeletedEvent ->
                     listOf(event.also { this -= event.roomId })
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->

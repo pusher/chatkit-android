@@ -25,12 +25,16 @@ data class Room(
     private fun memberUserIds(): MutableSet<String> = _memberUserIds
             ?: mutableSetOf<String>().also { _memberUserIds = it }
 
-    fun removeUser(userId: String) {
+    internal fun removeUser(userId: String) {
         memberUserIds() -= userId
     }
 
-    fun addUser(userId: String) {
+    internal fun addUser(userId: String) {
         memberUserIds() += userId
+    }
+
+    internal fun addAllUsers(userIds: Set<String>) {
+        memberUserIds().addAll(userIds)
     }
 
     override fun equals(other: Any?) = (other is Room) && other.id == this.id

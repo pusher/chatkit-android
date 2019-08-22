@@ -20,12 +20,14 @@ import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
+import com.pusher.util.Result
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -171,6 +173,77 @@ class RoomSpek : Spek({
 
             assertThat(badEvents).isEmpty()
         }
+
+        it("always has the correct memberUserIds after room data is changed") {
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            val roomUpdated = CountDownLatch(1)
+
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.RoomUpdated -> {
+                        assertThat(event.room.memberUserIds.size).isEqualTo(2)
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
+            superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
+
+        }
+
+        it("always has the correct memberUserIds after message is sent to a room") {
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            val roomUpdated = CountDownLatch(1)
+
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.RoomUpdated -> {
+                        assertThat(event.room.memberUserIds.size).isEqualTo(2)
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
+            superUser.sendSimpleMessage(superUser.generalRoom, "hello").assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
+        }
+
+        it("always has the correct memberUserIds after added to room") {
+            //todo: this test passes as the current server implementation permits, but as soon as
+            // we change the backend implementation this test will need to be updated.
+
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
+
+            val addedEvent = FutureValue<ChatEvent.AddedToRoom>()
+            val alice = chatFor(ALICE).connect { event ->
+                if (event is ChatEvent.AddedToRoom)
+                    addedEvent.set(event)
+            }.assumeSuccess()
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            val joinedEvent = superUser.subscribeRoomFor(GENERAL) { event ->
+                event.takeIf { it is RoomEvent.UserJoined && it.user.id == ALICE }
+            }
+
+            assertThat(alice.rooms.size).isEqualTo(0)
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(1)
+            superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE)).assumeSuccess()
+            joinedEvent.get()
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
+
+            assertThat(alice.rooms.size).isEqualTo(1)
+            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(2)
+            assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
+        }
     }
 
     describe("currentUser '$PUSHERINO'") {
@@ -313,27 +386,33 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val updatedRoom by chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> event.room
-                    else -> null
-                }
-            }
+            val roomUpdated = CountDownLatch(1)
 
             val newCustomData = mapOf(
                     "added" to "some",
                     "custom" to "data"
             )
 
+            chatFor(ALICE).connectFor { event ->
+                when (event) {
+                    is ChatEvent.RoomUpdated -> {
+                        assertThat(event.room.name).isEqualTo(GENERAL)
+                        assertThat(event.room.isPrivate).isEqualTo(false)
+                        assertThat(event.room.customData).isEqualTo(newCustomData)
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
             superUser.updateRoom(
                     room = superUser.generalRoom,
                     customData = newCustomData
             ).assumeSuccess()
+            roomUpdated.await()
+            assertThat(superUser.generalRoom.name).isEqualTo(GENERAL)
+            assertThat(superUser.generalRoom.isPrivate).isEqualTo(false)
+            assertThat(superUser.generalRoom.customData).isEqualTo(newCustomData)
 
-            assertThat(updatedRoom.name).isEqualTo(GENERAL)
-            assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.customData).isEqualTo(newCustomData)
         }
 
         it("updates existing room customData") {
