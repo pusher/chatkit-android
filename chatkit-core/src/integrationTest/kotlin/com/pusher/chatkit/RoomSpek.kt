@@ -20,7 +20,6 @@ import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
-import com.pusher.util.Result
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
 import org.jetbrains.spek.api.Spek
@@ -659,6 +658,40 @@ class RoomSpek : Spek({
             val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
 
             assertThat(isSubscribed).isFalse()
+        }
+
+        it("does not emit onUserJoined for members of a room when the subscription is first created") {
+
+            setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, PUSHERINO, SUPER_USER))
+
+            var usersJoined = 0
+            var roomUpdated = CountDownLatch(1)
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.UserJoined -> {
+                        usersJoined++
+                        roomUpdated.countDown()
+                    }
+                    is RoomEvent.RoomUpdated -> {
+                        roomUpdated.countDown()
+                    }
+                }
+            }
+
+            //do something else to ensure that no user joined events were actually fired
+            superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
+            roomUpdated.await()
+            assertThat(usersJoined).isEqualTo(0)
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) // super user doesn't count as a user
+
+            //ensure that one new user did join and calls the UserJoined event
+            roomUpdated = CountDownLatch(1)
+            superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE))
+            roomUpdated.await()
+            assertThat(usersJoined).isEqualTo(1)
+
         }
     }
 })
