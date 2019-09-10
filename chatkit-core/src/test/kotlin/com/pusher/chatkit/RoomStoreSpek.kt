@@ -137,28 +137,20 @@ class RoomStoreSpek : Spek({
             val subject = RoomStore()
 
             val room = simpleRoom("1", "one", false, null)
+            setOf("callum", "mike", "alice").forEach { room.addUser(it) }
 
             subject += room
 
             val events = subject.applyMembershipEvent(
                     room.id,
-                    MembershipSubscriptionEvent.InitialState(listOf("mike", "callum", "alice"))
+                    MembershipSubscriptionEvent.InitialState(listOf("mike", "callum", "bob"))
             )
 
-            it ("should not emit any joined events in the initial state") {
-                assertThat(events).isEmpty()
-            }
-
-            val eventJoined = subject.applyMembershipEvent(room.id,
-                    MembershipSubscriptionEvent.UserJoined("bob"))
-            it ("should emit new joiner event") {
-                assertThat(eventJoined).containsExactly(MembershipSubscriptionEvent.UserJoined("bob"))
-            }
-
-            val eventLeft = subject.applyMembershipEvent(room.id,
-                    MembershipSubscriptionEvent.UserLeft("alice"))
-            it ("should emit person left event") {
-                assertThat(eventLeft).containsExactly(MembershipSubscriptionEvent.UserLeft("alice"))
+            it("should emit the correct events") {
+                assertThat(events).containsExactly(
+                        MembershipSubscriptionEvent.UserJoined("bob"),
+                        MembershipSubscriptionEvent.UserLeft("alice")
+                )
             }
 
             it("should update the room membership") {

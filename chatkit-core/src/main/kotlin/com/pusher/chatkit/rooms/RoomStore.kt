@@ -9,6 +9,11 @@ internal class RoomStore(
         private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap(),
         private val roomsPassedInitialState: MutableList<String> = arrayListOf()
 ) {
+
+    fun hasRoomPassedInitialState(roomId: String): Boolean{
+        return roomsPassedInitialState.contains(roomId)
+    }
+
     fun toList(): List<Room> =
             roomsMap.values.toList()
 
@@ -109,32 +114,20 @@ internal class RoomStore(
                     val joinedIds = event.userIds.filterNot { existingMembers.contains(it) }
                     val leftIds = existingMembers.filterNot { event.userIds.contains(it) }
 
-                    var eventsArising = joinedIds.map(MembershipSubscriptionEvent::UserJoined) +
+                    roomsPassedInitialState.add(roomId)
+
+                    joinedIds.map(MembershipSubscriptionEvent::UserJoined) +
                             leftIds.map(MembershipSubscriptionEvent::UserLeft)
 
-                    eventsArising.forEach { e ->
-                        when (e) {
-                            is MembershipSubscriptionEvent.UserJoined -> this[roomId]?.addUser(e.userId)
-                            is MembershipSubscriptionEvent.UserLeft -> this[roomId]?.removeUser(e.userId)
-                        }
-                    }
-
-                    //prevent onUserJoined events from being enriched the first time the user creates the subscription
-                    if (! roomsPassedInitialState.contains(roomId) ) {
-                        eventsArising = arrayListOf()
-                        roomsPassedInitialState.add(roomId)
-                    }
-
-                    eventsArising //pass this back up
                 }
                 else ->
-                    listOf(event).also { events ->
-                        events.forEach { event ->
-                            when (event) {
-                                is MembershipSubscriptionEvent.UserJoined -> this[roomId]?.addUser(event.userId)
-                                is MembershipSubscriptionEvent.UserLeft -> this[roomId]?.removeUser(event.userId)
-                            }
-                        }
+                    listOf(event)
+            }.also { events ->
+                events.forEach { event ->
+                    when (event) {
+                        is MembershipSubscriptionEvent.UserJoined -> this[roomId]?.addUser(event.userId)
+                        is MembershipSubscriptionEvent.UserLeft -> this[roomId]?.removeUser(event.userId)
                     }
+                }
             }
 }

@@ -9,6 +9,7 @@ import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -180,7 +181,16 @@ internal class RoomService(
                 messageLimit = messageLimit,
                 roomId = roomId,
                 cursorService = cursorsService,
-                membershipConsumer = { roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit) },
+                membershipConsumer = {
+                    if (it is MembershipSubscriptionEvent.InitialState
+                            && !roomStore.hasRoomPassedInitialState(roomId)) {
+                        //if it's the first initial state event we don't want to emit the callbacks for
+                        //people who have entered the room
+                        roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent)
+                    } else {
+                        roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit)
+                    }
+                },
                 roomConsumer = { emit(enrichEvent(it, emit)) },
                 cursorConsumer = { emit(translateCursorEvent(it)) },
                 client = client,
