@@ -666,13 +666,14 @@ class RoomSpek : Spek({
 
             var usersJoined = 0
             var roomUpdated = CountDownLatch(1)
+            val memberJoinedRoom = CountDownLatch(1)
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
 
             superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
                 when (event) {
                     is RoomEvent.UserJoined -> {
                         usersJoined++
-                        roomUpdated.countDown()
+                        memberJoinedRoom.countDown()
                     }
                     is RoomEvent.RoomUpdated -> {
                         roomUpdated.countDown()
@@ -687,9 +688,8 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) // super user doesn't count as a user
 
             //ensure that one new user did join and calls the UserJoined event
-            roomUpdated = CountDownLatch(1)
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE))
-            roomUpdated.await()
+            memberJoinedRoom.await()
             assertThat(usersJoined).isEqualTo(1)
 
         }

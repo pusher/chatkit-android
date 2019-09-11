@@ -42,6 +42,7 @@ internal class RoomService(
     // Access synchronised on itself
     private val openSubscriptions = HashMap<String, Subscription>()
     private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
+    private val roomsPassedInitialState : MutableSet<String> = mutableSetOf()
 
     internal val roomStore = RoomStore()
 
@@ -183,10 +184,11 @@ internal class RoomService(
                 cursorService = cursorsService,
                 membershipConsumer = {
                     if (it is MembershipSubscriptionEvent.InitialState
-                            && !roomStore.hasRoomPassedInitialState(roomId)) {
+                            && !roomsPassedInitialState.contains(roomId)) {
                         //if it's the first initial state event we don't want to emit the callbacks for
                         //people who have entered the room
                         roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent)
+                        roomsPassedInitialState.add(roomId)
                     } else {
                         roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit)
                     }

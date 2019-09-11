@@ -6,13 +6,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class RoomStore(
-        private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap(),
-        private val roomsPassedInitialState: MutableList<String> = arrayListOf()
+        private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
 ) {
-
-    fun hasRoomPassedInitialState(roomId: String): Boolean{
-        return roomsPassedInitialState.contains(roomId)
-    }
 
     fun toList(): List<Room> =
             roomsMap.values.toList()
@@ -113,8 +108,6 @@ internal class RoomStore(
 
                     val joinedIds = event.userIds.filterNot { existingMembers.contains(it) }
                     val leftIds = existingMembers.filterNot { event.userIds.contains(it) }
-
-                    roomsPassedInitialState.add(roomId)
 
                     joinedIds.map(MembershipSubscriptionEvent::UserJoined) +
                             leftIds.map(MembershipSubscriptionEvent::UserLeft)
