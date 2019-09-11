@@ -187,10 +187,10 @@ internal class RoomService(
                             && !roomsPassedInitialState.contains(roomId)) {
                         //if it's the first initial state event we don't want to emit the callbacks for
                         //people who were already in the room
-                        roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent)
+                        enrichEvents(roomStore.applyMembershipEvent(roomId, it))
                         roomsPassedInitialState.add(roomId)
                     } else {
-                        roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent).forEach(emit)
+                        enrichEvents(roomStore.applyMembershipEvent(roomId, it)).forEach(emit)
                     }
                 },
                 roomConsumer = { emit(enrichEvent(it, emit)) },
@@ -254,28 +254,45 @@ internal class RoomService(
                 else -> RoomEvent.NoEvent
             }
 
-    private fun enrichEvent(event: MembershipSubscriptionEvent): RoomEvent =
-            when (event) {
-                is MembershipSubscriptionEvent.UserJoined ->
-                    userService.fetchUserBy(event.userId).map { user ->
-                        RoomEvent.UserJoined(user) as RoomEvent
-                    }.recover {
-                        RoomEvent.ErrorOccurred(it)
+    private fun enrichEvents(events: List<MembershipSubscriptionEvent>): List<RoomEvent> {
+        val allUserIds = events.map {
+            when (it) {
+                is MembershipSubscriptionEvent.UserJoined -> it.userId
+                is MembershipSubscriptionEvent.UserLeft -> it.userId
+                else -> null
+            }
+        }.filterNotNull().toSet()
+
+        return userService.fetchUsersBy(allUserIds).map { users ->
+            events.map { event ->
+                when (event) {
+                    is MembershipSubscriptionEvent.UserJoined -> {
+                        val user = users[event.userId]
+                        when (user) {
+                            null -> RoomEvent.ErrorOccurred(Errors.other("Could not find user with id ${event.userId}"))
+                            else -> RoomEvent.UserJoined(user)
+                        }
                     }
-                is MembershipSubscriptionEvent.UserLeft ->
-                    userService.fetchUserBy(event.userId).map { user ->
-                        RoomEvent.UserLeft(user) as RoomEvent
-                    }.recover {
-                        RoomEvent.ErrorOccurred(it)
+                    is MembershipSubscriptionEvent.UserLeft -> {
+                        val user = users[event.userId]
+                        when (user) {
+                            null -> RoomEvent.ErrorOccurred(Errors.other("Could not find user with id ${event.userId}"))
+                            else -> RoomEvent.UserLeft(user)
+                        }
                     }
-                is MembershipSubscriptionEvent.ErrorOccurred -> {
-                    RoomEvent.ErrorOccurred(event.error)
-                }
-                is MembershipSubscriptionEvent.InitialState -> {
-                    logger.error("Should not have received membership initial state in RoomService")
-                    RoomEvent.NoEvent
+                    is MembershipSubscriptionEvent.ErrorOccurred -> {
+                        RoomEvent.ErrorOccurred(event.error)
+                    }
+                    is MembershipSubscriptionEvent.InitialState -> {
+                        logger.error("Should not have received membership initial state in RoomService")
+                        RoomEvent.NoEvent
+                    }
                 }
             }
+        }.recover {
+            listOf(RoomEvent.ErrorOccurred(it))
+        }
+    }
 
     private fun enrichEvent(event: RoomSubscriptionEvent, consumer: RoomConsumer): RoomEvent =
             when (event) {
