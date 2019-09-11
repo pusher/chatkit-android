@@ -186,7 +186,7 @@ internal class RoomService(
                     if (it is MembershipSubscriptionEvent.InitialState
                             && !roomsPassedInitialState.contains(roomId)) {
                         //if it's the first initial state event we don't want to emit the callbacks for
-                        //people who have entered the room
+                        //people who were already in the room
                         roomStore.applyMembershipEvent(roomId, it).map(::enrichEvent)
                         roomsPassedInitialState.add(roomId)
                     } else {
