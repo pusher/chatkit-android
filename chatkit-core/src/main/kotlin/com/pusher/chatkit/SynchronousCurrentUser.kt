@@ -13,6 +13,7 @@ import com.pusher.chatkit.users.User
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
+import elements.Errors
 import elements.Subscription
 import java.net.URLEncoder
 
@@ -273,6 +274,16 @@ class SynchronousCurrentUser(
     fun usersForRoom(room: Room): Result<List<User>, Error> =
             chatManager.userService.fetchUsersBy(room.memberUserIds)
                     .map { it.values.toList() }
+
+    fun usersForRoom(roomId: String): Result<List<User>, Error> {
+        val room = rooms.find { it.id == roomId  }
+        return if (room != null) {
+            usersForRoom(room)
+        } else {
+            Result.failure(Errors.other("Could not find a room with id $roomId to get users"))
+        }
+
+    }
 
     fun enablePushNotifications(): Result<Unit, Error> {
         if (pushNotifications != null) {

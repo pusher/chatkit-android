@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class RoomStore(
         private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
 ) {
+
     fun toList(): List<Room> =
             roomsMap.values.toList()
 
@@ -110,6 +111,7 @@ internal class RoomStore(
 
                     joinedIds.map(MembershipSubscriptionEvent::UserJoined) +
                             leftIds.map(MembershipSubscriptionEvent::UserLeft)
+
                 }
                 else ->
                     listOf(event)

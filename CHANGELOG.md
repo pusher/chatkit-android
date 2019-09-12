@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.7.2...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.8.0...HEAD)
+
+## [1.8.0](https://github.com/pusher/chatkit-android/compare/v1.7.2...v1.8.0)
+
+### Fixed
+
+- Speed up subscribing to a room with many users.
+- Prevent `onUserJoined` being called when a user firsts subscribes to a room for
+people who are already in the room. This behavior is now consistent with our other Client SDKs
+  - To get the members of a room, you need to call `usersForRoom` with either the room, or roomId
+- Ensure that multiple calls for many users presence is called in parallel instead of synchronously
+
+## Added
+
+- Fetch all `usersForRoom` by roomId
 
 ## [1.7.2](https://github.com/pusher/chatkit-android/compare/v1.7.1...v1.7.2) - 2019-09-05
 
