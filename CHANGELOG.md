@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Speed up subscribing to a room with many users.
 - Prevent `onUserJoined` being called when a user firsts subscribes to a room for
-people who are already in the room, which is the same as how iOS and JS function
+people who are already in the room. This behavior is now consistent with our other Client SDKs
+  - To get the members of a room, you need to call `usersForRoom` with either the room, or roomId
 - Ensure that multiple calls for many users presence is called in parallel instead of synchronously
 
 ## Added
