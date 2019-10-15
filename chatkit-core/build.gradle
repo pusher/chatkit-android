@@ -91,7 +91,7 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 }
 
 dokka {
-    outputFormat = 'javadoc'
+    outputFormat = 'html'
     outputDirectory = "../docs"
 }
 
