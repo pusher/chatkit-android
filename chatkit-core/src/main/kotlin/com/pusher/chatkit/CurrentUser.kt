@@ -195,7 +195,7 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.deleteRoom(room) }, callback)
 
     /**
-     * @see #deleteRoom
+     * @see [deleteRoom]
      */
     fun deleteRoom(roomId: String, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.deleteRoom(roomId) }, callback)
