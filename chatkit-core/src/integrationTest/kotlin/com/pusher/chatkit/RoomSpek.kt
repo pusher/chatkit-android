@@ -27,6 +27,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -692,6 +693,44 @@ class RoomSpek : Spek({
             memberJoinedRoom.await()
             assertThat(usersJoined).isEqualTo(1)
 
+        }
+
+        it("room updated callback called after setReadCursor") {
+            setUpInstanceWith(createDefaultRole(),
+                    newRoom(GENERAL, SUPER_USER))
+
+            val roomUpdatedCountDownLatch = CountDownLatch(1)
+            val readCursorCountdownLatch = CountDownLatch(1)
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.RoomUpdated -> {
+                        if (event.room.customData != null) {
+                            roomUpdatedCountDownLatch.countDown()
+                        }
+                    }
+                    is RoomEvent.MultipartMessage -> {
+                        superUser.setReadCursor(superUser.generalRoom, event.message.id)
+                    }
+                    is RoomEvent.NewReadCursor -> {
+                        readCursorCountdownLatch.countDown()
+                    }
+                }
+            }
+
+            //send a message and also a read cursor
+            superUser.sendSimpleMessage(superUser.generalRoom, "hello")
+            readCursorCountdownLatch.await(5, TimeUnit.SECONDS)
+
+            //update the room info
+            val customDataUpdateTwo = mapOf("author" to "danielle")
+            superUser.updateRoom(superUser.generalRoom, superUser.generalRoom.name,
+                    customData = customDataUpdateTwo)
+            val latchCompleted = roomUpdatedCountDownLatch.await(5, TimeUnit.SECONDS)
+            assertThat(latchCompleted).isTrue()
+            assertThat(superUser.generalRoom.customData).isEqualTo(customDataUpdateTwo)
         }
     }
 })
