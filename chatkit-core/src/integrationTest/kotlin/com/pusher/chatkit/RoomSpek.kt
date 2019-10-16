@@ -9,6 +9,7 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.RoomPushNotificationTitle
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -218,9 +219,6 @@ class RoomSpek : Spek({
         }
 
         it("always has the correct memberUserIds after added to room") {
-            //todo: this test passes as the current server implementation permits, but as soon as
-            // we change the backend implementation this test will need to be updated.
-
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
 
             val addedEvent = FutureValue<ChatEvent.AddedToRoom>()
@@ -241,8 +239,12 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             assertThat(alice.rooms.size).isEqualTo(1)
-            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(2)
+            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(0)
+            assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(0)
+
+            alice.subscribeToRoomMultipart(alice.generalRoom, RoomListeners())
             assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
+
         }
     }
 
