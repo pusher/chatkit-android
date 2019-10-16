@@ -697,7 +697,7 @@ class RoomSpek : Spek({
 
         }
 
-        it("room updated callback called after setReadCursor") {
+        it("room updated callback should be called after setting a read cursor") {
             setUpInstanceWith(createDefaultRole(),
                     newRoom(GENERAL, SUPER_USER))
 
