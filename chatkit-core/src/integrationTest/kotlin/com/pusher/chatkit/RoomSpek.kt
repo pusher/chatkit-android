@@ -9,6 +9,7 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
+import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.RoomPushNotificationTitle
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -27,6 +28,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -217,9 +219,6 @@ class RoomSpek : Spek({
         }
 
         it("always has the correct memberUserIds after added to room") {
-            //todo: this test passes as the current server implementation permits, but as soon as
-            // we change the backend implementation this test will need to be updated.
-
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
 
             val addedEvent = FutureValue<ChatEvent.AddedToRoom>()
@@ -240,8 +239,12 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             assertThat(alice.rooms.size).isEqualTo(1)
-            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(2)
+            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(0)
+            assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(0)
+
+            alice.subscribeToRoomMultipart(alice.generalRoom, RoomListeners())
             assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
+
         }
     }
 
@@ -692,6 +695,44 @@ class RoomSpek : Spek({
             memberJoinedRoom.await()
             assertThat(usersJoined).isEqualTo(1)
 
+        }
+
+        it("room updated callback should be called after setting a read cursor") {
+            setUpInstanceWith(createDefaultRole(),
+                    newRoom(GENERAL, SUPER_USER))
+
+            val roomUpdatedCountDownLatch = CountDownLatch(1)
+            val readCursorCountdownLatch = CountDownLatch(1)
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
+                when (event) {
+                    is RoomEvent.RoomUpdated -> {
+                        if (event.room.customData != null) {
+                            roomUpdatedCountDownLatch.countDown()
+                        }
+                    }
+                    is RoomEvent.MultipartMessage -> {
+                        superUser.setReadCursor(superUser.generalRoom, event.message.id)
+                    }
+                    is RoomEvent.NewReadCursor -> {
+                        readCursorCountdownLatch.countDown()
+                    }
+                }
+            }
+
+            //send a message and also a read cursor
+            superUser.sendSimpleMessage(superUser.generalRoom, "hello")
+            readCursorCountdownLatch.await(5, TimeUnit.SECONDS)
+
+            //update the room info
+            val customDataUpdateTwo = mapOf("author" to "danielle")
+            superUser.updateRoom(superUser.generalRoom, superUser.generalRoom.name,
+                    customData = customDataUpdateTwo)
+            val latchCompleted = roomUpdatedCountDownLatch.await(5, TimeUnit.SECONDS)
+            assertThat(latchCompleted).isTrue()
+            assertThat(superUser.generalRoom.customData).isEqualTo(customDataUpdateTwo)
         }
     }
 })

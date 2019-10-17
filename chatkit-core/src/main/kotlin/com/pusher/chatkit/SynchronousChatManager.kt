@@ -183,10 +183,8 @@ class SynchronousChatManager constructor(
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
             when (event) {
-                is UserSubscriptionEvent.AddedToRoomEvent -> {
-                    event.room.addUser(currentUser.id)
+                is UserSubscriptionEvent.AddedToRoomEvent ->
                     ChatEvent.AddedToRoom(event.room)
-                }
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
                     ChatEvent.RemovedFromRoom(event.roomId)
                 is UserSubscriptionEvent.RoomUpdatedEvent ->
