@@ -203,12 +203,18 @@ class CurrentUser(
     fun leaveRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.leaveRoom(room) }, callback)
 
+    /**
+     * @see [leaveRoom]
+     */
     fun leaveRoom(roomId: String, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.leaveRoom(roomId) }, callback)
 
     fun joinRoom(room: Room, callback: (Result<Room, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.joinRoom(room) }, callback)
 
+    /**
+     * @see [joinRoom]
+     */
     fun joinRoom(roomId: String, callback: (Result<Room, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.joinRoom(roomId) }, callback)
 
@@ -248,6 +254,9 @@ class CurrentUser(
             callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
+    /**
+     *
+     */
     @JvmOverloads
     fun subscribeToRoomMultipart(
             room: Room,
@@ -256,6 +265,9 @@ class CurrentUser(
             callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(room, listeners, messageLimit) }, callback)
 
+    /**
+     * @see [subscribeToRoomMultipart]
+     */
     @JvmOverloads
     fun subscribeToRoomMultipart(
             roomId: String,
@@ -331,33 +343,70 @@ class CurrentUser(
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendSimpleMessage(room, messageText) }, callback)
 
+    /**
+     * Sends some message [parts] to the [room]. For more information on what the [parts] can be check
+     * out the [docs][https://pusher.com/docs/chatkit/reference/android].
+     * The [callback] will be called with a [Result] when the operation is complete. If the
+     * operation was successful you will receive an [Int] which contains the message id, or an
+     * [Error] informing you of what went wrong.
+     */
     fun sendMultipartMessage(
             room: Room,
             parts: List<NewPart>,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(room, parts) }, callback)
 
+    /**
+     * @see [sendMultipartMessage]
+     */
     fun sendMultipartMessage(
             roomId: String,
             parts: List<NewPart>,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(roomId, parts) }, callback)
 
+    /**
+     * Sets that the current user is typing in the [room]. You can send as many of these as you like,
+     * the SDK will handle rate limiting the request. The [callback] will be called with a [Result]
+     * when the operation is complete. If the operation was successful you will receive a [Unit], or
+     * an [Error] informing you of what went wrong.
+     */
     fun isTypingIn(room: Room, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.isTypingIn(room) }, callback)
 
+    /**
+     * @see [isTypingIn]
+     */
     fun isTypingIn(roomId: String, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.isTypingIn(roomId) }, callback)
 
+    /**
+     * Get a list of the public rooms that you are not a member of yet. The [callback] will be called
+     * with a [Result] when the operation is complete. If the operation was successful you will receive
+     * a List<Room>, or an [Error] informing you of what went wrong.
+     */
     fun getJoinableRooms(callback: (Result<List<Room>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.getJoinableRooms() }, callback)
 
+    /**
+     * Get the list of users in the [room]. The [callback] will be called with a [Result] when the
+     * operation is complete. If the operation was successful you will receive a List<User>, or an
+     * [Error] informing you of what went wrong.
+     */
     fun usersForRoom(room: Room, callback: (Result<List<User>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.usersForRoom(room) }, callback)
 
+    /**
+     * @see [usersForRoom]
+     */
     fun usersForRoom(roomId: String, callback: (Result<List<User>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.usersForRoom(roomId) }, callback)
 
+    /**
+     * Enables push notifications for the current user. The [callback] will be called with a [Result]
+     * when the operation is complete. If the operation was successful you will receive a [Unit],
+     * or an [Error] informing you of what went wrong.
+     */
     fun enablePushNotifications(callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.enablePushNotifications() }, callback)
 }
