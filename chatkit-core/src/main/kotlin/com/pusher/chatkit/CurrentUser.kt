@@ -41,8 +41,9 @@ class CurrentUser(
 
 
     /**
-     * Returns a callback with a list of all the users on the instance if successful.
-     * If unsuccessful an [Error] will be returned.
+     * Fetches all the users in the instance. The [callback] will be called with a [Result] when the
+     * operation is complete. If the operation was successful you will receive a [List<User>] which
+     * contains all the users, or an [Error] informing you of what went wrong.
      */
     fun users(callback: (Result<List<User>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.users }, callback)
@@ -81,8 +82,9 @@ class CurrentUser(
     }
 
     /**
-     * Returns the read [Cursor] for the current user in [roomId] if successful If unsuccessful
-     * an [Error] is returned.
+     * Gets the current users read cursor for the [roomId]. The [callback] will be called with a
+     * [Result] when the operation is complete. If the operation was successful you will receive a
+     * [Cursor], or an [Error] informing you of what went wrong.
      */
     fun getReadCursor(roomId: String): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(roomId)
@@ -93,8 +95,9 @@ class CurrentUser(
             syncCurrentUser.getReadCursor(room.id)
 
     /**
-     * Returns the read [Cursor] for the [userId] in [roomId] if successful If unsuccessful
-     * an [Error] is returned.
+     * Gets the current read cursor for the [userId] in [roomId]. The [callback] will be called with a
+     * [Result] when the operation is complete. If the operation was successful you will receive an
+     * [Cursor] which, or an [Error] informing you of what went wrong.
      */
     fun getReadCursor(roomId: String, userId: String): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(roomId, userId)
@@ -106,15 +109,17 @@ class CurrentUser(
             syncCurrentUser.getReadCursor(room.id, user.id)
 
     /**
-     * Adds the [userIds] to the [roomId]. The [callback] returns void if successful,
-     * and an [Error] if unsuccessful.
+     * Adds the [userIds] to the [roomId]. The [callback] will be called with a [Result] when the
+     * operation is complete. If the operation was successful you will receive a [Unit], or an
+     * [Error] informing you of what went wrong.
      */
     fun addUsersToRoom(roomId: String, userIds: List<String>, callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.addUsersToRoom(roomId, userIds) }, callback)
 
     /**
-     * Removes the [userIds] from the [roomId]. The [callback] returns void if successful,
-     * and an [Error] if unsuccessful.
+     * Removes the [userIds] from the [roomId]. The [callback] will be called with a [Result] when the
+     * operation is complete. If the operation was successful you will receive [Unit], or an
+     * [Error] informing you of what went wrong.
      */
     fun removeUsersFromRoom(
             roomId: String,
@@ -130,7 +135,7 @@ class CurrentUser(
      * - [isPrivate] - optional - a boolean to determine if the room is available for others to join, by default the room will be not be private
      * - [customData] - optional - a [CustomData] object with any extra information you'd like to save with the new room e.g. mapOf("description" to "some extra description about the room")
      * - [userIds] - optional - a list of the userIds of users who will be added to the room
-     * - [callback] - returns a [Result] with the [Room] if success, or an [Error] if something went wrong
+     * - [callback] - returns a [Result] with the [Room] if successful, or an [Error] letting you know what went wrong
      */
     @JvmOverloads
     fun createRoom(
@@ -149,7 +154,7 @@ class CurrentUser(
      * - [pushNotificationTitleOverride] - optional - a string that appears on the push notification title for this room, by default the title is the room name
      * - [isPrivate]- optional - a boolean to determine if the room is available for others to join, by default the room will be not be private
      * - [customData] - optional - a [CustomData] object with any extra information you'd like to save with the new room e.g. mapOf("description" to "some extra description about the room")
-     * - [callback] - returns a [Result] with the [Room] if success, or an [Error] if something went wrong
+     * - [callback] - returns a [Result] with the [Room] if successful, or an [Error] letting you know what went wrong
      */
     @JvmOverloads
     fun updateRoom(
@@ -175,7 +180,7 @@ class CurrentUser(
 
     /**
      * Delete the [room]. The [callback] will be called with a [Result] when the operation is complete.
-     * If the operation was successful you will receive a [String] which contains ?,
+     * If the operation was successful you will receive a [String] which contains the deleted room id,
      * or an [Error] informing you of what went wrong.
      * This is a soft delete, which means you cannot reuse the roomId later.
      */
@@ -188,6 +193,11 @@ class CurrentUser(
     fun deleteRoom(roomId: String, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.deleteRoom(roomId) }, callback)
 
+    /**
+     * Remove yourself from the [room]. The [callback] will be called with a [Result] when the operation is complete.
+     * If the operation was successful you will receive a [String] which contains the room id of the room you just left,
+     * or an [Error] informing you of what went wrong.
+     */
     fun leaveRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.leaveRoom(room) }, callback)
 
@@ -197,6 +207,11 @@ class CurrentUser(
     fun leaveRoom(roomId: String, callback: (Result<String, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.leaveRoom(roomId) }, callback)
 
+    /**
+     * Add yourself to the [room]. The [callback] will be called with a [Result] when the operation is complete.
+     * If the operation was successful you will receive a [Room] which contains room you just joined,
+     * or an [Error] informing you of what went wrong.
+     */
     fun joinRoom(room: Room, callback: (Result<Room, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.joinRoom(room) }, callback)
 
@@ -243,11 +258,11 @@ class CurrentUser(
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     /**
-     * Subscribe to a [room] for multipart messages. You need to configure your [listners] to listen
-     * for the events you're interested in, see [RoomListeners] for more information on what events
-     * are possible. You can configure a [messageLimit] which returns 10 messages by default when you
-     * subsribe to the room. Finally the [callback] will be called with a [Subscription] if the operation
-     * was successful.
+     * Subscribe to a [room] for multipart messages. You need to configure the [listeners] to listen
+     * for the events you're interested in, see the [docs][https://pusher.com/docs/chatkit/reference/android#chat-events]
+     * for more information on what events are possible. You can configure a [messageLimit] which
+     * returns 10 messages by default when you subscribe to the room. Finally the [callback] will
+     * be called with a [Subscription] if the operation was successful.
      */
     @JvmOverloads
     fun subscribeToRoomMultipart(
@@ -300,10 +315,11 @@ class CurrentUser(
      * Fetches multipart messages for a [roomId] from an optional [initialId]. You can specify the direction
      * of messages you want to receive, by default this is [Direction.OLDER_FIRST] which means you get the older messages
      * through first. However you can alternatively request the messages in [Direction.NEWER_FIRST] which means
-     * you'd get the newer messages first. You can specify how many messages to receive back in the [limit].
-     * The [callback] will be called with a [Result] when the operation is complete. If the operation
-     * was successful you will receive an [List<com.pusher.chatkit.messages.multipart.Message>]
-     * which contains the message id, or an [Error] informing you of what went wrong.
+     * you'd get the newer messages first. You can specify how many messages to receive back in the [limit],
+     * by default 10 messages will be returned. The [callback] will be called with a [Result] when the operation
+     * is complete. If the operation was successful you will receive an
+     * [List<com.pusher.chatkit.messages.multipart.Message>] which contains the message id,
+     * or an [Error] informing you of what went wrong.
      */
     @JvmOverloads
     fun fetchMultipartMessages(
@@ -376,7 +392,7 @@ class CurrentUser(
 
     /**
      * Sets that the current user is typing in the [room]. You can send as many of these as you like,
-     * the SDK will handle rate limiting the request. The [callback] will be called with a [Result]
+     * the SDK will handle rate limiting the requests. The [callback] will be called with a [Result]
      * when the operation is complete. If the operation was successful you will receive a [Unit], or
      * an [Error] informing you of what went wrong.
      */
