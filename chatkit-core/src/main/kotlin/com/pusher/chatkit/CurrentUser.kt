@@ -255,7 +255,11 @@ class CurrentUser(
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     /**
-     *
+     * Subscribe to a [room] for multipart messages. You need to configure your [listners] to listen
+     * for the events you're interested in, see [RoomListeners] for more information on what events
+     * are possible. You can configure a [messageLimit] which returns 10 messages by default when you
+     * subsribe to the room. Finally the [callback] will be called with a [Subscription] if the operation
+     * was successful.
      */
     @JvmOverloads
     fun subscribeToRoomMultipart(
@@ -304,6 +308,15 @@ class CurrentUser(
             callback: (Result<List<Message>, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.fetchMessages(roomId, initialId, direction, limit) }, callback)
 
+    /**
+     * Fetches multipart messages for a [roomId] from an optional [initialId]. You can specify the direction
+     * of messages you want to receive, by default this is [Direction.OLDER_FIRST] which means you get the older messages
+     * through first. However you can alternatively request the messages in [Direction.NEWER_FIRST] which means
+     * you'd get the newer messages first. You can specify how many messages to receive back in the [limit].
+     * The [callback] will be called with a [Result] when the operation is complete. If the operation
+     * was successful you will receive an [List<com.pusher.chatkit.messages.multipart.Message>]
+     * which contains the message id, or an [Error] informing you of what went wrong.
+     */
     @JvmOverloads
     fun fetchMultipartMessages(
             roomId: String,
@@ -331,12 +344,20 @@ class CurrentUser(
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMessage(roomId, messageText, attachment) }, callback)
 
+    /**
+     * Send a [messageText] to the [roomId]. The [callback] will be called with a [Result] when the
+     * operation is complete. If the operation was successful you will receive an [Int] which
+     * contains the message id, or an [Error] informing you of what went wrong.
+     */
     fun sendSimpleMessage(
             roomId: String,
             messageText: String,
             callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendSimpleMessage(roomId, messageText) }, callback)
 
+    /**
+     * @see [sendSimpleMessage]
+     */
     fun sendSimpleMessage(
             room: Room,
             messageText: String,
