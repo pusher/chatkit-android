@@ -54,7 +54,7 @@ class CurrentUser(
             syncCurrentUser.isSubscribedToRoom(roomId)
 
     /**
-     * Returns whether the current user is subscribed to the [room]
+     * @see [isSubscribedToRoom]
      */
     fun isSubscribedToRoom(room: Room): Boolean =
             syncCurrentUser.isSubscribedToRoom(room)
@@ -74,8 +74,7 @@ class CurrentUser(
     }
 
     /**
-     * Sets the read cursor for the current user in [roomId] to [position].
-     * The [position] is the id of the last message that the current user has read.
+     * @see [setReadCursor]
      */
     fun setReadCursor(roomId: String, position: Int) {
         Futures.schedule { syncCurrentUser.setReadCursor(roomId, position) }
@@ -88,8 +87,7 @@ class CurrentUser(
     fun getReadCursor(roomId: String): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(roomId)
     /**
-     * Returns the read [Cursor] for the current user in [room] if successful If unsuccessful
-     * an [Error] is returned.
+     * @see [getReadCursor]
      */
     fun getReadCursor(room: Room): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(room.id)
@@ -102,8 +100,7 @@ class CurrentUser(
             syncCurrentUser.getReadCursor(roomId, userId)
 
     /**
-     * Returns the read [Cursor] for the [user] in [room] if successful If unsuccessful
-     * an [Error] is returned.
+     * @see [getReadCursor]
      */
     fun getReadCursor(room: Room, user: User): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(room.id, user.id)
@@ -165,16 +162,7 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.updateRoom(room, name, pushNotificationTitleOverride, isPrivate, customData) }, callback)
 
     /**
-     * Update an existing room's properties by using the [roomId]:
-     * - [name] - a String to label the room
-     * - [pushNotificationTitleOverride] - optional - a string that appears on the push notification
-     *   title for this room, by default the title is the room name
-     * - [isPrivate]- optional - a boolean to determine if the room is available for others to join,
-     *   by default the room will be not be private
-     * - [customData] - optional - a [CustomData] object with any extra information you'd like to save
-     * with the new room e.g. mapOf("description" to "some extra description about the room")
-     * - [callback] - will be called with a [Result] when the operation is complete. You will receive
-     * a [Unit] if the operation was successful, or an [Error] informing you of what went wrong
+     * @see [updateRoom]
      */
     @JvmOverloads
     fun updateRoom(roomId: String,
