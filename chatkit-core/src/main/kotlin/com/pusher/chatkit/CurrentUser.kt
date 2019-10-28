@@ -41,7 +41,8 @@ class CurrentUser(
 
 
     /**
-     * Fetches all the users in the instance. The [callback] will be called with a [Result] when the
+     * Fetches a list of all the users in rooms you are currently subscribed to.
+     * The [callback] will be called with a [Result] when the
      * operation is complete. If the operation was successful you will receive a [List<User>] which
      * contains all the users, or an [Error] informing you of what went wrong.
      */
@@ -61,14 +62,16 @@ class CurrentUser(
             syncCurrentUser.isSubscribedToRoom(room)
 
     /**
-     * Updates the current user with the properties of [newUser]
+     * This is not intended to be used outside of the internal implementation.
      */
     fun updateWithPropertiesOf(newUser: CurrentUser) =
             syncCurrentUser.updateWithPropertiesOf(newUser.syncCurrentUser)
 
     /**
-     * Sets the read cursor for the cur rent user in [room] to [position].
+     * Sets the read cursor for the current user in [room] to [position].
      * The [position] is the id of the last message that the current user has read.
+     * This will consequently notify any other connected users who have a [RoomListeners]
+     * set for [onNewReadCursor] to let them know the current user has read up to [position].
      */
     fun setReadCursor(room: Room, position: Int) {
         Futures.schedule { syncCurrentUser.setReadCursor(room.id, position) }
@@ -82,9 +85,9 @@ class CurrentUser(
     }
 
     /**
-     * Gets the current users read cursor for the [roomId]. The [callback] will be called with a
-     * [Result] when the operation is complete. If the operation was successful you will receive a
-     * [Cursor], or an [Error] informing you of what went wrong.
+     * Gets the current users read cursor for the [roomId]. This method is synchronous and you will
+     * receive a [Result] with a [Cursor] if the process was successful, or an [Error] informing you
+     * of what went wrong. A common error is you must first be subscribed to the room to see read cursors.
      */
     fun getReadCursor(roomId: String): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(roomId)
@@ -95,9 +98,9 @@ class CurrentUser(
             syncCurrentUser.getReadCursor(room.id)
 
     /**
-     * Gets the current read cursor for the [userId] in [roomId]. The [callback] will be called with a
-     * [Result] when the operation is complete. If the operation was successful you will receive an
-     * [Cursor] which, or an [Error] informing you of what went wrong.
+     * Gets the current read cursor for the [userId] in [roomId]. This method is synchronous and you will
+     * receive a [Result] with a [Cursor] if the process was successful, or an [Error] informing you
+     * of what went wrong. A common error is you must first be subscribed to the room to see read cursors.
      */
     fun getReadCursor(roomId: String, userId: String): Result<Cursor, Error> =
             syncCurrentUser.getReadCursor(roomId, userId)
@@ -109,8 +112,12 @@ class CurrentUser(
             syncCurrentUser.getReadCursor(room.id, user.id)
 
     /**
-     * Adds the [userIds] to the [roomId]. The [callback] will be called with a [Result] when the
-     * operation is complete. If the operation was successful you will receive a [Unit], or an
+     * Make the users listed in [userIds] members of the room identified by [roomId]. This does not mean
+     * the user(s) will see new messages immediately, it means the room will be in their list of rooms
+     * and they will need to subscribe themselves to see any updates.
+     * Calling this method requires the current user to have the room:members:add role.
+     * The [callback] will be called with a [Result] when the
+     * operation is complete. If the operation was successful there is no value returned, or an
      * [Error] informing you of what went wrong.
      */
     fun addUsersToRoom(roomId: String, userIds: List<String>, callback: (Result<Unit, Error>) -> Unit) =
@@ -118,7 +125,7 @@ class CurrentUser(
 
     /**
      * Removes the [userIds] from the [roomId]. The [callback] will be called with a [Result] when the
-     * operation is complete. If the operation was successful you will receive [Unit], or an
+     * operation is complete. If the operation was successful there is no value returned, or an
      * [Error] informing you of what went wrong.
      */
     fun removeUsersFromRoom(
@@ -131,7 +138,9 @@ class CurrentUser(
      * Create a new room with:
      * - [id] - optional - a uniquely identifying String, if not provided a randomly generated unique string will be created for you
      * - [name] - a String to label the room
-     * - [pushNotificationTitleOverride] - optional - a string that appears on the push notification title for this room, by default the title is the room name
+     * - [pushNotificationTitleOverride] - optional - a string that appears on the push notification
+     * title for this room; by default the title is the room name, or for rooms that just have two members the title
+     * will be the other users name.
      * - [isPrivate] - optional - a boolean to determine if the room is available for others to join, by default the room will be not be private
      * - [customData] - optional - a [CustomData] object with any extra information you'd like to save with the new room e.g. mapOf("description" to "some extra description about the room")
      * - [userIds] - optional - a list of the userIds of users who will be added to the room
@@ -149,7 +158,8 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.createRoom(id, name, pushNotificationTitleOverride, isPrivate, customData, userIds) }, callback)
 
     /**
-     * Update an existing [room]'s properties:
+     * Update an existing [room]'s properties. If an argument is omitted or provided as null,
+     * the existing value will not be changed.
      * - [name] - a String to label the room
      * - [pushNotificationTitleOverride] - optional - a string that appears on the push notification title for this room, by default the title is the room name
      * - [isPrivate]- optional - a boolean to determine if the room is available for others to join, by default the room will be not be private
@@ -259,10 +269,10 @@ class CurrentUser(
 
     /**
      * Subscribe to a [room] for multipart messages. You need to configure the [listeners] to listen
-     * for the events you're interested in, see the [docs][https://pusher.com/docs/chatkit/reference/android#chat-events]
-     * for more information on what events are possible. You can configure a [messageLimit] which
-     * returns 10 messages by default when you subscribe to the room. Finally the [callback] will
-     * be called with a [Subscription] if the operation was successful.
+     * for the events you're interested in, for more information on what events are possible see the [docs][https://pusher.com/docs/chatkit/reference/android#chat-events]
+     * You can configure a [messageLimit] which returns the 10 messages that were most recently sent to the room,
+     * each message will call the [onMultipartMessage] listener so you can determine how to display the message.
+     * Finally the [callback] will be called with a [Subscription] if the operation was successful.
      */
     @JvmOverloads
     fun subscribeToRoomMultipart(
@@ -312,14 +322,12 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.fetchMessages(roomId, initialId, direction, limit) }, callback)
 
     /**
-     * Fetches multipart messages for a [roomId] from an optional [initialId]. You can specify the direction
-     * of messages you want to receive, by default this is [Direction.OLDER_FIRST] which means you get the older messages
-     * through first. However you can alternatively request the messages in [Direction.NEWER_FIRST] which means
-     * you'd get the newer messages first. You can specify how many messages to receive back in the [limit],
-     * by default 10 messages will be returned. The [callback] will be called with a [Result] when the operation
-     * is complete. If the operation was successful you will receive an
-     * [List<com.pusher.chatkit.messages.multipart.Message>] which contains the message id,
-     * or an [Error] informing you of what went wrong.
+     * Fetches multipart messages for a [roomId] from an optional message [initialId].
+     * - [roomId] - the room id you want to get messages for
+     * - [initialId] - optional - the message id for the [0] message, if no initialId is provided the [0] message is the last message sent to the room
+     * - [direction] - optional - the direction messages are ordered in the list, by default this is [Direction.OLDER_FIRST], alternatively you can request the messages in [Direction.NEWER_FIRST]
+     * - [limit] - optional - the number of messages you want to receive, by default this will be 10 messages.
+     * - [callback] - returns a [Result] with the [List<com.pusher.chatkit.messages.multipart.Message>] if successful, or an [Error] letting you know what went wrong
      */
     @JvmOverloads
     fun fetchMultipartMessages(
@@ -372,8 +380,10 @@ class CurrentUser(
      * Sends some message [parts] to the [room]. For more information on what the [parts] can be check
      * out the [docs][https://pusher.com/docs/chatkit/reference/android].
      * The [callback] will be called with a [Result] when the operation is complete. If the
-     * operation was successful you will receive an [Int] which contains the message id, or an
+     * operation was successful you will receive an [Int] which contains the sent message id, or an
      * [Error] informing you of what went wrong.
+     * e.g.
+     * //todo!
      */
     fun sendMultipartMessage(
             room: Room,
@@ -393,7 +403,7 @@ class CurrentUser(
     /**
      * Sets that the current user is typing in the [room]. You can send as many of these as you like,
      * the SDK will handle rate limiting the requests. The [callback] will be called with a [Result]
-     * when the operation is complete. If the operation was successful you will receive a [Unit], or
+     * when the operation is complete. If the operation was successful there is no value returned, or
      * an [Error] informing you of what went wrong.
      */
     fun isTypingIn(room: Room, callback: (Result<Unit, Error>) -> Unit) =
@@ -406,9 +416,11 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.isTypingIn(roomId) }, callback)
 
     /**
-     * Get a list of the public rooms that you are not a member of yet. The [callback] will be called
-     * with a [Result] when the operation is complete. If the operation was successful you will receive
-     * a List<Room>, or an [Error] informing you of what went wrong.
+     * Get a list of the public rooms that you are not a member of yet. Not all fields in the room objects
+     * will be populated until you join and subscribe to them e.g. you will not be able to see the
+     * `memberUserIds`, until you subscribe to a room.
+     * The [callback] will be called with a [Result] when the operation is complete.
+     * If the operation was successful you will receive a List<Room>, or an [Error] informing you of what went wrong.
      */
     fun getJoinableRooms(callback: (Result<List<Room>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.getJoinableRooms() }, callback)
@@ -428,9 +440,13 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.usersForRoom(roomId) }, callback)
 
     /**
-     * Enables push notifications for the current user. The [callback] will be called with a [Result]
-     * when the operation is complete. If the operation was successful you will receive a [Unit],
-     * or an [Error] informing you of what went wrong.
+     * Enables push notifications for the current user. You can call this everytime a user connects successfully to Chatkit,
+     * a user can receive push notifications on up to 10 Android devices. However you should disable
+     * push notifications if you detect the user in a signed out state to ensure they don't accidentally receive further
+     * push notifications as per the [information here][https://pusher.com/docs/chatkit/guides/push_notifications/setup-android#disabling-push-notifications])
+     * To disable push notifications for the current user call `chatManager.disablePushNotifications {  }`
+     * The [callback] will be called with a [Result] when the operation is complete.
+     * If the operation was successful there is no value returned, or an [Error] informing you of what went wrong.
      */
     fun enablePushNotifications(callback: (Result<Unit, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.enablePushNotifications() }, callback)
