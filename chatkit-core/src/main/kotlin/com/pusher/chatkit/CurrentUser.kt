@@ -136,15 +136,17 @@ class CurrentUser(
 
     /**
      * Create a new room with:
-     * - [id] - optional - a uniquely identifying String, if not provided a randomly generated unique string will be created for you
-     * - [name] - a String to label the room
-     * - [pushNotificationTitleOverride] - optional - a string that appears on the push notification
+     *
+     * @param[id] optional - a uniquely identifying String, if not provided a randomly generated unique string will be created for you
+     * @param[name] a String to label the room
+     * @param[pushNotificationTitleOverride] optional - a string that appears on the push notification
      * title for this room; by default the title is the room name, or for rooms that just have two members the title
      * will be the other users name.
-     * - [isPrivate] - optional - a boolean to determine if the room is available for others to join, by default the room will be not be private
-     * - [customData] - optional - a [CustomData] object with any extra information you'd like to save with the new room e.g. mapOf("description" to "some extra description about the room")
-     * - [userIds] - optional - a list of the userIds of users who will be added to the room
-     * - [callback] - returns a [Result] with the [Room] if successful, or an [Error] letting you know what went wrong
+     * @param[isPrivate] optional - a boolean to determine if the room is available for others to join, by default the room will be not be private
+     * @param[customData] optional - a [CustomData] object with any extra information you'd like to save with the new room e.g. mapOf("description" to "some extra description about the room")
+     * @param[userIds] optional - a list of the userIds of users who will be added to the room
+     * @param[callback] returns a [Result] with the [Room] if successful, or an [Error] letting you know what went wrong
+
      */
     @JvmOverloads
     fun createRoom(
@@ -323,11 +325,11 @@ class CurrentUser(
 
     /**
      * Fetches multipart messages for a [roomId] from an optional message [initialId].
-     * - [roomId] - the room id you want to get messages for
-     * - [initialId] - optional - the message id for the [0] message, if no initialId is provided the [0] message is the last message sent to the room
-     * - [direction] - optional - the direction messages are ordered in the list, by default this is [Direction.OLDER_FIRST], alternatively you can request the messages in [Direction.NEWER_FIRST]
-     * - [limit] - optional - the number of messages you want to receive, by default this will be 10 messages.
-     * - [callback] - returns a [Result] with the [List<com.pusher.chatkit.messages.multipart.Message>] if successful, or an [Error] letting you know what went wrong
+     * @param[roomId] the room id you want to get messages for
+     * @param[initialId] optional - the message id for the [0] message, if no initialId is provided the [0] message is the last message sent to the room
+     * @param[direction] optional - the direction messages are ordered in the list, by default this is [Direction.OLDER_FIRST], alternatively you can request the messages in [Direction.NEWER_FIRST]
+     * @param[limit] optional - the number of messages you want to receive, by default this will be 10 messages.
+     * @param[callback] returns a [Result] with the [List<com.pusher.chatkit.messages.multipart.Message>] if successful, or an [Error] letting you know what went wrong
      */
     @JvmOverloads
     fun fetchMultipartMessages(
@@ -382,8 +384,11 @@ class CurrentUser(
      * The [callback] will be called with a [Result] when the operation is complete. If the
      * operation was successful you will receive an [Int] which contains the sent message id, or an
      * [Error] informing you of what went wrong.
+     *
      * e.g.
-     * //todo!
+     * `sendMultipartMessage(room, listOf(`
+     * `NewPart.Inline("hello world"),`
+     * `NewPart.Url("http://www.pusher.com", "text/plain")), callback = { })`
      */
     fun sendMultipartMessage(
             room: Room,
