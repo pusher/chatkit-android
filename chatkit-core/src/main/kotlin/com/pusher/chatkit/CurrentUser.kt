@@ -61,17 +61,16 @@ class CurrentUser(
     fun isSubscribedToRoom(room: Room): Boolean =
             syncCurrentUser.isSubscribedToRoom(room)
 
-    /**
-     * This is not intended to be used outside of the internal implementation.
-     */
+    @Deprecated("Not intended for to be used outside of internal implementation ")
     fun updateWithPropertiesOf(newUser: CurrentUser) =
             syncCurrentUser.updateWithPropertiesOf(newUser.syncCurrentUser)
 
     /**
      * Sets the read cursor for the current user in [room] to [position].
      * The [position] is the id of the last message that the current user has read.
-     * This will consequently notify any other connected users who have a [RoomListeners]
-     * set for [onNewReadCursor] to let them know the current user has read up to [position].
+     * Setting your read cursor will update your unread count for this room for the current user.
+     * This will additionally notify any other connected users who have a [RoomListeners]
+     * set for [onNewReadCursor] to let them know this current user has read up to [position].
      */
     fun setReadCursor(room: Room, position: Int) {
         Futures.schedule { syncCurrentUser.setReadCursor(room.id, position) }
@@ -115,7 +114,7 @@ class CurrentUser(
      * Make the users listed in [userIds] members of the room identified by [roomId]. This does not mean
      * the user(s) will see new messages immediately, it means the room will be in their list of rooms
      * and they will need to subscribe themselves to see any updates.
-     * Calling this method requires the current user to have the room:members:add role.
+     * Calling this method requires the current user to have the room:members:add permission.
      * The [callback] will be called with a [Result] when the
      * operation is complete. If the operation was successful there is no value returned, or an
      * [Error] informing you of what went wrong.
@@ -124,7 +123,9 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.addUsersToRoom(roomId, userIds) }, callback)
 
     /**
-     * Removes the [userIds] from the [roomId]. The [callback] will be called with a [Result] when the
+     * Removes the [userIds] from the room identified by [roomId].
+     * Calling this method requires the current user to have the room:members:remove permission.
+     * The [callback] will be called with a [Result] when the
      * operation is complete. If the operation was successful there is no value returned, or an
      * [Error] informing you of what went wrong.
      */
@@ -388,7 +389,7 @@ class CurrentUser(
      * e.g.
      * `sendMultipartMessage(room, listOf(`
      * `NewPart.Inline("hello world"),`
-     * `NewPart.Url("http://www.pusher.com", "text/plain")), callback = { })`
+     * `NewPart.Url("https://example.com/uploads/myphoto.png", "image/png") ), callback = { })`
      */
     fun sendMultipartMessage(
             room: Room,
@@ -421,9 +422,8 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.isTypingIn(roomId) }, callback)
 
     /**
-     * Get a list of the public rooms that you are not a member of yet. Not all fields in the room objects
-     * will be populated until you join and subscribe to them e.g. you will not be able to see the
-     * `memberUserIds`, until you subscribe to a room.
+     * Get a list of the public rooms that you are not a member of yet.
+     * The memberUserIds, unreadCount, and lastMessageId will not be populated until you join and subscribe to the room.
      * The [callback] will be called with a [Result] when the operation is complete.
      * If the operation was successful you will receive a List<Room>, or an [Error] informing you of what went wrong.
      */
@@ -445,11 +445,15 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.usersForRoom(roomId) }, callback)
 
     /**
-     * Enables push notifications for the current user. You can call this everytime a user connects successfully to Chatkit,
+     * Enables push notifications for the current user.
+     *
+     * You can call this every time a user connects successfully to Chatkit,
      * a user can receive push notifications on up to 10 Android devices. However you should disable
      * push notifications if you detect the user in a signed out state to ensure they don't accidentally receive further
-     * push notifications as per the [information here][https://pusher.com/docs/chatkit/guides/push_notifications/setup-android#disabling-push-notifications])
-     * To disable push notifications for the current user call `chatManager.disablePushNotifications {  }`
+     * push notifications. To disable push notifications for the current user call `chatManager.disablePushNotifications {  }`
+     * More information on this is available in our
+     * [docs][https://pusher.com/docs/chatkit/guides/push_notifications/setup-android#disabling-push-notifications])
+     *
      * The [callback] will be called with a [Result] when the operation is complete.
      * If the operation was successful there is no value returned, or an [Error] informing you of what went wrong.
      */
