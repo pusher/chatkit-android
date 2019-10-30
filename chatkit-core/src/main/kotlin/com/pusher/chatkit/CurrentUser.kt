@@ -111,9 +111,10 @@ class CurrentUser(
             syncCurrentUser.getReadCursor(room.id, user.id)
 
     /**
-     * Make the users listed in [userIds] members of the room identified by [roomId]. This does not mean
-     * the user(s) will see new messages immediately, it means the room will be in their list of rooms
-     * and they will need to subscribe themselves to see any updates.
+     * Make the users listed in [userIds] members of the room identified by [roomId].
+     * For any users currently only they will be notified with a [AddedToRoom] event and you will need to handle
+     * subscribing to the room to see any new messages sent to the room. The current users list of rooms
+     * will also be updated to include this room.
      * Calling this method requires the current user to have the room:members:add permission.
      * The [callback] will be called with a [Result] when the
      * operation is complete. If the operation was successful there is no value returned, or an
@@ -124,6 +125,9 @@ class CurrentUser(
 
     /**
      * Removes the [userIds] from the room identified by [roomId].
+     * For any users currently online they will be notified in the [RemovedFromRoom] event and you will need to
+     * handle how this is displayed in the UI to the user. The current users list of rooms will also be updated
+     * to remove this room.
      * Calling this method requires the current user to have the room:members:remove permission.
      * The [callback] will be called with a [Result] when the
      * operation is complete. If the operation was successful there is no value returned, or an
@@ -271,11 +275,14 @@ class CurrentUser(
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     /**
-     * Subscribe to a [room] for multipart messages. You need to configure the [listeners] to listen
-     * for the events you're interested in, for more information on what events are possible see the [docs][https://pusher.com/docs/chatkit/reference/android#chat-events]
-     * You can configure a [messageLimit] which returns the 10 messages that were most recently sent to the room,
+     * Subscribe to a [room] for messages. You need to configure the [listeners] to listen
+     * for the events you're interested in, for more information on what events are possible see the
+     * [docs][https://pusher.com/docs/chatkit/reference/android#chat-events]
+     * You can configure a [messageLimit] which returns the the requested number of messages that were most recently sent to the room,
+     * by default this is 10 messages,
      * each message will call the [onMultipartMessage] listener so you can determine how to display the message.
-     * Finally the [callback] will be called with a [Subscription] if the operation was successful.
+     * Finally the [callback] will be called with a [Subscription] if the operation was successful. You will need
+     * to use this subscription to `cancel()` when you no longer want to receive any new events in this room.
      */
     @JvmOverloads
     fun subscribeToRoomMultipart(
@@ -360,7 +367,10 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.sendMessage(roomId, messageText, attachment) }, callback)
 
     /**
-     * Send a [messageText] to the [roomId]. The [callback] will be called with a [Result] when the
+     * Send a [messageText] to the [roomId].
+     * This is a convenience method which will use the [sendMultipartMessage] which will send a single
+     * `NewPart.Inline([messageText])` to the [roomId].
+     * The [callback] will be called with a [Result] when the
      * operation is complete. If the operation was successful you will receive an [Int] which
      * contains the message id, or an [Error] informing you of what went wrong.
      */
@@ -388,7 +398,7 @@ class CurrentUser(
      *
      * e.g.
      * `sendMultipartMessage(room, listOf(`
-     * `NewPart.Inline("hello world"),`
+     * `NewPart.Inline("hello world", "text/plain"),`
      * `NewPart.Url("https://example.com/uploads/myphoto.png", "image/png") ), callback = { })`
      */
     fun sendMultipartMessage(
@@ -407,8 +417,9 @@ class CurrentUser(
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(roomId, parts) }, callback)
 
     /**
-     * Sets that the current user is typing in the [room]. You can send as many of these as you like,
-     * the SDK will handle rate limiting the requests. The [callback] will be called with a [Result]
+     * Sets that the current user is typing in the [room].
+     * you can call this as frequently as you like, the SDK will handle rate limiting the requests,
+     * e.g. on every keystroke. The [callback] will be called with a [Result]
      * when the operation is complete. If the operation was successful there is no value returned, or
      * an [Error] informing you of what went wrong.
      */
@@ -423,7 +434,9 @@ class CurrentUser(
 
     /**
      * Get a list of the public rooms that you are not a member of yet.
-     * The memberUserIds, unreadCount, and lastMessageId will not be populated until you join and subscribe to the room.
+     * The memberUserIds, unreadCount, and lastMessageId will not be populated as you are not yet subscribed to these rooms.
+     * The rooms returned here will not be updated to populate those properties when you do subscribe,
+     * instead you will receive a room object in the subscription event which will contain all these properties.
      * The [callback] will be called with a [Result] when the operation is complete.
      * If the operation was successful you will receive a List<Room>, or an [Error] informing you of what went wrong.
      */
