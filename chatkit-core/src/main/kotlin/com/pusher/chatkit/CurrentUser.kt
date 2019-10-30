@@ -112,8 +112,8 @@ class CurrentUser(
 
     /**
      * Make the users listed in [userIds] members of the room identified by [roomId].
-     * For any users currently only they will be notified with a [AddedToRoom] event and you will need to handle
-     * subscribing to the room to see any new messages sent to the room. The current users list of rooms
+     * For any users currently online they will be notified with a [AddedToRoom] event and they will need to handle
+     * subscribing to the room to see any new messages sent to the room. Added users rooms list
      * will also be updated to include this room.
      * Calling this method requires the current user to have the room:members:add permission.
      * The [callback] will be called with a [Result] when the
@@ -125,8 +125,8 @@ class CurrentUser(
 
     /**
      * Removes the [userIds] from the room identified by [roomId].
-     * For any users currently online they will be notified in the [RemovedFromRoom] event and you will need to
-     * handle how this is displayed in the UI to the user. The current users list of rooms will also be updated
+     * For any users currently online they will be notified in the [RemovedFromRoom] event and they will need to
+     * handle how this is displayed in the UI to the user. Removed users rooms list will also be updated
      * to remove this room.
      * Calling this method requires the current user to have the room:members:remove permission.
      * The [callback] will be called with a [Result] when the
