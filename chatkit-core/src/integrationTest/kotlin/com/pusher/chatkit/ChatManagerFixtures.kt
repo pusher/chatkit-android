@@ -58,6 +58,9 @@ class TestChatkitDependencies(
 val SynchronousCurrentUser.generalRoom
     get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 
+val SynchronousCurrentUser.notGeneralRoom
+    get() = rooms.find { it.name == Rooms.NOT_GENERAL } ?: error("Could not find room named: not general")
+
 private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
 
 fun chatFor(userName: String) = SynchronousChatManager(

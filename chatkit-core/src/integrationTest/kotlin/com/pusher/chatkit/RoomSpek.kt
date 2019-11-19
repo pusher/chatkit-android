@@ -734,5 +734,29 @@ class RoomSpek : Spek({
             assertThat(latchCompleted).isTrue()
             assertThat(superUser.generalRoom.customData).isEqualTo(customDataUpdateTwo)
         }
+
+        it ("rooms should have their own unread counts") {
+            setUpInstanceWith(createDefaultRole(),
+                    newUsers(ALICE, PUSHERINO),
+                    newRoom(GENERAL, ALICE, PUSHERINO),
+                    newRoom(NOT_GENERAL, ALICE, PUSHERINO))
+
+            //connect as alice
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+
+            //alice sends 2 messages to general
+            alice.sendSimpleMessage(alice.generalRoom, "general1")
+            alice.sendSimpleMessage(alice.generalRoom, "general2")
+
+            //alice sends 3 messages to not_general
+            alice.sendSimpleMessage(alice.notGeneralRoom, "notGeneral1")
+            alice.sendSimpleMessage(alice.notGeneralRoom, "notGeneral2")
+            alice.sendSimpleMessage(alice.notGeneralRoom, "notGeneral3")
+
+            //assert that pusherino sees different unread counts for the rooms
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            assertThat(pusherino.generalRoom.unreadCount).isEqualTo(2)
+            assertThat(pusherino.notGeneralRoom.unreadCount).isEqualTo(3)
+        }
     }
 })
