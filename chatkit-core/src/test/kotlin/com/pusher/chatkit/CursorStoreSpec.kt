@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.cursors.CursorsStore
+import com.pusher.chatkit.users.ReadStateApiType
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.jetbrains.spek.api.Spek
@@ -58,10 +59,10 @@ class CursorStoreSpec : Spek({
 
         on("receiving subsequent InitialState events from user subscription") {
             val events = subject.applyEvent(UserSubscriptionEvent.InitialState(
-                    cursors = listOf(
-                            Cursor("callum", "1", 1, "2017-11-29T16:59:58Z"),
-                            Cursor("callum", "2", 3, "2017-11-29T16:59:59Z"),
-                            Cursor("callum", "3", 4, "2017-11-29T16:59:59Z")
+                    readStates = listOf(
+                            ReadStateApiType("1", 0, Cursor("callum", "1", 1, "2017-11-29T16:59:58Z")),
+                            ReadStateApiType("2", 0, Cursor("callum", "2", 3, "2017-11-29T16:59:59Z")),
+                            ReadStateApiType("3", 0, Cursor("callum", "3", 4, "2017-11-29T16:59:59Z"))
                     ),
                     currentUser = User("myuser", "", "", null, null, null),
                     rooms = listOf()

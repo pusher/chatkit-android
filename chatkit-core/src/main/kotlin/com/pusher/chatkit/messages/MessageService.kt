@@ -22,7 +22,7 @@ import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 
 internal class MessageService(
-        private val v2client: PlatformClient,
+        private val legacyV2client: PlatformClient,
         private val client: PlatformClient,
         private val userService: UserService,
         private val roomService: RoomService,
@@ -36,7 +36,7 @@ internal class MessageService(
             direction: Direction
     ): Result<List<Message>, Error> =
             fetchMessagesParams(limit, initialId, direction).let { params ->
-                v2client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
+                legacyV2client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
                     messages.map { message ->
                         userService.fetchUserBy(message.userId).map { user ->
                             message.user = user
@@ -180,7 +180,7 @@ internal class MessageService(
             MessageRequest(text, attachment.takeIf { it !== AttachmentBody.None })
                     .toJson()
                     .flatMap { body ->
-                        v2client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                        legacyV2client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
                     }.map {
                         it.messageId
                     }
