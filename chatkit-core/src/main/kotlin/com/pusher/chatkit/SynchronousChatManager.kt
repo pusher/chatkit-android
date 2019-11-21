@@ -34,8 +34,8 @@ class SynchronousChatManager constructor(
     )
 
     private val logger = dependencies.logger
-    private val v2chatkitClient = createPlatformClient(InstanceType.SERVER_V2)
-    private val chatkitClient = createPlatformClient(InstanceType.SERVER_V6)
+    private val coreLegacyV2Client = createPlatformClient(InstanceType.CORE_LEGACY_V2)
+    private val coreClient = createPlatformClient(InstanceType.CORE)
     private val cursorsClient = createPlatformClient(InstanceType.CURSORS)
     private val presenceClient = createPlatformClient(InstanceType.PRESENCE)
     private val filesClient = createPlatformClient(InstanceType.FILES)
@@ -47,7 +47,7 @@ class SynchronousChatManager constructor(
 
     private val eventConsumers = mutableListOf<ChatManagerEventConsumer>()
 
-    private val urlRefresher = UrlRefresher(chatkitClient)
+    private val urlRefresher = UrlRefresher(coreClient)
 
     internal val cursorService = CursorService(cursorsClient, logger)
 
@@ -61,12 +61,12 @@ class SynchronousChatManager constructor(
                     consumer = this::consumePresenceSubscriptionEvent
             )
 
-    internal val userService = UserService(chatkitClient, presenceService)
+    internal val userService = UserService(coreClient, presenceService)
 
     internal val roomService =
             RoomService(
-                    v2chatkitClient,
-                    chatkitClient,
+                    coreLegacyV2Client,
+                    coreClient,
                     urlRefresher,
                     userService,
                     cursorService,
@@ -75,8 +75,8 @@ class SynchronousChatManager constructor(
             )
 
     internal val messageService = MessageService(
-            v2chatkitClient,
-            chatkitClient,
+            coreLegacyV2Client,
+            coreClient,
             userService,
             roomService,
             urlRefresher,
@@ -131,7 +131,7 @@ class SynchronousChatManager constructor(
 
         userSubscription = UserSubscription(
                 userId = userId,
-                client = chatkitClient,
+                client = coreClient,
                 listeners = ::consumeUserSubscriptionEvent,
                 logger = logger
         )
@@ -251,7 +251,7 @@ class SynchronousChatManager constructor(
                 name = initialState.currentUser.name,
                 chatManager = this,
                 pushNotifications = beams,
-                client = createPlatformClient(InstanceType.SERVER_V6)
+                client = createPlatformClient(InstanceType.CORE)
         )
 
     /**
@@ -297,8 +297,8 @@ class SynchronousChatManager constructor(
 }
 
 internal enum class InstanceType(val serviceName: String, val version: String = "v1") {
-    SERVER_V2("chatkit", "v2"),
-    SERVER_V6("chatkit", "v6"),
+    CORE_LEGACY_V2("chatkit", "v2"),
+    CORE("chatkit", "v7"),
     CURSORS("chatkit_cursors", "v2"),
     PRESENCE("chatkit_presence", "v2"),
     FILES("chatkit_files"),

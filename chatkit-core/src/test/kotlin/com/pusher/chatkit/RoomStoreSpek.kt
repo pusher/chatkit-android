@@ -46,7 +46,7 @@ class RoomStoreSpek : Spek({
                             simpleRoom("8", "eight", false, null),
                             simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated"))
                     ),
-                    cursors = listOf(),
+                    readStates = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )
 
@@ -107,7 +107,7 @@ class RoomStoreSpek : Spek({
 
             val replacementState = UserSubscriptionEvent.InitialState(
                     rooms = listOf(roomOneUpdated, roomTwoNew),
-                    cursors = listOf(),
+                    readStates = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z",
                             "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
             )

@@ -9,9 +9,14 @@ typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 sealed class UserSubscriptionEvent {
     internal data class InitialState(
             val rooms: List<Room>,
-            val cursors: List<Cursor>,
+            val readStates: List<ReadStateApiType>,
             val currentUser: User
-    ) : UserSubscriptionEvent()
+    ) : UserSubscriptionEvent() {
+        val cursors : List<Cursor>
+            get() = readStates.filter { it.cursor != null }
+                              .map { it.cursor!! }
+
+    }
     internal data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
     internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()

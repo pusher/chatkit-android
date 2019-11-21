@@ -9,7 +9,6 @@ import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -31,7 +30,7 @@ sealed class RoomPushNotificationTitle {
 }
 
 internal class RoomService(
-        private val v2client: PlatformClient,
+        private val legacyV2client: PlatformClient,
         private val client: PlatformClient,
         private val urlRefresher: UrlRefresher,
         private val userService: UserService,
@@ -89,7 +88,7 @@ internal class RoomService(
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
-            v2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
+            legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
                         roomStore -= roomId
                         roomId
@@ -144,7 +143,7 @@ internal class RoomService(
             unsafeConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription =
-            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v2client, RoomSubscriptionEventParserV2)
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
 
     fun subscribeToRoomMultipart(
             roomId: String,
