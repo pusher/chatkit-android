@@ -28,7 +28,7 @@ class CursorsStore {
         this += cursors
     }
 
-    fun applyEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
+    internal fun applyEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
                     integrateCursors(event.cursors).map(UserSubscriptionEvent::NewCursor)
