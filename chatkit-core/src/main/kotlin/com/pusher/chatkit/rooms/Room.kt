@@ -37,15 +37,17 @@ data class Room(
         memberUserIds().addAll(userIds)
     }
 
-    override fun equals(other: Any?) = (other is Room) && other.id == this.id
+    override fun equals(other: Any?) = (other is Room) && id == other.id
 
     override fun hashCode(): Int { return id.hashCode() }
 
-    fun deepEquals(room: Room) =
-            room.name == this.name &&
-                    room.pushNotificationTitleOverride == this.pushNotificationTitleOverride &&
-                    room.customData == this.customData &&
-                    room.isPrivate == this.isPrivate
+    fun deepEquals(other: Room) =
+            name == other.name &&
+                    pushNotificationTitleOverride == other.pushNotificationTitleOverride &&
+                    customData == other.customData &&
+                    isPrivate == other.isPrivate  &&
+                    unreadCount == other.unreadCount &&
+                    lastMessageAt == other.lastMessageAt
 
     fun withUnreadCount(unreadCount: Int) =
         Room(id, createdById, name, pushNotificationTitleOverride, isPrivate, customData,
