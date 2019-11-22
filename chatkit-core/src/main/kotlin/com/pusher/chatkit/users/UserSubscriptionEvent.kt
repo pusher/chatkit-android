@@ -1,5 +1,6 @@
 package com.pusher.chatkit.users
 
+import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.Room
 
@@ -7,16 +8,38 @@ import com.pusher.chatkit.rooms.Room
 typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 
 sealed class UserSubscriptionEvent {
+
     internal data class InitialState(
-            val rooms: List<Room>,
+            @SerializedName("rooms") private var _rooms: List<Room>,
             val readStates: List<ReadStateApiType>,
             val currentUser: User
     ) : UserSubscriptionEvent() {
-        val cursors : List<Cursor>
+
+        val cursors: List<Cursor>
             get() = readStates.filter { it.cursor != null }
-                              .map { it.cursor!! }
+                    .map { it.cursor!! }
+
+        val rooms: List<Room>
+            get() {
+                if (!populatedRoomUnreadCounts) {
+                    _rooms = _rooms.map { room ->
+                        Pair(room, readStates.find { readState -> room.id == readState.roomId })
+                    }.map { (room, readState) ->
+                        if (readState != null) {
+                            room.withUnreadCount(readState.unreadCount)
+                        } else {
+                            room
+                        }
+                    }
+                    populatedRoomUnreadCounts = true
+                }
+                return _rooms
+            }
+
+        private var populatedRoomUnreadCounts = false
 
     }
+
     internal data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
     internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
