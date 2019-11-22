@@ -1,5 +1,6 @@
 package com.pusher.chatkit.cursors
 
+import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.util.dateFormat
 import java.util.*
 
@@ -8,5 +9,5 @@ data class Cursor(
         val roomId: String,
         val position: Int,
         val updatedAt: String = dateFormat.format(Date()),
-        val type: Int = 0
+        @SerializedName("cursor_type") val type: Int = 0
 )
