@@ -15,7 +15,7 @@ data class Room(
         val lastMessageAt: String?,
         val createdAt: String,
         var updatedAt: String,
-        var deletedAt: String
+        var deletedAt: String?
 ) {
     @SerializedName("member_user_ids")
     private var _memberUserIds: MutableSet<String>? = null
@@ -46,4 +46,9 @@ data class Room(
                     room.pushNotificationTitleOverride == this.pushNotificationTitleOverride &&
                     room.customData == this.customData &&
                     room.isPrivate == this.isPrivate
+
+    fun withUnreadCount(unreadCount: Int) =
+        Room(id, createdById, name, pushNotificationTitleOverride, isPrivate, customData,
+                unreadCount, lastMessageAt, createdAt, updatedAt, deletedAt)
+
 }
