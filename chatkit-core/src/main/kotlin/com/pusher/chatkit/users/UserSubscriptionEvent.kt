@@ -5,9 +5,9 @@ import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.Room
 
 
-typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
+internal typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 
-sealed class UserSubscriptionEvent {
+internal sealed class UserSubscriptionEvent {
 
     internal data class InitialState(
             @SerializedName("rooms") private var _rooms: List<Room>,

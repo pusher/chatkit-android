@@ -88,11 +88,11 @@ class CursorService(
             logger = logger
     )
 
-    fun applyEvent(event: CursorSubscriptionEvent) =
-            cursorsStore.applyEvent(event).map(::enrichEvent)
-
-    fun applyEvent(event: UserSubscriptionEvent) =
+    internal fun applyEvent(event: UserSubscriptionEvent) =
             cursorsStore.applyEvent(event)
+
+    private fun applyEvent(event: CursorSubscriptionEvent) =
+            cursorsStore.applyEvent(event).map(::enrichEvent)
 
     private fun enrichEvent(event: CursorSubscriptionEvent): ChatEvent =
             when (event) {
