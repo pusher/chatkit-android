@@ -36,7 +36,7 @@ class RoomStoreSpek : Spek({
             subject.initialiseContents(initialState)
 
             val replacementState = UserSubscriptionEvent.InitialState(
-                    rooms = listOf(
+                    _rooms = listOf(
                             simpleRoom("1", "one", false, null),
                             simpleRoom("3", "three", true, null),
                             simpleRoom("4", "four", false, mapOf("set" to "now")),
@@ -106,7 +106,7 @@ class RoomStoreSpek : Spek({
             val roomTwoNew = simpleRoom("2", "wasn't there before", false, null)
 
             val replacementState = UserSubscriptionEvent.InitialState(
-                    rooms = listOf(roomOneUpdated, roomTwoNew),
+                    _rooms = listOf(roomOneUpdated, roomTwoNew),
                     readStates = listOf(),
                     currentUser = User("viv", "2017-04-13T14:10:04Z",
                             "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))

@@ -65,7 +65,7 @@ class CursorStoreSpec : Spek({
                             ReadStateApiType("3", 0, Cursor("callum", "3", 4, "2017-11-29T16:59:59Z"))
                     ),
                     currentUser = User("myuser", "", "", null, null, null),
-                    rooms = listOf()
+                    _rooms = listOf()
 
             ))
 
