@@ -32,7 +32,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
-import elements.Error as ElementsError
+import java.util.concurrent.atomic.AtomicInteger
 
 class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -145,16 +145,33 @@ class ChatManagerSpek : Spek({
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
             superUser.sendSimpleMessage(superUser.generalRoom, "message1").assumeSuccess()
 
-            var updatedEvent by FutureValue<ChatEvent.RoomUpdated>()
+            var roomUpdatedEvent1 by FutureValue<ChatEvent.RoomUpdated>()
+            var roomUpdatedEvent2 by FutureValue<ChatEvent.RoomUpdated>()
+            val roomUpdatedEventCounter = AtomicInteger()
             val user = chatFor(PUSHERINO).connect { event ->
-                if (event is ChatEvent.RoomUpdated) updatedEvent = event
+                if (event is ChatEvent.RoomUpdated) {
+                    val roomUpdatedEventCount = roomUpdatedEventCounter.getAndIncrement()
+                    if (roomUpdatedEventCount == 0) {
+                        roomUpdatedEvent1 = event
+                    } else if (roomUpdatedEventCount == 1) {
+                        roomUpdatedEvent2 = event
+                    }
+                }
             }.assumeSuccess()
 
             superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
 
-            assertThat(updatedEvent.room.unreadCount).isEqualTo(2)
+            assertThat(roomUpdatedEvent1.room.unreadCount).isEqualTo(1)
+            assertThat(roomUpdatedEvent1.room.lastMessageAt).isNotEmpty()
+
+            assertThat(roomUpdatedEvent2.room.unreadCount).isEqualTo(2)
+            assertThat(roomUpdatedEvent2.room.lastMessageAt).isAtLeast(
+                       roomUpdatedEvent1.room.lastMessageAt)
+
+            assertThat(roomUpdatedEventCounter.get()).isEqualTo(2)
+
             assertThat(user.rooms[0].unreadCount).isEqualTo(2)
-            assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
+            assertThat(user.rooms[0].lastMessageAt).isEqualTo(roomUpdatedEvent2.room.lastMessageAt)
         }
 
         it("loads users related to current user") {

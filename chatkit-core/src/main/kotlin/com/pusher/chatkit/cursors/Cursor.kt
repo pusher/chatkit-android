@@ -10,4 +10,6 @@ data class Cursor(
         val position: Int,
         val updatedAt: String = dateFormat.format(Date()),
         @SerializedName("cursor_type") val type: Int = 0
-)
+) {
+    fun matches(other : Cursor) = userId == other.userId && roomId == other.roomId
+}

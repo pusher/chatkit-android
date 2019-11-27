@@ -22,6 +22,8 @@ internal sealed class UserSubscriptionEvent {
         val rooms: List<Room>
             get() {
                 if (!populatedRoomUnreadCounts) {
+                    // TODO: copy readStates to a local sorted list and remove on each
+                    //  find for better perf and also clarity (1 read state corresponds to 1 room)
                     _rooms = _rooms.map { room ->
                         Pair(room, readStates.find { readState -> room.id == readState.roomId })
                     }.map { (room, readState) ->
@@ -44,6 +46,6 @@ internal sealed class UserSubscriptionEvent {
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
     internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
     internal data class RoomDeletedEvent(val roomId: String) : UserSubscriptionEvent()
-    internal data class NewCursor(val cursor: Cursor) : UserSubscriptionEvent()
+    internal data class ReadStateUpdatedEvent(val readState: ReadStateApiType) : UserSubscriptionEvent()
     internal data class ErrorOccurred(val error: elements.Error) : UserSubscriptionEvent()
 }

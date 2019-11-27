@@ -50,36 +50,42 @@ class CursorStoreSpec : Spek({
     given("another cursor store") {
         val subject = CursorsStore()
 
-        subject.initialiseContents(
-                listOf(
-                        Cursor("callum", "1", 1, "2017-11-29T16:59:58Z"),
-                        Cursor("callum", "2", 2, "2017-11-29T16:59:58Z")
-                )
-        )
+        val constantRoom1Cursor = Cursor("callum", "1", 1, "2017-11-29T16:59:58Z")
+        val initialRoom2Cursor = Cursor("callum", "2", 2, "2017-11-29T16:59:58Z")
+
+        subject.initialiseContents(listOf(
+                constantRoom1Cursor,
+                initialRoom2Cursor
+        ))
 
         on("receiving subsequent InitialState events from user subscription") {
+
+            val newRoom2Cursor = Cursor("callum", "2", 3, "2017-11-29T16:59:59Z")
+            val newRoom3Cursor = Cursor("callum", "3", 4, "2017-11-29T16:59:59Z")
+
             val events = subject.applyEvent(UserSubscriptionEvent.InitialState(
                     readStates = listOf(
-                            ReadStateApiType("1", 0, Cursor("callum", "1", 1, "2017-11-29T16:59:58Z")),
-                            ReadStateApiType("2", 0, Cursor("callum", "2", 3, "2017-11-29T16:59:59Z")),
-                            ReadStateApiType("3", 0, Cursor("callum", "3", 4, "2017-11-29T16:59:59Z"))
+                            ReadStateApiType("1", 0, constantRoom1Cursor),
+                            ReadStateApiType("2", 0, newRoom2Cursor),
+                            ReadStateApiType("3", 0, newRoom3Cursor)
                     ),
-                    currentUser = User("myuser", "", "", null, null, null),
-                    _rooms = listOf()
-
+                    currentUser = User("callum", "", "", null, null, null),
+                    _rooms = listOf() // normally would be there but not needed for this test
             ))
 
             it("should emit events describing the difference in state") {
                 assertThat(events).containsExactly(
-                        UserSubscriptionEvent.NewCursor(Cursor("callum", "2", 3, "2017-11-29T16:59:59Z")),
-                        UserSubscriptionEvent.NewCursor(Cursor("callum", "3", 4, "2017-11-29T16:59:59Z"))
+                        UserSubscriptionEvent.ReadStateUpdatedEvent(
+                                ReadStateApiType("2", 0, newRoom2Cursor)),
+                        UserSubscriptionEvent.ReadStateUpdatedEvent(
+                                ReadStateApiType("3", 0, newRoom3Cursor))
                 )
             }
 
             it("should update the contents of the store") {
-                assertThat(subject["callum"]["1"]).isEqualTo(Cursor("callum", "1", 1, "2017-11-29T16:59:58Z"))
-                assertThat(subject["callum"]["2"]).isEqualTo(Cursor("callum", "2", 3, "2017-11-29T16:59:59Z"))
-                assertThat(subject["callum"]["3"]).isEqualTo(Cursor("callum", "3", 4, "2017-11-29T16:59:59Z"))
+                assertThat(subject["callum"]["1"]).isEqualTo(constantRoom1Cursor)
+                assertThat(subject["callum"]["2"]).isEqualTo(newRoom2Cursor)
+                assertThat(subject["callum"]["3"]).isEqualTo(newRoom3Cursor)
             }
         }
     }

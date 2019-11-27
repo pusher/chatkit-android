@@ -17,11 +17,13 @@ data class Room(
         var updatedAt: String,
         var deletedAt: String?
 ) {
+    // TODO: make the property val and part of the data class generated copy fun
     @SerializedName("member_user_ids")
     private var _memberUserIds: MutableSet<String>? = null
     val memberUserIds: Set<String>
         get() = memberUserIds()
 
+    // TODO: remove? (bug hiding potential comes in initial state and should always remain there)
     private fun memberUserIds(): MutableSet<String> = _memberUserIds
             ?: mutableSetOf<String>().also { _memberUserIds = it }
 

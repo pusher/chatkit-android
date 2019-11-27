@@ -31,13 +31,23 @@ class CursorsStore {
     internal fun applyEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
-                    integrateCursors(event.cursors).map(UserSubscriptionEvent::NewCursor)
-                is UserSubscriptionEvent.NewCursor ->
-                    integrateCursors(listOf(event.cursor)).map(UserSubscriptionEvent::NewCursor)
+                    integrateCursors(event.cursors)
+                            .map { cursor -> findCorrespondingReadState(event, cursor) }
+                            .map(UserSubscriptionEvent::ReadStateUpdatedEvent)
+                is UserSubscriptionEvent.ReadStateUpdatedEvent ->
+                    if (event.readState.cursor != null) {
+                        integrateCursors(listOf(event.readState.cursor))
+                                .map { UserSubscriptionEvent.ReadStateUpdatedEvent(event.readState) }
+                    } else {
+                        listOf()
+                    }
                 else ->
-                    // Do not "apply" events which don't relate to cursors
                     listOf()
             }
+
+    private fun findCorrespondingReadState(event: UserSubscriptionEvent.InitialState,
+                                           cursor: Cursor) =
+            event.readStates.find { it.cursor?.matches(cursor) ?: false }!!
 
     fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
             when (event) {
