@@ -29,6 +29,7 @@ import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -87,17 +88,35 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, ALICE, PUSHERINO))
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
-            val originalCount = alice.generalRoom.unreadCount!!
 
-            var updatedCount by FutureValue<Int>()
+            var roomUpdatedEvent1 by FutureValue<RoomEvent.RoomUpdated>()
+            var roomUpdatedEvent2 by FutureValue<RoomEvent.RoomUpdated>()
+            val roomUpdatedEventCounter = AtomicInteger()
             alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
-                if (event is RoomEvent.RoomUpdated) updatedCount = event.room.unreadCount!!
+                if (event is RoomEvent.RoomUpdated) {
+                    val roomUpdatedEventCount = roomUpdatedEventCounter.getAndIncrement()
+                    if (roomUpdatedEventCount == 0) {
+                        roomUpdatedEvent1 = event
+                    } else if (roomUpdatedEventCount == 1) {
+                        roomUpdatedEvent2 = event
+                    }
+                }
             }
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
-            assertThat(updatedCount).isEqualTo(originalCount + 1)
+            assertThat(roomUpdatedEvent1.room.unreadCount).isEqualTo(0)
+            assertThat(roomUpdatedEvent1.room.lastMessageAt).isNotEmpty()
+
+            assertThat(roomUpdatedEvent2.room.unreadCount).isEqualTo(1)
+            assertThat(roomUpdatedEvent2.room.lastMessageAt).isAtLeast(
+                       roomUpdatedEvent1.room.lastMessageAt)
+
+            assertThat(roomUpdatedEventCounter.get()).isEqualTo(2)
+
+            assertThat(alice.rooms[0].unreadCount).isEqualTo(1)
+            assertThat(alice.rooms[0].lastMessageAt).isEqualTo(roomUpdatedEvent2.room.lastMessageAt)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
@@ -413,8 +432,11 @@ class RoomSpek : Spek({
             roomUpdated.await()
             assertThat(superUser.generalRoom.name).isEqualTo(GENERAL)
             assertThat(superUser.generalRoom.isPrivate).isEqualTo(false)
-            assertThat(superUser.generalRoom.customData).isEqualTo(newCustomData)
 
+            // FIXME: flaky, should use FutureValue for both users to wait for RoomUpdated event,
+            //  also the assertions inside the callback above won't fail the test correctly
+            //  but make it hang on the latch (callbacks are run also on internal thread)
+            assertThat(superUser.generalRoom.customData).isEqualTo(newCustomData)
         }
 
         it("updates existing room customData") {

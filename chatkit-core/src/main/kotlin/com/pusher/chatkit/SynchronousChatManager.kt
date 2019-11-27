@@ -191,8 +191,14 @@ class SynchronousChatManager constructor(
                     ChatEvent.RoomUpdated(event.room)
                 is UserSubscriptionEvent.RoomDeletedEvent ->
                     ChatEvent.RoomDeleted(event.roomId)
-                is UserSubscriptionEvent.NewCursor ->
-                    ChatEvent.NewReadCursor(event.cursor)
+                is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
+                    val receivedCursor = event.readState.cursor
+                    if (receivedCursor != null) {
+                        ChatEvent.NewReadCursor(receivedCursor)
+                    } else {
+                        ChatEvent.RoomUpdated(roomService.roomStore[event.readState.roomId]!!)
+                    }
+                }
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatEvent.ErrorOccurred(event.error)
                 is UserSubscriptionEvent.InitialState ->
