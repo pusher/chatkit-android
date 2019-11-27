@@ -3,7 +3,6 @@ package com.pusher.chatkit.rooms
 import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class RoomStore(
         private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
@@ -80,17 +79,35 @@ internal class RoomStore(
                     listOf(event) + removedFrom + addedTo + updated
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent ->
+                    // TODO: should add membership change processing or is handled by user_joined_room event? (ask Callum)
                     listOf(event.also {
                         this += event.room
                     })
-                is UserSubscriptionEvent.RoomUpdatedEvent ->
-                    listOf(event.also {
-                        //memberUserIDs are not populated in Rooms we have just deserialised from the
-                        // server because we receive them separately via membership subscriptions,
-                        // so we must copy the set we have been tracking on our previous instance
-                        // of the Room on to this new instance
-                        event.room.addAllUsers(roomsMap[event.room.id]?.memberUserIds.orEmpty())
-                        this += event.room})
+                is UserSubscriptionEvent.RoomUpdatedEvent -> {
+                    var newRoom = event.room
+                    val knownRoom = roomsMap[newRoom.id]!!
+                    // we don't get unread count and members with this event
+                    newRoom.addAllUsers(knownRoom.memberUserIds)
+                    if (knownRoom.unreadCount != null) {
+                        newRoom = newRoom.withUnreadCount(knownRoom.unreadCount)
+                    }
+                    this += newRoom
+                    listOf(UserSubscriptionEvent.RoomUpdatedEvent(newRoom))
+                }
+                is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
+                    var room = roomsMap[event.readState.roomId]!!
+                    room = room.withUnreadCount(event.readState.unreadCount)
+                    this += room
+
+                    // Returning a copy with no cursor so that the returned applied event is
+                    // not translated to NewReadCursor but to RoomUpdated ChatEvent.
+                    // That is the relevant event from the perspective of this store.
+                    // The ChatEvent.NewReadCursor will be translated
+                    // into if CursorStore updates applying ReadStateUpdatedEvent and
+                    // returning it with the cursor.
+                    val eventWithNoCursor = event.copy(event.readState.copy(cursor = null))
+                    listOf(eventWithNoCursor)
+                }
                 is UserSubscriptionEvent.RoomDeletedEvent ->
                     listOf(event.also { this -= event.roomId })
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
