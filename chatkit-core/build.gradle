@@ -36,7 +36,9 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        includeEngines 'spek', 'spek2'
+    }
 }
 
 sourceCompatibility = '1.7'

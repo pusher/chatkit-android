@@ -61,8 +61,9 @@ internal class RoomStore(
                         knownRooms.contains(it)
                     }.onEach {
                         this += it
-                    }.map {
-                        UserSubscriptionEvent.AddedToRoomEvent(it)
+                    }.map { room ->
+                        UserSubscriptionEvent.AddedToRoomEvent(room,
+                                event.readStates.find { it.roomId == room.id }!!)
                     }
 
                     val updated = event.rooms.filter { nr ->
@@ -79,7 +80,6 @@ internal class RoomStore(
                     listOf(event) + removedFrom + addedTo + updated
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent ->
-                    // TODO: should add membership change processing or is handled by user_joined_room event? (ask Callum)
                     listOf(event.also {
                         this += event.room
                     })
