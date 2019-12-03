@@ -1,5 +1,6 @@
 package com.pusher.chatkit.cursors
 
+import com.pusher.chatkit.users.ReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
 
@@ -35,15 +36,19 @@ class CursorsStore {
                             .map { cursor -> findCorrespondingReadState(event, cursor) }
                             .map(UserSubscriptionEvent::ReadStateUpdatedEvent)
                 is UserSubscriptionEvent.ReadStateUpdatedEvent ->
-                    if (event.readState.cursor != null) {
-                        integrateCursors(listOf(event.readState.cursor))
-                                .map { UserSubscriptionEvent.ReadStateUpdatedEvent(event.readState) }
-                    } else {
-                        listOf()
-                    }
-                // TODO: add handling of AddedToRoomEvent
+                    applyReadState(event.readState)
+                is UserSubscriptionEvent.AddedToRoomEvent ->
+                    applyReadState(event.readState)
                 else ->
                     listOf()
+            }
+
+    private fun applyReadState(readState: ReadStateApiType) : List<UserSubscriptionEvent> =
+            if (readState.cursor != null) {
+                integrateCursors(listOf(readState.cursor))
+                        .map { UserSubscriptionEvent.ReadStateUpdatedEvent(readState) }
+            } else {
+                listOf()
             }
 
     private fun findCorrespondingReadState(event: UserSubscriptionEvent.InitialState,
