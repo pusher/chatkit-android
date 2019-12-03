@@ -22,10 +22,20 @@ internal sealed class UserSubscriptionEvent {
         val rooms: List<Room>
             get() {
                 if (!populatedRoomUnreadCounts) {
-                    // TODO: copy readStates to a local sorted list and remove on each
-                    //  find for better perf and also clarity (1 read state corresponds to 1 room)
+                    val readStateRoomId2PositionMap : MutableMap<String, Int> =
+                            readStates.mapIndexed { index, readState -> Pair(readState, index) }
+                                    .associateTo(HashMap(readStates.size)) { (readState, index) ->
+                                        Pair(readState.roomId, index)
+                                    }
+
                     _rooms = _rooms.map { room ->
-                        Pair(room, readStates.find { readState -> room.id == readState.roomId })
+                        val readStatePosition : Int? = readStateRoomId2PositionMap.remove(room.id)
+                        val readState = if (readStatePosition != null) {
+                            readStates[readStatePosition]
+                        } else {
+                            null
+                        }
+                        Pair(room, readState)
                     }.map { (room, readState) ->
                         if (readState != null) {
                             room.withUnreadCount(readState.unreadCount)
@@ -42,7 +52,16 @@ internal sealed class UserSubscriptionEvent {
 
     }
 
-    internal data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
+    internal data class AddedToRoomEvent(
+            @SerializedName("room") private var _room: Room,
+            val readState: ReadStateApiType
+    ) : UserSubscriptionEvent() {
+
+        val room : Room
+            get() = _room.withUnreadCount(readState.unreadCount)
+
+    }
+
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
     internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
     internal data class RoomDeletedEvent(val roomId: String) : UserSubscriptionEvent()
