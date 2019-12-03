@@ -41,6 +41,7 @@ class CursorsStore {
                     } else {
                         listOf()
                     }
+                // TODO: add handling of AddedToRoomEvent
                 else ->
                     listOf()
             }
