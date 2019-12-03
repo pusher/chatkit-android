@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.8.1...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.8.2...HEAD)
+
+## [1.8.2](https://github.com/pusher/chatkit-android/compare/v1.8.1...v1.8.2)
+
+### Changed
+
+- Updated the Pusher Beams dependency to 1.5.1.
+
+
+### Added
+
+- The capability to allow Beams to work in the same app as Chatkit.
 
 ## [1.8.1](https://github.com/pusher/chatkit-android/compare/v1.8.0...v1.8.1)
 

@@ -9,7 +9,7 @@ import com.pusher.pushnotifications.PusherCallbackError
 import com.pusher.pushnotifications.auth.TokenProvider
 import com.pusher.util.Result
 import elements.Error
-import com.pusher.pushnotifications.PushNotifications as Beams
+import com.pusher.pushnotifications.PushNotificationsInstance as BeamsInstance
 
 // Implementation of `PushNotifications` interface using Pusher Beams!
 class BeamsPushNotifications(
@@ -22,10 +22,11 @@ class BeamsPushNotifications(
         override fun fetchToken(userId: String): String =
                 beamsTokenProviderService.fetchToken(userId)
     }
+    private val pushNotificationsInstance = BeamsInstance(context, instanceId)
 
     override fun start(): Result<Unit, Error> {
         return try {
-            Beams.start(context, instanceId)
+            pushNotificationsInstance.start()
             Result.success(Unit)
         } catch (ex: ClassNotFoundException) {
             Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))
@@ -37,7 +38,7 @@ class BeamsPushNotifications(
     override fun setUserId(userId: String): Result<Unit, Error> {
         val f = FutureValue<Result<Unit, Error>>()
         try {
-            Beams.setUserId(userId, tokenProvider, object : BeamsCallback<Void, PusherCallbackError> {
+            pushNotificationsInstance.setUserId(userId, tokenProvider, object : BeamsCallback<Void, PusherCallbackError> {
                 override fun onFailure(error: PusherCallbackError) {
                     f.set(Result.failure(elements.OtherError(error.message, error.cause)))
                 }
@@ -57,7 +58,7 @@ class BeamsPushNotifications(
 
     override fun stop(): Result<Unit, Error> {
         try {
-            Beams.stop()
+            pushNotificationsInstance.stop()
         } catch (ex: ClassNotFoundException) {
             return Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))
         } catch (ex: Throwable) {
