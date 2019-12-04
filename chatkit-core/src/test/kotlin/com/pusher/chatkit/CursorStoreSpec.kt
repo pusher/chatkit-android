@@ -70,7 +70,8 @@ class CursorStoreSpec : Spek({
                             ReadStateApiType("3", 0, newRoom3Cursor)
                     ),
                     currentUser = User("callum", "", "", null, null, null),
-                    _rooms = listOf() // normally would be there but not needed for this test
+                    _rooms = listOf(), // normally would be there but not needed for this test
+                    memberships = listOf() // ditto
             ))
 
             it("should emit events describing the difference in state") {

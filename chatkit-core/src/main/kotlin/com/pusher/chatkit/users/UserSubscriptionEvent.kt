@@ -10,14 +10,11 @@ internal typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 internal sealed class UserSubscriptionEvent {
 
     internal data class InitialState(
+            val currentUser: User,
             @SerializedName("rooms") private var _rooms: List<Room>,
             val readStates: List<ReadStateApiType>,
-            val currentUser: User
+            val memberships: List<RoomMembershipApiType>
     ) : UserSubscriptionEvent() {
-
-        val cursors: List<Cursor>
-            get() = readStates.filter { it.cursor != null }
-                    .map { it.cursor!! }
 
         val rooms: List<Room>
             get() {
@@ -47,8 +44,11 @@ internal sealed class UserSubscriptionEvent {
                 }
                 return _rooms
             }
-
         private var populatedRoomUnreadCounts = false
+
+        val cursors: List<Cursor>
+            get() = readStates.filter { it.cursor != null }
+                    .map { it.cursor!! }
 
     }
 
@@ -68,3 +68,11 @@ internal sealed class UserSubscriptionEvent {
     internal data class ReadStateUpdatedEvent(val readState: ReadStateApiType) : UserSubscriptionEvent()
     internal data class ErrorOccurred(val error: elements.Error) : UserSubscriptionEvent()
 }
+
+internal data class ReadStateApiType(
+        val roomId: String,
+        val unreadCount: Int,
+        val cursor: Cursor?
+)
+
+internal data class RoomMembershipApiType(val roomId: String, val userIds: List<String>)

@@ -53,6 +53,8 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
             unreadCountChangedForRoom10 = ReadStateApiType("10", 101, null)
 
             replacementState = UserSubscriptionEvent.InitialState(
+                    currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z",
+                            "Vivan", null, mapOf("email" to "vivan@pusher.com")),
                     _rooms = listOf(
                             roomOneUnchanged,
                             simpleRoom("3", "three", true, null),
@@ -65,7 +67,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                             simpleRoom("10", "ten", false, null)
                     ),
                     readStates = readStates.values + readStateForAddedRoom + unreadCountChangedForRoom10,
-                    currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
+                    memberships = listOf() // normally would be there but not needed for this test
             )
             replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
         }
@@ -124,10 +126,11 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
             val roomOneUpdated = simpleRoom("1", "new", true, null)
             val roomTwoNew = simpleRoom("2", "wasn't there before", false, null)
             val replacementState = UserSubscriptionEvent.InitialState(
+                    currentUser = User("viv", "2017-04-13T14:10:04Z",
+                            "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com")),
                     _rooms = listOf(roomOneUpdated, roomTwoNew),
                     readStates = listOf(roomOneReadState, ReadStateApiType("2", 0, null)),
-                    currentUser = User("viv", "2017-04-13T14:10:04Z",
-                            "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com"))
+                    memberships = listOf() // normally would be there but not needed for this test
             )
             replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
         }
