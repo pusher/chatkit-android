@@ -2,66 +2,54 @@ package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
+import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState
+import com.pusher.util.Result
+import elements.Error
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object UserSubscriptionEventParserSpec : Spek({
-    describe("parsing added to room example event from the docs") {
+    describe("when parsing initial state example event from the docs") {
+        lateinit var result : Result<UserSubscriptionEvent, Error>
 
-        val result = UserSubscriptionEventParser(ADDED_TO_ROOM_EVENT_DOCS_JSON)
+        beforeEachTest {
+            result = UserSubscriptionEventParser(readTestJson("initial_state-docs"))
+        }
 
-        it("room will have unread count relayed from read state") {
+        // TODO: add tests around other bits like unread counts, cursors etc
+
+        it("then result's memberships will contain valid information") {
+            val initialStateEvent = result.successOrThrow() as InitialState
+
+            val membership = initialStateEvent.memberships
+
+            assertThat(membership.size).isEqualTo(2)
+
+            assertThat(membership[0].roomId).isEqualTo("cool-room-1")
+            assertThat(membership[0].userIds.size).isEqualTo(2)
+            assertThat(membership[0].userIds[0]).isEqualTo("jean")
+            assertThat(membership[0].userIds[1]).isEqualTo("ham")
+
+            assertThat(membership[1].roomId).isEqualTo("party-room")
+            assertThat(membership[1].userIds.size).isEqualTo(1)
+            assertThat(membership[1].userIds[0]).isEqualTo("ham")
+        }
+
+    }
+    describe("when parsing added to room example event from the docs") {
+        lateinit var result : Result<UserSubscriptionEvent, Error>
+
+        beforeEachTest {
+            result = UserSubscriptionEventParser(readTestJson("added_to_room-docs"))
+        }
+
+        it("then result's room will have unread count relayed from read state") {
             val addedToRoomEvent = result.successOrThrow() as AddedToRoomEvent
             assertThat(addedToRoomEvent.room.unreadCount).isEqualTo(15)
         }
 
     }
-})
 
-private const val ADDED_TO_ROOM_EVENT_DOCS_JSON = """
-    {
-      "event_name": "added_to_room",
-      "data": {
-        "room": {
-          "id": "cool-room-2",
-          "created_by_id": "ham",
-          "name": "mycoolroom",
-          "push_notification_title_override": null,
-          "private": false,
-          "custom_data": {
-            "something": "interesting"
-          },
-          "last_message_at": "2017-04-14T14:00:42Z",
-          "created_at": "2017-03-23T11:36:42Z",
-          "updated_at": "2017-03-23T11:36:42Z",
-          "deleted_at": null
-        },
-        "memberships": [
-          {
-            "room_id": "cool-room-1",
-            "user_ids": ["jean", "ham"]
-          },
-          {
-            "room_id": "cool-room-2",
-            "user_ids": ["ham"]
-          },
-          {
-            "room_id": "party-room",
-            "user_ids": ["viv", "ham"]
-          }
-        ],
-        "read_state": {
-          "room_id": "cool-room-2",
-          "unread_count": 15,
-          "cursor": {
-            "room_id": "cool-room-2",
-            "user_id": "viv",
-            "cursor_type": 0,
-            "position": 123654,
-            "updated_at": "2017-04-13T14:10:04Z"
-          }
-        }
-      },
-      "timestamp": "2017-04-14T14:00:42Z"
-    }
-"""
+    // TODO: add other cases (JSONSs), e.g. for more read states, null cursor, etc
+
+})
