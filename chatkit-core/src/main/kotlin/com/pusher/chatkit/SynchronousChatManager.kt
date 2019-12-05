@@ -183,6 +183,8 @@ class SynchronousChatManager constructor(
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
             when (event) {
+                is UserSubscriptionEvent.InitialState ->
+                    ChatEvent.NoEvent // This is emitted specially on connect
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     ChatEvent.AddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
@@ -199,10 +201,12 @@ class SynchronousChatManager constructor(
                         ChatEvent.RoomUpdated(roomService.roomStore[event.readState.roomId]!!)
                     }
                 }
+                is UserSubscriptionEvent.UserJoinedRoomEvent ->
+                    ChatEvent.NoEvent // TODO: need userId -> user enrichment
+                is UserSubscriptionEvent.UserLeftRoomEvent ->
+                    ChatEvent.NoEvent // TODO: ditto
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatEvent.ErrorOccurred(event.error)
-                is UserSubscriptionEvent.InitialState ->
-                    ChatEvent.NoEvent // This is emitted specially on connect
             }
 
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
