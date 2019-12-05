@@ -5,6 +5,7 @@ import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.ReadStateApiType
+import com.pusher.chatkit.users.RoomMembershipApiType
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.junit.Assert.fail
@@ -15,11 +16,13 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
     val subject by memoized { RoomStore() }
 
     describe("on receiving new InitialState from user's subscription") {
-        lateinit var addedRoom6 : Room
-        lateinit var readStateForAddedRoom : ReadStateApiType
-        lateinit var unreadCountChangedForRoom10 : ReadStateApiType
-        lateinit var replacementState : UserSubscriptionEvent.InitialState
-        lateinit var replacementEvents : List<UserSubscriptionEvent>
+        lateinit var addedRoom6: Room
+        lateinit var readStateForAddedRoom6: ReadStateApiType
+
+        lateinit var unreadCountChangedForRoom10: ReadStateApiType
+
+        lateinit var replacementState: UserSubscriptionEvent.InitialState
+        lateinit var replacementEvents: List<UserSubscriptionEvent>
 
         @Suppress("MapGetWithNotNullAssertionOperator")
         beforeEachTest {
@@ -48,9 +51,12 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
             subject.initialiseContents(initialState)
 
             addedRoom6 = simpleRoom("6", "size", false, null)
-            readStateForAddedRoom = ReadStateApiType(addedRoom6.id, 66, null)
+            readStateForAddedRoom6 = ReadStateApiType(addedRoom6.id, 66, null)
 
             unreadCountChangedForRoom10 = ReadStateApiType("10", 101, null)
+
+            // TODO: add membership change related test (best breaking those tests so that
+            //  each test actually tests only one thing)
 
             replacementState = UserSubscriptionEvent.InitialState(
                     currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z",
@@ -66,8 +72,18 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                             simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated")),
                             simpleRoom("10", "ten", false, null)
                     ),
-                    readStates = readStates.values + readStateForAddedRoom + unreadCountChangedForRoom10,
-                    memberships = listOf() // normally would be there but not needed for this test
+                    readStates = readStates.values + readStateForAddedRoom6 + unreadCountChangedForRoom10,
+                    memberships = listOf(
+                        RoomMembershipApiType("1", listOf("viv")),
+                        RoomMembershipApiType("3", listOf("viv")),
+                        RoomMembershipApiType("4", listOf("viv")),
+                        RoomMembershipApiType("5", listOf("viv")),
+                        RoomMembershipApiType("6", listOf("viv")),
+                        RoomMembershipApiType("7", listOf("viv")),
+                        RoomMembershipApiType("8", listOf("viv")),
+                        RoomMembershipApiType("9", listOf("viv")),
+                        RoomMembershipApiType("10", listOf("viv"))
+                    )
             )
             replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
         }
@@ -78,7 +94,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("3", "three", true, null, 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("4", "four", false, mapOf("set" to "now"), 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("5", "5ive", false, null, 0)),
-                    UserSubscriptionEvent.AddedToRoomEvent(addedRoom6, readStateForAddedRoom),
+                    UserSubscriptionEvent.AddedToRoomEvent(addedRoom6, readStateForAddedRoom6, RoomMembershipApiType("6", listOf("viv"))),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data", "third" to "field"), 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("8", "eight", false, null, 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated"), 0)),
@@ -130,7 +146,10 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                             "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com")),
                     _rooms = listOf(roomOneUpdated, roomTwoNew),
                     readStates = listOf(roomOneReadState, ReadStateApiType("2", 0, null)),
-                    memberships = listOf() // normally would be there but not needed for this test
+                    memberships = listOf(
+                            RoomMembershipApiType("1", listOf("viv")),
+                            RoomMembershipApiType("2", listOf("viv"))
+                    )
             )
             replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
         }
@@ -159,7 +178,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
     // TODO: make the tests here have common reused and meaningful given part and clear separation
     //  between given and when parts
     describe("on receiving new InitialState from room membership subscription") {
-        lateinit var events : List<MembershipSubscriptionEvent>
+        lateinit var events: List<MembershipSubscriptionEvent>
 
         beforeEachTest {
             val room = simpleRoom("1", "one", false, null)

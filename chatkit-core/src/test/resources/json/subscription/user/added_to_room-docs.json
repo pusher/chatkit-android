@@ -15,20 +15,10 @@
       "updated_at": "2017-03-23T11:36:42Z",
       "deleted_at": null
     },
-    "memberships": [
-      {
-        "room_id": "cool-room-1",
-        "user_ids": ["jean", "ham"]
-      },
-      {
+    "memberships": {
         "room_id": "cool-room-2",
         "user_ids": ["ham"]
-      },
-      {
-        "room_id": "party-room",
-        "user_ids": ["viv", "ham"]
-      }
-    ],
+    },
     "read_state": {
       "room_id": "cool-room-2",
       "unread_count": 15,

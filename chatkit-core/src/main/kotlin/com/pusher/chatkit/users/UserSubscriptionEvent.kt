@@ -13,7 +13,7 @@ internal sealed class UserSubscriptionEvent {
             val currentUser: User,
             @SerializedName("rooms") private var _rooms: List<Room>,
             val readStates: List<ReadStateApiType>,
-            val memberships: List<RoomMembershipApiType>
+            val memberships: List<RoomMembershipApiType> // TODO: make priv and relay via room
     ) : UserSubscriptionEvent() {
 
         val rooms: List<Room>
@@ -54,7 +54,8 @@ internal sealed class UserSubscriptionEvent {
 
     internal data class AddedToRoomEvent(
             @SerializedName("room") private var _room: Room,
-            val readState: ReadStateApiType
+            val readState: ReadStateApiType,
+            val memberships: RoomMembershipApiType // TODO: make priv and relay via room
     ) : UserSubscriptionEvent() {
 
         val room : Room
