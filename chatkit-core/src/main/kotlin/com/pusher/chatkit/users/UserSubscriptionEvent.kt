@@ -64,9 +64,22 @@ internal sealed class UserSubscriptionEvent {
     }
 
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
+
     internal data class RoomUpdatedEvent(val room: Room) : UserSubscriptionEvent()
+
     internal data class RoomDeletedEvent(val roomId: String) : UserSubscriptionEvent()
-    internal data class ReadStateUpdatedEvent(val readState: ReadStateApiType) : UserSubscriptionEvent()
+
+    internal data class ReadStateUpdatedEvent(
+            val readState: ReadStateApiType) : UserSubscriptionEvent()
+
+    internal data class UserJoinedRoomEvent(
+            val userId: String,
+            val roomId: String) : UserSubscriptionEvent()
+
+    internal data class UserLeftRoomEvent(
+            val userId: String,
+            val roomId: String) : UserSubscriptionEvent()
+
     internal data class ErrorOccurred(val error: elements.Error) : UserSubscriptionEvent()
 }
 

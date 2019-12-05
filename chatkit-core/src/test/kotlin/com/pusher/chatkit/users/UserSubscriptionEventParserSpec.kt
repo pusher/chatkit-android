@@ -1,8 +1,7 @@
 package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState
+import com.pusher.chatkit.users.UserSubscriptionEvent.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -43,6 +42,24 @@ object UserSubscriptionEventParserSpec : Spek({
             assertThat(membership.userIds[0]).isEqualTo("ham")
         }
 
+    }
+    describe("when parsing user joined room example event from the docs") {
+        val userJoinedRoomEvent = UserSubscriptionEventParser(readTestJson("user_joined_room-docs"))
+                .successOrThrow() as UserJoinedRoomEvent
+
+        it("then result will have valid user/room IDs") {
+            assertThat(userJoinedRoomEvent.userId).isEqualTo("xavier")
+            assertThat(userJoinedRoomEvent.roomId).isEqualTo("cool-room-1")
+        }
+    }
+    describe("when parsing user left room example event from the docs") {
+        val userJoinedRoomEvent = UserSubscriptionEventParser(readTestJson("user_left_room-docs"))
+                .successOrThrow() as UserLeftRoomEvent
+
+        it("then result will have valid user/room IDs") {
+            assertThat(userJoinedRoomEvent.userId).isEqualTo("xavier")
+            assertThat(userJoinedRoomEvent.roomId).isEqualTo("cool-room-1")
+        }
     }
 
     // TODO: add other cases (JSONSs), e.g. for more read states, null cursor, etc
