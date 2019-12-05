@@ -63,7 +63,8 @@ internal class RoomStore(
                         this += it
                     }.map { room ->
                         UserSubscriptionEvent.AddedToRoomEvent(room,
-                                event.readStates.find { it.roomId == room.id }!!)
+                                event.readStates.find { it.roomId == room.id }!!,
+                                event.memberships.find { it.roomId == room.id }!!)
                     }
 
                     val updated = event.rooms.filter { nr ->
