@@ -104,21 +104,26 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
         }
 
         it("will update the room store") {
-            val roomStoreContents = subject.toList().sortedBy { it.id.toInt() }
+            val actualRooms = subject.toList().sortedBy { it.id.toInt() }
 
-            assertThat(roomStoreContents).hasSize(9)
+            assertThat(actualRooms).hasSize(9)
 
-            val differences = roomStoreContents.zip(listOf(
+            val expectedRooms = listOf(
                     simpleRoom("1", "one", false, null, 11),
                     simpleRoom("3", "three", true, null, 33),
                     simpleRoom("4", "four", false, mapOf("set" to "now"), 44),
                     simpleRoom("5", "5ive", false, null, 55),
-                    addedRoom6.withUnreadCount(66),
+                    addedRoom6.copy(unreadCount = 66),
                     simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data", "third" to "field"), 77),
                     simpleRoom("8", "eight", false, null, 88),
                     simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated"), 99),
                     simpleRoom("10", "ten", false, null, 101)
-            )).filterNot { (l, r) -> l.deepEquals(r) }
+            )
+
+            val differences = actualRooms.zip(expectedRooms)
+                    .filterNot { (a, e) -> a.deepEquals(e) }
+                    .onEach { (a, e) ->
+                        System.err.println("Not matching room, actual:\n$a\nexpected:\n$e") }
 
             assertThat(differences).isEmpty()
         }
@@ -147,7 +152,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                     _rooms = listOf(roomOneUpdated, roomTwoNew),
                     readStates = listOf(roomOneReadState, ReadStateApiType("2", 0, null)),
                     memberships = listOf(
-                            RoomMembershipApiType("1", listOf("viv")),
+                            RoomMembershipApiType("1", listOf("viv", "mike")),
                             RoomMembershipApiType("2", listOf("viv"))
                     )
             )
@@ -165,7 +170,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                     }
                     is UserSubscriptionEvent.AddedToRoomEvent -> {
                         assertThat(event.room.name).isEqualTo("wasn't there before")
-                        assertThat(event.room.memberUserIds.size).isEqualTo(0)
+                        assertThat(event.room.memberUserIds).containsExactly("viv")
                     }
                     is UserSubscriptionEvent.InitialState -> {}
                     else -> fail()
@@ -182,7 +187,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
 
         beforeEachTest {
             val room = simpleRoom("1", "one", false, null)
-            setOf("callum", "mike", "alice").forEach { room.addUser(it) }
+                    .copy(memberUserIds = setOf("callum", "mike", "alice"))
 
             subject += room
 

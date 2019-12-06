@@ -72,7 +72,6 @@ internal class RoomStore(
                             kr == nr && !kr.deepEquals(nr)
                         }
                     }.onEach {
-                        it.addAllUsers(roomsMap[it.id]?.memberUserIds.orEmpty())
                         this += it
                     }.map {
                         UserSubscriptionEvent.RoomUpdatedEvent(it)
@@ -88,16 +87,17 @@ internal class RoomStore(
                     var newRoom = event.room
                     val knownRoom = roomsMap[newRoom.id]!!
                     // we don't get unread count and members with this event
-                    newRoom.addAllUsers(knownRoom.memberUserIds)
+                    newRoom = newRoom.copy(memberUserIds = knownRoom.memberUserIds)
                     if (knownRoom.unreadCount != null) {
-                        newRoom = newRoom.withUnreadCount(knownRoom.unreadCount)
+                        // we only get unread counts in initial state for 1000 rooms
+                        newRoom = newRoom.copy(unreadCount = knownRoom.unreadCount)
                     }
                     this += newRoom
                     listOf(UserSubscriptionEvent.RoomUpdatedEvent(newRoom))
                 }
                 is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
                     var room = roomsMap[event.readState.roomId]!!
-                    room = room.withUnreadCount(event.readState.unreadCount)
+                    room = room.copy(unreadCount = event.readState.unreadCount)
                     this += room
 
                     // Returning a copy with no cursor so that the returned applied event is
@@ -136,8 +136,9 @@ internal class RoomStore(
             }.also { events ->
                 events.forEach { event ->
                     when (event) {
-                        is MembershipSubscriptionEvent.UserJoined -> this[roomId]?.addUser(event.userId)
-                        is MembershipSubscriptionEvent.UserLeft -> this[roomId]?.removeUser(event.userId)
+                        // TODO: now that comes within user's subscription
+//                        is MembershipSubscriptionEvent.UserJoined -> this[roomId]?.addUser(event.userId)
+//                        is MembershipSubscriptionEvent.UserLeft -> this[roomId]?.removeUser(event.userId)
                     }
                 }
             }
