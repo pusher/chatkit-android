@@ -15,29 +15,9 @@ data class Room(
         val lastMessageAt: String?,
         val createdAt: String,
         var updatedAt: String,
-        var deletedAt: String?
+        var deletedAt: String?,
+        val memberUserIds: Set<String>
 ) {
-    // TODO: make the property val and part of the data class generated copy fun
-    @SerializedName("member_user_ids")
-    private var _memberUserIds: MutableSet<String>? = null
-    val memberUserIds: Set<String>
-        get() = memberUserIds()
-
-    // TODO: remove? (bug hiding potential comes in initial state and should always remain there)
-    private fun memberUserIds(): MutableSet<String> = _memberUserIds
-            ?: mutableSetOf<String>().also { _memberUserIds = it }
-
-    internal fun removeUser(userId: String) {
-        memberUserIds() -= userId
-    }
-
-    internal fun addUser(userId: String) {
-        memberUserIds() += userId
-    }
-
-    internal fun addAllUsers(userIds: Set<String>) {
-        memberUserIds().addAll(userIds)
-    }
 
     override fun equals(other: Any?) = (other is Room) && id == other.id
 
@@ -50,9 +30,5 @@ data class Room(
                     isPrivate == other.isPrivate  &&
                     unreadCount == other.unreadCount &&
                     lastMessageAt == other.lastMessageAt
-
-    fun withUnreadCount(unreadCount: Int) =
-        Room(id, createdById, name, pushNotificationTitleOverride, isPrivate, customData,
-                unreadCount, lastMessageAt, createdAt, updatedAt, deletedAt)
 
 }
