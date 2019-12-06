@@ -29,6 +29,7 @@ import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class RoomSpek : Spek({
@@ -689,34 +690,36 @@ class RoomSpek : Spek({
 
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, PUSHERINO, SUPER_USER))
 
-            var usersJoined = 0
-            var roomUpdated = CountDownLatch(1)
-            val memberJoinedRoom = CountDownLatch(1)
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            var roomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
+
+            val userJoined = AtomicBoolean(false)
+            var userJoinedEvent by FutureValue<RoomEvent.UserJoined>()
 
             superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
                 when (event) {
+                    is RoomEvent.RoomUpdated -> roomUpdatedEvent = event
                     is RoomEvent.UserJoined -> {
-                        usersJoined++
-                        memberJoinedRoom.countDown()
-                    }
-                    is RoomEvent.RoomUpdated -> {
-                        roomUpdated.countDown()
+                        userJoinedEvent = event
+                        userJoined.set(true)
                     }
                 }
             }
 
             //do something else to ensure that no user joined events were actually fired
             superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
-            roomUpdated.await()
-            assertThat(usersJoined).isEqualTo(0)
-            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) // super user doesn't count as a user
+
+            assertThat(roomUpdatedEvent.room.customData).containsExactly("key", "data")
+            assertThat(userJoined.get()).isEqualTo(false)
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             //ensure that one new user did join and calls the UserJoined event
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE))
-            memberJoinedRoom.await()
-            assertThat(usersJoined).isEqualTo(1)
 
+            assertThat(userJoinedEvent.user.id).isEqualTo(ALICE)
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(3)
+            assertThat(userJoined.get()).isEqualTo(true)
         }
 
         it("room updated callback should be called after setting a read cursor") {

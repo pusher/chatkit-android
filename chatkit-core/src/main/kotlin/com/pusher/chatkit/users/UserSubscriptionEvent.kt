@@ -32,10 +32,12 @@ internal sealed class UserSubscriptionEvent {
                         } else {
                             null
                         }
-                        Pair(room, readState)
-                    }.map { (room, readState) ->
+                        val memberIds = memberships.find { it.roomId == room.id }!!.userIds.toSet() // TODO: perf
+                        Triple(room, readState, memberIds)
+                    }.map { (room, readState, memberIds) ->
                         if (readState != null) {
-                            room.withUnreadCount(readState.unreadCount)
+                            room.copy(unreadCount = readState.unreadCount,
+                                    memberUserIds = memberIds)
                         } else {
                             room
                         }
@@ -59,7 +61,8 @@ internal sealed class UserSubscriptionEvent {
     ) : UserSubscriptionEvent() {
 
         val room : Room
-            get() = _room.withUnreadCount(readState.unreadCount)
+            get() = _room.copy(unreadCount = readState.unreadCount,
+                    memberUserIds = memberships.userIds.toSet())
 
     }
 
