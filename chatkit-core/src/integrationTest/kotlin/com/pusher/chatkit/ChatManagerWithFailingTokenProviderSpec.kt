@@ -13,7 +13,6 @@ import com.pusher.util.Result
 import elements.Error
 import elements.Errors
 import elements.emptyHeaders
-import org.junit.Assert.fail
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.lang.Thread.sleep
@@ -55,12 +54,9 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
             }
 
             it("then the connection result indicates and contains the correct error") {
-                val connectionResult = futureConnectionResult.get()
-                if (connectionResult is Result.Failure) {
-                    val connectionError = connectionResult.error
-                    assertThat(connectionError).isEqualTo(tokenProviderError)
-                } else {
-                    fail("not true that $connectionResult is failure")
+                assertThat(futureConnectionResult.get()).apply {
+                    isInstanceOf(Result.Failure::class.java)
+                    isEqualTo(Result.failure<String, Error>(tokenProviderError))
                 }
             }
             it("then no events are notified") {
