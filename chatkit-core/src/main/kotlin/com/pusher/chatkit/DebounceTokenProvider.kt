@@ -13,6 +13,13 @@ internal class DebounceTokenProvider(private val original: TokenProvider) : Toke
     private var pending: Future<Result<String, Error>>? = null
 
     override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = synchronized(this) {
+        val initialPendingSnapshot = pending
+        if (initialPendingSnapshot != null &&
+                (initialPendingSnapshot.isDone || initialPendingSnapshot.isCancelled)) {
+
+            pending = null
+        }
+
         pending ?: original.fetchToken(tokenParams).also { pending = it }
     }
 

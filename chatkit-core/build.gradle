@@ -21,8 +21,13 @@ dependencies {
 
     testImplementation "org.mockito:mockito-inline:$mockito_version"
     testImplementation 'com.google.truth:truth:0.40'
-    testImplementation 'org.jetbrains.spek:spek-api:1.1.5'
-    testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
+
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
+    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
+
+    testImplementation "org.jetbrains.spek:spek-api:$legacy_spek_version"
+    testImplementation "org.jetbrains.spek:spek-junit-platform-engine:$legacy_spek_version"
+
     testImplementation 'org.junit.platform:junit-platform-runner:1.1.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.3'
     testImplementation "com.auth0:java-jwt:3.3.0"
@@ -46,7 +51,7 @@ junitPlatform {
     details 'tree'
     filters {
         engines {
-            include 'junit-jupiter', 'spek'
+            include 'junit-jupiter', 'spek', 'spek2'
         }
     }
 }

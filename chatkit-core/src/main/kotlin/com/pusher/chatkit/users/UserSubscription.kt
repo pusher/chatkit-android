@@ -18,6 +18,11 @@ internal class UserSubscription(
         logger: Logger,
         private val listeners: UserSubscriptionConsumer
 ) : Subscription {
+
+    private val initialized = AtomicBoolean(false)
+
+    private val initialState: FutureValue<Result<UserSubscriptionEvent.InitialState, Error>> = FutureValue()
+
     private val subscription = loggingSubscription(
             client = client,
             path = "users",
@@ -29,9 +34,6 @@ internal class UserSubscription(
             description = "User $userId",
             logger = logger
     )
-
-    private val initialized = AtomicBoolean(false)
-    private val initialState: FutureValue<Result<UserSubscriptionEvent.InitialState, Error>> = FutureValue()
 
     private fun consumeEvent(event: UserSubscriptionEvent) {
         if (event is UserSubscriptionEvent.InitialState
