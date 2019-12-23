@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.ReadStateApiType
@@ -36,17 +35,17 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                     "8" to ReadStateApiType("8", 88, null),
                     "9" to ReadStateApiType("9", 99, null)
             )
-            val roomOneUnchanged = simpleRoom("1", "one", false, null, readStates["1"]!!.unreadCount)
+            val roomOneUnchanged = simpleRoom("1", "one", false, null, readStates["1"]!!.unreadCount, setOf("viv"))
             val initialState = listOf(
                     roomOneUnchanged,
-                    simpleRoom("2", "two", false, null, readStates["2"]!!.unreadCount),
-                    simpleRoom("3", "three", false, null, readStates["3"]!!.unreadCount),
-                    simpleRoom("4", "four", false, null, readStates["4"]!!.unreadCount),
-                    simpleRoom("5", "five", false, null, readStates["5"]!!.unreadCount),
-                    simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data"), readStates["7"]!!.unreadCount),
-                    simpleRoom("8", "eight", false, mapOf("pre" to "set"), readStates["8"]!!.unreadCount),
-                    simpleRoom("9", "nine", false, mapOf("pre" to "set"), readStates["9"]!!.unreadCount),
-                    simpleRoom("10", "ten", false, null, 100) // unread count will change here
+                    simpleRoom("2", "two", false, null, readStates["2"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("3", "three", false, null, readStates["3"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("4", "four", false, null, readStates["4"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("5", "five", false, null, readStates["5"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data"), readStates["7"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("8", "eight", false, mapOf("pre" to "set"), readStates["8"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("9", "nine", false, mapOf("pre" to "set"), readStates["9"]!!.unreadCount, setOf("viv")),
+                    simpleRoom("10", "ten", false, null, 100, setOf("viv")) // unread count will change here
             )
             subject.initialiseContents(initialState)
 
@@ -134,15 +133,10 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
 
         beforeEachTest {
             val roomOneReadState = ReadStateApiType("1", 0, null)
-            val roomOne = simpleRoom("1", "one", true, null, roomOneReadState.unreadCount)
+            val roomOne = simpleRoom("1", "one", true, null, roomOneReadState.unreadCount,
+                    setOf("viv", "mike"))
             val initialState = listOf(roomOne)
             subject.initialiseContents(initialState)
-            subject.applyMembershipEvent(
-                    "1",
-                    MembershipSubscriptionEvent.InitialState(
-                            listOf("viv", "mike")
-                    )
-            )
 
             val roomOneUpdated = simpleRoom("1", "new", true, null)
             val roomTwoNew = simpleRoom("2", "wasn't there before", false, null)
@@ -159,7 +153,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
             replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
         }
 
-        it ("will emit only relevant events") {
+        it ("will emit expected events") {
             assertThat(replacementEvents).hasSize(3)
 
             for (event in replacementEvents) {
@@ -179,34 +173,40 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
         }
     }
 
-    // TODO: adjust as in v7 it's part of user sub
     // TODO: make the tests here have common reused and meaningful given part and clear separation
     //  between given and when parts
-    describe("on receiving new InitialState from room membership subscription") {
-        lateinit var events: List<MembershipSubscriptionEvent>
+    describe("on receiving new InitialState with one joined and one left user") {
+        val room = simpleRoom("1", "one", false, null,
+                unreadCount = 0,
+                memberUserIds =  setOf("callum", "mike", "alice"))
+        val initialState = UserSubscriptionEvent.InitialState(
+                currentUser = User("viv", "2017-04-13T14:10:04Z",
+                        "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com")),
+                _rooms = listOf(room),
+                readStates = listOf(ReadStateApiType("1", 0, null)),
+                memberships = listOf(
+                        RoomMembershipApiType("1", listOf("mike", "callum", "bob"))
+                )
+        )
+
+        lateinit var events: List<UserSubscriptionEvent>
 
         beforeEachTest {
-            val room = simpleRoom("1", "one", false, null)
-                    .copy(memberUserIds = setOf("callum", "mike", "alice"))
-
             subject += room
-
-            events = subject.applyMembershipEvent(
-                    room.id,
-                    MembershipSubscriptionEvent.InitialState(listOf("mike", "callum", "bob"))
-            )
+            events = subject.applyUserSubscriptionEvent(initialState)
         }
 
-        it("will emit the correct events") {
+        it("will emit expected events") {
             assertThat(events).containsExactly(
-                    MembershipSubscriptionEvent.UserJoined("bob"),
-                    MembershipSubscriptionEvent.UserLeft("alice")
+                    initialState,
+                    UserSubscriptionEvent.UserJoinedRoomEvent("bob", "1"),
+                    UserSubscriptionEvent.UserLeftRoomEvent("alice", "1")
             )
         }
-
-        it("will update the room membership") {
+        it("will update the store") {
             assertThat(subject["1"]!!.memberUserIds).containsExactly("mike", "callum", "bob")
         }
     }
+
 })
 
