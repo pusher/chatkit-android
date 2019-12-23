@@ -46,6 +46,7 @@ internal class RoomStore(
             event: UserSubscriptionEvent
     ): List<UserSubscriptionEvent> =
             when (event) {
+                // TODO: extract well named funs with clear responsibility
                 is UserSubscriptionEvent.InitialState -> {
                     val knownRooms = this.toList()
 
