@@ -31,4 +31,8 @@ data class Room(
                     unreadCount == other.unreadCount &&
                     lastMessageAt == other.lastMessageAt
 
+    fun withAddedMember(addedMemberId: String) = copy(memberUserIds = memberUserIds + addedMemberId)
+
+    fun withLeftMember(leftMemberId: String) = copy(memberUserIds = memberUserIds - leftMemberId)
+
 }

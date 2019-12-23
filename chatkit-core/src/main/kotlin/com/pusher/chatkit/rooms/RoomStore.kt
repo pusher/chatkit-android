@@ -1,6 +1,5 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import java.util.concurrent.ConcurrentHashMap
 
@@ -49,13 +48,6 @@ internal class RoomStore(
             when (event) {
                 is UserSubscriptionEvent.InitialState -> {
                     val knownRooms = this.toList()
-                    val removedFrom = knownRooms.filterNot {
-                        event.rooms.contains(it)
-                    }.onEach {
-                        this -= it
-                    }.map {
-                        UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
-                    }
 
                     val addedTo = event.rooms.filterNot {
                         knownRooms.contains(it)
@@ -65,6 +57,14 @@ internal class RoomStore(
                         UserSubscriptionEvent.AddedToRoomEvent(room,
                                 event.readStates.find { it.roomId == room.id }!!,
                                 event.memberships.find { it.roomId == room.id }!!)
+                    }
+
+                    val removedFrom = knownRooms.filterNot {
+                        event.rooms.contains(it)
+                    }.onEach {
+                        this -= it
+                    }.map {
+                        UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
                     }
 
                     val updated = event.rooms.filter { nr ->
@@ -77,7 +77,31 @@ internal class RoomStore(
                         UserSubscriptionEvent.RoomUpdatedEvent(it)
                     }
 
-                    listOf(event) + removedFrom + addedTo + updated
+                    val usersJoined = knownRooms.filterPairingWith(event.rooms).filter { (kr, nr) ->
+                        !kr.memberUserIds.containsAll(nr.memberUserIds)
+                    }.onEach { (_, nr) ->
+                        this += nr
+                    }.map { (kr, nr) ->
+                        Pair(nr.id, nr.memberUserIds - kr.memberUserIds)
+                    }.flatMap { (roomId, joinedMembers) ->
+                        joinedMembers.map { joinedMember ->
+                            UserSubscriptionEvent.UserJoinedRoomEvent(joinedMember, roomId)
+                        }
+                    }
+
+                    val usersLeft = knownRooms.filterPairingWith(event.rooms).filter { (kr, nr) ->
+                        !nr.memberUserIds.containsAll(kr.memberUserIds)
+                    }.onEach { (_, nr) ->
+                        this += nr
+                    }.map { (kr, nr) ->
+                        Pair(nr.id, kr.memberUserIds - nr.memberUserIds)
+                    }.flatMap { (roomId, leftMembers) ->
+                        leftMembers.map { leftMember ->
+                            UserSubscriptionEvent.UserLeftRoomEvent(leftMember, roomId)
+                        }
+                    }
+
+                    listOf(event) + addedTo + removedFrom + updated + usersJoined + usersLeft
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent ->
                     listOf(event.also {
@@ -113,33 +137,27 @@ internal class RoomStore(
                     listOf(event.also { this -= event.roomId })
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
                     listOf(event.also { this -= event.roomId })
+                is UserSubscriptionEvent.UserJoinedRoomEvent -> {
+                    val room = roomsMap[event.roomId]!!
+                    this += room.withAddedMember(event.userId)
+                    listOf(event)
+                }
+                is UserSubscriptionEvent.UserLeftRoomEvent -> {
+                    val room = roomsMap[event.roomId]!!
+                    this += room.withLeftMember(event.userId)
+                    listOf(event)
+                }
                 else -> listOf(event)
             }
 
-    fun applyMembershipEvent(
-            roomId: String,
-            event: MembershipSubscriptionEvent
-    ): List<MembershipSubscriptionEvent> =
-            when (event) {
-                is MembershipSubscriptionEvent.InitialState -> {
-                    val existingMembers = this[roomId]?.memberUserIds.orEmpty()
+    private fun List<Room>.filterPairingWith(rooms: List<Room>): List<Pair<Room, Room>> {
+        return this.map { kr ->
+            Pair(kr, rooms.find { nr -> kr.id == nr.id })
+        }.filter { (_, nr) ->
+            nr != null
+        }.map { (kr, nr) ->
+            Pair(kr, nr!!)
+        }
+    }
 
-                    val joinedIds = event.userIds.filterNot { existingMembers.contains(it) }
-                    val leftIds = existingMembers.filterNot { event.userIds.contains(it) }
-
-                    joinedIds.map(MembershipSubscriptionEvent::UserJoined) +
-                            leftIds.map(MembershipSubscriptionEvent::UserLeft)
-
-                }
-                else ->
-                    listOf(event)
-            }.also { events ->
-                events.forEach { event ->
-                    when (event) {
-                        // TODO: now that comes within user's subscription
-//                        is MembershipSubscriptionEvent.UserJoined -> this[roomId]?.addUser(event.userId)
-//                        is MembershipSubscriptionEvent.UserLeft -> this[roomId]?.removeUser(event.userId)
-                    }
-                }
-            }
 }
