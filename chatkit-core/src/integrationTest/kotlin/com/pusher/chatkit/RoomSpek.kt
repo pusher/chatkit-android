@@ -45,7 +45,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.UserJoined && event.user.id == PUSHERINO) userJoined = event.user
             }
 
@@ -63,7 +63,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.UserLeft) userLeft = event.user
             }
             pusherino.leaveRoom(alice.generalRoom.id).assumeSuccess()
