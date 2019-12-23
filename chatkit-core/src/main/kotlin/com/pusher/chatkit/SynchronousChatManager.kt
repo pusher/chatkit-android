@@ -202,9 +202,21 @@ class SynchronousChatManager constructor(
                     }
                 }
                 is UserSubscriptionEvent.UserJoinedRoomEvent ->
-                    ChatEvent.NoEvent // TODO: need userId -> user enrichment
+                    userService.fetchUserBy(event.userId).fold(
+                            onSuccess = { user ->
+                                val room = roomService.roomStore[event.roomId]!!
+                                ChatEvent.UserJoinedRoom(user, room)
+                            },
+                            onFailure = { ChatEvent.ErrorOccurred(it) }
+                    )
                 is UserSubscriptionEvent.UserLeftRoomEvent ->
-                    ChatEvent.NoEvent // TODO: ditto
+                    userService.fetchUserBy(event.userId).fold(
+                            onSuccess = { user ->
+                                val room = roomService.roomStore[event.roomId]!!
+                                ChatEvent.UserLeftRoom(user, room)
+                            },
+                            onFailure = { ChatEvent.ErrorOccurred(it) }
+                    )
                 is UserSubscriptionEvent.ErrorOccurred ->
                     ChatEvent.ErrorOccurred(event.error)
             }

@@ -8,7 +8,6 @@ import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -241,50 +240,6 @@ internal class RoomService(
                 else -> RoomEvent.NoEvent
             }
 
-    // TODO: call (from SynchronousChatManager?), split responsibility (enrich/translation)?,
-    //  find new home? (SynchronousChatManager or maybe separate SRP classes)
-    // TODO: when this is called (TODO above) the events shall be emitted
-    private fun enrichEvents(events: List<UserSubscriptionEvent>): List<RoomEvent> {
-        val allUserIds = events.map {
-            when (it) {
-                is UserSubscriptionEvent.UserJoinedRoomEvent -> it.userId
-                is UserSubscriptionEvent.UserLeftRoomEvent -> it.userId
-                else -> null
-            }
-        }.filterNotNull().toSet()
-
-        return userService.fetchUsersBy(allUserIds).map { users ->
-            events.map { event ->
-                when (event) {
-                    is UserSubscriptionEvent.UserJoinedRoomEvent -> {
-                        val user = users[event.userId]
-                        when (user) {
-                            null -> RoomEvent.ErrorOccurred(Errors.other("Could not find user with id ${event.userId}"))
-                            else -> RoomEvent.UserJoined(user)
-                        }
-                    }
-                    is UserSubscriptionEvent.UserLeftRoomEvent -> {
-                        val user = users[event.userId]
-                        when (user) {
-                            null -> RoomEvent.ErrorOccurred(Errors.other("Could not find user with id ${event.userId}"))
-                            else -> RoomEvent.UserLeft(user)
-                        }
-                    }
-                    is UserSubscriptionEvent.ErrorOccurred -> {
-                        RoomEvent.ErrorOccurred(event.error)
-                    }
-                    is UserSubscriptionEvent.InitialState -> {
-                        logger.error("Should not have received membership initial state in RoomService")
-                        RoomEvent.NoEvent
-                    }
-                    else -> RoomEvent.NoEvent
-                }
-            }
-        }.recover {
-            listOf(RoomEvent.ErrorOccurred(it))
-        }
-    }
-
     private fun enrichEvent(event: RoomSubscriptionEvent, consumer: RoomConsumer): RoomEvent =
             when (event) {
                 is RoomSubscriptionEvent.NewMessage ->
@@ -354,13 +309,17 @@ internal class RoomService(
     fun distributeGlobalEvent(event: ChatEvent) {
         // This function must map events which we wish to report at room scope that
         // are not received at room scope from the backend.
-        // Be careful, if you map an event where which originated here, you will create
+        // Be careful, if you map an event which originated here, you will create
         // an infinite loop consuming that event.
         when (event) {
             is ChatEvent.RoomUpdated ->
                 roomConsumers[event.room.id]?.invoke(RoomEvent.RoomUpdated(event.room))
             is ChatEvent.RoomDeleted ->
                 roomConsumers[event.roomId]?.invoke(RoomEvent.RoomDeleted(event.roomId))
+            is ChatEvent.UserJoinedRoom ->
+                roomConsumers[event.room.id]?.invoke(RoomEvent.UserJoined(event.user))
+            is ChatEvent.UserLeftRoom ->
+                roomConsumers[event.room.id]?.invoke(RoomEvent.UserLeft(event.user))
             is ChatEvent.PresenceChange ->
                 roomConsumers.keys.forEach { roomId ->
                     if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
@@ -372,9 +331,6 @@ internal class RoomService(
         }
     }
 }
-
-private fun noRoomMembershipError(room: Room): Error =
-        Errors.other("User is not a member of ${room.name}")
 
 internal data class UpdateRoomRequest(
         val name: String?,
