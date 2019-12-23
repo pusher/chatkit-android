@@ -9,7 +9,6 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.RoomPushNotificationTitle
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -259,12 +258,8 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             assertThat(alice.rooms.size).isEqualTo(1)
-            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(0)
-            assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(0)
-
-            alice.subscribeToRoomMultipart(alice.generalRoom, RoomListeners())
+            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(2)
             assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
-
         }
     }
 
