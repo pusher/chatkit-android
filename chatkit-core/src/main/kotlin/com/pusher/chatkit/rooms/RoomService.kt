@@ -200,6 +200,9 @@ internal class RoomService(
             roomConsumers.remove(roomId)
         }.connect()
 
+        // ensure members are fetched and subscribe individually to their presence changes
+        userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
+
         synchronized(buffer) {
             buffer.forEach { event ->
                 consumer(event)
