@@ -8,6 +8,7 @@ import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -43,8 +44,8 @@ internal class RoomService(
 
     internal val roomStore = RoomStore()
 
-    internal fun populateInitial(rooms: List<Room>) {
-        roomStore.initialiseContents(rooms)
+    internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
+        roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
     }
 
     fun fetchRoom(id: String): Result<Room, Error> =
@@ -57,8 +58,7 @@ internal class RoomService(
                     .orElse { Errors.other("Room not found locally") }
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
-                    .map { rooms -> rooms.also { roomStore += it } }
+            client.doGet("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
 
     fun createRoom(
             id: String?,
@@ -80,7 +80,6 @@ internal class RoomService(
             ).toJson()
                     .flatMap { body -> client.doPost<Room>("/rooms", body) }
                     .map { room ->
-                        roomStore += room
                         userService.populateUserStore(room.memberUserIds)
                         room
                     }
@@ -88,21 +87,18 @@ internal class RoomService(
     fun deleteRoom(roomId: String): Result<String, Error> =
             legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
-                        roomStore -= roomId
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
             client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
-                        roomStore -= roomId
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
             client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { room ->
-                        roomStore += room
                         userService.populateUserStore(room.memberUserIds)
                         room
                     }

@@ -1,247 +1,233 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomStore
-import com.pusher.chatkit.users.ReadStateApiType
-import com.pusher.chatkit.users.RoomMembershipApiType
-import com.pusher.chatkit.users.User
-import com.pusher.chatkit.users.UserSubscriptionEvent
-import org.junit.Assert.fail
+import com.pusher.chatkit.users.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 class RoomStoreReceivingNewInitialStatesSpek : Spek({
     val subject by memoized { RoomStore() }
 
-    describe("on receiving new InitialState from user's subscription") {
-        lateinit var addedRoom6: Room
-        lateinit var readStateForAddedRoom6: ReadStateApiType
+    val initialReadStates = listOf(
+            ReadStateApiType("1", 11, null),
+            ReadStateApiType("2", 22, null),
+            ReadStateApiType("3", 33, null)
+    )
+    val initialMemberships = listOf(
+            RoomMembershipApiType("1", listOf("viv")),
+            RoomMembershipApiType("2", listOf("viv", "ham")),
+            RoomMembershipApiType("3", listOf("viv"))
+    )
+    val initialRooms = listOf(
+            simpleRoom("1", "one", false, null),
+            simpleRoom("2", "two", true, null),
+            simpleRoom("3", "three", false, mapOf("custom" to "data"))
+    )
 
-        lateinit var unreadCountChangedForRoom10: ReadStateApiType
+    val currentUser = User(
+            id = "testUser",
+            name = "Test User",
+            createdAt = "blah",
+            updatedAt = "blah",
+            customData = null,
+            avatarURL = null
+    )
 
-        lateinit var replacementState: UserSubscriptionEvent.InitialState
-        lateinit var replacementEvents: List<UserSubscriptionEvent>
-
-        @Suppress("MapGetWithNotNullAssertionOperator")
-        beforeEachTest {
-            val readStates = mapOf(
-                    "1" to ReadStateApiType("1", 11, null),
-                    "2" to ReadStateApiType("2", 22, null),
-                    "3" to ReadStateApiType("3", 33, null),
-                    "4" to ReadStateApiType("4", 44, null),
-                    "5" to ReadStateApiType("5", 55, null),
-                    "7" to ReadStateApiType("7", 77, null),
-                    "8" to ReadStateApiType("8", 88, null),
-                    "9" to ReadStateApiType("9", 99, null)
-            )
-            val roomOneUnchanged = simpleRoom("1", "one", false, null, readStates["1"]!!.unreadCount, setOf("viv"))
-            val initialState = listOf(
-                    roomOneUnchanged,
-                    simpleRoom("2", "two", false, null, readStates["2"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("3", "three", false, null, readStates["3"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("4", "four", false, null, readStates["4"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("5", "five", false, null, readStates["5"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data"), readStates["7"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("8", "eight", false, mapOf("pre" to "set"), readStates["8"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("9", "nine", false, mapOf("pre" to "set"), readStates["9"]!!.unreadCount, setOf("viv")),
-                    simpleRoom("10", "ten", false, null, 100, setOf("viv")) // unread count will change here
-            )
-            subject.initialiseContents(initialState)
-
-            addedRoom6 = simpleRoom("6", "size", false, null)
-            readStateForAddedRoom6 = ReadStateApiType(addedRoom6.id, 66, null)
-
-            unreadCountChangedForRoom10 = ReadStateApiType("10", 101, null)
-
-            // TODO: add membership change related test (best breaking those tests so that
-            //  each test actually tests only one thing)
-
-            replacementState = UserSubscriptionEvent.InitialState(
-                    currentUser = User("viv", "2017-04-13T14:10:04Z", "2017-04-13T14:10:04Z",
-                            "Vivan", null, mapOf("email" to "vivan@pusher.com")),
-                    _rooms = listOf(
-                            roomOneUnchanged,
-                            simpleRoom("3", "three", true, null),
-                            simpleRoom("4", "four", false, mapOf("set" to "now")),
-                            simpleRoom("5", "5ive", false, null),
-                            addedRoom6,
-                            simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data", "third" to "field")),
-                            simpleRoom("8", "eight", false, null),
-                            simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated")),
-                            simpleRoom("10", "ten", false, null)
-                    ),
-                    readStates = readStates.values + readStateForAddedRoom6 + unreadCountChangedForRoom10,
-                    memberships = listOf(
-                        RoomMembershipApiType("1", listOf("viv")),
-                        RoomMembershipApiType("3", listOf("viv")),
-                        RoomMembershipApiType("4", listOf("viv")),
-                        RoomMembershipApiType("5", listOf("viv")),
-                        RoomMembershipApiType("6", listOf("viv")),
-                        RoomMembershipApiType("7", listOf("viv")),
-                        RoomMembershipApiType("8", listOf("viv")),
-                        RoomMembershipApiType("9", listOf("viv")),
-                        RoomMembershipApiType("10", listOf("viv"))
+    fun applyInitialState(
+            rooms: List<RoomApiType>? = null,
+            readStates: List<ReadStateApiType>? = null,
+            memberships: List<RoomMembershipApiType>? = null
+    ) =
+            subject.applyUserSubscriptionEvent(
+                    UserSubscriptionEvent.InitialState(
+                            currentUser = currentUser,
+                            rooms = rooms ?: initialRooms,
+                            readStates = readStates ?: initialReadStates,
+                            memberships = memberships ?: initialMemberships
                     )
             )
-            replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
-        }
 
-        it("will emit expected events") {
-            assertThat(replacementEvents).containsExactly(
-                    UserSubscriptionEvent.RemovedFromRoomEvent("2"),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("3", "three", true, null, 0)),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("4", "four", false, mapOf("set" to "now"), 0)),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("5", "5ive", false, null, 0)),
-                    UserSubscriptionEvent.AddedToRoomEvent(addedRoom6.copy(unreadCount =  readStateForAddedRoom6.unreadCount, memberUserIds = setOf("viv"))),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data", "third" to "field"), 0)),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("8", "eight", false, null, 0)),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated"), 0)),
-                    UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("10", "ten", false, null, 101)),
-                    replacementState // this event is not removed during the expansion because the roomStore has not dealt with the currentUser field
-            )
-        }
-
-        it("will update the room store") {
-            val actualRooms = subject.toList().sortedBy { it.id.toInt() }
-
-            assertThat(actualRooms).hasSize(9)
-
-            val expectedRooms = listOf(
-                    simpleRoom("1", "one", false, null, 11),
-                    simpleRoom("3", "three", true, null, 33),
-                    simpleRoom("4", "four", false, mapOf("set" to "now"), 44),
-                    simpleRoom("5", "5ive", false, null, 55),
-                    addedRoom6.copy(unreadCount = 66),
-                    simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data", "third" to "field"), 77),
-                    simpleRoom("8", "eight", false, null, 88),
-                    simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated"), 99),
-                    simpleRoom("10", "ten", false, null, 101)
-            )
-
-            val differences = actualRooms.zip(expectedRooms)
-                    .filterNot { (a, e) -> a.deepEquals(e) }
-                    .onEach { (a, e) ->
-                        System.err.println("Not matching room, actual:\n$a\nexpected:\n$e") }
-
-            assertThat(differences).isEmpty()
-        }
-    }
-
-    describe("on receiving new InitialState from user's subscription with updated and added room") {
-        lateinit var replacementEvents: List<UserSubscriptionEvent>
-
+    describe("A RoomStore") {
         beforeEachTest {
-            val roomOneReadState = ReadStateApiType("1", 0, null)
-            val roomOne = simpleRoom("1", "one", true, null, roomOneReadState.unreadCount,
-                    setOf("viv", "mike"))
-            val initialState = listOf(roomOne)
-            subject.initialiseContents(initialState)
-
-            val roomOneUpdated = simpleRoom("1", "new", true, null)
-            val roomTwoNew = simpleRoom("2", "wasn't there before", false, null)
-            val replacementState = UserSubscriptionEvent.InitialState(
-                    currentUser = User("viv", "2017-04-13T14:10:04Z",
-                            "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com")),
-                    _rooms = listOf(roomOneUpdated, roomTwoNew),
-                    readStates = listOf(roomOneReadState, ReadStateApiType("2", 0, null)),
-                    memberships = listOf(
-                            RoomMembershipApiType("1", listOf("viv", "mike")),
-                            RoomMembershipApiType("2", listOf("viv"))
-                    )
+            subject.initialiseContents(
+                    initialRooms,
+                    memberships = initialMemberships,
+                    readStates = initialReadStates
             )
-            replacementEvents = subject.applyUserSubscriptionEvent(replacementState)
         }
 
-        it ("will emit expected events") {
-            assertThat(replacementEvents).hasSize(3)
+        describe("replacement state with no changes") {
+            lateinit var events: List<UserInternalEvent>
+            beforeEachTest {
+                events = subject.applyUserSubscriptionEvent(
+                        UserSubscriptionEvent.InitialState(
+                                currentUser = currentUser,
+                                rooms = initialRooms,
+                                memberships = initialMemberships,
+                                readStates = initialReadStates
+                        )
+                )
+            }
 
-            for (event in replacementEvents) {
-                when (event) {
-                    is UserSubscriptionEvent.RoomUpdatedEvent -> {
-                        assertThat(event.room.name).isEqualTo("new")
-                        assertThat(event.room.memberUserIds).containsExactly("viv", "mike")
-                    }
-                    is UserSubscriptionEvent.AddedToRoomEvent -> {
-                        assertThat(event.room.name).isEqualTo("wasn't there before")
-                        assertThat(event.room.memberUserIds).containsExactly("viv")
-                    }
-                    is UserSubscriptionEvent.InitialState -> {}
-                    else -> fail()
+            it("reports no changes") {
+                assertThat(events).isEmpty()
+            }
+        }
+
+        describe("differences in room entities") {
+            describe("replacement state with a difference in a room") {
+                val newRoom = simpleRoom(initialRooms[1].id, "number 2", true, null)
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            rooms = listOf(initialRooms[0], newRoom, initialRooms[2])
+                    )
+                }
+
+                it("reports a RoomUpdated, with the new field visible") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RoomUpdated::class.java)
+                    assertThat(event.room.id).isEqualTo(newRoom.id)
+                    assertThat(event.room.name).isEqualTo(newRoom.name)
+                }
+            }
+
+            describe("replacement state with a new room, including memberships and read state") {
+                val newRoom = simpleRoom("new", "New Room", false, null)
+                val newMembers = RoomMembershipApiType("new", listOf("member_a", "member_b"))
+                val newReadState = ReadStateApiType("new", 5, null)
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            rooms = initialRooms + newRoom,
+                            memberships = initialMemberships + newMembers,
+                            readStates = initialReadStates + newReadState
+                    )
+                }
+
+                it("reports an AddedToRoom event with the room attached") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    assertThat(event.room.id).isEqualTo(newRoom.id)
+                    assertThat(event.room.name).isEqualTo(newRoom.name)
+                }
+
+                it("sets the members on the Room in the event") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    assertThat(event.room.memberUserIds).containsExactlyElementsIn(newMembers.userIds)
+                }
+
+                it("sets the unread count on the Room in the event") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
+                }
+            }
+
+            describe("replacement state with a new room, including memberships only") {
+                val newRoom = simpleRoom("new", "New Room", false, null)
+                val newMembers = RoomMembershipApiType("new", listOf("member_a", "member_b"))
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            rooms = initialRooms + newRoom,
+                            memberships = initialMemberships + newMembers
+                    )
+                }
+
+                it("reports an AddedToRoom event with the room attached") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    assertThat(event.room.id).isEqualTo(newRoom.id)
+                    assertThat(event.room.name).isEqualTo(newRoom.name)
+                }
+
+                it("sets the members on the Room in the event") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    assertThat(event.room.memberUserIds).containsExactlyElementsIn(newMembers.userIds)
+                }
+
+                it("nulls the unread count on the Room in the event") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    assertThat(event.room.unreadCount).isNull()
+                }
+            }
+
+            describe("replacement state with a room removed") {
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            rooms = listOf(initialRooms[0], initialRooms[2])
+                    )
+                }
+
+                it("reports a RoomUpdated, with the new field visible") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RemovedFromRoom::class.java)
+                    assertThat(event.roomId).isEqualTo(initialRooms[1].id)
+                }
+            }
+        }
+
+        describe("differences in read states") {
+            describe("replacement state with a difference in read state") {
+                val newReadState = ReadStateApiType(initialRooms[1].id, 23, null)
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            readStates = listOf(initialReadStates[0], newReadState, initialReadStates[2])
+                    )
+                }
+
+                it("reports a RoomUpdated, with the new unreadCount visible") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RoomUpdated::class.java)
+                    assertThat(event.room.id).isEqualTo(newReadState.roomId)
+                    assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
+                }
+            }
+        }
+
+        describe("differences in memberships") {
+            describe("replacement state with a new member added") {
+                val newMemberships = RoomMembershipApiType(initialRooms[0].id, listOf("mike", "viv"))
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            memberships = listOf(newMemberships, initialMemberships[1], initialMemberships[2])
+                    )
+                }
+
+                it("reports a UserJoinedRoom, with the new member") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.UserJoinedRoom::class.java)
+                    assertThat(event.roomId).isEqualTo(newMemberships.roomId)
+                    assertThat(event.userId).isEqualTo(newMemberships.userIds[0])
+                }
+            }
+
+            describe("replacement state with a member removed") {
+                val newMemberships = RoomMembershipApiType(initialRooms[1].id, listOf("viv"))
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            memberships = listOf(initialMemberships[0], newMemberships, initialMemberships[2])
+                    )
+                }
+
+                it("reports a UserLeftRoom, with the old member") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.UserLeftRoom::class.java)
+                    assertThat(event.roomId).isEqualTo(newMemberships.roomId)
+                    assertThat(event.userId).isEqualTo("ham")
                 }
             }
         }
     }
-
-    // TODO: make the tests here have common reused and meaningful given part and clear separation
-    //  between given and when parts
-    describe("on receiving new InitialState with one joined and one left user") {
-        val room = simpleRoom("1", "one", false, null,
-                unreadCount = 0,
-                memberUserIds =  setOf("callum", "mike", "alice"))
-        val initialState = UserSubscriptionEvent.InitialState(
-                currentUser = User("viv", "2017-04-13T14:10:04Z",
-                        "2017-04-13T14:10:04Z", "Vivan", null, mapOf("email" to "vivan@pusher.com")),
-                _rooms = listOf(room),
-                readStates = listOf(ReadStateApiType("1", 0, null)),
-                memberships = listOf(
-                        RoomMembershipApiType("1", listOf("mike", "callum", "bob"))
-                )
-        )
-
-        lateinit var events: List<UserSubscriptionEvent>
-
-        beforeEachTest {
-            subject += room
-            events = subject.applyUserSubscriptionEvent(initialState)
-        }
-
-        it("will emit expected events") {
-            assertThat(events).containsExactly(
-                    initialState,
-                    UserSubscriptionEvent.UserJoinedRoomEvent("bob", "1"),
-                    UserSubscriptionEvent.UserLeftRoomEvent("alice", "1")
-            )
-        }
-        it("will update the store") {
-            assertThat(subject["1"]!!.memberUserIds).containsExactly("mike", "callum", "bob")
-        }
-    }
-
-    describe("given room store with new, empty room") {
-        val initialRoom = newEmptyJoinedRoom("1", "one", "marek")
-        beforeEachTest {
-            subject += initialRoom
-        }
-
-        lateinit var applyTranslatedEvents: List<UserSubscriptionEvent>
-
-        describe("when new initial state is applied (reconnect) " +
-                "with added room which is missing read state (the top 1000 limit)") {
-            val addedRoom = newEmptyJoinedRoom("2", "two", "marek")
-            val initialState = UserSubscriptionEvent.InitialState(
-                    currentUser = simpleUser("marek"),
-                    _rooms = listOf(initialRoom, addedRoom),
-                    readStates = listOf(ReadStateApiType("1", 0, null)),
-                    memberships = listOf(RoomMembershipApiType("1", listOf("marek")),
-                                         RoomMembershipApiType("2", listOf("marek"))))
-            beforeEachTest {
-                applyTranslatedEvents = subject.applyUserSubscriptionEvent(initialState)
-            }
-
-            it("then the existing room remains unchanged") {
-                assertThat(subject["1"]!!).isEqualTo(initialRoom)
-            }
-            it("then the added room is stored") {
-                assertThat(subject["2"]!!).isEqualTo(addedRoom)
-            }
-            it("then expected events are emitted") {
-                assertThat(applyTranslatedEvents).containsExactly(
-                        initialState,
-                        UserSubscriptionEvent.AddedToRoomEvent(addedRoom))
-            }
-        }
-    }
-
 })
 
+private fun <V, T: V> List<V>.assertSingletonListWithElementType(clazz: Class<T>): T {
+    assertThat(this).hasSize(1)
+    assertThat(this.first()).isInstanceOf(clazz)
+    return this.first() as T
+}
