@@ -19,28 +19,13 @@ internal sealed class UserSubscriptionEvent {
         val rooms: List<Room>
             get() {
                 if (!populatedRoomUnreadCounts) {
-                    val readStateRoomId2PositionMap : MutableMap<String, Int> =
-                            readStates.mapIndexed { index, readState -> Pair(readState, index) }
-                                    .associateTo(HashMap(readStates.size)) { (readState, index) ->
-                                        Pair(readState.roomId, index)
-                                    }
-
+                    val readStatesMap = readStates.map { it.roomId to it }.toMap()
+                    val membershipsMap = memberships.map { it.roomId to it.userIds.toSet()}.toMap()
                     _rooms = _rooms.map { room ->
-                        val readStatePosition : Int? = readStateRoomId2PositionMap.remove(room.id)
-                        val readState = if (readStatePosition != null) {
-                            readStates[readStatePosition]
-                        } else {
-                            null
-                        }
-                        val memberIds = memberships.find { it.roomId == room.id }!!.userIds.toSet() // TODO: perf
-                        Triple(room, readState, memberIds)
-                    }.map { (room, readState, memberIds) ->
-                        if (readState != null) {
-                            room.copy(unreadCount = readState.unreadCount,
-                                    memberUserIds = memberIds)
-                        } else {
-                            room
-                        }
+                        room.copy(
+                                unreadCount = readStatesMap[room.id]?.unreadCount,
+                                memberUserIds = membershipsMap.getValue(room.id)
+                        )
                     }
                     populatedRoomUnreadCounts = true
                 }
@@ -49,9 +34,7 @@ internal sealed class UserSubscriptionEvent {
         private var populatedRoomUnreadCounts = false
 
         val cursors: List<Cursor>
-            get() = readStates.filter { it.cursor != null }
-                    .map { it.cursor!! }
-
+            get() = readStates.mapNotNull { it.cursor }
     }
 
     internal data class AddedToRoomEvent(
