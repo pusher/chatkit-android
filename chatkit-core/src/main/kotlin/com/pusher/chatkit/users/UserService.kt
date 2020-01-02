@@ -41,7 +41,7 @@ class UserService(
         return userIds
                 .map { userId ->
                     knownUsers[userId].orElse {
-                        userNotFound(userId)
+                        userFetchError(userId)
                     }.map { user ->
                         userId to user
                     }
@@ -54,7 +54,7 @@ class UserService(
 
     fun fetchUserBy(userId: String): Result<User, Error> =
             fetchUsersBy(setOf(userId)).flatMap { users ->
-                users.values.firstOrNull().orElse { userNotFound(userId) }
+                users.values.firstOrNull().orElse { userFetchError(userId) }
             }
 
     fun addUsersToRoom(roomId: String, userIds: List<String>) =
@@ -75,6 +75,6 @@ class UserService(
         fetchUsersBy(userIds)
     }
 
-    private fun userNotFound(id: String): Error =
-            Errors.other("Could not load user with id: $id")
 }
+
+private fun userFetchError(id: String): Error = Errors.other("Could not load user with id: $id")
