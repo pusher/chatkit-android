@@ -1,168 +1,119 @@
 package com.pusher.chatkit.rooms
 
+import com.pusher.chatkit.users.ReadStateApiType
+import com.pusher.chatkit.users.RoomApiType
+import com.pusher.chatkit.users.RoomMembershipApiType
+import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
-internal class RoomStore(
-        private val roomsMap: MutableMap<String, Room> = Collections.synchronizedMap(LinkedHashMap())
-) {
-
-    fun toList(): List<Room> {
-        /* "It is imperative that the user manually synchronize on the returned map
-           when iterating over any of its collection views"
-           https://developer.android.com/reference/java/util/Collections.html#synchronizedMap%28java.util.Map%3CK,%20V%3E%29 */
-        return synchronized(roomsMap) { roomsMap.values.toList() }
-    }
+internal class RoomStore {
+    private val rooms: MutableMap<String, RoomApiType> = Collections.synchronizedMap(LinkedHashMap())
+    private val readStates: MutableMap<String, ReadStateApiType> = Collections.synchronizedMap(LinkedHashMap())
+    private val members: MutableMap<String, RoomMembershipApiType> = Collections.synchronizedMap(LinkedHashMap())
 
     operator fun get(id: String): Room? =
-            roomsMap[id]
+            rooms[id]?.let { Room(it, members[id], readStates[id]) }
 
-    operator fun plusAssign(room: Room) {
-        roomsMap += (room.id to room)
+    internal fun listAll(): List<Room> =
+            rooms.keys.map { this[it]!! }
+
+    internal fun clear() {
+        rooms.clear()
+        readStates.clear()
+        members.clear()
     }
 
-    operator fun plusAssign(rooms: List<Room>) {
-        roomsMap += rooms.map { it.id to it }.toMap()
-    }
-
-    operator fun minusAssign(room: Room) {
-        roomsMap -= room.id
-    }
-
-    operator fun minusAssign(rooms: List<Room>) {
-        roomsMap -= rooms.map { it.id }
-    }
-
-    operator fun minusAssign(roomId: String) {
-        roomsMap -= roomId
-    }
-
-    fun clear() {
-        roomsMap.clear()
-    }
-
-    fun initialiseContents(rooms: List<Room>) {
+    internal fun initialiseContents(rooms: List<RoomApiType>, memberships: List<RoomMembershipApiType>, readStates: List<ReadStateApiType>) {
         clear()
-        this += rooms
+        rooms.forEach { this.rooms[it.id] = it }
+        memberships.forEach { this.members[it.roomId] = it }
+        readStates.forEach { this.readStates[it.roomId] = it }
+    }
+
+    private fun remove(roomId: String) {
+        this.rooms.remove(roomId)
+        this.members.remove(roomId)
+        this.readStates.remove(roomId)
     }
 
     fun applyUserSubscriptionEvent(
             event: UserSubscriptionEvent
-    ): List<UserSubscriptionEvent> {
-        return when (event) {
-            // TODO: extract well named funs with clear responsibility
-            is UserSubscriptionEvent.InitialState -> {
-                val knownRooms = this.toList()
+    ): List<UserInternalEvent> =
+            when (event) {
+                is UserSubscriptionEvent.InitialState -> {
+                    val addedRooms = event.rooms.map { it.id }.toSet() - this.rooms.keys.toSet()
+                    val removedRooms = this.rooms.keys.toSet() - event.rooms.map { it.id }.toSet()
 
-                val addedTo = event.rooms.filterNot {
-                    knownRooms.contains(it)
-                }.onEach {
-                    this += it
-                }.map { room ->
-                    UserSubscriptionEvent.AddedToRoomEvent(room)
-                }
+                    val changedRooms = this.rooms.values.mapNotNull { existing->
+                        event.rooms.find { it.id == existing.id }?.to(existing)
+                    }.filter { (new, existing) -> new != existing
+                    }.map { it.first }
 
-                val removedFrom = knownRooms.filterNot {
-                    event.rooms.contains(it)
-                }.onEach {
-                    this -= it
-                }.map {
-                    UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
-                }
+                    val changedReadStates = this.readStates.values.mapNotNull { existing ->
+                        event.readStates.find { it.roomId == existing.roomId }?.to(existing)
+                    }.filter { (new, existing) -> new != existing
+                    }.map { it.first }
 
-                val updated = event.rooms.filter { nr ->
-                    knownRooms.any { kr ->
-                        kr == nr && !kr.deepEquals(nr)
+                    val changedMembers = this.members.values.mapNotNull { existing ->
+                        event.memberships.find { it.roomId == existing.roomId }?.to(existing)
+                    }.filterNot { (new, existing) ->
+                        new.userIds.toSet() == existing.userIds.toSet()
                     }
-                }.onEach {
-                    this += it
-                }.map {
-                    UserSubscriptionEvent.RoomUpdatedEvent(it)
-                }
 
-                val usersJoined = knownRooms.filterPairingWith(event.rooms).filter { (kr, nr) ->
-                    !kr.memberUserIds.containsAll(nr.memberUserIds)
-                }.onEach { (_, nr) ->
-                    this += nr
-                }.map { (kr, nr) ->
-                    Pair(nr.id, nr.memberUserIds - kr.memberUserIds)
-                }.flatMap { (roomId, joinedMembers) ->
-                    joinedMembers.map { joinedMember ->
-                        UserSubscriptionEvent.UserJoinedRoomEvent(joinedMember, roomId)
+                    this.initialiseContents(event.rooms, event.memberships, event.readStates)
+
+                    addedRooms.map { UserInternalEvent.AddedToRoom(this[it]!!) } +
+                    removedRooms.map { UserInternalEvent.RemovedFromRoom(it) } +
+                    changedRooms.map { UserInternalEvent.RoomUpdated(this[it.id]!!) } +
+                    changedReadStates.map { UserInternalEvent.RoomUpdated(this[it.roomId]!!) } +
+                    changedMembers.flatMap { (new, existing) ->
+                        (new.userIds - existing.userIds).map { UserInternalEvent.UserJoinedRoom(it, new.roomId) } +
+                        (existing.userIds - new.userIds).map { UserInternalEvent.UserLeftRoom(it, new.roomId) }
                     }
                 }
+                is UserSubscriptionEvent.AddedToRoomEvent -> {
+                    this.rooms[event.room.id] = event.room
+                    this.members[event.memberships.roomId] = event.memberships
+                    this.readStates[event.readState.roomId] = event.readState
 
-                val usersLeft = knownRooms.filterPairingWith(event.rooms).filter { (kr, nr) ->
-                    !nr.memberUserIds.containsAll(kr.memberUserIds)
-                }.onEach { (_, nr) ->
-                    this += nr
-                }.map { (kr, nr) ->
-                    Pair(nr.id, kr.memberUserIds - nr.memberUserIds)
-                }.flatMap { (roomId, leftMembers) ->
-                    leftMembers.map { leftMember ->
-                        UserSubscriptionEvent.UserLeftRoomEvent(leftMember, roomId)
+                    listOf(UserInternalEvent.AddedToRoom(this[event.room.id]!!))
+                }
+                is UserSubscriptionEvent.RoomUpdatedEvent -> {
+                    this.rooms[event.room.id] = event.room
+                    listOf(UserInternalEvent.RoomUpdated(this[event.room.id]!!))
+                }
+                is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
+                    this.readStates[event.readState.roomId] = event.readState
+                    listOf(
+                            UserInternalEvent.RoomUpdated(this[event.readState.roomId]!!),
+                            UserInternalEvent.NewCursor(event.readState.cursor!!) // can this be null?
+                    )
+                }
+                is UserSubscriptionEvent.RoomDeletedEvent -> {
+                    this.remove(event.roomId)
+                    listOf(UserInternalEvent.RoomDeleted(event.roomId))
+                }
+                is UserSubscriptionEvent.RemovedFromRoomEvent -> {
+                    this.remove(event.roomId)
+                    listOf(UserInternalEvent.RemovedFromRoom(event.roomId))
+                }
+                is UserSubscriptionEvent.UserJoinedRoomEvent -> {
+                    this.members[event.roomId]?.let { existingMembers ->
+                        this.members[event.roomId] =
+                                RoomMembershipApiType(event.roomId, existingMembers.userIds + event.userId)
                     }
+                    listOf(UserInternalEvent.UserJoinedRoom(event.userId, event.roomId))
                 }
-
-                listOf(event) + addedTo + removedFrom + updated + usersJoined + usersLeft
-            }
-            is UserSubscriptionEvent.AddedToRoomApiEvent ->
-                listOf(event.also {
-                    this += event.room
-                })
-            is UserSubscriptionEvent.RoomUpdatedEvent -> {
-                var newRoom = event.room
-                val knownRoom = roomsMap[newRoom.id]!!
-                // we don't get unread count and members with this event
-                newRoom = newRoom.copy(memberUserIds = knownRoom.memberUserIds)
-                if (knownRoom.unreadCount != null) {
-                    // we only get unread counts in initial state for 1000 rooms
-                    newRoom = newRoom.copy(unreadCount = knownRoom.unreadCount)
+                is UserSubscriptionEvent.UserLeftRoomEvent -> {
+                    this.members[event.roomId]?.let { existingMembers ->
+                        this.members[event.roomId] =
+                                RoomMembershipApiType(event.roomId, existingMembers.userIds - event.userId)
+                    }
+                    listOf(UserInternalEvent.UserLeftRoom(event.userId, event.roomId))
                 }
-                this += newRoom
-                listOf(UserSubscriptionEvent.RoomUpdatedEvent(newRoom))
+                is UserSubscriptionEvent.ErrorOccurred ->
+                    listOf(UserInternalEvent.ErrorOccurred(event.error))
             }
-            is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
-                var room = roomsMap[event.readState.roomId]!!
-                room = room.copy(unreadCount = event.readState.unreadCount)
-                this += room
-
-                // Returning a copy with no cursor so that the returned applied event is
-                // not translated to NewReadCursor but to RoomUpdated ChatEvent.
-                // That is the relevant event from the perspective of this store.
-                // The ChatEvent.NewReadCursor will be translated
-                // into if CursorStore updates applying ReadStateUpdatedEvent and
-                // returning it with the cursor.
-                val eventWithNoCursor = event.copy(event.readState.copy(cursor = null))
-                listOf(eventWithNoCursor)
-            }
-            is UserSubscriptionEvent.RoomDeletedEvent ->
-                listOf(event.also { this -= event.roomId })
-            is UserSubscriptionEvent.RemovedFromRoomEvent ->
-                listOf(event.also { this -= event.roomId })
-            is UserSubscriptionEvent.UserJoinedRoomEvent -> {
-                val room = roomsMap[event.roomId]!!
-                this += room.withAddedMember(event.userId)
-                listOf(event)
-            }
-            is UserSubscriptionEvent.UserLeftRoomEvent -> {
-                val room = roomsMap[event.roomId]!!
-                this += room.withLeftMember(event.userId)
-                listOf(event)
-            }
-            else -> listOf(event)
-        }
-    }
-
-    private fun List<Room>.filterPairingWith(rooms: List<Room>): List<Pair<Room, Room>> {
-        return this.map { kr ->
-            Pair(kr, rooms.find { nr -> kr.id == nr.id })
-        }.filter { (_, nr) ->
-            nr != null
-        }.map { (kr, nr) ->
-            Pair(kr, nr!!)
-        }
-    }
-
 }

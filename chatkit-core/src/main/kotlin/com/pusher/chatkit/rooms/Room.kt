@@ -2,6 +2,9 @@ package com.pusher.chatkit.rooms
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.CustomData
+import com.pusher.chatkit.users.ReadStateApiType
+import com.pusher.chatkit.users.RoomApiType
+import com.pusher.chatkit.users.RoomMembershipApiType
 
 data class Room(
         val id: String,
@@ -18,21 +21,22 @@ data class Room(
         var deletedAt: String?,
         val memberUserIds: Set<String>
 ) {
-
-    override fun equals(other: Any?) = (other is Room) && id == other.id
-
-    override fun hashCode(): Int { return id.hashCode() }
-
-    fun deepEquals(other: Room) =
-            name == other.name &&
-                    pushNotificationTitleOverride == other.pushNotificationTitleOverride &&
-                    customData == other.customData &&
-                    isPrivate == other.isPrivate  &&
-                    unreadCount == other.unreadCount &&
-                    lastMessageAt == other.lastMessageAt
-
-    fun withAddedMember(addedMemberId: String) = copy(memberUserIds = memberUserIds + addedMemberId)
-
-    fun withLeftMember(leftMemberId: String) = copy(memberUserIds = memberUserIds - leftMemberId)
-
+        internal constructor(
+                room: RoomApiType,
+                memberships: RoomMembershipApiType?,
+                readState: ReadStateApiType?
+        ) : this(
+                id = room.id,
+                name = room.name,
+                createdById = room.createdById,
+                pushNotificationTitleOverride = room.pushNotificationTitleOverride,
+                isPrivate = room.private,
+                customData = room.customData,
+                createdAt = room.createdAt,
+                updatedAt = room.updatedAt,
+                deletedAt = room.deletedAt,
+                lastMessageAt = room.lastMessageAt,
+                unreadCount = readState?.unreadCount,
+                memberUserIds = memberships?.userIds.orEmpty().toSet()
+        )
 }

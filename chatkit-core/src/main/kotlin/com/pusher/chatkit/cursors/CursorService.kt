@@ -33,8 +33,8 @@ class CursorService(
                 )
             }
 
-    internal fun populateInitial(cursors: List<Cursor>) {
-        cursorsStore.initialiseContents(cursors)
+    internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
+        cursorsStore.initialiseContents(event.readStates.mapNotNull { it.cursor })
     }
 
     fun close() {
