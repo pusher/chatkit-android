@@ -201,7 +201,10 @@ internal class RoomService(
         }.connect()
 
         // ensure members are fetched and subscribe individually to their presence changes
-        userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
+        val usersFetchResult = userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
+        if (usersFetchResult is Result.Failure) {
+            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
+        }
 
         synchronized(buffer) {
             buffer.forEach { event ->
