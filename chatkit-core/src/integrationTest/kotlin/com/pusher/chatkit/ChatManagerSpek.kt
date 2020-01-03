@@ -29,6 +29,7 @@ import mockitox.stub
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -158,6 +159,7 @@ class ChatManagerSpek : Spek({
                 }
             }.assumeSuccess()
 
+            sleep(1000) // just so lastMessageAt surely changes for the room
             val message1Timestamp = user.rooms[0].lastMessageAt!!
             superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
 
