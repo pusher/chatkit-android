@@ -1,6 +1,7 @@
 package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
+import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.users.UserSubscriptionEvent.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -35,6 +36,11 @@ object UserSubscriptionEventParserSpec : Spek({
         }
         it("then the second room won't contain unread count") {
             assertThat(initialStateEvent.rooms[1].unreadCount).isNull()
+        }
+        it("then the valid cursor will be available for the first room (and only the first room)") {
+            assertThat(initialStateEvent.cursors.size).isEqualTo(1)
+            assertThat(initialStateEvent.cursors[0]).isEqualTo(
+                    Cursor("viv", "cool-room-1", 123654, "2017-04-13T14:10:04Z", 0))
         }
     }
 
