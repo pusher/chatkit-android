@@ -43,10 +43,6 @@
       {
         "room_id": "cool-room-1",
         "user_ids": ["jean", "ham"]
-      },
-      {
-        "room_id": "party-room",
-        "user_ids": ["ham"]
       }
     ]
   },
