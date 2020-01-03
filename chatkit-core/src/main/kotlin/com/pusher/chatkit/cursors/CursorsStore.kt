@@ -37,7 +37,7 @@ class CursorsStore {
                             .map(UserSubscriptionEvent::ReadStateUpdatedEvent)
                 is UserSubscriptionEvent.ReadStateUpdatedEvent ->
                     applyReadState(event.readState)
-                is UserSubscriptionEvent.AddedToRoomEvent ->
+                is UserSubscriptionEvent.AddedToRoomApiEvent ->
                     applyReadState(event.readState)
                 else ->
                     listOf()

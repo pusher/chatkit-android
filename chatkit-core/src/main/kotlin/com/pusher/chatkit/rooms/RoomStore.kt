@@ -55,9 +55,7 @@ internal class RoomStore(
                     }.onEach {
                         this += it
                     }.map { room ->
-                        UserSubscriptionEvent.AddedToRoomEvent(room,
-                                event.readStates.find { it.roomId == room.id }!!,
-                                event.memberships.find { it.roomId == room.id }!!)
+                        UserSubscriptionEvent.AddedToRoomEvent(room)
                     }
 
                     val removedFrom = knownRooms.filterNot {
@@ -104,7 +102,7 @@ internal class RoomStore(
 
                     listOf(event) + addedTo + removedFrom + updated + usersJoined + usersLeft
                 }
-                is UserSubscriptionEvent.AddedToRoomEvent ->
+                is UserSubscriptionEvent.AddedToRoomApiEvent ->
                     listOf(event.also {
                         this += event.room
                     })
