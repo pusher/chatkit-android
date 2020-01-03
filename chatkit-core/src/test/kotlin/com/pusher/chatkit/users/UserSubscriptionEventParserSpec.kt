@@ -15,16 +15,12 @@ object UserSubscriptionEventParserSpec : Spek({
         it("then result's memberships will contain valid information") {
             val memberships = initialStateEvent.memberships
 
-            assertThat(memberships.size).isEqualTo(2)
+            assertThat(memberships.size).isEqualTo(1)
 
             assertThat(memberships[0].roomId).isEqualTo("cool-room-1")
             assertThat(memberships[0].userIds.size).isEqualTo(2)
             assertThat(memberships[0].userIds[0]).isEqualTo("jean")
             assertThat(memberships[0].userIds[1]).isEqualTo("ham")
-
-            assertThat(memberships[1].roomId).isEqualTo("party-room")
-            assertThat(memberships[1].userIds.size).isEqualTo(1)
-            assertThat(memberships[1].userIds[0]).isEqualTo("ham")
         }
 
     }
