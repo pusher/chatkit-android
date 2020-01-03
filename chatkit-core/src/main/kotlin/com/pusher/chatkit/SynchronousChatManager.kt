@@ -185,7 +185,9 @@ class SynchronousChatManager constructor(
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
                     ChatEvent.NoEvent // This is emitted specially on connect
-                is UserSubscriptionEvent.AddedToRoomEvent ->
+                is UserSubscriptionEvent.AddedToRoomApiEvent ->
+                    ChatEvent.AddedToRoom(event.room)
+                is UserSubscriptionEvent.AddedToRoomEvent -> // reconnect
                     ChatEvent.AddedToRoom(event.room)
                 is UserSubscriptionEvent.RemovedFromRoomEvent ->
                     ChatEvent.RemovedFromRoom(event.roomId)

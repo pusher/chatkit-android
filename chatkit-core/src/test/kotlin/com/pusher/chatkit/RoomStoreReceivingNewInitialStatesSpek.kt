@@ -93,7 +93,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("3", "three", true, null, 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("4", "four", false, mapOf("set" to "now"), 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("5", "5ive", false, null, 0)),
-                    UserSubscriptionEvent.AddedToRoomEvent(addedRoom6, readStateForAddedRoom6, RoomMembershipApiType("6", listOf("viv"))),
+                    UserSubscriptionEvent.AddedToRoomEvent(addedRoom6.copy(unreadCount =  readStateForAddedRoom6.unreadCount, memberUserIds = setOf("viv"))),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("7", "seven", false, mapOf("pre" to "set", "custom" to "data", "third" to "field"), 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("8", "eight", false, null, 0)),
                     UserSubscriptionEvent.RoomUpdatedEvent(simpleRoom("9", "9ine", true, mapOf("pre" to "set", "and" to "updated"), 0)),
@@ -205,6 +205,41 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
         }
         it("will update the store") {
             assertThat(subject["1"]!!.memberUserIds).containsExactly("mike", "callum", "bob")
+        }
+    }
+
+    describe("given room store with new, empty room") {
+        val initialRoom = newEmptyJoinedRoom("1", "one", "marek")
+        beforeEachTest {
+            subject += initialRoom
+        }
+
+        lateinit var applyTranslatedEvents: List<UserSubscriptionEvent>
+
+        describe("when new initial state is applied (reconnect) " +
+                "with added room which is missing read state (the top 1000 limit)") {
+            val addedRoom = newEmptyJoinedRoom("2", "two", "marek")
+            val initialState = UserSubscriptionEvent.InitialState(
+                    currentUser = simpleUser("marek"),
+                    _rooms = listOf(initialRoom, addedRoom),
+                    readStates = listOf(ReadStateApiType("1", 0, null)),
+                    memberships = listOf(RoomMembershipApiType("1", listOf("marek")),
+                                         RoomMembershipApiType("2", listOf("marek"))))
+            beforeEachTest {
+                applyTranslatedEvents = subject.applyUserSubscriptionEvent(initialState)
+            }
+
+            it("then the existing room remains unchanged") {
+                assertThat(subject["1"]!!).isEqualTo(initialRoom)
+            }
+            it("then the added room is stored") {
+                assertThat(subject["2"]!!).isEqualTo(addedRoom)
+            }
+            it("then expected events are emitted") {
+                assertThat(applyTranslatedEvents).containsExactly(
+                        initialState,
+                        UserSubscriptionEvent.AddedToRoomEvent(addedRoom))
+            }
         }
     }
 

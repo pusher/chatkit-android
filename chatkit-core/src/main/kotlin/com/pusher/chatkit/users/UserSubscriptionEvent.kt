@@ -54,10 +54,13 @@ internal sealed class UserSubscriptionEvent {
 
     }
 
-    internal data class AddedToRoomEvent(
+    /**
+     * Corresponds to backend API event (as opposed to internal event below used on reconnect).
+     */
+    internal data class AddedToRoomApiEvent(
             @SerializedName("room") private var _room: Room,
             val readState: ReadStateApiType,
-            val memberships: RoomMembershipApiType // TODO: make priv and relay via room
+            private val memberships: RoomMembershipApiType
     ) : UserSubscriptionEvent() {
 
         val room : Room
@@ -65,6 +68,11 @@ internal sealed class UserSubscriptionEvent {
                     memberUserIds = memberships.userIds.toSet())
 
     }
+
+    /**
+     * Event used for internal processing on reconnect (receiving subsequent initial state).
+      */
+    internal data class AddedToRoomEvent(val room: Room) : UserSubscriptionEvent()
 
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
 
