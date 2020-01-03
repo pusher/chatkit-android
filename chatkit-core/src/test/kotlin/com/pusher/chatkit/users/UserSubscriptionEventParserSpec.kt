@@ -24,6 +24,20 @@ object UserSubscriptionEventParserSpec : Spek({
         }
 
     }
+    describe("when parsing initial state with read state missing for the second room " +
+            "(simulating the top 1000 rooms limit)") {
+
+        val initialStateEvent = UserSubscriptionEventParser(
+                readTestJson("initial_state-readState-limit")).successOrThrow() as InitialState
+
+        it("then the first room will contain valid unread count") {
+            assertThat(initialStateEvent.rooms[0].unreadCount).isEqualTo(7)
+        }
+        it("then the second room won't contain unread count") {
+            assertThat(initialStateEvent.rooms[1].unreadCount).isNull()
+        }
+    }
+
     describe("when parsing added to room example event from the docs") {
         val addedToRoomEvent = UserSubscriptionEventParser(readTestJson("added_to_room-docs"))
                 .successOrThrow() as AddedToRoomEvent
