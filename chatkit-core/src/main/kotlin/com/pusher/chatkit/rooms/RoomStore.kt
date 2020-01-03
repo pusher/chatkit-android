@@ -48,57 +48,60 @@ internal class RoomStore(
             when (event) {
                 // TODO: extract well named funs with clear responsibility
                 is UserSubscriptionEvent.InitialState -> {
-                    val knownRooms = this.toList()
+                    val oldRooms = this.toList()
+                    val newRooms = event.rooms
 
-                    val addedTo = event.rooms.filterNot {
-                        knownRooms.contains(it)
-                    }.onEach {
+                    val pairs = oldRooms.zipOn(newRooms) { it.id }
+
+                    val addedTo = pairs.takeSecondWhereFirstIsNull().onEach {
                         this += it
                     }.map { room ->
-                        UserSubscriptionEvent.AddedToRoomEvent(room,
+                        UserSubscriptionEvent.AddedToRoomEvent(
+                                room,
                                 event.readStates.find { it.roomId == room.id }!!,
-                                event.memberships.find { it.roomId == room.id }!!)
+                                event.memberships.find { it.roomId == room.id }!!
+                        )
                     }
 
-                    val removedFrom = knownRooms.filterNot {
-                        event.rooms.contains(it)
-                    }.onEach {
+                    val removedFrom = pairs.takeFirstWhereSecondIsNull().onEach {
                         this -= it
                     }.map {
                         UserSubscriptionEvent.RemovedFromRoomEvent(it.id)
                     }
 
-                    val updated = event.rooms.filter { nr ->
-                        knownRooms.any { kr ->
-                            kr == nr && !kr.deepEquals(nr)
-                        }
+                    val matchingPairs = pairs.takeWhereNeitherAreNull()
+
+                    val updated = matchingPairs.filter {
+                        !it.first.deepEquals(it.second)
+                    }.map {
+                        it.second
                     }.onEach {
                         this += it
                     }.map {
                         UserSubscriptionEvent.RoomUpdatedEvent(it)
                     }
 
-                    val usersJoined = knownRooms.filterPairingWith(event.rooms).filter { (kr, nr) ->
-                        !kr.memberUserIds.containsAll(nr.memberUserIds)
-                    }.onEach { (_, nr) ->
-                        this += nr
-                    }.map { (kr, nr) ->
-                        Pair(nr.id, nr.memberUserIds - kr.memberUserIds)
-                    }.flatMap { (roomId, joinedMembers) ->
-                        joinedMembers.map { joinedMember ->
-                            UserSubscriptionEvent.UserJoinedRoomEvent(joinedMember, roomId)
+                    val usersJoined = matchingPairs.map {
+                        it.second to (it.first.memberUserIds - it.second.memberUserIds)
+                    }.filter { (_, newMembers) ->
+                        newMembers.isNotEmpty()
+                    }.onEach { (newRoom, _) ->
+                        this += newRoom
+                    }.flatMap { (newRoom, newMembers) ->
+                        newMembers.map { newMember ->
+                            UserSubscriptionEvent.UserJoinedRoomEvent(newMember, newRoom.id)
                         }
                     }
 
-                    val usersLeft = knownRooms.filterPairingWith(event.rooms).filter { (kr, nr) ->
-                        !nr.memberUserIds.containsAll(kr.memberUserIds)
-                    }.onEach { (_, nr) ->
-                        this += nr
-                    }.map { (kr, nr) ->
-                        Pair(nr.id, kr.memberUserIds - nr.memberUserIds)
-                    }.flatMap { (roomId, leftMembers) ->
-                        leftMembers.map { leftMember ->
-                            UserSubscriptionEvent.UserLeftRoomEvent(leftMember, roomId)
+                    val usersLeft = matchingPairs.map {
+                        it.second to (it.second.memberUserIds - it.first.memberUserIds)
+                    }.filter { (_, oldMembers) ->
+                        oldMembers.isNotEmpty()
+                    }.onEach { (newRoom, _) ->
+                        this += newRoom
+                    }.flatMap { (newRoom, oldMembers) ->
+                        oldMembers.map { oldMember ->
+                            UserSubscriptionEvent.UserJoinedRoomEvent(oldMember, newRoom.id)
                         }
                     }
 
@@ -151,14 +154,25 @@ internal class RoomStore(
                 else -> listOf(event)
             }
 
-    private fun List<Room>.filterPairingWith(rooms: List<Room>): List<Pair<Room, Room>> {
-        return this.map { kr ->
-            Pair(kr, rooms.find { nr -> kr.id == nr.id })
-        }.filter { (_, nr) ->
-            nr != null
-        }.map { (kr, nr) ->
-            Pair(kr, nr!!)
-        }
-    }
+    private fun <V, K: Comparable<K>> List<V>.zipOn(others: List<V>, on: (V) -> K): List<Pair<V?, V?>> =
+            (this.map { on(it) } + others.map { on(it) })
+                    .toSet()
+                    .sorted()
+                    .map { id ->
+                        this.find { on(it) == id } to others.find { on(it) == id }
+                    }
 
+    private fun <A, B> List<Pair<A?, B?>>.takeWhereNeitherAreNull(): List<Pair<A, B>> =
+            this.mapNotNull {
+                if (it.first != null && it.second != null)
+                    it.first!! to it.second!!
+                else
+                    null
+            }
+
+    private fun <A, B> List<Pair<A?, B?>>.takeFirstWhereSecondIsNull(): List<A> =
+            this.filter { it.second == null }.map { it.first!! }
+
+    private fun <A, B> List<Pair<A?, B?>>.takeSecondWhereFirstIsNull(): List<B> =
+            this.filter { it.first == null }.map { it.second!! }
 }
