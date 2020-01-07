@@ -49,12 +49,12 @@ internal class RoomStore {
                     val changedRooms = this.rooms.values.mapNotNull { existing->
                         event.rooms.find { it.id == existing.id }?.to(existing)
                     }.filter { (new, existing) -> new != existing
-                    }.map { it.first }
+                    }.map { it.first.id }
 
                     val changedReadStates = this.readStates.values.mapNotNull { existing ->
                         event.readStates.find { it.roomId == existing.roomId }?.to(existing)
                     }.filter { (new, existing) -> new != existing
-                    }.map { it.first }
+                    }.map { it.first.roomId }
 
                     val changedMembers = this.members.values.mapNotNull { existing ->
                         event.memberships.find { it.roomId == existing.roomId }?.to(existing)
@@ -66,8 +66,7 @@ internal class RoomStore {
 
                     addedRooms.map { UserInternalEvent.AddedToRoom(this[it]!!) } +
                     removedRooms.map { UserInternalEvent.RemovedFromRoom(it) } +
-                    changedRooms.map { UserInternalEvent.RoomUpdated(this[it.id]!!) } +
-                    changedReadStates.map { UserInternalEvent.RoomUpdated(this[it.roomId]!!) } +
+                    (changedRooms + changedReadStates).toSet().map { UserInternalEvent.RoomUpdated(this[it]!!) } +
                     changedMembers.flatMap { (new, existing) ->
                         (new.userIds - existing.userIds).map { UserInternalEvent.UserJoinedRoom(it, new.roomId) } +
                         (existing.userIds - new.userIds).map { UserInternalEvent.UserLeftRoom(it, new.roomId) }
