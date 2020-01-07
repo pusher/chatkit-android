@@ -186,6 +186,35 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                     assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
                 }
             }
+
+            describe("replacement state with a read state removed") {
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            readStates = listOf(initialReadStates[0], initialReadStates[2])
+                    )
+                }
+
+                it("reports nothing") {
+                    assertThat(events).hasSize(0)
+                }
+            }
+
+            describe("replacement state with a read state not matching a room (technically a backend error)") {
+                lateinit var events: List<UserInternalEvent>
+                val newReadState = ReadStateApiType("unknown", 1, null)
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            readStates = initialReadStates + newReadState
+                    )
+                }
+
+                it("reports nothing") {
+                    assertThat(events).hasSize(0)
+                }
+            }
         }
 
         describe("differences in memberships") {
