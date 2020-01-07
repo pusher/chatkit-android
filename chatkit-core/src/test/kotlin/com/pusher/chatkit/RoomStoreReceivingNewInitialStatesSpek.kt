@@ -252,6 +252,37 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
             }
         }
+
+        describe("multiple differences") {
+            describe("replacement state with difference in read state and room last message timestamp") {
+                val newReadState = ReadStateApiType(initialRooms[1].id, 23, null)
+                val newRoom = with (initialRooms[1]) {
+                            simpleRoom(
+                                    id = id,
+                                    name = name,
+                                    customData = customData,
+                                    isPrivate = private,
+                                    lastMessageAt = "2020-01-07T14:10:38Z"
+                            )
+                        }
+
+                lateinit var events: List<UserInternalEvent>
+
+                beforeEachTest {
+                    events = applyInitialState(
+                            rooms = listOf(initialRooms[0], newRoom, initialRooms[2]),
+                            readStates = listOf(initialReadStates[0], newReadState, initialReadStates[2])
+                    )
+                }
+
+                it("reports a single RoomUpdated, with the new unreadCount and lastMessageAt visible") {
+                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RoomUpdated::class.java)
+                    assertThat(event.room.id).isEqualTo(newRoom.id)
+                    assertThat(event.room.lastMessageAt).isEqualTo(newRoom.lastMessageAt)
+                    assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
+                }
+            }
+        }
     }
 })
 
