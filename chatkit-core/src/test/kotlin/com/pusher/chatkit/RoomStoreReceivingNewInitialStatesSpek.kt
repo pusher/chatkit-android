@@ -170,7 +170,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
         }
 
         describe("differences in read states") {
-            describe("replacement state with a difference in read state") {
+            describe("replacement state with a difference in unread count") {
                 val newReadState = ReadStateApiType(initialRooms[1].id, 23, null)
                 lateinit var events: List<UserInternalEvent>
 
