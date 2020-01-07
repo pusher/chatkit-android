@@ -64,13 +64,17 @@ internal class RoomStore {
 
                     this.initialiseContents(event.rooms, event.memberships, event.readStates)
 
-                    addedRooms.map { UserInternalEvent.AddedToRoom(this[it]!!) } +
-                    removedRooms.map { UserInternalEvent.RemovedFromRoom(it) } +
-                    (changedRooms + changedReadStates).toSet().map { UserInternalEvent.RoomUpdated(this[it]!!) } +
-                    changedMembers.flatMap { (new, existing) ->
+                    val addedEvents = addedRooms.map { UserInternalEvent.AddedToRoom(this[it]!!) }
+                    val removedEvents = removedRooms.map { UserInternalEvent.RemovedFromRoom(it) }
+                    val updatedEvents = (changedRooms + changedReadStates).toSet().map {
+                        UserInternalEvent.RoomUpdated(this[it]!!)
+                    }
+                    val membershipEvents = changedMembers.flatMap { (new, existing) ->
                         (new.userIds - existing.userIds).map { UserInternalEvent.UserJoinedRoom(it, new.roomId) } +
                         (existing.userIds - new.userIds).map { UserInternalEvent.UserLeftRoom(it, new.roomId) }
                     }
+
+                    addedEvents + removedEvents + updatedEvents + membershipEvents
                 }
                 is UserSubscriptionEvent.AddedToRoomEvent -> {
                     this.rooms[event.room.id] = event.room
