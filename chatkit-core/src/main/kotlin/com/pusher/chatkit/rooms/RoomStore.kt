@@ -85,10 +85,7 @@ internal class RoomStore {
                 }
                 is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
                     this.readStates[event.readState.roomId] = event.readState
-                    listOf(
-                            UserInternalEvent.RoomUpdated(this[event.readState.roomId]!!),
-                            UserInternalEvent.NewCursor(event.readState.cursor!!) // can this be null?
-                    )
+                    listOf(UserInternalEvent.RoomUpdated(this[event.readState.roomId]!!))
                 }
                 is UserSubscriptionEvent.RoomDeletedEvent -> {
                     this.remove(event.roomId)
