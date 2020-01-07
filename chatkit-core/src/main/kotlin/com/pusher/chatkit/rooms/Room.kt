@@ -23,8 +23,8 @@ data class Room(
 ) {
         internal constructor(
                 room: RoomApiType,
-                memberships: RoomMembershipApiType?,
-                readState: ReadStateApiType?
+                memberships: Set<String>?,
+                unreadCount: Int?
         ) : this(
                 id = room.id,
                 name = room.name,
@@ -36,7 +36,7 @@ data class Room(
                 updatedAt = room.updatedAt,
                 deletedAt = room.deletedAt,
                 lastMessageAt = room.lastMessageAt,
-                unreadCount = readState?.unreadCount,
-                memberUserIds = memberships?.userIds.orEmpty().toSet()
+                unreadCount = unreadCount,
+                memberUserIds = memberships.orEmpty()
         )
 }
