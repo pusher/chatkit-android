@@ -12,6 +12,15 @@ import com.pusher.util.Result
 import elements.Error
 import elements.Subscription
 
+internal interface PlatformClientFactory {
+    fun createPlatformClient(instance: Instance, tokenProvider: TokenProvider): PlatformClient
+}
+
+internal class DefaultPlatformClientFactory : PlatformClientFactory {
+    override fun createPlatformClient(instance: Instance, tokenProvider: TokenProvider) =
+        PlatformClient(instance, tokenProvider)
+}
+
 class PlatformClient(
         private val platformInstance: Instance,
         private val tokenProvider: TokenProvider
