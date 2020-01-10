@@ -11,7 +11,7 @@ buildscript {
         android_arch_version = '1.1.1'
         spek_version = '2.0.9'
         legacy_spek_version = '1.1.5'
-        mockito_version = '2.10.0'
+        mockito_version = '3.2.4'
         constraints_layout_version = '1.1.0'
         espresso_version = '3.0.1'
         espresso_runner_version = '1.0.1'
