@@ -1,10 +1,11 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
+import kotlin.collections.LinkedHashMap
 
 internal class RoomStore(
-        private val roomsMap: MutableMap<String, Room> = ConcurrentHashMap()
+        private val roomsMap: MutableMap<String, Room> = Collections.synchronizedMap(LinkedHashMap())
 ) {
 
     fun toList(): List<Room> =
