@@ -6,6 +6,9 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
+import com.pusher.chatkit.model.mappers.mapToRoom
+import com.pusher.chatkit.model.network.CreateRoomResponse
+import com.pusher.chatkit.model.network.JoinRoomResponse
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -78,29 +81,33 @@ internal class RoomService(
                     customData = customData,
                     userIds = userIds
             ).toJson()
-                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
-                    .map { room ->
-                        userService.populateUserStore(room.memberUserIds)
-                        room
+                    .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
+                    .map { response ->
+                        roomStore.add(response)
+                        userService.populateUserStore(response.members.userIds.toSet())
+                        mapToRoom(response.room, response.members, null)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
             legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
+                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
             client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
+                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
-                    .map { room ->
-                        userService.populateUserStore(room.memberUserIds)
-                        room
+            client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+                    .map { response ->
+                        roomStore.add(response)
+                        userService.populateUserStore(response.members.userIds.toSet())
+                        mapToRoom(response.room, response.members, null)
                     }
 
     fun updateRoom(

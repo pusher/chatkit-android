@@ -20,23 +20,4 @@ data class Room(
         var updatedAt: String,
         var deletedAt: String?,
         val memberUserIds: Set<String>
-) {
-        internal constructor(
-                room: RoomApiType,
-                memberships: Set<String>?,
-                unreadCount: Int?
-        ) : this(
-                id = room.id,
-                name = room.name,
-                createdById = room.createdById,
-                pushNotificationTitleOverride = room.pushNotificationTitleOverride,
-                isPrivate = room.private,
-                customData = room.customData,
-                createdAt = room.createdAt,
-                updatedAt = room.updatedAt,
-                deletedAt = room.deletedAt,
-                lastMessageAt = room.lastMessageAt,
-                unreadCount = unreadCount,
-                memberUserIds = memberships.orEmpty()
-        )
-}
+)
