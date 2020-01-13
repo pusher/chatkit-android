@@ -1,10 +1,8 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.users.ReadStateApiType
-import com.pusher.chatkit.users.RoomApiType
-import com.pusher.chatkit.users.RoomMembershipApiType
-import com.pusher.chatkit.users.UserInternalEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent
+import com.pusher.chatkit.model.mappers.mapToRoom
+import com.pusher.chatkit.model.network.JoinRoomResponse
+import com.pusher.chatkit.users.*
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
@@ -14,7 +12,7 @@ internal class RoomStore {
     private val members: MutableMap<String, Set<String>> = Collections.synchronizedMap(LinkedHashMap())
 
     operator fun get(id: String): Room? =
-            rooms[id]?.let { Room(it, members[id], unreadCounts[id]) }
+            rooms[id]?.let { mapToRoom(it, members[id], unreadCounts[id]) }
 
     internal fun listAll(): List<Room> =
             rooms.keys.map { this[it]!! }
@@ -32,7 +30,17 @@ internal class RoomStore {
         readStates.forEach { this.unreadCounts[it.roomId] = it.unreadCount }
     }
 
-    private fun remove(roomId: String) {
+    /*
+     * Only rooms we are a member of should be added to the RoomStore, so we
+     * only accept Create/JoinRoomResponses as proof (CreateRoomResponse is
+     * a typealias for JoinRoomResponse)
+     */
+    internal fun add(data: JoinRoomResponse) {
+        rooms[data.room.id] = data.room
+        members[data.members.roomId] = data.members.userIds.toSet()
+    }
+
+    internal fun remove(roomId: String) {
         this.rooms.remove(roomId)
         this.members.remove(roomId)
         this.unreadCounts.remove(roomId)
