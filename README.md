@@ -95,6 +95,20 @@ chatkit_integration_locator=<instance locator>
 chatkit_integration_key=<instance key>
 ```
 
+### Spek Tests
+
+Our tests are currently written using the [Spek Framework](https://www.spekframework.org/setup-android/).
+And you will need to install the Spek Plugin in Android Studio to be able to run them.
+
+You may find that you will also need to edit the run configuration and add your
+chatkit locator and chatkit key like this:
+
+```
+-Dchatkit_integration_locator=xxxx -Dchatkit_integration_key=yyy
+```
+
+Happy testing!
+
 ## Publishing
 
 ### jCenter
