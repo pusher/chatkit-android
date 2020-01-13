@@ -1,6 +1,6 @@
 package com.pusher.chatkit.cursors
 
-import com.pusher.chatkit.users.ReadStateApiType
+import com.pusher.chatkit.model.network.ReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 

@@ -1,6 +1,9 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
+import com.pusher.chatkit.model.network.ReadStateApiType
+import com.pusher.chatkit.model.network.RoomApiType
+import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.users.*
 import org.spekframework.spek2.Spek

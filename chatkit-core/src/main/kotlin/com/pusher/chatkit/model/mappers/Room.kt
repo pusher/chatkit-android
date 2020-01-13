@@ -1,9 +1,9 @@
 package com.pusher.chatkit.model.mappers
 
+import com.pusher.chatkit.model.network.ReadStateApiType
+import com.pusher.chatkit.model.network.RoomApiType
+import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.users.ReadStateApiType
-import com.pusher.chatkit.users.RoomApiType
-import com.pusher.chatkit.users.RoomMembershipApiType
 
 internal fun mapToRoom(
         room: RoomApiType,

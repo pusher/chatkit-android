@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.users.RoomApiType
+import com.pusher.chatkit.model.network.RoomApiType
 
 internal fun simpleRoom(
         id: String,
