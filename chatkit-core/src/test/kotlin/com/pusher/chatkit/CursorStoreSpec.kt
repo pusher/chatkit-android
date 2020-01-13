@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.cursors.CursorsStore
-import com.pusher.chatkit.users.ReadStateApiType
+import com.pusher.chatkit.model.network.ReadStateApiType
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.jetbrains.spek.api.Spek

@@ -2,9 +2,6 @@ package com.pusher.chatkit.rooms
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.CustomData
-import com.pusher.chatkit.users.ReadStateApiType
-import com.pusher.chatkit.users.RoomApiType
-import com.pusher.chatkit.users.RoomMembershipApiType
 
 data class Room(
         val id: String,

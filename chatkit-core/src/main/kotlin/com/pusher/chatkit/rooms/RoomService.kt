@@ -7,8 +7,12 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.model.mappers.mapToRoom
+import com.pusher.chatkit.model.network.*
+import com.pusher.chatkit.model.network.CreateRoomRequest
 import com.pusher.chatkit.model.network.CreateRoomResponse
 import com.pusher.chatkit.model.network.JoinRoomResponse
+import com.pusher.chatkit.model.network.UpdateRoomRequest
+import com.pusher.chatkit.model.network.UpdateRoomRequestWithPNTitleOverride
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -72,7 +76,7 @@ internal class RoomService(
             customData: CustomData?,
             userIds: List<String>
     ): Result<Room, Error> =
-            RoomCreateRequest(
+            CreateRoomRequest(
                     id = id,
                     name = name,
                     pushNotificationTitleOverride = pushNotificationTitleOverride,
@@ -340,26 +344,3 @@ internal class RoomService(
         }
     }
 }
-
-internal data class UpdateRoomRequest(
-        val name: String?,
-        val private: Boolean?,
-        val customData: CustomData?
-)
-
-internal data class UpdateRoomRequestWithPNTitleOverride(
-        val name: String?,
-        val pushNotificationTitleOverride: String?,
-        val private: Boolean?,
-        val customData: CustomData?
-)
-
-private data class RoomCreateRequest(
-        val id: String?,
-        val name: String,
-        val pushNotificationTitleOverride: String?,
-        val private: Boolean,
-        val createdById: String,
-        val customData: CustomData?,
-        var userIds: List<String> = emptyList()
-)

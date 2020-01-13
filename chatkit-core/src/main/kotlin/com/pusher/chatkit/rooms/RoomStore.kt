@@ -2,6 +2,9 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.model.mappers.mapToRoom
 import com.pusher.chatkit.model.network.JoinRoomResponse
+import com.pusher.chatkit.model.network.ReadStateApiType
+import com.pusher.chatkit.model.network.RoomApiType
+import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.users.*
 import java.util.*
 import kotlin.collections.LinkedHashMap
