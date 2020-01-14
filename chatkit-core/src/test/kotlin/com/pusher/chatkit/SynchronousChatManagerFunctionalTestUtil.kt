@@ -1,5 +1,6 @@
 package com.pusher.chatkit
 
+import com.pusher.platform.Instance
 import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
@@ -25,3 +26,13 @@ class DummyTokenProvider : TokenProvider {
     override fun clearToken(token: String?) { /* nop */ }
 
 }
+
+internal fun testPlatformClientFactory(mockPlatformClient: PlatformClient) =
+        object : PlatformClientFactory {
+
+            override fun createPlatformClient(instance: Instance,
+                                              tokenProvider: TokenProvider): PlatformClient {
+
+                return mockPlatformClient
+            }
+        }

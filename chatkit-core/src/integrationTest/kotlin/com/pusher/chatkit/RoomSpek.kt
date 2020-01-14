@@ -29,9 +29,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
-class RoomSpek : Spek({
+object RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
@@ -76,7 +75,7 @@ class RoomSpek : Spek({
             var updatedRoom by FutureValue<Room>()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.RoomUpdated) updatedRoom = event.room
             }
             changeRoomName(alice.generalRoom, NOT_GENERAL).run()
@@ -88,17 +87,14 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, ALICE, PUSHERINO))
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
-
-            var roomUpdatedEvent1 by FutureValue<RoomEvent.RoomUpdated>()
-            var roomUpdatedEvent2 by FutureValue<RoomEvent.RoomUpdated>()
-            val roomUpdatedEventCounter = AtomicInteger()
+            var lastMessageAtRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
+            var unreadCountRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
             alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.RoomUpdated) {
-                    val roomUpdatedEventCount = roomUpdatedEventCounter.getAndIncrement()
-                    if (roomUpdatedEventCount == 0) {
-                        roomUpdatedEvent1 = event
-                    } else if (roomUpdatedEventCount == 1) {
-                        roomUpdatedEvent2 = event
+                    if (event.room.unreadCount == 1) {
+                        unreadCountRoomUpdatedEvent = event
+                    } else {
+                        lastMessageAtRoomUpdatedEvent = event
                     }
                 }
             }
@@ -106,17 +102,13 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
-            assertThat(roomUpdatedEvent1.room.unreadCount).isEqualTo(0)
-            assertThat(roomUpdatedEvent1.room.lastMessageAt).isNotEmpty()
+            assertThat(lastMessageAtRoomUpdatedEvent.room.lastMessageAt).isNotEmpty()
 
-            assertThat(roomUpdatedEvent2.room.unreadCount).isEqualTo(1)
-            assertThat(roomUpdatedEvent2.room.lastMessageAt).isAtLeast(
-                       roomUpdatedEvent1.room.lastMessageAt)
-
-            assertThat(roomUpdatedEventCounter.get()).isEqualTo(2)
+            assertThat(unreadCountRoomUpdatedEvent.room.unreadCount).isEqualTo(1)
 
             assertThat(alice.rooms[0].unreadCount).isEqualTo(1)
-            assertThat(alice.rooms[0].lastMessageAt).isEqualTo(roomUpdatedEvent2.room.lastMessageAt)
+            assertThat(alice.rooms[0].lastMessageAt).isEqualTo(
+                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
@@ -126,7 +118,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val expectedRoomId = pusherino.generalRoom.id
 
-            pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { event ->
                 if (event is RoomEvent.RoomDeleted) deletedRoomId = event.roomId
             }
             deleteRoom(pusherino.generalRoom).run()
@@ -171,17 +163,17 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            val message1Id = pusherino.sendMessage(pusherino.generalRoom, "Message 1").assumeSuccess()
-            pusherino.sendMessage(pusherino.generalRoom, "Message 2").assumeSuccess()
+            val message1Id = pusherino.sendSimpleMessage(pusherino.generalRoom, "Message 1").assumeSuccess()
+            pusherino.sendSimpleMessage(pusherino.generalRoom, "Message 2").assumeSuccess()
             pusherino.setReadCursor(pusherino.generalRoom, message1Id).get().assumeSuccess()
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
             val badEvents = ConcurrentLinkedQueue<RoomEvent>()
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 when (event) {
-                    is RoomEvent.Message ->
-                        if (!alice.generalRoom.memberUserIds.contains(event.message.userId)) {
+                    is RoomEvent.MultipartMessage ->
+                        if (!alice.generalRoom.memberUserIds.contains(event.message.sender.id)) {
                             badEvents.add(event)
                         }
                     is RoomEvent.NewReadCursor ->
@@ -240,10 +232,9 @@ class RoomSpek : Spek({
         it("always has the correct memberUserIds after added to room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
 
-            val addedEvent = FutureValue<ChatEvent.AddedToRoom>()
+            var addedEvent by FutureValue<ChatEvent.AddedToRoom>()
             val alice = chatFor(ALICE).connect { event ->
-                if (event is ChatEvent.AddedToRoom)
-                    addedEvent.set(event)
+                if (event is ChatEvent.AddedToRoom) addedEvent = event
             }.assumeSuccess()
 
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
@@ -258,7 +249,7 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             assertThat(alice.rooms.size).isEqualTo(1)
-            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(2)
+            assertThat(addedEvent.room.memberUserIds.size).isEqualTo(2)
             assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
         }
     }
@@ -650,7 +641,7 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            pusherino.subscribeToRoom(pusherino.generalRoom) { }
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { }
 
             val users = pusherino.usersForRoom(pusherino.generalRoom).assumeSuccess()
 
@@ -662,7 +653,7 @@ class RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { }
+            alice.subscribeToRoomMultipart(alice.generalRoom) { }
 
             val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
 
@@ -674,7 +665,7 @@ class RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { }.unsubscribe()
+            alice.subscribeToRoomMultipart(alice.generalRoom) { }.unsubscribe()
 
             val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
 

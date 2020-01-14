@@ -32,7 +32,6 @@ import org.jetbrains.spek.api.dsl.it
 import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
 
 class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -147,7 +146,6 @@ class ChatManagerSpek : Spek({
 
             var lastMessageAtRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             var unreadCountRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
-            val roomUpdatedEventCounter = AtomicInteger()
             val user = chatFor(PUSHERINO).connect { event ->
                 if (event is ChatEvent.RoomUpdated) {
                     if (event.room.unreadCount == 2) {
@@ -155,7 +153,6 @@ class ChatManagerSpek : Spek({
                     } else {
                         lastMessageAtRoomUpdatedEvent = event
                     }
-                    roomUpdatedEventCounter.incrementAndGet()
                 }
             }.assumeSuccess()
 
@@ -163,17 +160,19 @@ class ChatManagerSpek : Spek({
             val message1Timestamp = user.rooms[0].lastMessageAt!!
             superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
 
-            assertThat(lastMessageAtRoomUpdatedEvent.room.unreadCount).isEqualTo(1)
-            assertThat(lastMessageAtRoomUpdatedEvent.room.lastMessageAt).isGreaterThan(message1Timestamp)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.lastMessageAt).isGreaterThan(
+                    message1Timestamp)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.unreadCount).isAtLeast(1)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.unreadCount).isAtMost(
+                    unreadCountRoomUpdatedEvent.room.unreadCount!!)
 
-            assertThat(unreadCountRoomUpdatedEvent.room.unreadCount).isEqualTo(2)
-            assertThat(unreadCountRoomUpdatedEvent.room.lastMessageAt).isEqualTo(
-                       lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
-
-            assertThat(roomUpdatedEventCounter.get()).isEqualTo(2)
+            assertThat(unreadCountRoomUpdatedEvent.room.lastMessageAt).isAtLeast(message1Timestamp)
+            assertThat(unreadCountRoomUpdatedEvent.room.lastMessageAt).isAtMost(
+                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt!!)
 
             assertThat(user.rooms[0].unreadCount).isEqualTo(2)
-            assertThat(user.rooms[0].lastMessageAt).isEqualTo(unreadCountRoomUpdatedEvent.room.lastMessageAt)
+            assertThat(user.rooms[0].lastMessageAt).isEqualTo(
+                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
         }
 
         it("loads users related to current user") {
