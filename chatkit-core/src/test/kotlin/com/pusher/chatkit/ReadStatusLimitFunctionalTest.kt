@@ -1,74 +1,42 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.doAnswer
-import com.nhaarman.mockitokotlin2.eq
-import com.nhaarman.mockitokotlin2.mock
 import com.pusher.chatkit.users.ReadStateApiType
 import com.pusher.chatkit.users.RoomMembershipApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import com.pusher.chatkit.users.UserSubscriptionEventParser
-import com.pusher.platform.Instance
-import com.pusher.platform.SubscriptionListeners
-import com.pusher.platform.network.Futures
-import com.pusher.platform.tokenProvider.TokenProvider
+import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result
 import elements.Error
-import elements.Subscription
-import elements.SubscriptionEvent
-import elements.emptyHeaders
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object ReadStatusLimitFunctionalTest : Spek({
 
+    val initialState = UserSubscriptionEvent.InitialState(
+            simpleUser("marek"),
+            listOf(
+                    newEmptyJoinedRoom("roomId1", "1", "marek"),
+                    newEmptyJoinedRoomWithNoUnreadCount("roomId2", "2", "marek")
+            ),
+            listOf(
+                    ReadStateApiType("roomId1", 0, null)
+            ),
+            listOf(
+                    RoomMembershipApiType("roomId1", listOf("marek")),
+                    RoomMembershipApiType("roomId2", listOf("marek"))
+            )
+    )
+
     describe("given two joined rooms with no read status for the second room " +
             "(simulating the top 1000 limit)") {
 
-        // TODO: extract for reuse
-        val dummySubscription = object : Subscription {
-            override fun unsubscribe() {
-                // nop
-            }
-        }
         val mockPlatformClient by memoized {
-            mock<PlatformClient> {
-                on { subscribeResuming(eq("users"), any(), any<UserSubscriptionEventParser>()) } doAnswer { invocation ->
-                    Futures.schedule {
-                        @Suppress("UNCHECKED_CAST")
-                        val listener = invocation.arguments[1] as SubscriptionListeners<UserSubscriptionEvent>
-
-                        listener.onEvent(SubscriptionEvent(
-                                "initial_state",
-                                emptyHeaders(),
-                                UserSubscriptionEvent.InitialState(
-                                        simpleUser("marek"),
-                                        listOf(
-                                                newEmptyJoinedRoom("roomId1", "1", "marek"),
-                                                newEmptyJoinedRoomWithNoUnreadCount("roomId2", "2", "marek")
-                                        ),
-                                        listOf(
-                                                ReadStateApiType("roomId1", 0, null)
-                                        ),
-                                        listOf(
-                                                RoomMembershipApiType("roomId1", listOf("marek")),
-                                                RoomMembershipApiType("roomId2", listOf("marek"))
-                                        )
-                                ))
-                        )
-                    }
-                    dummySubscription
-                }
-            }
-        }
-        val testPlatformClientFactory = object : PlatformClientFactory {
-            override fun createPlatformClient(instance: Instance, tokenProvider: TokenProvider): PlatformClient {
-                return mockPlatformClient
-            }
+            mockPlatformClientForUserSubscription(initialState)
         }
 
-        val subject by memoized { chatForFunctionalTest("marek", testPlatformClientFactory) }
+        val subject by memoized {
+            chatForFunctionalTest("marek", testPlatformClientFactory(mockPlatformClient))
+        }
 
         describe("when connect is called") {
             lateinit var connectResult: Result<SynchronousCurrentUser, Error>
@@ -84,6 +52,46 @@ object ReadStatusLimitFunctionalTest : Spek({
             }
             it("then the second room does not have unread count") {
                 assertThat(connectResult.successOrThrow().rooms[1].unreadCount).isNull()
+            }
+        }
+    }
+
+    describe("given read_state_updated event for the second room " +
+            "(the one with no unread count)") {
+
+        val readStateUpdatedEvent = UserSubscriptionEvent.ReadStateUpdatedEvent(
+                ReadStateApiType("roomId2", 1, null)
+        )
+        val mockPlatformClient by memoized {
+            mockPlatformClientForUserSubscription(initialState, readStateUpdatedEvent)
+        }
+
+        val subject by memoized {
+            chatForFunctionalTest("marek", testPlatformClientFactory(mockPlatformClient))
+        }
+
+        describe("when connect is called") {
+            lateinit var connectResult: Result<SynchronousCurrentUser, Error>
+            lateinit var roomUpdatedEvent: FutureValue<ChatEvent.RoomUpdated>
+            beforeEachTest {
+                roomUpdatedEvent = FutureValue()
+
+                connectResult = subject.connect { chatEvent ->
+                    if (chatEvent is ChatEvent.RoomUpdated) roomUpdatedEvent.set(chatEvent)
+                }
+            }
+
+            it("then the expected room updated event is notified") {
+                assertThat(roomUpdatedEvent.get().room.id).isEqualTo("roomId2")
+                assertThat(roomUpdatedEvent.get().room.unreadCount).isEqualTo(1)
+            }
+            it("then the second room has unread count") {
+                roomUpdatedEvent.get() // wait for the event first
+                assertThat(connectResult.successOrThrow().rooms[1].unreadCount).isEqualTo(1)
+            }
+            it("then the first room has the same unread count") {
+                roomUpdatedEvent.get() // wait for the event first
+                assertThat(connectResult.successOrThrow().rooms[0].unreadCount).isEqualTo(0)
             }
         }
     }

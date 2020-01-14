@@ -126,35 +126,14 @@ class SynchronousChatManager : AppHookListener {
     private lateinit var userSubscription: UserSubscription
     private lateinit var currentUser: SynchronousCurrentUser
 
-    // Holds events emitted during connection until we're initialised fully
-    private val eventBuffer = object {
-        private val buffer = ArrayList<ChatEvent>()
-        private var released = false
-
-        fun queue(event: ChatEvent) {
-            synchronized(buffer) {
-                if (released) {
-                    emit(event)
-                } else {
-                    buffer.add(event)
-                }
-            }
-        }
-
-        fun emit(event: ChatEvent) {
-            eventConsumers.forEach { consumer ->
-                consumer(event)
-            }
-        }
-
-        fun release() {
-            synchronized(buffer) {
-                buffer.forEach { emit(it) }
-                buffer.clear()
-                released = true
-            }
+    private fun emit(event: ChatEvent) {
+        eventConsumers.forEach { consumer ->
+            consumer(event)
         }
     }
+
+    private val populatedInitialStateLock = Object()
+    private var populatedInitialState = false
 
     fun connect(listeners: ChatListeners): Result<SynchronousCurrentUser, Error> =
             connect(listeners.toCallback())
@@ -181,10 +160,12 @@ class SynchronousChatManager : AppHookListener {
             logger.verbose("Current User initialised")
             roomService.populateInitial(initialState.rooms)
             cursorService.populateInitial(initialState.cursors)
-            // Ensure this is the first event propagated
-            eventBuffer.emit(ChatEvent.CurrentUserReceived(currentUser))
-            // Release any other events
-            eventBuffer.release()
+            emit(ChatEvent.CurrentUserReceived(currentUser))
+
+            synchronized(populatedInitialStateLock) {
+                populatedInitialState = true
+                populatedInitialStateLock.notifyAll()
+            }
 
             currentUser
         }
@@ -199,6 +180,10 @@ class SynchronousChatManager : AppHookListener {
     }
 
     private fun consumeUserSubscriptionEvent(incomingEvent: UserSubscriptionEvent) {
+        synchronized(populatedInitialStateLock) {  // wait for initial state to be processed first
+            if (!populatedInitialState) populatedInitialStateLock.wait()
+        }
+
         val appliedEvents = roomService.roomStore.applyUserSubscriptionEvent(incomingEvent) +
                 cursorService.applyEvent(incomingEvent)
 
@@ -206,7 +191,7 @@ class SynchronousChatManager : AppHookListener {
             if (event is UserSubscriptionEvent.InitialState) {
                 currentUser.updateWithPropertiesOf(newCurrentUser(event))
             }
-            eventBuffer.queue(transformUserSubscriptionEvent(event))
+            emit(transformUserSubscriptionEvent(event))
         }
     }
 
@@ -218,7 +203,7 @@ class SynchronousChatManager : AppHookListener {
             consumeEvents(transformPresenceSubscriptionEvent(event))
 
     private fun consumeEvents(events: List<ChatEvent>) {
-        events.forEach(eventBuffer::queue)
+        events.forEach(this::emit)
     }
 
     private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
