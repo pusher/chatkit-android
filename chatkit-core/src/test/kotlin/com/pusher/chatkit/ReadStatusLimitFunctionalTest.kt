@@ -89,7 +89,7 @@ object ReadStatusLimitFunctionalTest : Spek({
                 roomUpdatedEvent.get() // wait for the event first
                 assertThat(connectResult.successOrThrow().rooms[1].unreadCount).isEqualTo(1)
             }
-            it("then the first room has the same unread count") {
+            it("then the first room has its unread count unchanged") {
                 roomUpdatedEvent.get() // wait for the event first
                 assertThat(connectResult.successOrThrow().rooms[0].unreadCount).isEqualTo(0)
             }
