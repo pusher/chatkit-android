@@ -65,7 +65,11 @@ internal class RoomService(
                     .orElse { Errors.other("Room not found locally") }
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
+            if (joinable) {
+                client.doGet("/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms")
+            } else {
+                client.doGet("/users/${URLEncoder.encode(userId, "UTF-8")}/joined_rooms")
+            }
 
     fun createRoom(
             id: String?,
