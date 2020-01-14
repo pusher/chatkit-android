@@ -6,13 +6,12 @@ import com.pusher.chatkit.model.network.ReadStateApiType
 import com.pusher.chatkit.model.network.RoomApiType
 import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.users.*
-import java.util.*
-import kotlin.collections.LinkedHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 internal class RoomStore {
-    private val rooms: MutableMap<String, RoomApiType> = Collections.synchronizedMap(LinkedHashMap())
-    private val unreadCounts: MutableMap<String, Int> = Collections.synchronizedMap(LinkedHashMap())
-    private val members: MutableMap<String, Set<String>> = Collections.synchronizedMap(LinkedHashMap())
+    private val rooms: MutableMap<String, RoomApiType> = ConcurrentHashMap()
+    private val unreadCounts: MutableMap<String, Int> = ConcurrentHashMap()
+    private val members: MutableMap<String, Set<String>> = ConcurrentHashMap()
 
     operator fun get(id: String): Room? =
             rooms[id]?.let { mapToRoom(it, members[id], unreadCounts[id]) }
