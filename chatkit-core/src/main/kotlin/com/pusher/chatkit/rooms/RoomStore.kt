@@ -17,7 +17,7 @@ internal class RoomStore {
             rooms[id]?.let { mapToRoom(it, members[id], unreadCounts[id]) }
 
     internal fun listAll(): List<Room> =
-            rooms.keys.map { this[it]!! }
+            rooms.keys.map { this[it]!! }.sortedByDescending { it.lastMessageAt ?: it.createdAt }
 
     internal fun clear() {
         rooms.clear()
