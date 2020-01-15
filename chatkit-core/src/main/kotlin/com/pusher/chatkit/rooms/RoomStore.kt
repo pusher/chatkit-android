@@ -17,7 +17,7 @@ internal class RoomStore {
                 rooms[id]?.let { mapToRoom(it, members[id], unreadCounts[id]) }
             }
 
-    internal fun listAll(): List<Room> =
+    internal fun toList(): List<Room> =
             synchronized(this) {
                 rooms.keys.map { this[it]!! }
             }.sortedByDescending {
