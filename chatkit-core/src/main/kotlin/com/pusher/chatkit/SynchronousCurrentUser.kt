@@ -28,7 +28,7 @@ class SynchronousCurrentUser(
         private val pushNotifications: PushNotifications?
 ) {
 
-    val rooms: List<Room> get() = chatManager.roomService.roomStore.listAll()
+    val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
 
     val users: Result<List<User>, Error>
         get() = rooms
