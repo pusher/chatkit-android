@@ -164,7 +164,7 @@ class SynchronousChatManager : AppHookListener {
 
             synchronized(populatedInitialStateLock) {
                 populatedInitialState = true
-                populatedInitialStateLock.notifyAll()
+                populatedInitialStateLock.notify() // there should be only one thread waiting
             }
 
             currentUser
