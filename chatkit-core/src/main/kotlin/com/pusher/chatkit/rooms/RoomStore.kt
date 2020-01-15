@@ -1,6 +1,6 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.model.mappers.mapToRoom
+import com.pusher.chatkit.model.mappers.toRoom
 import com.pusher.chatkit.model.network.JoinRoomResponse
 import com.pusher.chatkit.model.network.ReadStateApiType
 import com.pusher.chatkit.model.network.RoomApiType
@@ -14,7 +14,7 @@ internal class RoomStore {
 
     operator fun get(id: String): Room? =
             synchronized(this) {
-                rooms[id]?.let { mapToRoom(it, members[id], unreadCounts[id]) }
+                rooms[id]?.let { toRoom(it, members[id], unreadCounts[id]) }
             }
 
     internal fun toList(): List<Room> =

@@ -12,7 +12,7 @@ import com.pusher.chatkit.rooms.Room
 /*
  * FROM INTERNAL REPRESENTATION (managed by room store)
  */
-internal fun mapToRoom(
+internal fun toRoom(
         room: RoomApiType,
         memberships: Set<String>?,
         unreadCount: Int?
@@ -34,46 +34,46 @@ internal fun mapToRoom(
 /*
  * FROM NETWORK REPRESENTATION (unmanaged get requests)
  */
-private fun mapToRoom(
+private fun toRoom(
         room: RoomApiType,
         memberships: RoomMembershipApiType?,
         readState: ReadStateApiType?
-) = mapToRoom(
+) = toRoom(
         room = room,
         memberships = memberships?.userIds.orEmpty().toSet(),
         unreadCount = readState?.unreadCount
 )
 
-internal fun mapToRoom(
+internal fun toRoom(
         response: GetRoomResponse
-) = mapToRoom(
+) = toRoom(
         response.room,
         response.membership,
         null
 )
 
-internal fun mapToRoom(
+internal fun toRoom(
         response: CreateRoomResponse
-) = mapToRoom(
+) = toRoom(
         response.room,
         response.membership,
         null
 )
 
-internal fun mapToRooms(
+internal fun toRooms(
         response: JoinableRoomsResponse
 ) = response.rooms.map { room ->
-    mapToRoom(
+    toRoom(
             room,
             response.memberships.find { it.roomId == room.id },
             null
     )
 }
 
-internal fun mapToRooms(
+internal fun toRooms(
         response: JoinedRoomsResponse
 ) = response.rooms.map { room ->
-    mapToRoom(
+    toRoom(
             room,
             response.memberships.find { it.roomId == room.id },
             response.readStates.find { it.roomId == room.id }
