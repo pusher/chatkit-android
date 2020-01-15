@@ -32,6 +32,7 @@ import org.jetbrains.spek.api.dsl.it
 import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -113,7 +114,7 @@ class ChatManagerSpek : Spek({
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(PUSHERINO))
 
-            done.await()
+            assertThat(done.await(10, TimeUnit.SECONDS)).isTrue()
             assertThat(events.count { it is ChatEvent.CurrentUserReceived }).isEqualTo(1)
         }
 
