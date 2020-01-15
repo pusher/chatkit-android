@@ -7,7 +7,6 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.model.mappers.mapToRoom
-import com.pusher.chatkit.model.network.*
 import com.pusher.chatkit.model.network.CreateRoomRequest
 import com.pusher.chatkit.model.network.CreateRoomResponse
 import com.pusher.chatkit.model.network.JoinRoomResponse
@@ -92,8 +91,8 @@ internal class RoomService(
                     .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
                     .map { response ->
                         roomStore.add(response)
-                        userService.populateUserStore(response.members.userIds.toSet())
-                        mapToRoom(response.room, response.members, null)
+                        userService.populateUserStore(response.membership.userIds.toSet())
+                        mapToRoom(response.room, response.membership, null)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
@@ -114,8 +113,8 @@ internal class RoomService(
             client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { response ->
                         roomStore.add(response)
-                        userService.populateUserStore(response.members.userIds.toSet())
-                        mapToRoom(response.room, response.members, null)
+                        userService.populateUserStore(response.membership.userIds.toSet())
+                        mapToRoom(response.room, response.membership, null)
                     }
 
     fun updateRoom(
