@@ -28,7 +28,7 @@ internal data class ReadStateApiType(
 internal data class RoomMembershipApiType(val roomId: String, val userIds: List<String>)
 
 /*
- * SYNC REQUESTS
+ * REQUESTS
  */
 
 internal data class UpdateRoomRequest(
@@ -55,7 +55,7 @@ internal data class CreateRoomRequest(
 )
 
 /*
- * SYNC RESPONSES
+ * RESPONSES
  */
 internal data class CreateRoomResponse(
         val room: RoomApiType,
