@@ -7,7 +7,7 @@ internal fun simpleRoom(
         name: String,
         isPrivate: Boolean = false,
         customData: CustomData? = null,
-        lastMessageAt: String? = "2017-04-13T14:10:38Z"
+        lastMessageAt: String? = "2017-04-14T14:10:38Z"
 ) =
         RoomApiType(
                 id = id,
