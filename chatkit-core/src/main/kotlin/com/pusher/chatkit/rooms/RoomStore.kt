@@ -49,7 +49,7 @@ internal class RoomStore {
     internal fun add(data: JoinRoomResponse) {
         synchronized(this) {
             rooms[data.room.id] = data.room
-            members[data.members.roomId] = data.members.userIds.toSet()
+            members[data.membership.roomId] = data.membership.userIds.toSet()
         }
     }
 

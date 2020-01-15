@@ -59,7 +59,7 @@ internal data class CreateRoomRequest(
  */
 internal data class CreateRoomResponse(
         val room: RoomApiType,
-        val members: RoomMembershipApiType
+        val membership: RoomMembershipApiType
 )
 
 internal typealias JoinRoomResponse = CreateRoomResponse
