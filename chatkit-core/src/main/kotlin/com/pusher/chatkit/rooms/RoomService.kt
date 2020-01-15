@@ -7,9 +7,12 @@ import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.model.mappers.mapToRoom
+import com.pusher.chatkit.model.mappers.mapToRooms
+import com.pusher.chatkit.model.network.*
 import com.pusher.chatkit.model.network.CreateRoomRequest
 import com.pusher.chatkit.model.network.CreateRoomResponse
 import com.pusher.chatkit.model.network.JoinRoomResponse
+import com.pusher.chatkit.model.network.JoinableRoomsResponse
 import com.pusher.chatkit.model.network.UpdateRoomRequest
 import com.pusher.chatkit.model.network.UpdateRoomRequestWithPNTitleOverride
 import com.pusher.chatkit.subscription.ChatkitSubscription
@@ -56,7 +59,9 @@ internal class RoomService(
 
     fun fetchRoom(id: String): Result<Room, Error> =
             getLocalRoom(id).flatRecover {
-                client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")
+                client.doGet<GetRoomResponse>(
+                        "/rooms/${URLEncoder.encode(id, "UTF-8")}"
+                ).map(::mapToRoom)
             }
 
     private fun getLocalRoom(id: String): Result<Room, Error> =
@@ -65,9 +70,13 @@ internal class RoomService(
 
     fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
             if (joinable) {
-                client.doGet("/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms")
+                client.doGet<JoinableRoomsResponse>(
+                        "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
+                ).map(::mapToRooms)
             } else {
-                client.doGet("/users/${URLEncoder.encode(userId, "UTF-8")}/joined_rooms")
+                client.doGet<JoinedRoomsResponse>(
+                        "/users/${URLEncoder.encode(userId, "UTF-8")}/joined_rooms"
+                ).map(::mapToRooms)
             }
 
     fun createRoom(
@@ -92,7 +101,7 @@ internal class RoomService(
                     .map { response ->
                         roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
-                        mapToRoom(response.room, response.membership, null)
+                        mapToRoom(response)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
@@ -114,7 +123,7 @@ internal class RoomService(
                     .map { response ->
                         roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
-                        mapToRoom(response.room, response.membership, null)
+                        mapToRoom(response)
                     }
 
     fun updateRoom(
@@ -138,7 +147,9 @@ internal class RoomService(
 
       return request
           .toJson()
-          .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+          .flatMap { body ->
+              client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body)
+          }
     }
 
     fun isSubscribedTo(roomId: String) =
