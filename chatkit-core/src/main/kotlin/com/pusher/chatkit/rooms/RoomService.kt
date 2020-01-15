@@ -6,8 +6,8 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
-import com.pusher.chatkit.model.mappers.mapToRoom
-import com.pusher.chatkit.model.mappers.mapToRooms
+import com.pusher.chatkit.model.mappers.toRoom
+import com.pusher.chatkit.model.mappers.toRooms
 import com.pusher.chatkit.model.network.*
 import com.pusher.chatkit.model.network.CreateRoomRequest
 import com.pusher.chatkit.model.network.CreateRoomResponse
@@ -61,7 +61,7 @@ internal class RoomService(
             getLocalRoom(id).flatRecover {
                 client.doGet<GetRoomResponse>(
                         "/rooms/${URLEncoder.encode(id, "UTF-8")}"
-                ).map(::mapToRoom)
+                ).map(::toRoom)
             }
 
     private fun getLocalRoom(id: String): Result<Room, Error> =
@@ -72,11 +72,11 @@ internal class RoomService(
             if (joinable) {
                 client.doGet<JoinableRoomsResponse>(
                         "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
-                ).map(::mapToRooms)
+                ).map(::toRooms)
             } else {
                 client.doGet<JoinedRoomsResponse>(
                         "/users/${URLEncoder.encode(userId, "UTF-8")}/joined_rooms"
-                ).map(::mapToRooms)
+                ).map(::toRooms)
             }
 
     fun createRoom(
@@ -101,7 +101,7 @@ internal class RoomService(
                     .map { response ->
                         roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
-                        mapToRoom(response)
+                        toRoom(response)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
@@ -123,7 +123,7 @@ internal class RoomService(
                     .map { response ->
                         roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
-                        mapToRoom(response)
+                        toRoom(response)
                     }
 
     fun updateRoom(
