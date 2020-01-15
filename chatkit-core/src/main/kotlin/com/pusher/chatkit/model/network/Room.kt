@@ -62,4 +62,23 @@ internal data class CreateRoomResponse(
         val membership: RoomMembershipApiType
 )
 
+// Create and Join room responses are type equivalent, because they both represent a room which
+// the user must be a member of. Get room (below) is a distinct type, because it does not.
 internal typealias JoinRoomResponse = CreateRoomResponse
+
+internal data class GetRoomResponse(
+    val room: RoomApiType,
+    val membership: RoomMembershipApiType
+)
+
+
+internal data class JoinableRoomsResponse(
+        val rooms: List<RoomApiType>,
+        val memberships: List<RoomMembershipApiType>
+)
+
+internal data class JoinedRoomsResponse(
+        val rooms: List<RoomApiType>,
+        val memberships: List<RoomMembershipApiType>,
+        val readStates: List<ReadStateApiType>
+)
