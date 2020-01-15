@@ -31,7 +31,7 @@ object UserSubscriptionEventParserSpec : Spek({
                 .successOrThrow() as AddedToRoomEvent
 
         it("then result's memberships will contain valid information") {
-            val membership = addedToRoomEvent.memberships
+            val membership = addedToRoomEvent.membership
             assertThat(membership.roomId).isEqualTo("cool-room-2")
             assertThat(membership.userIds.size).isEqualTo(1)
             assertThat(membership.userIds[0]).isEqualTo("ham")

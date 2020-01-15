@@ -6,7 +6,6 @@ import com.pusher.chatkit.model.network.ReadStateApiType
 import com.pusher.chatkit.model.network.RoomApiType
 import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.users.*
-import java.util.concurrent.ConcurrentHashMap
 
 internal class RoomStore {
     private val rooms: MutableMap<String, RoomApiType> = HashMap()
@@ -114,7 +113,7 @@ internal class RoomStore {
             }
             is UserSubscriptionEvent.AddedToRoomEvent -> {
                 this.rooms[event.room.id] = event.room
-                this.members[event.memberships.roomId] = event.memberships.userIds.toSet()
+                this.members[event.membership.roomId] = event.membership.userIds.toSet()
                 this.unreadCounts[event.readState.roomId] = event.readState.unreadCount
 
                 listOf(UserInternalEvent.AddedToRoom(this[event.room.id]!!))
