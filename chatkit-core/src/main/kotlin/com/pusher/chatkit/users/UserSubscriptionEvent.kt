@@ -21,7 +21,7 @@ internal sealed class UserSubscriptionEvent {
     internal data class AddedToRoomEvent(
             var room: RoomApiType,
             val readState: ReadStateApiType,
-            val memberships: RoomMembershipApiType
+            val membership: RoomMembershipApiType
     ) : UserSubscriptionEvent()
 
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
