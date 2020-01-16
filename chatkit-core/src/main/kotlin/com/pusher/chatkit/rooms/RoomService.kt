@@ -6,8 +6,6 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
-import com.pusher.chatkit.model.mappers.toRoom
-import com.pusher.chatkit.model.mappers.toRooms
 import com.pusher.chatkit.rooms.api.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
@@ -47,15 +45,18 @@ internal class RoomService(
 
     internal val roomStore = RoomStore()
 
+    private val joinedRoomApiMapper = JoinedRoomApiMapper()
+    private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
+
     internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
         roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
     }
 
-    fun fetchRoom(id: String): Result<Room, Error> =
+    internal fun getJoinedRoom(id: String): Result<Room, Error> =
             getLocalRoom(id).flatRecover {
                 client.doGet<GetRoomResponse>(
                         "/rooms/${URLEncoder.encode(id, "UTF-8")}"
-                ).map(::toRoom)
+                ).map(joinedRoomApiMapper::toRoom)
             }
 
     private fun getLocalRoom(id: String): Result<Room, Error> =
@@ -66,11 +67,11 @@ internal class RoomService(
             if (joinable) {
                 client.doGet<JoinableRoomsResponse>(
                         "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
-                ).map(::toRooms)
+                ).map(notJoinedRoomApiMapper::toRooms)
             } else {
                 client.doGet<JoinedRoomsResponse>(
                         "/users/${URLEncoder.encode(userId, "UTF-8")}/joined_rooms"
-                ).map(::toRooms)
+                ).map(joinedRoomApiMapper::toRooms)
             }
 
     fun createRoom(
@@ -95,7 +96,7 @@ internal class RoomService(
                     .map { response ->
                         roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
-                        toRoom(response)
+                        joinedRoomApiMapper.toRoom(response)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
@@ -117,7 +118,7 @@ internal class RoomService(
                     .map { response ->
                         roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
-                        toRoom(response)
+                        joinedRoomApiMapper.toRoom(response)
                     }
 
     fun updateRoom(
