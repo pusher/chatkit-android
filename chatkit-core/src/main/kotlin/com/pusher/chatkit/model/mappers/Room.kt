@@ -4,10 +4,10 @@ import com.pusher.chatkit.model.network.CreateRoomResponse
 import com.pusher.chatkit.model.network.GetRoomResponse
 import com.pusher.chatkit.model.network.JoinableRoomsResponse
 import com.pusher.chatkit.model.network.JoinedRoomsResponse
-import com.pusher.chatkit.model.network.ReadStateApiType
-import com.pusher.chatkit.model.network.RoomApiType
-import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 
 /*
  * FROM INTERNAL REPRESENTATION (managed by room store)
@@ -37,7 +37,7 @@ internal fun toRoom(
 private fun toRoom(
         room: RoomApiType,
         memberships: RoomMembershipApiType?,
-        readState: ReadStateApiType?
+        readState: RoomReadStateApiType?
 ) = toRoom(
         room = room,
         memberships = memberships?.userIds.orEmpty().toSet(),

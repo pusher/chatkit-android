@@ -1,6 +1,6 @@
 package com.pusher.chatkit.cursors
 
-import com.pusher.chatkit.model.network.ReadStateApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
@@ -43,7 +43,7 @@ class CursorsStore {
                     listOf()
             }
 
-    private fun applyReadState(readState: ReadStateApiType) : List<UserInternalEvent> =
+    private fun applyReadState(readState: RoomReadStateApiType) : List<UserInternalEvent> =
             if (readState.cursor != null) {
                 integrateCursors(listOf(readState.cursor))
                         .map { UserInternalEvent.NewCursor(readState.cursor) }
