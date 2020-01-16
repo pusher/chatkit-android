@@ -2,7 +2,10 @@ package com.pusher.chatkit.messages.multipart
 
 import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.rooms.V3MessageBody
+import com.pusher.chatkit.rooms.V3PartBody
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.parseAs
@@ -132,7 +135,7 @@ internal fun upgradeMessageV3(
         urlRefresher: UrlRefresher
 ): Result<Message, Error> =
         userService.fetchUserBy(message.userId).flatMap { user ->
-            roomService.fetchRoom(message.roomId).flatMap { room ->
+            roomService.getJoinedRoom(message.roomId).flatMap { room ->
                 message.parts.map { makePart(it, urlRefresher) }.collect().map { parts ->
                     Message(
                             id = message.id,

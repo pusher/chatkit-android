@@ -243,11 +243,11 @@ class SynchronousChatManager : AppHookListener {
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
             when (event) {
                 is RoomEvent.UserStartedTyping ->
-                    roomService.fetchRoom(roomId).map { room ->
+                    roomService.getJoinedRoom(roomId).map { room ->
                         ChatEvent.UserStartedTyping(event.user, room) as ChatEvent
                     }.recover { ChatEvent.ErrorOccurred(it) }
                 is RoomEvent.UserStoppedTyping ->
-                    roomService.fetchRoom(roomId).map { room ->
+                    roomService.getJoinedRoom(roomId).map { room ->
                         ChatEvent.UserStoppedTyping(event.user, room) as ChatEvent
                     }.recover { ChatEvent.ErrorOccurred(it) }
                 else ->
