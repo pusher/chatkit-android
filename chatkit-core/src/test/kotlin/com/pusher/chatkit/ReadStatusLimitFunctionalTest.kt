@@ -1,8 +1,8 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.users.ReadStateApiType
-import com.pusher.chatkit.users.RoomMembershipApiType
+import com.pusher.chatkit.model.network.ReadStateApiType
+import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result
@@ -15,8 +15,8 @@ object ReadStatusLimitFunctionalTest : Spek({
     val initialState = UserSubscriptionEvent.InitialState(
             simpleUser("marek"),
             listOf(
-                    newEmptyJoinedRoom("roomId1", "1", "marek"),
-                    newEmptyJoinedRoomWithNoUnreadCount("roomId2", "2", "marek")
+                    simpleRoom("roomId1", "1", lastMessageAt = "2017-05-14T14:10:38Z"),
+                    simpleRoom("roomId2", "2", lastMessageAt = null)
             ),
             listOf(
                     ReadStateApiType("roomId1", 0, null)
