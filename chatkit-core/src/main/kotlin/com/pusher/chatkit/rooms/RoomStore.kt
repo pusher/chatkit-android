@@ -1,6 +1,6 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.model.network.JoinRoomResponse
+import com.pusher.chatkit.rooms.api.JoinRoomResponse
 import com.pusher.chatkit.rooms.api.RoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType

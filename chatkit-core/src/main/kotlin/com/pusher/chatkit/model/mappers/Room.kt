@@ -1,13 +1,7 @@
 package com.pusher.chatkit.model.mappers
 
-import com.pusher.chatkit.model.network.CreateRoomResponse
-import com.pusher.chatkit.model.network.GetRoomResponse
-import com.pusher.chatkit.model.network.JoinableRoomsResponse
-import com.pusher.chatkit.model.network.JoinedRoomsResponse
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.api.RoomApiType
-import com.pusher.chatkit.rooms.api.RoomMembershipApiType
-import com.pusher.chatkit.rooms.api.RoomReadStateApiType
+import com.pusher.chatkit.rooms.api.*
 
 /*
  * FROM INTERNAL REPRESENTATION (managed by room store)
