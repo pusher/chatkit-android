@@ -8,13 +8,7 @@ import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
 import com.pusher.chatkit.model.mappers.toRoom
 import com.pusher.chatkit.model.mappers.toRooms
-import com.pusher.chatkit.model.network.*
-import com.pusher.chatkit.model.network.CreateRoomRequest
-import com.pusher.chatkit.model.network.CreateRoomResponse
-import com.pusher.chatkit.model.network.JoinRoomResponse
-import com.pusher.chatkit.model.network.JoinableRoomsResponse
-import com.pusher.chatkit.model.network.UpdateRoomRequest
-import com.pusher.chatkit.model.network.UpdateRoomRequestWithPNTitleOverride
+import com.pusher.chatkit.rooms.api.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
