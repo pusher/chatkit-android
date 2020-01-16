@@ -15,7 +15,7 @@
       "updated_at": "2017-03-23T11:36:42Z",
       "deleted_at": null
     },
-    "memberships": {
+    "membership": {
         "room_id": "cool-room-2",
         "user_ids": ["ham"]
     },
