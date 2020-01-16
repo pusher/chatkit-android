@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.cursors.CursorSubscriptionEvent
 import com.pusher.chatkit.cursors.CursorsStore
-import com.pusher.chatkit.model.network.ReadStateApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.jetbrains.spek.api.Spek
@@ -65,9 +65,9 @@ class CursorStoreSpec : Spek({
 
             val events = subject.applyEvent(UserSubscriptionEvent.InitialState(
                     readStates = listOf(
-                            ReadStateApiType("1", 0, constantRoom1Cursor),
-                            ReadStateApiType("2", 0, newRoom2Cursor),
-                            ReadStateApiType("3", 0, newRoom3Cursor)
+                            RoomReadStateApiType("1", 0, constantRoom1Cursor),
+                            RoomReadStateApiType("2", 0, newRoom2Cursor),
+                            RoomReadStateApiType("3", 0, newRoom3Cursor)
                     ),
                     currentUser = User("callum", "", "", null, null, null),
                     rooms = listOf(), // normally would be there but not needed for this test
@@ -77,9 +77,9 @@ class CursorStoreSpec : Spek({
             it("should emit events describing the difference in state") {
                 assertThat(events).containsExactly(
                         UserSubscriptionEvent.ReadStateUpdatedEvent(
-                                ReadStateApiType("2", 0, newRoom2Cursor)),
+                                RoomReadStateApiType("2", 0, newRoom2Cursor)),
                         UserSubscriptionEvent.ReadStateUpdatedEvent(
-                                ReadStateApiType("3", 0, newRoom3Cursor))
+                                RoomReadStateApiType("3", 0, newRoom3Cursor))
                 )
             }
 

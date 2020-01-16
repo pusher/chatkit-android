@@ -1,11 +1,13 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.model.network.ReadStateApiType
-import com.pusher.chatkit.model.network.RoomApiType
-import com.pusher.chatkit.model.network.RoomMembershipApiType
 import com.pusher.chatkit.rooms.RoomStore
-import com.pusher.chatkit.users.*
+import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
+import com.pusher.chatkit.users.User
+import com.pusher.chatkit.users.UserInternalEvent
+import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -13,9 +15,9 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
     val subject by memoized { RoomStore() }
 
     val initialReadStates = listOf(
-            ReadStateApiType("1", 11, null),
-            ReadStateApiType("2", 22, null),
-            ReadStateApiType("3", 33, null)
+            RoomReadStateApiType("1", 11, null),
+            RoomReadStateApiType("2", 22, null),
+            RoomReadStateApiType("3", 33, null)
     )
     val initialMemberships = listOf(
             RoomMembershipApiType("1", listOf("viv")),
@@ -39,7 +41,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
 
     fun applyInitialState(
             rooms: List<RoomApiType>? = null,
-            readStates: List<ReadStateApiType>? = null,
+            readStates: List<RoomReadStateApiType>? = null,
             memberships: List<RoomMembershipApiType>? = null
     ) =
             subject.applyUserSubscriptionEvent(
@@ -99,7 +101,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
             describe("replacement state with a new room, including memberships and read state") {
                 val newRoom = simpleRoom("new", "New Room", false, null)
                 val newMembers = RoomMembershipApiType("new", listOf("member_a", "member_b"))
-                val newReadState = ReadStateApiType("new", 5, null)
+                val newReadState = RoomReadStateApiType("new", 5, null)
                 lateinit var events: List<UserInternalEvent>
 
                 beforeEachTest {
@@ -174,7 +176,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
 
         describe("differences in read states") {
             describe("replacement state with a difference in unread count") {
-                val newReadState = ReadStateApiType(initialRooms[1].id, 23, null)
+                val newReadState = RoomReadStateApiType(initialRooms[1].id, 23, null)
                 lateinit var events: List<UserInternalEvent>
 
                 beforeEachTest {
@@ -206,7 +208,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
 
             describe("replacement state with a read state not matching a room (technically a backend error)") {
                 lateinit var events: List<UserInternalEvent>
-                val newReadState = ReadStateApiType("unknown", 1, null)
+                val newReadState = RoomReadStateApiType("unknown", 1, null)
 
                 beforeEachTest {
                     events = applyInitialState(
@@ -258,7 +260,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
 
         describe("multiple differences") {
             describe("replacement state with difference in read state and room last message timestamp") {
-                val newReadState = ReadStateApiType(initialRooms[1].id, 23, null)
+                val newReadState = RoomReadStateApiType(initialRooms[1].id, 23, null)
                 val newRoom = with (initialRooms[1]) {
                             simpleRoom(
                                     id = id,

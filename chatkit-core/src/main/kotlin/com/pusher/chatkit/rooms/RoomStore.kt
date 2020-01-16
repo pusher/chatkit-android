@@ -1,9 +1,9 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.model.network.JoinRoomResponse
-import com.pusher.chatkit.model.network.ReadStateApiType
-import com.pusher.chatkit.model.network.RoomApiType
-import com.pusher.chatkit.model.network.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
@@ -34,7 +34,10 @@ internal class RoomStore {
         }
     }
 
-    internal fun initialiseContents(rooms: List<RoomApiType>, memberships: List<RoomMembershipApiType>, readStates: List<ReadStateApiType>) {
+    internal fun initialiseContents(rooms: List<RoomApiType>,
+                                    memberships: List<RoomMembershipApiType>,
+                                    readStates: List<RoomReadStateApiType>) {
+
         synchronized(this) {
             clear()
             rooms.forEach { this.rooms[it.id] = it }
