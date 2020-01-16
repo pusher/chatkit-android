@@ -1,20 +1,22 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.model.mappers.toRoom
 import com.pusher.chatkit.model.network.JoinRoomResponse
 import com.pusher.chatkit.model.network.ReadStateApiType
 import com.pusher.chatkit.model.network.RoomApiType
 import com.pusher.chatkit.model.network.RoomMembershipApiType
-import com.pusher.chatkit.users.*
+import com.pusher.chatkit.users.UserInternalEvent
+import com.pusher.chatkit.users.UserSubscriptionEvent
 
 internal class RoomStore {
     private val rooms: MutableMap<String, RoomApiType> = HashMap()
     private val unreadCounts: MutableMap<String, Int> = HashMap()
     private val members: MutableMap<String, Set<String>> = HashMap()
 
+    private val mapper = JoinedRoomInternalMapper()
+
     operator fun get(id: String): Room? =
             synchronized(this) {
-                rooms[id]?.let { toRoom(it, members[id], unreadCounts[id]) }
+                rooms[id]?.let { mapper.toRoom(it, members[id]!!, unreadCounts[id]) }
             }
 
     internal fun toList(): List<Room> =
@@ -152,4 +154,27 @@ internal class RoomStore {
                 listOf(UserInternalEvent.ErrorOccurred(event.error))
         }
     }
+}
+
+private class JoinedRoomInternalMapper {
+
+    fun toRoom(
+            room: RoomApiType,
+            memberships: Set<String>,
+            unreadCount: Int?
+    ) = Room(
+            room.id,
+            room.createdById,
+            room.name,
+            room.pushNotificationTitleOverride,
+            room.private,
+            room.customData,
+            unreadCount,
+            room.lastMessageAt,
+            room.createdAt,
+            room.updatedAt,
+            room.deletedAt,
+            memberships
+    )
+
 }
