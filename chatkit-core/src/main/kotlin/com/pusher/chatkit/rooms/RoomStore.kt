@@ -95,8 +95,8 @@ internal class RoomStore {
                 }
 
                 val changedMembers = this.members.mapNotNull { (roomId, existing) ->
-                    event.memberships.find { it.roomId == roomId }?.let { newMemberships ->
-                        Triple(roomId, existing, newMemberships.userIds.toSet())
+                    event.memberships.find { it.roomId == roomId }?.let { newMembership ->
+                        Triple(roomId, existing, newMembership.userIds.toSet())
                     }
                 }.filter { (_, existing, new) ->
                     new != existing
@@ -163,7 +163,7 @@ private class JoinedRoomInternalMapper {
 
     fun toRoom(
             room: RoomApiType,
-            memberships: Set<String>,
+            members: Set<String>,
             unreadCount: Int?
     ) = Room(
             room.id,
@@ -177,7 +177,7 @@ private class JoinedRoomInternalMapper {
             room.createdAt,
             room.updatedAt,
             room.deletedAt,
-            memberships
+            members
     )
 
 }
