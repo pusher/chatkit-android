@@ -144,15 +144,11 @@ internal class RoomStore {
                 listOf(UserInternalEvent.RemovedFromRoom(event.roomId))
             }
             is UserSubscriptionEvent.UserJoinedRoomEvent -> {
-                members[event.roomId]?.let { existingMembers ->
-                    members[event.roomId] = existingMembers + event.userId
-                }
+                members[event.roomId] = members[event.roomId]!! + event.userId
                 listOf(UserInternalEvent.UserJoinedRoom(event.userId, event.roomId))
             }
             is UserSubscriptionEvent.UserLeftRoomEvent -> {
-                members[event.roomId]?.let { existingMembers ->
-                    members[event.roomId] = existingMembers - event.userId
-                }
+                members[event.roomId] = members[event.roomId]!! - event.userId
                 listOf(UserInternalEvent.UserLeftRoom(event.userId, event.roomId))
             }
             is UserSubscriptionEvent.ErrorOccurred ->
