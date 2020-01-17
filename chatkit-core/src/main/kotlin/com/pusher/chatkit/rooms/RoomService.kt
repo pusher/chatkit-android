@@ -53,17 +53,11 @@ internal class RoomService(
     }
 
     internal fun getJoinedRoom(id: String): Result<Room, Error> =
-            getLocalRoom(id).flatRecover {
-                client.doGet<GetRoomResponse>(
-                        "/rooms/${URLEncoder.encode(id, "UTF-8")}"
-                ).map(joinedRoomApiMapper::toRoom)
-            }
+            roomStore[id].orElse { Errors.other("Room not found locally") }
 
-    private fun getLocalRoom(id: String): Result<Room, Error> =
-            roomStore[id]
-                    .orElse { Errors.other("Room not found locally") }
-
-    fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
+    // TODO: simplify (fetchJoinableRooms), it's only used as joinable
+    internal fun fetchUserRooms(userId: String, joinable: Boolean = false)
+            : Result<List<Room>, Error> =
             if (joinable) {
                 client.doGet<JoinableRoomsResponse>(
                         "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
