@@ -1,8 +1,8 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.users.ReadStateApiType
-import com.pusher.chatkit.users.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result
@@ -15,11 +15,11 @@ object ReadStatusLimitFunctionalTest : Spek({
     val initialState = UserSubscriptionEvent.InitialState(
             simpleUser("marek"),
             listOf(
-                    newEmptyJoinedRoom("roomId1", "1", "marek"),
-                    newEmptyJoinedRoomWithNoUnreadCount("roomId2", "2", "marek")
+                    simpleRoom("roomId1", "1", lastMessageAt = "2017-05-14T14:10:38Z"),
+                    simpleRoom("roomId2", "2", lastMessageAt = null)
             ),
             listOf(
-                    ReadStateApiType("roomId1", 0, null)
+                    RoomReadStateApiType("roomId1", 0, null)
             ),
             listOf(
                     RoomMembershipApiType("roomId1", listOf("marek")),
@@ -60,7 +60,7 @@ object ReadStatusLimitFunctionalTest : Spek({
             "(the one with no unread count)") {
 
         val readStateUpdatedEvent = UserSubscriptionEvent.ReadStateUpdatedEvent(
-                ReadStateApiType("roomId2", 1, null)
+                RoomReadStateApiType("roomId2", 1, null)
         )
         val mockPlatformClient by memoized {
             mockPlatformClientForUserSubscription(initialState, readStateUpdatedEvent)

@@ -6,8 +6,10 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
+import com.pusher.chatkit.rooms.api.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
+import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
@@ -41,24 +43,22 @@ internal class RoomService(
     private val openSubscriptions = HashMap<String, Subscription>()
     private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
 
-    internal val roomStore = RoomStore()
+    val roomStore = RoomStore()
 
-    internal fun populateInitial(rooms: List<Room>) {
-        roomStore.initialiseContents(rooms)
+    private val joinedRoomApiMapper = JoinedRoomApiMapper()
+    private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
+
+    fun populateInitial(event: UserSubscriptionEvent.InitialState) {
+        roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
     }
 
-    fun fetchRoom(id: String): Result<Room, Error> =
-            getLocalRoom(id).flatRecover {
-                client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")
-            }
+    fun getJoinedRoom(id: String): Result<Room, Error> =
+            roomStore[id].orElse { Errors.other("Room not found locally") }
 
-    private fun getLocalRoom(id: String): Result<Room, Error> =
-            roomStore[id]
-                    .orElse { Errors.other("Room not found locally") }
-
-    fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
-                    .map { rooms -> rooms.also { roomStore += it } }
+    fun fetchJoinableRooms(userId: String): Result<List<Room>, Error> =
+            client.doGet<JoinableRoomsResponse>(
+                    "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
+            ).map(notJoinedRoomApiMapper::toRooms)
 
     fun createRoom(
             id: String?,
@@ -69,7 +69,7 @@ internal class RoomService(
             customData: CustomData?,
             userIds: List<String>
     ): Result<Room, Error> =
-            RoomCreateRequest(
+            CreateRoomRequest(
                     id = id,
                     name = name,
                     pushNotificationTitleOverride = pushNotificationTitleOverride,
@@ -78,33 +78,33 @@ internal class RoomService(
                     customData = customData,
                     userIds = userIds
             ).toJson()
-                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
-                    .map { room ->
-                        roomStore += room
-                        userService.populateUserStore(room.memberUserIds)
-                        room
+                    .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
+                    .map { response ->
+                        roomStore.add(response)
+                        userService.populateUserStore(response.membership.userIds.toSet())
+                        joinedRoomApiMapper.toRoom(response)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
             legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
-                        roomStore -= roomId
+                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
             client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
-                        roomStore -= roomId
+                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
-                    .map { room ->
-                        roomStore += room
-                        userService.populateUserStore(room.memberUserIds)
-                        room
+            client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+                    .map { response ->
+                        roomStore.add(response)
+                        userService.populateUserStore(response.membership.userIds.toSet())
+                        joinedRoomApiMapper.toRoom(response)
                     }
 
     fun updateRoom(
@@ -128,7 +128,9 @@ internal class RoomService(
 
       return request
           .toJson()
-          .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+          .flatMap { body ->
+              client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body)
+          }
     }
 
     fun isSubscribedTo(roomId: String) =
@@ -337,26 +339,3 @@ internal class RoomService(
         }
     }
 }
-
-internal data class UpdateRoomRequest(
-        val name: String?,
-        val private: Boolean?,
-        val customData: CustomData?
-)
-
-internal data class UpdateRoomRequestWithPNTitleOverride(
-        val name: String?,
-        val pushNotificationTitleOverride: String?,
-        val private: Boolean?,
-        val customData: CustomData?
-)
-
-private data class RoomCreateRequest(
-        val id: String?,
-        val name: String,
-        val pushNotificationTitleOverride: String?,
-        val private: Boolean,
-        val createdById: String,
-        val customData: CustomData?,
-        var userIds: List<String> = emptyList()
-)

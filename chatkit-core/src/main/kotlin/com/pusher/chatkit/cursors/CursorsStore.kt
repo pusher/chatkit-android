@@ -1,6 +1,7 @@
 package com.pusher.chatkit.cursors
 
-import com.pusher.chatkit.users.ReadStateApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
+import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
 
@@ -29,33 +30,28 @@ class CursorsStore {
         this += cursors
     }
 
-    internal fun applyEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
+    internal fun applyEvent(event: UserSubscriptionEvent): List<UserInternalEvent> =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
-                    integrateCursors(event.cursors)
-                            .map { cursor -> findCorrespondingReadState(event, cursor) }
-                            .map(UserSubscriptionEvent::ReadStateUpdatedEvent)
+                    integrateCursors(event.readStates.mapNotNull { it.cursor })
+                            .map(UserInternalEvent::NewCursor)
                 is UserSubscriptionEvent.ReadStateUpdatedEvent ->
                     applyReadState(event.readState)
-                is UserSubscriptionEvent.AddedToRoomApiEvent ->
+                is UserSubscriptionEvent.AddedToRoomEvent ->
                     applyReadState(event.readState)
                 else ->
                     listOf()
             }
 
-    private fun applyReadState(readState: ReadStateApiType) : List<UserSubscriptionEvent> =
+    private fun applyReadState(readState: RoomReadStateApiType) : List<UserInternalEvent> =
             if (readState.cursor != null) {
                 integrateCursors(listOf(readState.cursor))
-                        .map { UserSubscriptionEvent.ReadStateUpdatedEvent(readState) }
+                        .map { UserInternalEvent.NewCursor(readState.cursor) }
             } else {
                 listOf()
             }
 
-    private fun findCorrespondingReadState(event: UserSubscriptionEvent.InitialState,
-                                           cursor: Cursor) =
-            event.readStates.find { it.cursor?.matches(cursor) ?: false }!!
-
-    fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
+    internal fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
             when (event) {
                 is CursorSubscriptionEvent.InitialState ->
                     integrateCursors(event.cursors).map(CursorSubscriptionEvent::OnCursorSet)

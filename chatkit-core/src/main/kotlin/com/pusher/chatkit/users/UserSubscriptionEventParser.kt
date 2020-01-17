@@ -33,7 +33,7 @@ internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> 
 
     private fun JsonObject.parseEvent(eventName: String): Result<UserSubscriptionEvent, Error> = when (eventName) {
         "initial_state" -> parseAs<InitialState>()
-        "added_to_room" -> parseAs<AddedToRoomApiEvent>()
+        "added_to_room" -> parseAs<AddedToRoomEvent>()
         "removed_from_room" -> parseAs<RemovedFromRoomEvent>()
         "room_updated" -> parseAs<RoomUpdatedEvent>()
         "room_deleted" -> parseAs<RoomDeletedEvent>()

@@ -8,7 +8,6 @@ import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.rooms.*
-import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.users.User
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
@@ -266,10 +265,7 @@ class SynchronousCurrentUser(
             }
 
     fun getJoinableRooms(): Result<List<Room>, Error> =
-            chatManager.roomService.fetchUserRooms(
-                    userId = id,
-                    joinable = true
-            )
+            chatManager.roomService.fetchJoinableRooms(userId = id)
 
     fun usersForRoom(room: Room): Result<List<User>, Error> =
             chatManager.userService.fetchUsersBy(room.memberUserIds)

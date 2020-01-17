@@ -17,22 +17,4 @@ data class Room(
         var updatedAt: String,
         var deletedAt: String?,
         val memberUserIds: Set<String>
-) {
-
-    override fun equals(other: Any?) = (other is Room) && id == other.id
-
-    override fun hashCode(): Int { return id.hashCode() }
-
-    fun deepEquals(other: Room) =
-            name == other.name &&
-                    pushNotificationTitleOverride == other.pushNotificationTitleOverride &&
-                    customData == other.customData &&
-                    isPrivate == other.isPrivate  &&
-                    unreadCount == other.unreadCount &&
-                    lastMessageAt == other.lastMessageAt
-
-    fun withAddedMember(addedMemberId: String) = copy(memberUserIds = memberUserIds + addedMemberId)
-
-    fun withLeftMember(leftMemberId: String) = copy(memberUserIds = memberUserIds - leftMemberId)
-
-}
+)

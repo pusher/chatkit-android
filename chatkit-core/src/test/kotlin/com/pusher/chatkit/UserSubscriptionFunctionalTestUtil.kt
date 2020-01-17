@@ -41,9 +41,7 @@ internal fun mockPlatformClientForUserSubscription(
 private fun mapToSubscriptionEventId(event: UserSubscriptionEvent): String {
     return when (event) {
         is UserSubscriptionEvent.InitialState -> "initial_state"
-        is UserSubscriptionEvent.AddedToRoomApiEvent -> "added_to_room"
-        is UserSubscriptionEvent.AddedToRoomEvent ->
-            throw RuntimeException("illegal event, use AddedToRoomApiEvent instead")
+        is UserSubscriptionEvent.AddedToRoomEvent -> "added_to_room"
         is UserSubscriptionEvent.RemovedFromRoomEvent -> "removed_from_room"
         is UserSubscriptionEvent.RoomUpdatedEvent -> "room_updated"
         is UserSubscriptionEvent.RoomDeletedEvent -> "room_deleted"

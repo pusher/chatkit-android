@@ -12,6 +12,7 @@ import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.rooms.RoomConsumer
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.RoomService
+import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -158,8 +159,8 @@ class SynchronousChatManager : AppHookListener {
         return userSubscription.initialState().map { initialState ->
             currentUser = newCurrentUser(initialState)
             logger.verbose("Current User initialised")
-            roomService.populateInitial(initialState.rooms)
-            cursorService.populateInitial(initialState.cursors)
+            roomService.populateInitial(initialState)
+            cursorService.populateInitial(initialState)
             emit(ChatEvent.CurrentUserReceived(currentUser))
 
             synchronized(populatedInitialStateLock) {
@@ -184,14 +185,15 @@ class SynchronousChatManager : AppHookListener {
             if (!populatedInitialState) populatedInitialStateLock.wait()
         }
 
+        if (incomingEvent is UserSubscriptionEvent.InitialState) {
+            currentUser.updateWithPropertiesOf(newCurrentUser(incomingEvent))
+        }
+
         val appliedEvents = roomService.roomStore.applyUserSubscriptionEvent(incomingEvent) +
                 cursorService.applyEvent(incomingEvent)
 
         return appliedEvents.forEach { event ->
-            if (event is UserSubscriptionEvent.InitialState) {
-                currentUser.updateWithPropertiesOf(newCurrentUser(event))
-            }
-            emit(transformUserSubscriptionEvent(event))
+            emit(transformUserInternalEvent(event))
         }
     }
 
@@ -206,29 +208,17 @@ class SynchronousChatManager : AppHookListener {
         events.forEach(this::emit)
     }
 
-    private fun transformUserSubscriptionEvent(event: UserSubscriptionEvent): ChatEvent =
+    private fun transformUserInternalEvent(event: UserInternalEvent): ChatEvent =
             when (event) {
-                is UserSubscriptionEvent.InitialState ->
-                    ChatEvent.NoEvent // This is emitted specially on connect
-                is UserSubscriptionEvent.AddedToRoomApiEvent ->
+                is UserInternalEvent.AddedToRoom->
                     ChatEvent.AddedToRoom(event.room)
-                is UserSubscriptionEvent.AddedToRoomEvent -> // reconnect
-                    ChatEvent.AddedToRoom(event.room)
-                is UserSubscriptionEvent.RemovedFromRoomEvent ->
+                is UserInternalEvent.RemovedFromRoom->
                     ChatEvent.RemovedFromRoom(event.roomId)
-                is UserSubscriptionEvent.RoomUpdatedEvent ->
+                is UserInternalEvent.RoomUpdated->
                     ChatEvent.RoomUpdated(event.room)
-                is UserSubscriptionEvent.RoomDeletedEvent ->
+                is UserInternalEvent.RoomDeleted->
                     ChatEvent.RoomDeleted(event.roomId)
-                is UserSubscriptionEvent.ReadStateUpdatedEvent -> {
-                    val receivedCursor = event.readState.cursor
-                    if (receivedCursor != null) {
-                        ChatEvent.NewReadCursor(receivedCursor)
-                    } else {
-                        ChatEvent.RoomUpdated(roomService.roomStore[event.readState.roomId]!!)
-                    }
-                }
-                is UserSubscriptionEvent.UserJoinedRoomEvent ->
+                is UserInternalEvent.UserJoinedRoom->
                     userService.fetchUserBy(event.userId).fold(
                             onSuccess = { user ->
                                 val room = roomService.roomStore[event.roomId]!!
@@ -236,7 +226,7 @@ class SynchronousChatManager : AppHookListener {
                             },
                             onFailure = { ChatEvent.ErrorOccurred(it) }
                     )
-                is UserSubscriptionEvent.UserLeftRoomEvent ->
+                is UserInternalEvent.UserLeftRoom->
                     userService.fetchUserBy(event.userId).fold(
                             onSuccess = { user ->
                                 val room = roomService.roomStore[event.roomId]!!
@@ -244,18 +234,20 @@ class SynchronousChatManager : AppHookListener {
                             },
                             onFailure = { ChatEvent.ErrorOccurred(it) }
                     )
-                is UserSubscriptionEvent.ErrorOccurred ->
+                is UserInternalEvent.NewCursor ->
+                    ChatEvent.NewReadCursor(event.cursor)
+                is UserInternalEvent.ErrorOccurred ->
                     ChatEvent.ErrorOccurred(event.error)
             }
 
     private fun transformRoomSubscriptionEvent(roomId: String, event: RoomEvent): ChatEvent =
             when (event) {
                 is RoomEvent.UserStartedTyping ->
-                    roomService.fetchRoom(roomId).map { room ->
+                    roomService.getJoinedRoom(roomId).map { room ->
                         ChatEvent.UserStartedTyping(event.user, room) as ChatEvent
                     }.recover { ChatEvent.ErrorOccurred(it) }
                 is RoomEvent.UserStoppedTyping ->
-                    roomService.fetchRoom(roomId).map { room ->
+                    roomService.getJoinedRoom(roomId).map { room ->
                         ChatEvent.UserStoppedTyping(event.user, room) as ChatEvent
                     }.recover { ChatEvent.ErrorOccurred(it) }
                 else ->
