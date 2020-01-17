@@ -4,7 +4,7 @@ import com.pusher.chatkit.rooms.Room
 
 internal class JoinedRoomApiMapper {
 
-    fun toRoom(response: CreateRoomResponse) =
+    fun toRoom(response: JoinRoomResponse) =
             toRoom(
                     response.room,
                     response.membership,
