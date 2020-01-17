@@ -12,5 +12,7 @@ internal data class CreateRoomRequest(
         var userIds: List<String> = emptyList()
 )
 
-// when a user creates a room then they automatically join the room, the response format is the same
-internal typealias CreateRoomResponse = JoinRoomResponse
+internal class CreateRoomResponse(
+        val room: JoinedRoomApiType,
+        val membership: RoomMembershipApiType
+)
