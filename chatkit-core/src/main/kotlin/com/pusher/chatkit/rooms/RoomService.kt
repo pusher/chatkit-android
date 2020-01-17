@@ -43,30 +43,22 @@ internal class RoomService(
     private val openSubscriptions = HashMap<String, Subscription>()
     private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
 
-    internal val roomStore = RoomStore()
+    val roomStore = RoomStore()
 
     private val joinedRoomApiMapper = JoinedRoomApiMapper()
     private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
 
-    internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
+    fun populateInitial(event: UserSubscriptionEvent.InitialState) {
         roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
     }
 
-    internal fun getJoinedRoom(id: String): Result<Room, Error> =
+    fun getJoinedRoom(id: String): Result<Room, Error> =
             roomStore[id].orElse { Errors.other("Room not found locally") }
 
-    // TODO: simplify (fetchJoinableRooms), it's only used as joinable
-    internal fun fetchUserRooms(userId: String, joinable: Boolean = false)
-            : Result<List<Room>, Error> =
-            if (joinable) {
-                client.doGet<JoinableRoomsResponse>(
-                        "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
-                ).map(notJoinedRoomApiMapper::toRooms)
-            } else {
-                client.doGet<JoinedRoomsResponse>(
-                        "/users/${URLEncoder.encode(userId, "UTF-8")}/joined_rooms"
-                ).map(joinedRoomApiMapper::toRooms)
-            }
+    fun fetchJoinableRooms(userId: String): Result<List<Room>, Error> =
+            client.doGet<JoinableRoomsResponse>(
+                    "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
+            ).map(notJoinedRoomApiMapper::toRooms)
 
     fun createRoom(
             id: String?,

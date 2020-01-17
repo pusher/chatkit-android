@@ -18,14 +18,6 @@ internal class JoinedRoomApiMapper {
                     null
             )
 
-    fun toRooms(response: JoinedRoomsResponse) = response.rooms.map { room ->
-        toRoom(
-                room,
-                response.memberships.find { it.roomId == room.id }!!,
-                response.readStates.find { it.roomId == room.id }
-        )
-    }
-
     private fun toRoom(room: JoinedRoomApiType,
                        membership: RoomMembershipApiType,
                        readState: RoomReadStateApiType?) =
