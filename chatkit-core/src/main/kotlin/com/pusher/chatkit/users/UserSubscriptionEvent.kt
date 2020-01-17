@@ -2,7 +2,7 @@ package com.pusher.chatkit.users
 
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 
@@ -12,20 +12,20 @@ internal sealed class UserSubscriptionEvent {
 
     internal data class InitialState(
             val currentUser: User,
-            val rooms: List<RoomApiType>,
+            val rooms: List<JoinedRoomApiType>,
             val readStates: List<RoomReadStateApiType>,
             val memberships: List<RoomMembershipApiType>
     ) : UserSubscriptionEvent()
 
     internal data class AddedToRoomEvent(
-            var room: RoomApiType,
+            var room: JoinedRoomApiType,
             val readState: RoomReadStateApiType,
             val membership: RoomMembershipApiType
     ) : UserSubscriptionEvent()
 
     internal data class RemovedFromRoomEvent(val roomId: String) : UserSubscriptionEvent()
 
-    internal data class RoomUpdatedEvent(val room: RoomApiType) : UserSubscriptionEvent()
+    internal data class RoomUpdatedEvent(val room: JoinedRoomApiType) : UserSubscriptionEvent()
 
     internal data class RoomDeletedEvent(val roomId: String) : UserSubscriptionEvent()
 

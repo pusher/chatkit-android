@@ -1,14 +1,14 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.rooms.api.JoinRoomResponse
-import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
 internal class RoomStore {
-    private val rooms: MutableMap<String, RoomApiType> = HashMap()
+    private val rooms: MutableMap<String, JoinedRoomApiType> = HashMap()
     private val unreadCounts: MutableMap<String, Int> = HashMap()
     private val members: MutableMap<String, Set<String>> = HashMap()
 
@@ -34,7 +34,7 @@ internal class RoomStore {
         }
     }
 
-    internal fun initialiseContents(rooms: List<RoomApiType>,
+    internal fun initialiseContents(rooms: List<JoinedRoomApiType>,
                                     memberships: List<RoomMembershipApiType>,
                                     readStates: List<RoomReadStateApiType>) {
 
@@ -162,7 +162,7 @@ internal class RoomStore {
 private class JoinedRoomInternalMapper {
 
     fun toRoom(
-            room: RoomApiType,
+            room: JoinedRoomApiType,
             members: Set<String>,
             unreadCount: Int?
     ) = Room(

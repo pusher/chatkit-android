@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 
 internal fun simpleRoom(
         id: String,
@@ -9,7 +9,7 @@ internal fun simpleRoom(
         customData: CustomData? = null,
         lastMessageAt: String? = "2017-04-14T14:10:38Z"
 ) =
-        RoomApiType(
+        JoinedRoomApiType(
                 id = id,
                 createdById = "ham",
                 name = name,

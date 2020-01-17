@@ -1,6 +1,6 @@
 package com.pusher.chatkit.rooms.api
 
 internal data class JoinRoomResponse(
-        val room: RoomApiType,
+        val room: JoinedRoomApiType,
         val membership: RoomMembershipApiType
 )

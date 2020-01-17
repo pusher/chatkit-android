@@ -2,7 +2,7 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.rooms.RoomStore
-import com.pusher.chatkit.rooms.api.RoomApiType
+import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.User
@@ -40,7 +40,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
     )
 
     fun applyInitialState(
-            rooms: List<RoomApiType>? = null,
+            rooms: List<JoinedRoomApiType>? = null,
             readStates: List<RoomReadStateApiType>? = null,
             memberships: List<RoomMembershipApiType>? = null
     ) =
