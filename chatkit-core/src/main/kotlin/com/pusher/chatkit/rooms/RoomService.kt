@@ -120,9 +120,10 @@ internal class RoomService(
         } else {
           when (pushNotificationTitleOverride) {
             is RoomPushNotificationTitle.NoOverride ->
-              UpdateRoomRequestWithPNTitleOverride(name, null, isPrivate, customData)
+              UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate, customData)
             is RoomPushNotificationTitle.Override ->
-              UpdateRoomRequestWithPNTitleOverride(name, pushNotificationTitleOverride.title, isPrivate, customData)
+              UpdateRoomRequestWithPushNotificationTitleOverride(name,
+                      pushNotificationTitleOverride.title, isPrivate, customData)
           }
         }
 

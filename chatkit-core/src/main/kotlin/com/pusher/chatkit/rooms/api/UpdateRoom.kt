@@ -8,7 +8,7 @@ internal data class UpdateRoomRequest(
         val customData: CustomData?
 )
 
-internal data class UpdateRoomRequestWithPNTitleOverride(
+internal data class UpdateRoomRequestWithPushNotificationTitleOverride(
         val name: String?,
         val pushNotificationTitleOverride: String?,
         val private: Boolean?,
