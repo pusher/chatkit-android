@@ -22,6 +22,7 @@ import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
+import junit.framework.Assert.assertEquals
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -83,32 +84,20 @@ object RoomSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(NOT_GENERAL)
         }
 
-        it("notifies '$ALICE' when room '$GENERAL' receives a new message") {
-            setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, ALICE, PUSHERINO))
+        it("updates the unread counter when '$GENERAL' receives a new message") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(ALICE, PUSHERINO),
+                    newRoom(GENERAL, ALICE, PUSHERINO)
+            )
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
-            var lastMessageAtRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
-            var unreadCountRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
-            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
-                if (event is RoomEvent.RoomUpdated) {
-                    if (event.room.unreadCount == 1) {
-                        unreadCountRoomUpdatedEvent = event
-                    } else {
-                        lastMessageAtRoomUpdatedEvent = event
-                    }
-                }
-            }
+            assertEquals(alice.generalRoom.unreadCount, 0)
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
-            assertThat(lastMessageAtRoomUpdatedEvent.room.lastMessageAt).isNotEmpty()
-
-            assertThat(unreadCountRoomUpdatedEvent.room.unreadCount).isEqualTo(1)
-
-            assertThat(alice.rooms[0].unreadCount).isEqualTo(1)
-            assertThat(alice.rooms[0].lastMessageAt).isEqualTo(
-                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
+            assertEquals(alice.generalRoom.unreadCount, 1)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
