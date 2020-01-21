@@ -82,32 +82,24 @@ It can be either a relative or absolute path.
 ## Testing
 
 The SDK has integration tests which run against a real Chatkit server.
-In order to run them, you must provide Chatkit instance credentials in
-your Gradle `local.properties` (or as `-D` arguments to the VM executing
-the tests)
 
-*Important:* The tests may delete any and all resources associated with
-the instance you provide. Create a new one. Do not share it with any other
-use.
+Firstly you will need to install the
+[Spek Framework](https://www.spekframework.org/setup-android/) plugin in
+Android Studio. To do this go to Android Studio -> Preferences -> Plugins ->
+search for Spek and install. If you open a Spek test file, you should now see
+green play buttons to run each test (or the file).
 
-```
-chatkit_integration_locator=<instance locator>
-chatkit_integration_key=<instance key>
-```
-
-### Spek Tests
-
-Our tests are currently written using the [Spek Framework](https://www.spekframework.org/setup-android/).
-And you will need to install the Spek Plugin in Android Studio to be able to run them.
-
-You may find that you will also need to edit the run configuration and add your
-chatkit locator and chatkit key like this:
+In order for the tests to pass you must provide a Chatkit instance
+credential to the VM - to do this edit the run configurations -> select Spek
+on the left -> in the VM options field enter the following:
 
 ```
 -Dchatkit_integration_locator=xxxx -Dchatkit_integration_key=yyy
 ```
 
-Happy testing!
+*Important:* The tests will delete any and all resources associated with
+the instance you provide. Create a new instance for testing purposes, and do not
+share it anywhere else.
 
 ## Publishing
 
