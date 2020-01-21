@@ -1,15 +1,18 @@
 package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.TestFileReader
 import com.pusher.chatkit.users.UserSubscriptionEvent.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object UserSubscriptionEventParserSpec : Spek({
+    val testFileReader = TestFileReader("/json/subscription/user")
+
     describe("when parsing initial state example event from the docs") {
-        val initialStateEvent = UserSubscriptionEventParser(readTestJson("initial_state-docs"))
-                .successOrThrow() as InitialState
+        val initialStateEvent = UserSubscriptionEventParser(
+                testFileReader.readTestFile("initial_state-docs.json")
+        ).successOrThrow() as InitialState
 
         // TODO: add tests around other bits like unread counts, cursors etc
 
@@ -27,8 +30,9 @@ object UserSubscriptionEventParserSpec : Spek({
     }
 
     describe("when parsing added to room example event from the docs") {
-        val addedToRoomEvent = UserSubscriptionEventParser(readTestJson("added_to_room-docs"))
-                .successOrThrow() as AddedToRoomEvent
+        val addedToRoomEvent = UserSubscriptionEventParser(
+                testFileReader.readTestFile("added_to_room-docs.json")
+        ).successOrThrow() as AddedToRoomEvent
 
         it("then result's memberships will contain valid information") {
             val membership = addedToRoomEvent.membership
@@ -38,8 +42,9 @@ object UserSubscriptionEventParserSpec : Spek({
         }
     }
     describe("when parsing user joined room example event from the docs") {
-        val userJoinedRoomEvent = UserSubscriptionEventParser(readTestJson("user_joined_room-docs"))
-                .successOrThrow() as UserJoinedRoomEvent
+        val userJoinedRoomEvent = UserSubscriptionEventParser(
+                testFileReader.readTestFile("user_joined_room-docs.json")
+        ).successOrThrow() as UserJoinedRoomEvent
 
         it("then result has valid user/room IDs") {
             assertThat(userJoinedRoomEvent.userId).isEqualTo("xavier")
@@ -47,8 +52,9 @@ object UserSubscriptionEventParserSpec : Spek({
         }
     }
     describe("when parsing user left room example event from the docs") {
-        val userJoinedRoomEvent = UserSubscriptionEventParser(readTestJson("user_left_room-docs"))
-                .successOrThrow() as UserLeftRoomEvent
+        val userJoinedRoomEvent = UserSubscriptionEventParser(
+                testFileReader.readTestFile("user_left_room-docs.json")
+        ).successOrThrow() as UserLeftRoomEvent
 
         it("then result has valid user/room IDs") {
             assertThat(userJoinedRoomEvent.userId).isEqualTo("xavier")
