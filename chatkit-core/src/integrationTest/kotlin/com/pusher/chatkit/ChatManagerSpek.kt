@@ -176,11 +176,14 @@ class ChatManagerSpek : Spek({
                     lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
         }
 
-        it("loads users related to current user") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+        it("loads members of the current user's joined rooms") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, PUSHERINO, ALICE)
+            )
 
             val user = chatFor(PUSHERINO).connect().assumeSuccess()
-            user.rooms.forEach { room -> user.subscribeToRoomMultipart(room) { } }
 
             val users = user.users
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
