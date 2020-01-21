@@ -84,10 +84,10 @@ It can be either a relative or absolute path.
 The SDK has integration tests which run against a real Chatkit server.
 
 Firstly you will need to install the
-[Spek Framework](https://www.spekframework.org/setup-android/) plugin in
+[Spek](https://www.spekframework.org/setup-android/) plugin, and Spek Framework in
 Android Studio. To do this go to Android Studio -> Preferences -> Plugins ->
-search for Spek and install. If you open a Spek test file, you should now see
-green play buttons to run each test (or the file).
+search for Spek, and Spek Framework and install. If you open a Spek test file, you
+should now see green play buttons to run each test (or the file).
 
 In order for the tests to pass you must provide a Chatkit instance
 credential to the VM - to do this edit the run configurations -> select Spek
