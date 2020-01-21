@@ -4,6 +4,7 @@ plugins {
     id 'de.mannodermaus.android-junit5'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id("io.gitlab.arturbosch.detekt").version("1.4.0")
 }
 
 apply plugin: 'org.jetbrains.dokka'
@@ -54,9 +55,9 @@ dependencies {
     api project(':chatkit-core')
 
     testImplementation "junit:junit:$junit_legacy_version"
-    testImplementation junit5.unitTests()
-    testCompileOnly junit5.unitTestsRuntime()
-    testImplementation junit5.parameterized()
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
     testImplementation "org.mockito:mockito-inline:$mockito_version"
     testImplementation 'com.google.truth:truth:0.40'
 
@@ -104,6 +105,17 @@ task sourcesJar(type: Jar) {
 dokka {
     outputFormat = 'javadoc'
     outputDirectory = "$buildDir/javadoc"
+}
+
+detekt {
+    failFast = true // fail build on any finding
+    buildUponDefaultConfig = true // preconfigure defaults
+
+    reports {
+        html.enabled = true // observe findings in your browser with structure and code snippets
+        xml.enabled = true // checkstyle like format mainly for integrations like Jenkins
+        txt.enabled = true // similar to the console output, contains issue signature to manually edit baseline files
+    }
 }
 
 task javadocJar(type: Jar, dependsOn: dokka) {
