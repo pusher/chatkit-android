@@ -303,26 +303,6 @@ object RoomSpek : Spek({
             assertThat(room.isPrivate).isEqualTo(true)
         }
 
-        it("creates room with custom data") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
-
-            val customData = mapOf(
-                    "this is" to listOf("complex", "data"),
-                    "this key" to "has string value"
-            )
-
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-
-            val room = pusherino.createRoom(
-                    id = null,
-                    name = GENERAL,
-                    customData = customData
-            ).assumeSuccess()
-
-            assertThat(room.name).isEqualTo(GENERAL)
-            assertThat(room.customData).isEqualTo(customData)
-        }
-
         it("creates room with pn title override") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
@@ -398,107 +378,6 @@ object RoomSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(GENERAL)
             assertThat(updatedRoom.isPrivate).isEqualTo(true)
             assertThat(updatedRoom.customData).isEqualTo(SAMPLE_CUSTOM_DATA)
-        }
-
-        it("adds room customData") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
-
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-            val roomUpdated = CountDownLatch(1)
-
-            val newCustomData = mapOf(
-                    "added" to "some",
-                    "custom" to "data"
-            )
-
-            chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> {
-                        assertThat(event.room.name).isEqualTo(GENERAL)
-                        assertThat(event.room.isPrivate).isEqualTo(false)
-                        assertThat(event.room.customData).isEqualTo(newCustomData)
-                        roomUpdated.countDown()
-                    }
-                }
-            }
-
-            superUser.updateRoom(
-                    room = superUser.generalRoom,
-                    customData = newCustomData
-            ).assumeSuccess()
-            roomUpdated.await()
-            assertThat(superUser.generalRoom.name).isEqualTo(GENERAL)
-            assertThat(superUser.generalRoom.isPrivate).isEqualTo(false)
-
-            // FIXME: flaky, should use FutureValue for both users to wait for RoomUpdated event,
-            //  also the assertions inside the callback above won't fail the test correctly
-            //  but make it hang on the latch (callbacks are run also on internal thread)
-            assertThat(superUser.generalRoom.customData).isEqualTo(newCustomData)
-        }
-
-        it("updates existing room customData") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO, ALICE),
-                    newRoom(
-                            name = GENERAL,
-                            customData = SAMPLE_CUSTOM_DATA,
-                            userNames = *arrayOf(PUSHERINO, ALICE)
-                    )
-            )
-
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val updatedRoom by chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> event.room
-                    else -> null
-                }
-            }
-
-            val newCustomData = mapOf(
-                    "replaced" to "some",
-                    "custom" to "data"
-            )
-
-            superUser.updateRoom(
-                    room = superUser.generalRoom,
-                    customData = newCustomData
-            ).assumeSuccess()
-
-            assertThat(updatedRoom.name).isEqualTo(GENERAL)
-            assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.customData).isEqualTo(newCustomData)
-        }
-
-        it("updates to remove customData") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO, ALICE),
-                    newRoom(
-                            name = GENERAL,
-                            customData = SAMPLE_CUSTOM_DATA,
-                            userNames = *arrayOf(PUSHERINO, ALICE)
-                    )
-            )
-
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val updatedRoom by chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> event.room
-                    else -> null
-                }
-            }
-
-            superUser.updateRoom(
-                    room = superUser.generalRoom,
-                    customData = mapOf()
-            ).assumeSuccess()
-
-            assertThat(updatedRoom.name).isEqualTo(GENERAL)
-            assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.customData).isEqualTo(emptyMap<String, Any?>())
         }
 
         it("updates room pn title override") {
