@@ -93,12 +93,12 @@ object RoomSpek : Spek({
             )
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
-            assertEquals(alice.generalRoom.unreadCount, 0)
+            assertEquals(0, alice.generalRoom.unreadCount)
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
-            assertEquals(alice.generalRoom.unreadCount, 1)
+            assertEquals(1, alice.generalRoom.unreadCount)
         }
 
         it("updates the last message at when '$GENERAL' receives a new message") {
@@ -118,7 +118,7 @@ object RoomSpek : Spek({
             }
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
-            assertEquals(alice.generalRoom.lastMessageAt, lastMessageAt)
+            assertEquals(lastMessageAt, alice.generalRoom.lastMessageAt)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
