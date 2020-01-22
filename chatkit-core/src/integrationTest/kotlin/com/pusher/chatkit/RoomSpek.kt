@@ -23,6 +23,7 @@ import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertNull
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -98,6 +99,26 @@ object RoomSpek : Spek({
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
             assertEquals(alice.generalRoom.unreadCount, 1)
+        }
+
+        it("updates the last message at when '$GENERAL' receives a new message") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(ALICE, PUSHERINO),
+                    newRoom(GENERAL, ALICE, PUSHERINO)
+            )
+
+            val alice = chatFor(ALICE).connect().assumeSuccess()
+            assertNull(alice.generalRoom.lastMessageAt)
+
+            var lastMessageAt by FutureValue<String>()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { event ->
+                if (event is RoomEvent.RoomUpdated) lastMessageAt = event.room.lastMessageAt!!
+            }
+            pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
+
+            assertEquals(alice.generalRoom.lastMessageAt, lastMessageAt)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
