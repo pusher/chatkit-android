@@ -1,0 +1,22 @@
+{
+  "room": {
+    "id": "ac43dfef",
+    "name": "Chatkit chat",
+    "created_by_id": "alice",
+    "push_notification_title_override": null,
+    "custom_data": {
+      "highlight_color": "blue"
+    },
+    "private": false,
+    "last_message_at": "2020-01-08T14:55:10Z",
+    "created_at": "2017-03-23T11:36:42Z",
+    "updated_at": "2017-03-23T11:36:42Z"
+  },
+  "membership": {
+    "room_id": "ac43dfef",
+    "user_ids": [
+      "alice",
+      "carol"
+    ]
+  }
+}
