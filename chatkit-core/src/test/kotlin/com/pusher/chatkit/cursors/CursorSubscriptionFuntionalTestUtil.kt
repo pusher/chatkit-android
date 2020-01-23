@@ -8,15 +8,15 @@ import com.pusher.chatkit.dummySubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.platform.SubscriptionListeners
 import elements.emptyHeaders
-import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.startsWith
 
 internal fun justConnectingCursorSubscription()
         : KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
         client.subscribeResuming(
-                ArgumentMatchers.startsWith("/cursors/0/rooms/"),
-                any(),
-                any<CursorSubscriptionEventParser>()
+                path = startsWith("/cursors/0/rooms/"), // read type (0) cursors for any room
+                listeners = any(),
+                messageParser = any<CursorSubscriptionEventParser>()
         )
     } doAnswer { invocation ->
 
