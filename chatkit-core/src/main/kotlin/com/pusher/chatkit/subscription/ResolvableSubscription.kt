@@ -55,6 +55,6 @@ class ResolvableSubscription<A>(
     }
 
     override fun unsubscribe() {
-        this.subscription.unsubscribe()
+        subscription.unsubscribe()
     }
 }
