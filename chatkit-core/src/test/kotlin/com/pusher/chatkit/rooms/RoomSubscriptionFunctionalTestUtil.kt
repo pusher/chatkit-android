@@ -9,15 +9,15 @@ import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.DataParser
 import elements.emptyHeaders
-import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.startsWith
 
 internal fun emptyRoomSubscription()
         : KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
         client.subscribeResuming(
-                ArgumentMatchers.startsWith("/rooms/"),
-                any(),
-                any<DataParser<RoomSubscriptionEvent>>()
+                path = startsWith("/rooms/"),
+                listeners = any(),
+                messageParser = any<DataParser<RoomSubscriptionEvent>>()
         )
     } doAnswer { invocation ->
 
