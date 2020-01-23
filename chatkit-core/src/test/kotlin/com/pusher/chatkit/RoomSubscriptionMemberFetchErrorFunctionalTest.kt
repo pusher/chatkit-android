@@ -17,7 +17,7 @@ object RoomSubscriptionMemberFetchErrorFunctionalTest : Spek({
 
     val initialState = UserSubscriptionEvent.InitialState(
             simpleUser("alice"),
-            listOf(simpleRoom("roomId1", "1")),
+            listOf(simpleRoom("roomId1", "Room 1")),
             listOf(RoomReadStateApiType("roomId1", 0, null)),
             listOf(RoomMembershipApiType("roomId1", listOf("alice", "bob")))
     )
@@ -40,7 +40,7 @@ object RoomSubscriptionMemberFetchErrorFunctionalTest : Spek({
         describe("when room subscription is opened") {
             lateinit var errorOccured: FutureValue<RoomEvent.ErrorOccurred>
             beforeEachTest {
-                errorOccured = subject.subscribeRoomFor("1") { roomEvent ->
+                errorOccured = subject.subscribeRoomFor("Room 1") { roomEvent ->
                     if (roomEvent is RoomEvent.ErrorOccurred) {
                         roomEvent
                     } else {
