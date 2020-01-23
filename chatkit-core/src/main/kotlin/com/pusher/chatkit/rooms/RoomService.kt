@@ -203,7 +203,7 @@ internal class RoomService(
             roomConsumers.remove(roomId)
         }.connect()
 
-        // ensure members are fetched and subscribe individually to their presence changes
+        // ensure members are fetched and presence subscription is opened for each of them
         val usersFetchResult = userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
         if (usersFetchResult is Result.Failure) {
             emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
@@ -288,8 +288,6 @@ internal class RoomService(
                     }
                 is RoomSubscriptionEvent.ErrorOccurred ->
                     RoomEvent.ErrorOccurred(event.error)
-                is RoomSubscriptionEvent.NoEvent ->
-                    RoomEvent.NoEvent
             }
 
     // Access synchronized on itself
