@@ -4,10 +4,9 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
-import com.pusher.util.collect
-import com.pusher.util.orElse
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
 import elements.Error
-import elements.Errors
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,35 +25,29 @@ class UserService(
                         "id=${URLEncoder.encode(it, "UTF-8")}"
                     }
 
-            client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
-                    .map { loadedUsers ->
-                        loadedUsers.map { user ->
-                            knownUsers[user.id] = user
-                        }
+            val fetchResult = client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
+            when (fetchResult) {
+                is Result.Success -> {
+                    for (fetchedUser in fetchResult.value) {
+                        knownUsers[fetchedUser.id] = fetchedUser
                     }
+                }
+                is Result.Failure -> return fetchResult.error.asFailure()
+            }
         }
 
         userIds.forEach {
             presenceService.subscribeToUser(it)
         }
 
-        return userIds
-                .map { userId ->
-                    knownUsers[userId].orElse {
-                        userFetchError(userId)
-                    }.map { user ->
-                        userId to user
-                    }
-                }.collect().map { pairs ->
-                    pairs.toMap()
-                }.mapFailure { errors ->
-                    Errors.compose(errors)
-                }
+        return userIds.map { userId ->
+                    userId to knownUsers[userId]!!
+                }.toMap().asSuccess()
     }
 
     fun fetchUserBy(userId: String): Result<User, Error> =
-            fetchUsersBy(setOf(userId)).flatMap { users ->
-                users.values.firstOrNull().orElse { userFetchError(userId) }
+            fetchUsersBy(setOf(userId)).map { users ->
+                users.values.first()
             }
 
     fun addUsersToRoom(roomId: String, userIds: List<String>) =
@@ -76,5 +69,3 @@ class UserService(
     }
 
 }
-
-private fun userFetchError(id: String): Error = Errors.other("Could not load user with id: $id")

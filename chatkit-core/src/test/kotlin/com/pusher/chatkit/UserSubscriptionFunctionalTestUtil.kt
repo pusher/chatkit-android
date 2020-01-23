@@ -1,9 +1,9 @@
 package com.pusher.chatkit
 
+import com.nhaarman.mockitokotlin2.KStubbing
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.eq
-import com.nhaarman.mockitokotlin2.mock
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.UserSubscriptionEventParser
 import com.pusher.platform.SubscriptionListeners
@@ -15,26 +15,27 @@ import elements.emptyHeaders
 internal fun mockPlatformClientForUserSubscription(
         vararg events: UserSubscriptionEvent,
         error: Error? = null
-) : PlatformClient {
+): PlatformClient = mockPlatformClient(userSubscription(*events, error = error))
 
-    return mock {
-        on { subscribeResuming(eq("users"), any(), any<UserSubscriptionEventParser>())
-        } doAnswer { invocation ->
+internal fun userSubscription(vararg events: UserSubscriptionEvent, error: Error? = null)
+        : KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
+    on {
+        client.subscribeResuming(eq("users"), any(), any<UserSubscriptionEventParser>())
+    } doAnswer { invocation ->
 
-            @Suppress("UNCHECKED_CAST")
-            val listener = invocation.arguments[1] as SubscriptionListeners<UserSubscriptionEvent>
+        @Suppress("UNCHECKED_CAST")
+        val listener = invocation.arguments[1] as SubscriptionListeners<UserSubscriptionEvent>
 
-            Futures.schedule {
-                for (event in events) {
-                    val eventId = mapToSubscriptionEventId(event)
-                    listener.onEvent(SubscriptionEvent(eventId, emptyHeaders(), event))
-                }
-
-                if (error != null) listener.onError(error)
+        Futures.schedule {
+            for (event in events) {
+                val eventId = mapToSubscriptionEventId(event)
+                listener.onEvent(SubscriptionEvent(eventId, emptyHeaders(), event))
             }
 
-            dummySubscription()
+            if (error != null) listener.onError(error)
         }
+
+        dummySubscription()
     }
 }
 

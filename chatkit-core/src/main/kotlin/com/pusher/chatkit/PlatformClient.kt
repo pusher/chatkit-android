@@ -52,7 +52,7 @@ class PlatformClient(
     ): Result<A, Error> =
             doRequest("DELETE", path, null, responseParser)
 
-    private fun <A> doRequest(
+    internal fun <A> doRequest(
             method: String,
             path: String,
             body: String?,
