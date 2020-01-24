@@ -11,7 +11,7 @@ import com.pusher.platform.network.DataParser
 import elements.emptyHeaders
 import org.mockito.ArgumentMatchers.startsWith
 
-internal fun emptyRoomSubscription()
+internal fun justConnectingRoomSubscription()
         : KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
         client.subscribeResuming(
