@@ -5,7 +5,7 @@ import com.pusher.chatkit.cursors.justConnectingCursorSubscription
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.rooms.emptyRoomSubscription
+import com.pusher.chatkit.rooms.justConnectingRoomSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.usersFetchFailingWith
 import com.pusher.chatkit.util.FutureValue
@@ -27,7 +27,7 @@ object RoomSubscriptionMemberFetchErrorFunctionalTest : Spek({
         val mockPlatformClient by memoized {
             mockPlatformClient(
                     userSubscription(initialState),
-                    emptyRoomSubscription(),
+                    justConnectingRoomSubscription(),
                     justConnectingCursorSubscription(),
                     usersFetchFailingWith(networkError)
             )
