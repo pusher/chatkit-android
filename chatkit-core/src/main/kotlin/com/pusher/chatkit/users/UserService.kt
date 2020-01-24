@@ -4,7 +4,6 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
-import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import elements.Error
 import java.net.URLEncoder
@@ -19,30 +18,30 @@ class UserService(
     fun fetchUsersBy(userIds: Set<String>): Result<Map<String, User>, Error> {
         val missingUserIds = userIds.filter { id -> knownUsers[id] == null }
 
-        if (missingUserIds.isNotEmpty()) {
-            val missingUserIdsQs =
-                    missingUserIds.joinToString(separator = "&") {
+        val fetchResult: Result<List<User>, Error> =
+                if (missingUserIds.isNotEmpty()) {
+                    val missingUserIdsQueryParams = missingUserIds.joinToString(separator = "&") {
                         "id=${URLEncoder.encode(it, "UTF-8")}"
                     }
 
-            val fetchResult = client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
-            when (fetchResult) {
-                is Result.Success -> {
-                    for (fetchedUser in fetchResult.value) {
-                        knownUsers[fetchedUser.id] = fetchedUser
-                    }
+                    client.doGet("/users_by_ids?$missingUserIdsQueryParams")
+                } else {
+                    listOf<User>().asSuccess()
                 }
-                is Result.Failure -> return fetchResult.error.asFailure()
+
+        return fetchResult.map { fetchedUsers ->
+            fetchedUsers.forEach { fetchedUser ->
+                knownUsers[fetchedUser.id] = fetchedUser
             }
-        }
 
-        userIds.forEach {
-            presenceService.subscribeToUser(it)
-        }
+            userIds.forEach {
+                presenceService.subscribeToUser(it)
+            }
 
-        return userIds.map { userId ->
-                    userId to knownUsers[userId]!!
-                }.toMap().asSuccess()
+            userIds.map { userId ->
+                userId to knownUsers[userId]!!
+            }.toMap()
+        }
     }
 
     fun fetchUserBy(userId: String): Result<User, Error> =
