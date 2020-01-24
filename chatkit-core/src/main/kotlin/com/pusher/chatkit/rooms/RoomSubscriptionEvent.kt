@@ -18,5 +18,4 @@ internal sealed class RoomSubscriptionEvent {
     data class MessageDeleted(val messageId: Int): RoomSubscriptionEvent()
     data class UserIsTyping(val userId: String) : RoomSubscriptionEvent()
     data class ErrorOccurred(val error: Error) : RoomSubscriptionEvent()
-    object NoEvent : RoomSubscriptionEvent()
 }
