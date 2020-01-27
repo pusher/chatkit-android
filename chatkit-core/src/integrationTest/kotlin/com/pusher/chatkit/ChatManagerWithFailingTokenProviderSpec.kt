@@ -44,6 +44,7 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
 
             })
         }
+        afterEachTest { subject.close { /* nop */ } }
 
         describe("when connect is called") {
             beforeEachTest {
@@ -92,6 +93,7 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
 
             })
         }
+        afterEachTest { subject.close { /* nop */ } }
 
         describe("when connect is called") {
             beforeEachTest {
