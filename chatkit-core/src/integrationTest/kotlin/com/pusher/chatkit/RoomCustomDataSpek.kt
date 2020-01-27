@@ -2,34 +2,20 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
-import com.pusher.chatkit.Rooms.NOT_GENERAL
 import com.pusher.chatkit.Rooms.SAMPLE_CUSTOM_DATA
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.rooms.Room
-import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.rooms.RoomPushNotificationTitle
-import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
-import com.pusher.chatkit.test.InstanceActions.deleteRoom
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
-import com.pusher.chatkit.test.run
-import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
-import com.pusher.util.Result.Failure
-import com.pusher.util.Result.Success
-import junit.framework.Assert.*
+import junit.framework.Assert.assertNotNull
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
 object RoomCustomDataSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -64,11 +50,11 @@ object RoomCustomDataSpek : Spek({
                     newRoom(GENERAL, PUSHERINO, ALICE)
             )
 
-            var superUserRoomUpdated by FutureValue<Room>()
+            var superUserRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             val superUser = chatFor(SUPER_USER).connect { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
-                        superUserRoomUpdated = event.room
+                        superUserRoomUpdatedEvent = event
                     }
                 }
             }.assumeSuccess()
@@ -78,11 +64,11 @@ object RoomCustomDataSpek : Spek({
                     "custom" to "data"
             )
 
-            var alicesUpdatedGeneralRoom by FutureValue<Room>()
+            var alicesRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             chatFor(ALICE).connectFor { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
-                        alicesUpdatedGeneralRoom = event.room
+                        alicesRoomUpdatedEvent = event
                     }
                 }
             }
@@ -93,8 +79,8 @@ object RoomCustomDataSpek : Spek({
 
             ).assumeSuccess()
 
-            assertThat(alicesUpdatedGeneralRoom.customData).isEqualTo(newCustomData)
-            assertThat(superUserRoomUpdated.customData).isEqualTo(newCustomData)
+            assertThat(alicesRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
+            assertThat(superUserRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
             assertNotNull(superUser.rooms[0].customData)
             assertThat(superUser.rooms[0].customData).isEqualTo(newCustomData)
         }
@@ -110,20 +96,20 @@ object RoomCustomDataSpek : Spek({
                     )
             )
 
-            var superUserRoomUpdated by FutureValue<Room>()
+            var superUserRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             val superUser = chatFor(SUPER_USER).connect { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
-                        superUserRoomUpdated = event.room
+                        superUserRoomUpdatedEvent = event
                     }
                 }
             }.assumeSuccess()
 
-            var alicesUpdatedGeneralRoom by FutureValue<Room>()
+            var alicesRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             chatFor(ALICE).connectFor { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
-                        alicesUpdatedGeneralRoom = event.room
+                        alicesRoomUpdatedEvent = event
                     }
                 }
             }
@@ -138,8 +124,8 @@ object RoomCustomDataSpek : Spek({
                     customData = newCustomData
             ).assumeSuccess()
 
-            assertThat(alicesUpdatedGeneralRoom.customData).isEqualTo(newCustomData)
-            assertThat(superUserRoomUpdated.customData).isEqualTo(newCustomData)
+            assertThat(alicesRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
+            assertThat(superUserRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
             assertNotNull(superUser.rooms[0].customData)
             assertThat(superUser.rooms[0].customData).isEqualTo(newCustomData)
         }
@@ -155,21 +141,21 @@ object RoomCustomDataSpek : Spek({
                     )
             )
 
-            var superUserRoomUpdated by FutureValue<Room>()
+            var superUserRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             val superUser = chatFor(SUPER_USER).connect { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
-                        superUserRoomUpdated = event.room
+                        superUserRoomUpdatedEvent = event
                     }
                 }
             }.assumeSuccess()
 
-            var alicesUpdatedGeneralRoom by FutureValue<Room>()
+            var alicesRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             chatFor(ALICE).connectFor { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
 
-                        alicesUpdatedGeneralRoom = event.room
+                        alicesRoomUpdatedEvent = event
                     }
                 }
             }
@@ -181,8 +167,8 @@ object RoomCustomDataSpek : Spek({
                     customData = emptyCustomData
             ).assumeSuccess()
 
-            assertThat(alicesUpdatedGeneralRoom.customData).isEqualTo(emptyCustomData)
-            assertThat(superUserRoomUpdated.customData).isEqualTo(emptyCustomData)
+            assertThat(alicesRoomUpdatedEvent.room.customData).isEqualTo(emptyCustomData)
+            assertThat(superUserRoomUpdatedEvent.room.customData).isEqualTo(emptyCustomData)
             assertNotNull(superUser.rooms[0].customData)
             assertThat(superUser.rooms[0].customData).isEqualTo(emptyCustomData)
         }
