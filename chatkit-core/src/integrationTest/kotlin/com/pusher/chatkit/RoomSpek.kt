@@ -85,23 +85,7 @@ object RoomSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(NOT_GENERAL)
         }
 
-        it("updates the unread counter when '$GENERAL' receives a new message") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(ALICE, PUSHERINO),
-                    newRoom(GENERAL, ALICE, PUSHERINO)
-            )
-
-            val alice = chatFor(ALICE).connect().assumeSuccess()
-            assertEquals(0, alice.generalRoom.unreadCount)
-
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
-
-            assertEquals(1, alice.generalRoom.unreadCount)
-        }
-
-        it("updates the last message at when '$GENERAL' receives a new message") {
+        it("updates the unread count and last message at when '$GENERAL' receives a new message") {
             setUpInstanceWith(
                     createDefaultRole(),
                     newUsers(ALICE, PUSHERINO),
@@ -110,6 +94,7 @@ object RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
             assertNull(alice.generalRoom.lastMessageAt)
+            assertEquals(0, alice.generalRoom.unreadCount)
 
             var lastMessageAt by FutureValue<String>()
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
@@ -119,6 +104,7 @@ object RoomSpek : Spek({
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
             assertEquals(lastMessageAt, alice.generalRoom.lastMessageAt)
+            assertEquals(1, alice.generalRoom.unreadCount)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
