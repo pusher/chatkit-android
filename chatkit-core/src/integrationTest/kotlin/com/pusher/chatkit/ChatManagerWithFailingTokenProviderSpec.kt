@@ -21,7 +21,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 
 object ChatManagerWithFailingTokenProviderSpec : Spek({
-    afterEachTest(::closeChatManagers)
     afterEachTest(::tearDownInstance)
 
     val futureConnectionResult by memoized { FutureValue<Result<CurrentUser, Error>>() }
