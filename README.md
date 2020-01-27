@@ -87,6 +87,8 @@ The tests can be run using the Gradle `test` task with the VM options mentioned 
 To run the tests directly from Android Studio you will need to install the
 [Spek](https://plugins.jetbrains.com/plugin/8564-spek/) plugin, and
 [Spek Framework](https://plugins.jetbrains.com/plugin/10915-spek-framework/).
+Both plugins are needed as older tests are written using Spek1, and newer
+tests are using Spek2.
 To do this go to Android Studio -> Preferences -> Plugins ->
 search for Spek, and Spek Framework and install. If you open a Spek test file
 (e.g. RoomSpek), you should now see green play buttons to run each test
