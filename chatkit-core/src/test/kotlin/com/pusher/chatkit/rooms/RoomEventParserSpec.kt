@@ -16,7 +16,7 @@ object RoomEventParserSpec : Spek({
         val result = testFileReader.readTestFile("room_created-docs.json")
                 .parseAs<CreateRoomResponse>().successOrThrow()
 
-        it("creates a valid room") {
+        it("then the result has expected room") {
             val room = result.room
 
             Truth.assertThat(room.id).isEqualTo("ac43dfef")
