@@ -90,7 +90,7 @@ To run the tests directly from Android Studio you will need to install the
 Both plugins are needed as older tests are written using Spek1, and newer
 tests are using Spek2.
 To do this go to Android Studio -> Preferences -> Plugins ->
-search for Spek, and Spek Framework and install. If you open a Spek test file
+search for Spek, and Spek Framework and install both plugins. If you open a Spek test file
 (e.g. RoomSpek), you should now see green play buttons to run each test
 (or a test group from a file).
 
