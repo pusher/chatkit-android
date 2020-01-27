@@ -11,7 +11,7 @@ import org.spekframework.spek2.style.specification.describe
 object RoomEventParserSpec : Spek({
     val testFileReader = TestFileReader("/json/rooms")
 
-    describe("when creating a room example from the docs") {
+    describe("when create room response from the docs is parsed") {
 
         val result = testFileReader.readTestFile("room_created-docs.json")
                 .parseAs<CreateRoomResponse>().successOrThrow()
