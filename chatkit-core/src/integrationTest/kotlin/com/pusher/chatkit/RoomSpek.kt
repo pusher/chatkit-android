@@ -330,6 +330,17 @@ object RoomSpek : Spek({
             assertThat(room.pushNotificationTitleOverride).isEqualTo(pnTitleOverride)
         }
 
+        it("creates room with a membership") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
+
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+
+            val room = pusherino.createRoom(name =  GENERAL, userIds = listOf(ALICE)).assumeSuccess()
+
+            assertThat(room.memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO))
+            assertThat(pusherino.rooms[0].memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO))
+        }
+
         it("updates room name") {
             setUpInstanceWith(
                     createDefaultRole(),
@@ -603,6 +614,20 @@ object RoomSpek : Spek({
             assertThat(pusherino.rooms).contains(pusherino.generalRoom)
         }
 
+        it ("joins room with other members") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, PUSHERINO, ALICE))
+
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            val room = superUser.joinRoom(superUser.generalRoom).assumeSuccess()
+
+            assertThat(room.memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO, SUPER_USER))
+            assertThat(superUser.rooms[0].memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO, SUPER_USER))
+        }
+
         it("leaves room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
@@ -616,7 +641,10 @@ object RoomSpek : Spek({
         }
 
         it("gets joinable rooms") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
@@ -624,10 +652,15 @@ object RoomSpek : Spek({
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+            assertThat(rooms[0].memberUserIds.size).isEqualTo(0)
         }
 
         it("gets rooms") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO), newRoom(NOT_GENERAL))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, PUSHERINO, ALICE),
+                    newRoom(NOT_GENERAL))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
@@ -635,6 +668,7 @@ object RoomSpek : Spek({
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+            assertThat(rooms[0].memberUserIds).isEqualTo(setOf(PUSHERINO, ALICE, SUPER_USER))
         }
 
         it("provides users for a room") {
