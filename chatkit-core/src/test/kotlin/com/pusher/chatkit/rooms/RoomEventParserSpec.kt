@@ -5,6 +5,7 @@ import com.pusher.chatkit.TestFileReader
 import com.pusher.chatkit.rooms.api.CreateRoomResponse
 import com.pusher.chatkit.rooms.api.JoinRoomResponse
 import com.pusher.chatkit.rooms.api.JoinedRoomApiType
+import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.util.parseAs
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -34,12 +35,9 @@ object RoomEventParserSpec : Spek({
         }
 
         it("creates valid membership") {
-            val membership = result.membership
-
-            assertThat(membership.roomId).isEqualTo("ac43dfef")
-            assertThat(membership.userIds.size).isEqualTo(2)
-            assertThat(membership.userIds[0]).isEqualTo("alice")
-            assertThat(membership.userIds[1]).isEqualTo("carol")
+            val expectedMembership = RoomMembershipApiType("ac43dfef",
+                    listOf("alice", "carol"))
+            assertThat(result.membership).isEqualTo(expectedMembership)
         }
 
     }
@@ -66,12 +64,9 @@ object RoomEventParserSpec : Spek({
         }
 
         it("creates valid membership") {
-            val membership = result.membership
-
-            assertThat(membership.roomId).isEqualTo("ac43dfef")
-            assertThat(membership.userIds.size).isEqualTo(2)
-            assertThat(membership.userIds[0]).isEqualTo("alice")
-            assertThat(membership.userIds[1]).isEqualTo("carol")
+            val expectedMembership = RoomMembershipApiType("ac43dfef",
+                    listOf("alice", "carol"))
+            assertThat(result.membership).isEqualTo(expectedMembership)
         }
 
     }
