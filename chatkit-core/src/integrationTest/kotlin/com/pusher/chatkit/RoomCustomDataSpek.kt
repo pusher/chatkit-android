@@ -13,9 +13,8 @@ import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.util.FutureValue
 import junit.framework.Assert.assertNotNull
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object RoomCustomDataSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -65,23 +64,23 @@ object RoomCustomDataSpek : Spek({
             )
 
             var alicesRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
-            chatFor(ALICE).connectFor { event ->
+            val alice = chatFor(ALICE).connect { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
                         alicesRoomUpdatedEvent = event
                     }
                 }
-            }
+            }.assumeSuccess()
 
             superUser.updateRoom(
                     room = superUser.generalRoom,
                     customData = newCustomData
-
             ).assumeSuccess()
 
             assertThat(alicesRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
             assertThat(superUserRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
-            assertNotNull(superUser.rooms[0].customData)
+
+            assertThat(alice.rooms[0].customData).isEqualTo(newCustomData)
             assertThat(superUser.rooms[0].customData).isEqualTo(newCustomData)
         }
 
@@ -106,13 +105,13 @@ object RoomCustomDataSpek : Spek({
             }.assumeSuccess()
 
             var alicesRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
-            chatFor(ALICE).connectFor { event ->
+            val alice = chatFor(ALICE).connect { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
                         alicesRoomUpdatedEvent = event
                     }
                 }
-            }
+            }.assumeSuccess()
 
             val newCustomData = mapOf(
                     "replaced" to "some",
@@ -126,7 +125,8 @@ object RoomCustomDataSpek : Spek({
 
             assertThat(alicesRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
             assertThat(superUserRoomUpdatedEvent.room.customData).isEqualTo(newCustomData)
-            assertNotNull(superUser.rooms[0].customData)
+
+            assertThat(alice.rooms[0].customData).isEqualTo(newCustomData)
             assertThat(superUser.rooms[0].customData).isEqualTo(newCustomData)
         }
 
@@ -151,14 +151,14 @@ object RoomCustomDataSpek : Spek({
             }.assumeSuccess()
 
             var alicesRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
-            chatFor(ALICE).connectFor { event ->
+            val alice = chatFor(ALICE).connect { event ->
                 when (event) {
                     is ChatEvent.RoomUpdated -> {
 
                         alicesRoomUpdatedEvent = event
                     }
                 }
-            }
+            }.assumeSuccess()
 
             val emptyCustomData = mapOf<String, String>()
 
@@ -169,9 +169,9 @@ object RoomCustomDataSpek : Spek({
 
             assertThat(alicesRoomUpdatedEvent.room.customData).isEqualTo(emptyCustomData)
             assertThat(superUserRoomUpdatedEvent.room.customData).isEqualTo(emptyCustomData)
-            assertNotNull(superUser.rooms[0].customData)
+
+            assertThat(alice.rooms[0].customData).isEqualTo(emptyCustomData)
             assertThat(superUser.rooms[0].customData).isEqualTo(emptyCustomData)
         }
-
     }
 })
