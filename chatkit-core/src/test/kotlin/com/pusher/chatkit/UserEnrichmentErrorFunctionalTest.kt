@@ -11,8 +11,8 @@ import elements.Error
 import elements.Errors
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 object UserEnrichmentErrorFunctionalTest : Spek({
@@ -42,7 +42,7 @@ object UserEnrichmentErrorFunctionalTest : Spek({
         describe("when connect is called") {
             lateinit var connectResult: Result<SynchronousCurrentUser, Error>
 
-            val notifiedEvents: BlockingQueue<ChatEvent> = ArrayBlockingQueue(2)
+            val notifiedEvents: BlockingQueue<ChatEvent> = LinkedBlockingQueue()
             afterEachTest { notifiedEvents.clear() }
 
             beforeEachTest {
