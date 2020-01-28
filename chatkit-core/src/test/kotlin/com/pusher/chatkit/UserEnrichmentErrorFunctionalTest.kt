@@ -13,6 +13,7 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.TimeUnit
 
 object UserEnrichmentErrorFunctionalTest : Spek({
 
@@ -58,9 +59,8 @@ object UserEnrichmentErrorFunctionalTest : Spek({
                 val errorOccurred = notifiedEvents.take() as ChatEvent.ErrorOccurred
                 assertThat(errorOccurred.error).isEqualTo(networkError)
 
-                val unexpectedEvent: ChatEvent? = notifiedEvents.poll()
-                assertWithMessage("Only 2 events expected, unexpected 3rd: $unexpectedEvent")
-                        .that(unexpectedEvent).isNull()
+                assertWithMessage("Only 2 events expected")
+                        .that(notifiedEvents.poll(1, TimeUnit.MILLISECONDS)).isNull()
             }
         }
     }
