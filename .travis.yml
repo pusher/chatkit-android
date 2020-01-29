@@ -1,10 +1,8 @@
 dist: trusty
 jdk: oraclejdk8
 
-# safelist
-branches:
-  only:
-  - master
+if: type = pull_request
+if: repo = pusher/chatkit-android
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
