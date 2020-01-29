@@ -1,7 +1,7 @@
 dist: trusty
 jdk: oraclejdk8
 
-if: type = pull_request AND repo = pusher/chatkit-android
+if: type = (pull_request AND repo = pusher/chatkit-android) OR (branch = master)
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -42,4 +42,3 @@ script:
 after_success:
   # report coverage
   - bash <(curl -s https://codecov.io/bash)
-
