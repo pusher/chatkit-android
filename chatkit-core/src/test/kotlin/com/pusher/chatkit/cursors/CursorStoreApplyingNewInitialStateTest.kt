@@ -1,9 +1,6 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.cursors
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.cursors.CursorSubscriptionEvent
-import com.pusher.chatkit.cursors.CursorsStore
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -12,9 +9,9 @@ import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 
-class CursorStoreSpec : Spek({
+class CursorStoreApplyingNewInitialStateTest : Spek({
     given("cursor store") {
-        val subject = CursorsStore()
+        val subject = CursorStore()
 
         subject.initialiseContents(
                 listOf(
@@ -48,7 +45,7 @@ class CursorStoreSpec : Spek({
     }
 
     given("another cursor store") {
-        val subject = CursorsStore()
+        val subject = CursorStore()
 
         val constantRoom1Cursor = Cursor("callum", "1", 1, "2017-11-29T16:59:58Z")
         val initialRoom2Cursor = Cursor("callum", "2", 2, "2017-11-29T16:59:58Z")

@@ -5,7 +5,7 @@ import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
 
-class CursorsStore {
+class CursorStore {
     private val map = mutableMapOf<String, UserCursorStore>()
 
     operator fun get(userId: String) =
