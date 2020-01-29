@@ -17,8 +17,8 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object RoomCustomDataSpek : Spek({
-    beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
+    afterEachTest(::tearDownInstance)
 
     describe("room custom data") {
 
