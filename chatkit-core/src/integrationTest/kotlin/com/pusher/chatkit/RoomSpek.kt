@@ -266,10 +266,12 @@ object RoomSpek : Spek({
             assertThat(room.name).isEqualTo(GENERAL)
             assertThat(room.id).isNotEmpty()
             assertThat(room.memberUserIds).containsExactly(PUSHERINO)
+            assertThat(room.createdById).isEqualTo(PUSHERINO)
 
             assertThat(pusherino.rooms[0].name).isEqualTo(GENERAL)
             assertThat(pusherino.rooms[0].id).isNotEmpty()
             assertThat(pusherino.rooms[0].memberUserIds).containsExactly(PUSHERINO)
+            assertThat(pusherino.rooms[0].createdById).isEqualTo(PUSHERINO)
         }
 
         it("creates room with a user supplied id") {
@@ -676,6 +678,7 @@ object RoomSpek : Spek({
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+            assertThat(rooms[0].createdById).isEqualTo(SUPER_USER)
             assertThat(rooms[0].memberUserIds.size).isEqualTo(0)
         }
 
