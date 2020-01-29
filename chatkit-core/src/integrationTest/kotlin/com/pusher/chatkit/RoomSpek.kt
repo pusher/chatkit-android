@@ -265,6 +265,11 @@ object RoomSpek : Spek({
 
             assertThat(room.name).isEqualTo(GENERAL)
             assertThat(room.id).isNotEmpty()
+            assertThat(room.memberUserIds).containsExactly(PUSHERINO)
+
+            assertThat(pusherino.rooms[0].name).isEqualTo(GENERAL)
+            assertThat(pusherino.rooms[0].id).isNotEmpty()
+            assertThat(pusherino.rooms[0].memberUserIds).containsExactly(PUSHERINO)
         }
 
         it("creates room with a user supplied id") {
@@ -333,12 +338,20 @@ object RoomSpek : Spek({
         it("creates room with a membership") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            var pusherinoAddedToRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
+            val pusherino = chatFor(PUSHERINO).connect{event ->
+                when (event) {
+                    is ChatEvent.AddedToRoom -> {
+                        pusherinoAddedToRoomEvent = event
+                    }
+                }
+            }.assumeSuccess()
 
             val room = pusherino.createRoom(name =  GENERAL, userIds = listOf(ALICE)).assumeSuccess()
 
-            assertThat(room.memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO))
-            assertThat(pusherino.rooms[0].memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO))
+            assertThat(room.memberUserIds).containsExactly(ALICE, PUSHERINO)
+            assertThat(pusherino.rooms[0].memberUserIds).containsExactly(ALICE, PUSHERINO)
+            assertThat(pusherinoAddedToRoomEvent.room.memberUserIds).containsExactly(ALICE, PUSHERINO)
         }
 
         it("updates room name") {
@@ -620,12 +633,23 @@ object RoomSpek : Spek({
                     newUsers(PUSHERINO, ALICE),
                     newRoom(GENERAL, PUSHERINO, ALICE))
 
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+            var pusherinoJoinedRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
+            val pusherino = chatFor(PUSHERINO).connect{ event ->
+                when (event) {
+                    is ChatEvent.AddedToRoom -> {
+                        pusherinoJoinedRoomEvent = event
+                    }
+                }
+            }.assumeSuccess()
 
-            val room = superUser.joinRoom(superUser.generalRoom).assumeSuccess()
+            val room = pusherino.joinRoom(pusherino.generalRoom).assumeSuccess()
 
-            assertThat(room.memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO, SUPER_USER))
-            assertThat(superUser.rooms[0].memberUserIds).isEqualTo(setOf(ALICE, PUSHERINO, SUPER_USER))
+            assertThat(room.memberUserIds)
+                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
+            assertThat(pusherino.rooms[0].memberUserIds)
+                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
+            assertThat(pusherinoJoinedRoomEvent.room.memberUserIds)
+                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
         }
 
         it("leaves room") {
@@ -668,7 +692,7 @@ object RoomSpek : Spek({
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
-            assertThat(rooms[0].memberUserIds).isEqualTo(setOf(PUSHERINO, ALICE, SUPER_USER))
+            assertThat(rooms[0].memberUserIds).containsExactly(PUSHERINO, ALICE, SUPER_USER)
         }
 
         it("provides users for a room") {
