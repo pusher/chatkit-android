@@ -15,7 +15,7 @@ object RoomEventParserSpec : Spek({
 
     describe("when create room response from the docs is parsed") {
 
-        val result = testFileReader.readTestFile("room_created_response-docs.json")
+        val result = testFileReader.readTestFile("create_or_join_room_response-docs.json")
                 .parseAs<CreateRoomResponse>().successOrThrow()
 
         it("then the result has expected room") {
@@ -44,7 +44,7 @@ object RoomEventParserSpec : Spek({
 
     describe("when joining a room example from the docs") {
 
-        val result = testFileReader.readTestFile("room_joined_response-docs.json")
+        val result = testFileReader.readTestFile("create_or_join_room_response-docs.json")
                 .parseAs<JoinRoomResponse>().successOrThrow()
 
         it("creates a valid room") {
