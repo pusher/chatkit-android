@@ -113,7 +113,6 @@ object RoomSpek : Spek({
             assertThat(unreadCountRoomUpdatedEvent.room.unreadCount).isEqualTo(1)
 
             assertThat(alice.rooms[0].unreadCount).isEqualTo(1)
-            
             assertThat(alice.rooms[0].lastMessageAt).isEqualTo(
                     lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
         }
