@@ -68,7 +68,6 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                 ))
             }
 
-
             it("then the result indicates that nothing has been applied") {
                 assertThat(applyEventResult).isEmpty()
             }
@@ -131,7 +130,6 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                         )
                 ))
             }
-
 
             it("then the result indicates that the new cursor has been stored") {
                 assertThat(applyEventResult).containsExactly(UserInternalEvent.NewCursor(cursor))
