@@ -619,11 +619,16 @@ object RoomSpek : Spek({
         }
 
         it("joins room") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO),
+                    newRoom(GENERAL))
 
-            val pusherino = chatFor(SUPER_USER).connect().assumeSuccess()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
 
-            val room = pusherino.joinRoom(pusherino.generalRoom)
+            val generalRoomId = superUser.rooms[0].id
+            val room = pusherino.joinRoom(generalRoomId)
 
             check(room is Success) { (room as? Failure)?.error as Any }
             assertThat(pusherino.rooms).contains(pusherino.generalRoom)
@@ -633,7 +638,7 @@ object RoomSpek : Spek({
             setUpInstanceWith(
                     createDefaultRole(),
                     newUsers(PUSHERINO, ALICE),
-                    newRoom(GENERAL, PUSHERINO, ALICE))
+                    newRoom(GENERAL, ALICE))
 
             var pusherinoJoinedRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
             val pusherino = chatFor(PUSHERINO).connect{ event ->
@@ -644,7 +649,11 @@ object RoomSpek : Spek({
                 }
             }.assumeSuccess()
 
-            val room = pusherino.joinRoom(pusherino.generalRoom).assumeSuccess()
+            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            val generalRoomId = superUser.rooms[0].id
+
+            val room = pusherino.joinRoom(generalRoomId).assumeSuccess()
 
             assertThat(room.memberUserIds)
                     .containsExactly(ALICE, PUSHERINO, SUPER_USER)
