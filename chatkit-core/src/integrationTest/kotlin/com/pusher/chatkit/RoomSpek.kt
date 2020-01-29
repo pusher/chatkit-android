@@ -625,10 +625,7 @@ object RoomSpek : Spek({
                     newRoom(GENERAL))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val generalRoomId = superUser.rooms[0].id
-            val room = pusherino.joinRoom(generalRoomId)
+            val room = pusherino.joinRoom(GENERAL)
 
             check(room is Success) { (room as? Failure)?.error as Any }
             assertThat(pusherino.rooms).contains(pusherino.generalRoom)
@@ -649,11 +646,7 @@ object RoomSpek : Spek({
                 }
             }.assumeSuccess()
 
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val generalRoomId = superUser.rooms[0].id
-
-            val room = pusherino.joinRoom(generalRoomId).assumeSuccess()
+            val room = pusherino.joinRoom(GENERAL).assumeSuccess()
 
             assertThat(room.memberUserIds)
                     .containsExactly(ALICE, PUSHERINO, SUPER_USER)
