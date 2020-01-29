@@ -81,9 +81,16 @@ It can be either a relative or absolute path.
 
 ## Testing
 
-The SDK has integration tests which run against a real Chatkit server.
+The SDK has integration tests which run against a real Chatkit server. The tests
+can be run either using the Gradle task `test` or directly in Android Studio.
 
-The tests can be run using the Gradle `test` task with the VM options mentioned below set.
+In order for the tests to pass you must provide a Chatkit instance
+credential from the [dashboard](https://dash.pusher.com/chatkit/).
+
+*Important:* The tests will delete any and all resources associated with
+the instance you provide. Create a new instance for testing purposes, and do not
+share it anywhere else.
+
 To run the tests directly from Android Studio you will need to install the
 [Spek](https://plugins.jetbrains.com/plugin/8564-spek/) plugin, and
 [Spek Framework](https://plugins.jetbrains.com/plugin/10915-spek-framework/).
@@ -94,18 +101,21 @@ search for Spek, and Spek Framework and install both plugins. If you open a Spek
 (e.g. RoomSpek), you should now see green play buttons to run each test
 (or a test group from a file).
 
-In order for the tests to pass you must provide a Chatkit instance
-credential from the [dashboard](https://dash.pusher.com/chatkit/)
-to the VM — to do this edit the run configurations -> select Spek
-on the left -> in the VM options field enter the following:
+You will need to add your Chatkit test instance credentials to the VM — to do this edit
+the run configurations -> select Spek on the left -> in the VM options field
+enter the following:
 
 ```
 -Dchatkit_integration_locator=<INSTANCE_LOCATOR> -Dchatkit_integration_key=<SECRET_KEY>
 ```
 
-*Important:* The tests will delete any and all resources associated with
-the instance you provide. Create a new instance for testing purposes, and do not
-share it anywhere else.
+To run the Gradle test task, you will need to add your Chatkit test instance
+credentials to your global `gradle.properties` file:
+
+```
+chatkit_integration_locator=<INSTANCE_LOCATOR>
+chatkit_integration_key=<SECRET_KEY>
+```
 
 ## Publishing
 
