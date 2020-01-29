@@ -16,7 +16,7 @@ import junit.framework.Assert.assertNotNull
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object RoomCustomDataSpek : Spek({
+object RoomCustomDataTest : Spek({
     afterEachTest(::closeChatManagers)
     afterEachTest(::tearDownInstance)
 
