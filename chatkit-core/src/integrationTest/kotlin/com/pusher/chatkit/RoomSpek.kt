@@ -93,8 +93,7 @@ object RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-
-
+            
             var lastMessageAtRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
             var unreadCountRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
             alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
