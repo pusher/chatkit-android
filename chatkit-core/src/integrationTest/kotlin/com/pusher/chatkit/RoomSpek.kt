@@ -502,56 +502,6 @@ object RoomSpek : Spek({
             check(room is Success) { (room as? Failure)?.error as Any }
         }
 
-        it("joins room") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO),
-                    newRoom(GENERAL))
-
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            val room = pusherino.joinRoom(GENERAL)
-
-            check(room is Success) { (room as? Failure)?.error as Any }
-            assertThat(pusherino.rooms).contains(pusherino.generalRoom)
-        }
-
-        it ("joins room with other members") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO, ALICE),
-                    newRoom(GENERAL, ALICE))
-
-            var pusherinoJoinedRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
-            val pusherino = chatFor(PUSHERINO).connect{ event ->
-                when (event) {
-                    is ChatEvent.AddedToRoom -> {
-                        pusherinoJoinedRoomEvent = event
-                    }
-                }
-            }.assumeSuccess()
-
-            val room = pusherino.joinRoom(GENERAL).assumeSuccess()
-
-            assertThat(room.memberUserIds)
-                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
-            assertThat(pusherino.rooms[0].memberUserIds)
-                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
-            assertThat(pusherinoJoinedRoomEvent.room.memberUserIds)
-                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
-        }
-
-        it("leaves room") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
-
-            val pusherino = chatFor(SUPER_USER).connect().assumeSuccess()
-            val generalRoom = pusherino.generalRoom
-
-            val room = pusherino.leaveRoom(generalRoom)
-
-            check(room is Success) { (room as? Failure)?.error as Any }
-            assertThat(pusherino.rooms).doesNotContain(generalRoom)
-        }
-
         it("gets joinable rooms") {
             setUpInstanceWith(
                     createDefaultRole(),
