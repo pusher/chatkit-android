@@ -110,7 +110,7 @@ enter the following:
 ```
 
 To run the Gradle test task, you will need to add your Chatkit test instance
-credentials to your global `gradle.properties` file:
+credentials to your global `~/.gradle/gradle.properties` file:
 
 ```
 chatkit_integration_locator=<INSTANCE_LOCATOR>
