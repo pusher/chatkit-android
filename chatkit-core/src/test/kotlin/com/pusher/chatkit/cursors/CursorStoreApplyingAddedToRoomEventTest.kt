@@ -129,7 +129,7 @@ object CursorStoreApplyingAddedToRoomEventTest : Spek({
             }
         }
         describe("when applying AddedToRoomEvent for another room with a Cursor") {
-            val cursor = Cursor("alice", "roomId1001", position = 2)
+            val cursor = Cursor("alice", "roomId2", position = 2)
 
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
