@@ -33,7 +33,7 @@ object JoinRoomTests : Spek({
         assertThat(pusherino.rooms).contains(pusherino.generalRoom)
     }
 
-    describe ("currentUser '$PUSHERINO' joins room with other members") {
+    describe("currentUser '$PUSHERINO' joins room with other members") {
         setUpInstanceWith(
                 createDefaultRole(),
                 newUsers(PUSHERINO, ALICE),
@@ -70,7 +70,7 @@ object JoinRoomTests : Spek({
         assertThat(pusherino.rooms).doesNotContain(generalRoom)
     }
 
-    describe( "current user '$PUSHERINO") {
+    describe("current user '$PUSHERINO") {
         setUpInstanceWith(
                 createDefaultRole(),
                 newUsers(PUSHERINO, ALICE),
@@ -82,11 +82,11 @@ object JoinRoomTests : Spek({
             if (event is ChatEvent.AddedToRoom) addedToRoomEvent = event
         }.assumeSuccess()
 
-        it( "has no current rooms") {
+        it("has no current rooms") {
             assertThat(pusherino.rooms).isEmpty()
         }
 
-        it ("has one joinable rooms") {
+        it("has one joinable room") {
             val joinableRooms = pusherino.getJoinableRooms().assumeSuccess()
 
             assertThat(joinableRooms.size).isEqualTo(1)
@@ -94,7 +94,7 @@ object JoinRoomTests : Spek({
             assertThat(joinableRooms[0].memberUserIds).isEmpty()
         }
 
-        it ("joins room '$GENERAL' with accurate membership") {
+        it("joins room '$GENERAL' with accurate membership") {
             val generalRoom = pusherino.joinRoom(GENERAL).assumeSuccess()
             assertThat(generalRoom.memberUserIds)
                     .containsExactly(PUSHERINO, ALICE, SUPER_USER)
@@ -108,7 +108,7 @@ object JoinRoomTests : Spek({
                     .containsExactly(PUSHERINO, ALICE, SUPER_USER)
         }
 
-        it ("leaves room '$GENERAL'") {
+        it("leaves room '$GENERAL'") {
             pusherino.leaveRoom(GENERAL).assumeSuccess()
             assertThat(pusherino.rooms).isEmpty()
         }
