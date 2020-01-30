@@ -87,7 +87,7 @@ private val chatkitInstance by lazy {
     Instance(
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit",
-            serviceVersion = "v5",
+            serviceVersion = "v7",
             dependencies = TestDependencies()
     )
 }
@@ -307,6 +307,7 @@ object InstanceActions {
                         path = "/rooms",
                         method = "POST",
                         body = mutableMapOf<String, Any?>(
+                                "id" to name,
                                 "name" to name,
                                 "push_notification_title_override" to pushNotificationTitleOverride,
                                 "user_ids" to userNames,
