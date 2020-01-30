@@ -1,26 +1,29 @@
 package com.pusher.chatkit.cursors
 
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.mock
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object CursorStoreApplyingReadStateUpdatedTest : Spek({
+object CursorStoreApplyingAddedToRoomEventTest : Spek({
 
     val subject by memoized { CursorStore() }
 
     describe("given empty CursorStore") {
-        describe("when applying ReadStateUpdated with no Cursor") {
+        describe("when applying AddedToRoomEvent with no Cursor") {
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
-                applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
-                        RoomReadStateApiType(
-                                roomId = "roomId1001",
-                                unreadCount = 1,
+                applyEventResult = subject.applyEvent(UserSubscriptionEvent.AddedToRoomEvent(
+                        room = mock(), // should not be used by CursorStore
+                        readState = RoomReadStateApiType(
+                                roomId = "roomId1",
+                                unreadCount = 2,
                                 cursor = null
-                        )
+                        ),
+                        membership = mock() // should not be used by CursorStore
                 ))
             }
 
@@ -28,17 +31,19 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                 assertThat(applyEventResult).isEmpty()
             }
         }
-        describe("when applying ReadStateUpdated with a Cursor") {
+        describe("when applying AddedToRoomEvent with a Cursor") {
             val cursor = Cursor("alice", "roomId1", position = 1)
 
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
-                applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
-                        RoomReadStateApiType(
+                applyEventResult = subject.applyEvent(UserSubscriptionEvent.AddedToRoomEvent(
+                        room = mock(), // should not be used by CursorStore
+                        readState = RoomReadStateApiType(
                                 roomId = "roomId1",
-                                unreadCount = 1,
+                                unreadCount = 2,
                                 cursor = cursor
-                        )
+                        ),
+                        membership = mock() // should not be used by CursorStore
                 ))
             }
 
@@ -55,38 +60,42 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
         val initialCursor = Cursor("alice", "roomId1", position = 1)
         beforeEachTest { subject.initialiseContents(listOf(initialCursor)) }
 
-        describe("when applying ReadStateUpdated with the same Cursor") {
+        describe("when applying AddedToRoomEvent with the same Cursor") {
 
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
-                applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
-                        RoomReadStateApiType(
+                applyEventResult = subject.applyEvent(UserSubscriptionEvent.AddedToRoomEvent(
+                        room = mock(), // should not be used by CursorStore
+                        readState = RoomReadStateApiType(
                                 roomId = "roomId1",
-                                unreadCount = 1,
+                                unreadCount = 2,
                                 cursor = initialCursor
-                        )
+                        ),
+                        membership = mock() // should not be used by CursorStore
                 ))
             }
 
             it("then the result indicates that nothing has been applied") {
                 assertThat(applyEventResult).isEmpty()
             }
-            it("then the store contains the initial cursor") {
+            it("then the store contains the cursor") {
                 assertThat(subject[initialCursor.userId][initialCursor.roomId])
                         .isEqualTo(initialCursor)
             }
         }
-        describe("when applying ReadStateUpdated with a new cursor") {
+        describe("when applying AddedToRoomEvent with a new cursor") {
             val cursor = Cursor("alice", "roomId1", position = 2)
 
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
-                applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
-                        RoomReadStateApiType(
+                applyEventResult = subject.applyEvent(UserSubscriptionEvent.AddedToRoomEvent(
+                        room = mock(), // should not be used by CursorStore
+                        readState = RoomReadStateApiType(
                                 roomId = "roomId1",
-                                unreadCount = 0,
+                                unreadCount = 2,
                                 cursor = cursor
-                        )
+                        ),
+                        membership = mock() // should not be used by CursorStore
                 ))
             }
 
@@ -97,15 +106,17 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                 assertThat(subject[cursor.userId][cursor.roomId]).isEqualTo(cursor)
             }
         }
-        describe("when applying ReadStateUpdated for another room with no Cursor") {
+        describe("when applying AddedToRoomEvent for another room with no Cursor") {
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
-                applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
-                        RoomReadStateApiType(
-                                roomId = "roomId1001",
-                                unreadCount = 1,
+                applyEventResult = subject.applyEvent(UserSubscriptionEvent.AddedToRoomEvent(
+                        room = mock(), // should not be used by CursorStore
+                        readState = RoomReadStateApiType(
+                                roomId = "roomId1",
+                                unreadCount = 2,
                                 cursor = null
-                        )
+                        ),
+                        membership = mock() // should not be used by CursorStore
                 ))
             }
 
@@ -117,17 +128,19 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                         .isEqualTo(initialCursor)
             }
         }
-        describe("when applying ReadStateUpdated for another room with a Cursor") {
+        describe("when applying AddedToRoomEvent for another room with a Cursor") {
             val cursor = Cursor("alice", "roomId1001", position = 2)
 
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
-                applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
-                        RoomReadStateApiType(
-                                roomId = "roomId1001",
-                                unreadCount = 1,
+                applyEventResult = subject.applyEvent(UserSubscriptionEvent.AddedToRoomEvent(
+                        room = mock(), // should not be used by CursorStore
+                        readState = RoomReadStateApiType(
+                                roomId = "roomId1",
+                                unreadCount = 2,
                                 cursor = cursor
-                        )
+                        ),
+                        membership = mock() // should not be used by CursorStore
                 ))
             }
 
