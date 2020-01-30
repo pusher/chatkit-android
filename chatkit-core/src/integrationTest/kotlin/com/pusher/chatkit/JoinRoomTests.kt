@@ -16,8 +16,8 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object JoinRoomTests : Spek({
-    afterGroup(::tearDownInstance)
-    afterGroup(::closeChatManagers)
+    afterEachTest(::closeChatManagers)
+    afterEachTest(::tearDownInstance)
 
     describe("currentUser '$PUSHERINO' joins room") {
 
@@ -70,7 +70,7 @@ object JoinRoomTests : Spek({
         assertThat(pusherino.rooms).doesNotContain(generalRoom)
     }
 
-    describe("current user '$PUSHERINO") {
+    describe("current user '$PUSHERINO joining and leaving") {
         setUpInstanceWith(
                 createDefaultRole(),
                 newUsers(PUSHERINO, ALICE),
@@ -82,36 +82,28 @@ object JoinRoomTests : Spek({
             if (event is ChatEvent.AddedToRoom) addedToRoomEvent = event
         }.assumeSuccess()
 
-        it("has no current rooms") {
-            assertThat(pusherino.rooms).isEmpty()
-        }
+        assertThat(pusherino.rooms).isEmpty()
 
-        it("has one joinable room") {
-            val joinableRooms = pusherino.getJoinableRooms().assumeSuccess()
+        val joinableRooms = pusherino.getJoinableRooms().assumeSuccess()
 
-            assertThat(joinableRooms.size).isEqualTo(1)
-            assertThat(joinableRooms[0].id).isEqualTo(GENERAL)
-            assertThat(joinableRooms[0].memberUserIds).isEmpty()
-        }
+        assertThat(joinableRooms.size).isEqualTo(1)
+        assertThat(joinableRooms[0].id).isEqualTo(GENERAL)
+        assertThat(joinableRooms[0].memberUserIds).isEmpty()
 
-        it("joins room '$GENERAL' with accurate membership") {
-            val generalRoom = pusherino.joinRoom(GENERAL).assumeSuccess()
-            assertThat(generalRoom.memberUserIds)
-                    .containsExactly(PUSHERINO, ALICE, SUPER_USER)
+        val generalRoom = pusherino.joinRoom(GENERAL).assumeSuccess()
+        assertThat(generalRoom.memberUserIds)
+                .containsExactly(PUSHERINO, ALICE, SUPER_USER)
 
-            assertThat(pusherino.rooms).contains(pusherino.generalRoom)
-            assertThat(pusherino.rooms[0].memberUserIds)
-                    .containsExactly(PUSHERINO, ALICE, SUPER_USER)
+        assertThat(pusherino.rooms).contains(pusherino.generalRoom)
+        assertThat(pusherino.rooms[0].memberUserIds)
+                .containsExactly(PUSHERINO, ALICE, SUPER_USER)
 
-            assertThat(addedToRoomEvent.room.id).isEqualTo(GENERAL)
-            assertThat(addedToRoomEvent.room.memberUserIds)
-                    .containsExactly(PUSHERINO, ALICE, SUPER_USER)
-        }
+        assertThat(addedToRoomEvent.room.id).isEqualTo(GENERAL)
+        assertThat(addedToRoomEvent.room.memberUserIds)
+                .containsExactly(PUSHERINO, ALICE, SUPER_USER)
 
-        it("leaves room '$GENERAL'") {
-            pusherino.leaveRoom(GENERAL).assumeSuccess()
-            assertThat(pusherino.rooms).isEmpty()
-        }
+        pusherino.leaveRoom(GENERAL).assumeSuccess()
+        assertThat(pusherino.rooms).isEmpty()
 
     }
 })
