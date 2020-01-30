@@ -7,7 +7,6 @@ import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.usersFetchFailingWith
 import com.pusher.util.Result
-import elements.Error
 import elements.Errors
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -28,31 +27,22 @@ object UserEnrichmentErrorFunctionalTest : Spek({
     describe("given error when fetching user joining the room") {
         val userJoinedEvent = UserSubscriptionEvent.UserJoinedRoomEvent("bob", "roomId1")
 
-        val mockPlatformClient by memoized {
-            mockPlatformClient(
-                    userSubscription(initialState, userJoinedEvent),
-                    usersFetchFailingWith(networkError)
-            )
-        }
+        val mockPlatformClient = mockPlatformClient(
+                userSubscription(initialState, userJoinedEvent),
+                usersFetchFailingWith(networkError)
+        )
 
-        val subject by memoized {
-            chatForFunctionalTest("alice", testPlatformClientFactory(mockPlatformClient))
-        }
+        val subject = chatForFunctionalTest("alice", testPlatformClientFactory(mockPlatformClient))
 
         describe("when connect is called") {
-            lateinit var connectResult: Result<SynchronousCurrentUser, Error>
-
             val notifiedEvents: BlockingQueue<ChatEvent> = LinkedBlockingQueue()
-            afterEachTest { notifiedEvents.clear() }
+            val connectResult = subject.connect { event -> notifiedEvents.add(event) }
 
-            beforeEachTest {
-                connectResult = subject.connect { event -> notifiedEvents.add(event) }
-            }
+            it("then the connect result is successful\n" +
+                    "and the error is notified") {
 
-            it("then the connect result is successful") {
                 assertThat(connectResult).isInstanceOf(Result.Success::class.java)
-            }
-            it("then the error is notified") {
+
                 assertThat(notifiedEvents.take()).isInstanceOf(
                         ChatEvent.CurrentUserReceived::class.java)
 
