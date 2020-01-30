@@ -1,6 +1,7 @@
 package com.pusher.chatkit.rooms
 
 import com.google.common.truth.Truth.assertThat
+import com.pusher.chatkit.assertTypedSingletonList
 import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
@@ -290,9 +291,3 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
         }
     }
 })
-
-private inline fun <T, reified S: T> List<T>.assertTypedSingletonList(): S {
-    assertThat(this).hasSize(1)
-    assertThat(this.first()).isInstanceOf(S::class.java)
-    return this.first() as S
-}
