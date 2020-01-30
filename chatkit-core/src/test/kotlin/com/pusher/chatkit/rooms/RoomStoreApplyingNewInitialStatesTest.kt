@@ -1,17 +1,17 @@
-package com.pusher.chatkit
+package com.pusher.chatkit.rooms
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.rooms.RoomStore
 import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
+import com.pusher.chatkit.simpleRoom
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class RoomStoreReceivingNewInitialStatesSpek : Spek({
+class RoomStoreApplyingNewInitialStatesTest : Spek({
     val subject by memoized { RoomStore() }
 
     val initialReadStates = listOf(
@@ -92,7 +92,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports a RoomUpdated, with the new field visible") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RoomUpdated::class.java)
+                    val event: UserInternalEvent.RoomUpdated = events.assertTypedSingletonList()
                     assertThat(event.room.id).isEqualTo(newRoom.id)
                     assertThat(event.room.name).isEqualTo(newRoom.name)
                 }
@@ -113,18 +113,18 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports an AddedToRoom event with the room attached") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    val event: UserInternalEvent.AddedToRoom = events.assertTypedSingletonList()
                     assertThat(event.room.id).isEqualTo(newRoom.id)
                     assertThat(event.room.name).isEqualTo(newRoom.name)
                 }
 
                 it("sets the members on the Room in the event") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    val event: UserInternalEvent.AddedToRoom = events.assertTypedSingletonList()
                     assertThat(event.room.memberUserIds).containsExactlyElementsIn(newMembers.userIds)
                 }
 
                 it("sets the unread count on the Room in the event") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    val event: UserInternalEvent.AddedToRoom = events.assertTypedSingletonList()
                     assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
                 }
             }
@@ -142,18 +142,18 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports an AddedToRoom event with the room attached") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    val event: UserInternalEvent.AddedToRoom = events.assertTypedSingletonList()
                     assertThat(event.room.id).isEqualTo(newRoom.id)
                     assertThat(event.room.name).isEqualTo(newRoom.name)
                 }
 
                 it("sets the members on the Room in the event") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    val event: UserInternalEvent.AddedToRoom = events.assertTypedSingletonList()
                     assertThat(event.room.memberUserIds).containsExactlyElementsIn(newMembers.userIds)
                 }
 
                 it("nulls the unread count on the Room in the event") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.AddedToRoom::class.java)
+                    val event: UserInternalEvent.AddedToRoom = events.assertTypedSingletonList()
                     assertThat(event.room.unreadCount).isNull()
                 }
             }
@@ -168,7 +168,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports a RoomUpdated, with the new field visible") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RemovedFromRoom::class.java)
+                    val event: UserInternalEvent.RemovedFromRoom = events.assertTypedSingletonList()
                     assertThat(event.roomId).isEqualTo(initialRooms[1].id)
                 }
             }
@@ -186,7 +186,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports a RoomUpdated, with the new unreadCount visible") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RoomUpdated::class.java)
+                    val event: UserInternalEvent.RoomUpdated = events.assertTypedSingletonList()
                     assertThat(event.room.id).isEqualTo(newReadState.roomId)
                     assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
                 }
@@ -234,7 +234,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports a UserJoinedRoom, with the new member") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.UserJoinedRoom::class.java)
+                    val event: UserInternalEvent.UserJoinedRoom = events.assertTypedSingletonList()
                     assertThat(event.roomId).isEqualTo(newMemberships.roomId)
                     assertThat(event.userId).isEqualTo(newMemberships.userIds[0])
                 }
@@ -251,7 +251,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports a UserLeftRoom, with the old member") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.UserLeftRoom::class.java)
+                    val event: UserInternalEvent.UserLeftRoom = events.assertTypedSingletonList()
                     assertThat(event.roomId).isEqualTo(newMemberships.roomId)
                     assertThat(event.userId).isEqualTo("ham")
                 }
@@ -261,15 +261,15 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
         describe("multiple differences") {
             describe("replacement state with difference in read state and room last message timestamp") {
                 val newReadState = RoomReadStateApiType(initialRooms[1].id, 23, null)
-                val newRoom = with (initialRooms[1]) {
-                            simpleRoom(
-                                    id = id,
-                                    name = name,
-                                    customData = customData,
-                                    isPrivate = private,
-                                    lastMessageAt = "2020-01-07T14:10:38Z"
-                            )
-                        }
+                val newRoom = with(initialRooms[1]) {
+                    simpleRoom(
+                            id = id,
+                            name = name,
+                            customData = customData,
+                            isPrivate = private,
+                            lastMessageAt = "2020-01-07T14:10:38Z"
+                    )
+                }
 
                 lateinit var events: List<UserInternalEvent>
 
@@ -281,7 +281,7 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
                 }
 
                 it("reports a single RoomUpdated, with the new unreadCount and lastMessageAt visible") {
-                    val event = events.assertSingletonListWithElementType(UserInternalEvent.RoomUpdated::class.java)
+                    val event: UserInternalEvent.RoomUpdated = events.assertTypedSingletonList()
                     assertThat(event.room.id).isEqualTo(newRoom.id)
                     assertThat(event.room.lastMessageAt).isEqualTo(newRoom.lastMessageAt)
                     assertThat(event.room.unreadCount).isEqualTo(newReadState.unreadCount)
@@ -291,8 +291,8 @@ class RoomStoreReceivingNewInitialStatesSpek : Spek({
     }
 })
 
-private fun <V, T: V> List<V>.assertSingletonListWithElementType(clazz: Class<T>): T {
+private inline fun <T, reified S: T> List<T>.assertTypedSingletonList(): S {
     assertThat(this).hasSize(1)
-    assertThat(this.first()).isInstanceOf(clazz)
-    return this.first() as T
+    assertThat(this.first()).isInstanceOf(S::class.java)
+    return this.first() as S
 }
