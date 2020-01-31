@@ -97,7 +97,7 @@ object UserSubscriptionEventParserSpec : Spek({
 
     describe("when parsing initial state with no cursor") {
         val initialStateEvent = UserSubscriptionEventParser(
-                testFileReader.readTestFile("initial_state_no_read_cursor.json")
+                testFileReader.readTestFile("initial_state-withNoCursor.json")
         ).successOrThrow() as InitialState
 
         it("then result's read states contains valid information") {
@@ -111,9 +111,9 @@ object UserSubscriptionEventParserSpec : Spek({
         }
     }
 
-    describe("when parsing added to room example event from the docs") {
+    describe("when parsing added to room example event with no cursor") {
         val addedToRoomEvent = UserSubscriptionEventParser(
-                testFileReader.readTestFile("added_to_room_no_read_cursor.json")
+                testFileReader.readTestFile("added_to_room-withNoCursor.json")
         ).successOrThrow() as AddedToRoomEvent
 
         it("then result's read states contains valid information") {
@@ -122,7 +122,7 @@ object UserSubscriptionEventParserSpec : Spek({
                     unreadCount = 15,
                     cursor = null
             )
-            
+
             assertThat(addedToRoomEvent.readState).isEqualTo(expectedReadState)
         }
     }
