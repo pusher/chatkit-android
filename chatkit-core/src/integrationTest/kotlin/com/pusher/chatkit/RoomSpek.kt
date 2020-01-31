@@ -22,8 +22,6 @@ import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNull
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -500,44 +498,6 @@ object RoomSpek : Spek({
             val room = superUser.deleteRoom(superUser.generalRoom)
 
             check(room is Success) { (room as? Failure)?.error as Any }
-        }
-
-        it("joins room") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO),
-                    newRoom(GENERAL))
-
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            val room = pusherino.joinRoom(GENERAL)
-
-            check(room is Success) { (room as? Failure)?.error as Any }
-            assertThat(pusherino.rooms).contains(pusherino.generalRoom)
-        }
-
-        it ("joins room with other members") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO, ALICE),
-                    newRoom(GENERAL, ALICE))
-
-            var pusherinoJoinedRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
-            val pusherino = chatFor(PUSHERINO).connect{ event ->
-                when (event) {
-                    is ChatEvent.AddedToRoom -> {
-                        pusherinoJoinedRoomEvent = event
-                    }
-                }
-            }.assumeSuccess()
-
-            val room = pusherino.joinRoom(GENERAL).assumeSuccess()
-
-            assertThat(room.memberUserIds)
-                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
-            assertThat(pusherino.rooms[0].memberUserIds)
-                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
-            assertThat(pusherinoJoinedRoomEvent.room.memberUserIds)
-                    .containsExactly(ALICE, PUSHERINO, SUPER_USER)
         }
 
         it("leaves room") {
