@@ -23,6 +23,7 @@ after connecting (without the previous need to subscribe to individual rooms).
 ### Changed
 
 - Upgraded OkHttp to the highest version supporting Android 4.4.
+- Updated the Pusher Beams dependency to 1.6.2.
 
 ## [1.8.4](https://github.com/pusher/chatkit-android/compare/v1.8.3...v1.8.4)
 
