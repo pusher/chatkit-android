@@ -111,4 +111,20 @@ object UserSubscriptionEventParserSpec : Spek({
         }
     }
 
+    describe("when parsing added to room example event from the docs") {
+        val addedToRoomEvent = UserSubscriptionEventParser(
+                testFileReader.readTestFile("added_to_room_no_read_cursor.json")
+        ).successOrThrow() as AddedToRoomEvent
+
+        it("then result's read states contains valid information") {
+            val expectedReadState = RoomReadStateApiType(
+                    roomId = "cool-room-2",
+                    unreadCount = 15,
+                    cursor = null
+            )
+            
+            assertThat(addedToRoomEvent.readState).isEqualTo(expectedReadState)
+        }
+    }
+
 })
