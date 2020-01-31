@@ -7,12 +7,12 @@ import com.pusher.chatkit.users.UserSubscriptionEvent
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object CursorStoreApplyingReadStateUpdatedTest : Spek({
+object CursorStoreApplyingReadStateUpdatedEventTest : Spek({
 
     val subject by memoized { CursorStore() }
 
     describe("given empty CursorStore") {
-        describe("when applying ReadStateUpdated with no Cursor") {
+        describe("when applying ReadStateUpdatedEvent with no Cursor") {
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
                 applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
@@ -28,7 +28,7 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                 assertThat(applyEventResult).isEmpty()
             }
         }
-        describe("when applying ReadStateUpdated with a Cursor") {
+        describe("when applying ReadStateUpdatedEvent with a Cursor") {
             val cursor = Cursor("alice", "roomId1", position = 1)
 
             lateinit var applyEventResult: List<UserInternalEvent>
@@ -55,7 +55,7 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
         val initialCursor = Cursor("alice", "roomId1", position = 1)
         beforeEachTest { subject.initialiseContents(listOf(initialCursor)) }
 
-        describe("when applying ReadStateUpdated with the same Cursor") {
+        describe("when applying ReadStateUpdatedEvent with the same Cursor") {
 
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
@@ -76,7 +76,7 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                         .isEqualTo(initialCursor)
             }
         }
-        describe("when applying ReadStateUpdated with a new cursor") {
+        describe("when applying ReadStateUpdatedEvent with a new cursor") {
             val cursor = Cursor("alice", "roomId1", position = 2)
 
             lateinit var applyEventResult: List<UserInternalEvent>
@@ -97,7 +97,7 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                 assertThat(subject[cursor.userId][cursor.roomId]).isEqualTo(cursor)
             }
         }
-        describe("when applying ReadStateUpdated for another room with no Cursor") {
+        describe("when applying ReadStateUpdatedEvent for another room with no Cursor") {
             lateinit var applyEventResult: List<UserInternalEvent>
             beforeEachTest {
                 applyEventResult = subject.applyEvent(UserSubscriptionEvent.ReadStateUpdatedEvent(
@@ -117,7 +117,7 @@ object CursorStoreApplyingReadStateUpdatedTest : Spek({
                         .isEqualTo(initialCursor)
             }
         }
-        describe("when applying ReadStateUpdated for another room with a Cursor") {
+        describe("when applying ReadStateUpdatedEvent for another room with a Cursor") {
             val cursor = Cursor("alice", "roomId1001", position = 2)
 
             lateinit var applyEventResult: List<UserInternalEvent>

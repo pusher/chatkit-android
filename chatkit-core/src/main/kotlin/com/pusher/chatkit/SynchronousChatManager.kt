@@ -182,7 +182,8 @@ class SynchronousChatManager : AppHookListener {
 
     private fun consumeUserSubscriptionEvent(incomingEvent: UserSubscriptionEvent) {
         synchronized(populatedInitialStateLock) {  // wait for initial state to be processed first
-            if (!populatedInitialState) populatedInitialStateLock.wait()
+            // loop for spurious wakeup protection https://en.wikipedia.org/wiki/Spurious_wakeup
+            while (!populatedInitialState) populatedInitialStateLock.wait()
         }
 
         if (incomingEvent is UserSubscriptionEvent.InitialState) {
