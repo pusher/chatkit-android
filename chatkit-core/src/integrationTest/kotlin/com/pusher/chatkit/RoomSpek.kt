@@ -22,8 +22,6 @@ import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNull
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -500,6 +498,18 @@ object RoomSpek : Spek({
             val room = superUser.deleteRoom(superUser.generalRoom)
 
             check(room is Success) { (room as? Failure)?.error as Any }
+        }
+
+        it("leaves room") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
+
+            val pusherino = chatFor(SUPER_USER).connect().assumeSuccess()
+            val generalRoom = pusherino.generalRoom
+
+            val room = pusherino.leaveRoom(generalRoom)
+
+            check(room is Success) { (room as? Failure)?.error as Any }
+            assertThat(pusherino.rooms).doesNotContain(generalRoom)
         }
 
         it("gets joinable rooms") {
