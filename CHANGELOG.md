@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.8.4...HEAD)
+## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.9.0...HEAD)
+
+## [1.9.0](https://github.com/pusher/chatkit-android/compare/v1.8.4...v1.9.0)
+
+### Added
+
+- Made membership information (including updates) for joined rooms available straight
+after connecting (without the previous need to subscribe to individual rooms).
+
+### Fixed
+
+- Made rooms accessible via `CurrentUser` object sorted by room activity
+(lastMessageAt or createdAt), with recently active first.
+- Made user fetch report original error and fail transactionally.
+- Made processing of initial state on connect and immediate subsequent events reliable.
+
+### Changed
+
+- Upgraded OkHttp to the highest version supporting Android 4.4.
 
 ## [1.8.4](https://github.com/pusher/chatkit-android/compare/v1.8.3...v1.8.4)
 
