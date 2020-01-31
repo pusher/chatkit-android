@@ -95,6 +95,20 @@ object UserSubscriptionEventParserSpec : Spek({
         }
     }
 
-    // TODO: add other cases (JSONSs), e.g. for more read states, null cursor, etc
+    describe("when parsing initial state with no cursor") {
+        val initialStateEvent = UserSubscriptionEventParser(
+                testFileReader.readTestFile("initial_state_no_read_cursor.json")
+        ).successOrThrow() as InitialState
+
+        it("then result's read states contains valid information") {
+            val expectedReadState = RoomReadStateApiType(
+                    roomId = "cool-room-1",
+                    unreadCount = 7,
+                    cursor = null
+            )
+
+            assertThat(initialStateEvent.readStates).containsExactly(expectedReadState)
+        }
+    }
 
 })
