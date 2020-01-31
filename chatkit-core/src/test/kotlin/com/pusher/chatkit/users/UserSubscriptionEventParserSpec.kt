@@ -2,6 +2,8 @@ package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.TestFileReader
+import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -14,8 +16,6 @@ object UserSubscriptionEventParserSpec : Spek({
                 testFileReader.readTestFile("initial_state-docs.json")
         ).successOrThrow() as InitialState
 
-        // TODO: add tests around other bits like unread counts, cursors etc
-
         it("then result's memberships contain valid information") {
             val memberships = initialStateEvent.memberships
 
@@ -27,6 +27,21 @@ object UserSubscriptionEventParserSpec : Spek({
             assertThat(memberships[0].userIds[1]).isEqualTo("ham")
         }
 
+        it("then result's read states contains valid information") {
+            val expectedReadState = RoomReadStateApiType(
+                    roomId = "cool-room-1",
+                    unreadCount = 7,
+                    cursor = Cursor(
+                            userId = "viv",
+                            roomId = "cool-room-1",
+                            position = 123654,
+                            updatedAt = "2017-04-13T14:10:04Z",
+                            type = 0
+                    )
+            )
+
+            assertThat(initialStateEvent.readStates).containsExactly(expectedReadState)
+        }
     }
 
     describe("when parsing added to room example event from the docs") {
@@ -40,7 +55,24 @@ object UserSubscriptionEventParserSpec : Spek({
             assertThat(membership.userIds.size).isEqualTo(1)
             assertThat(membership.userIds[0]).isEqualTo("ham")
         }
+
+        it("then result's read states contains valid information") {
+            val expectedReadState = RoomReadStateApiType(
+                    roomId = "cool-room-2",
+                    unreadCount = 15,
+                    cursor = Cursor(
+                            userId = "viv",
+                            roomId = "cool-room-2",
+                            position = 123654,
+                            updatedAt = "2017-04-13T14:10:04Z",
+                            type = 0
+                    )
+            )
+
+            assertThat(addedToRoomEvent.readState).isEqualTo(expectedReadState)
+        }
     }
+
     describe("when parsing user joined room example event from the docs") {
         val userJoinedRoomEvent = UserSubscriptionEventParser(
                 testFileReader.readTestFile("user_joined_room-docs.json")
@@ -51,6 +83,7 @@ object UserSubscriptionEventParserSpec : Spek({
             assertThat(userJoinedRoomEvent.roomId).isEqualTo("cool-room-1")
         }
     }
+
     describe("when parsing user left room example event from the docs") {
         val userJoinedRoomEvent = UserSubscriptionEventParser(
                 testFileReader.readTestFile("user_left_room-docs.json")
