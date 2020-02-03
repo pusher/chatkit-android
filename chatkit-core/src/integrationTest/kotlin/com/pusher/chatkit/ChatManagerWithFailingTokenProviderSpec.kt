@@ -21,7 +21,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 
 object ChatManagerWithFailingTokenProviderSpec : Spek({
-    afterEachTest(::closeChatManagers)
     afterEachTest(::tearDownInstance)
 
     val futureConnectionResult by memoized { FutureValue<Result<CurrentUser, Error>>() }
@@ -44,6 +43,7 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
 
             })
         }
+        afterEachTest { subject.close { /* nop */ } }
 
         describe("when connect is called") {
             beforeEachTest {
@@ -92,6 +92,7 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
 
             })
         }
+        afterEachTest { subject.close { /* nop */ } }
 
         describe("when connect is called") {
             beforeEachTest {

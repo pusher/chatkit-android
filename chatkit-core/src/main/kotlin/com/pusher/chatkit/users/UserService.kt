@@ -4,10 +4,8 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.presence.PresenceService
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
-import com.pusher.util.collect
-import com.pusher.util.orElse
+import com.pusher.util.asSuccess
 import elements.Error
-import elements.Errors
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,41 +18,35 @@ class UserService(
     fun fetchUsersBy(userIds: Set<String>): Result<Map<String, User>, Error> {
         val missingUserIds = userIds.filter { id -> knownUsers[id] == null }
 
-        if (missingUserIds.isNotEmpty()) {
-            val missingUserIdsQs =
-                    missingUserIds.joinToString(separator = "&") {
+        val fetchResult: Result<List<User>, Error> =
+                if (missingUserIds.isNotEmpty()) {
+                    val missingUserIdsQueryParams = missingUserIds.joinToString(separator = "&") {
                         "id=${URLEncoder.encode(it, "UTF-8")}"
                     }
 
-            client.doGet<List<User>>("/users_by_ids?$missingUserIdsQs")
-                    .map { loadedUsers ->
-                        loadedUsers.map { user ->
-                            knownUsers[user.id] = user
-                        }
-                    }
-        }
-
-        userIds.forEach {
-            presenceService.subscribeToUser(it)
-        }
-
-        return userIds
-                .map { userId ->
-                    knownUsers[userId].orElse {
-                        userNotFound(userId)
-                    }.map { user ->
-                        userId to user
-                    }
-                }.collect().map { pairs ->
-                    pairs.toMap()
-                }.mapFailure { errors ->
-                    Errors.compose(errors)
+                    client.doGet("/users_by_ids?$missingUserIdsQueryParams")
+                } else {
+                    listOf<User>().asSuccess()
                 }
+
+        return fetchResult.map { fetchedUsers ->
+            fetchedUsers.forEach { fetchedUser ->
+                knownUsers[fetchedUser.id] = fetchedUser
+            }
+
+            userIds.forEach {
+                presenceService.subscribeToUser(it)
+            }
+
+            userIds.map { userId ->
+                userId to knownUsers[userId]!!
+            }.toMap()
+        }
     }
 
     fun fetchUserBy(userId: String): Result<User, Error> =
-            fetchUsersBy(setOf(userId)).flatMap { users ->
-                users.values.firstOrNull().orElse { userNotFound(userId) }
+            fetchUsersBy(setOf(userId)).map { users ->
+                users.values.first()
             }
 
     fun addUsersToRoom(roomId: String, userIds: List<String>) =
@@ -75,6 +67,4 @@ class UserService(
         fetchUsersBy(userIds)
     }
 
-    private fun userNotFound(id: String): Error =
-            Errors.other("Could not load user with id: $id")
 }

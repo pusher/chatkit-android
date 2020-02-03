@@ -9,7 +9,6 @@ import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.rooms.RoomListeners
 import com.pusher.chatkit.rooms.RoomPushNotificationTitle
 import com.pusher.chatkit.test.InstanceActions.changeRoomName
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -29,8 +28,9 @@ import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
-class RoomSpek : Spek({
+object RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
     afterEachTest(::closeChatManagers)
 
@@ -43,7 +43,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.UserJoined && event.user.id == PUSHERINO) userJoined = event.user
             }
 
@@ -61,7 +61,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.UserLeft) userLeft = event.user
             }
             pusherino.leaveRoom(alice.generalRoom.id).assumeSuccess()
@@ -75,7 +75,7 @@ class RoomSpek : Spek({
             var updatedRoom by FutureValue<Room>()
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 if (event is RoomEvent.RoomUpdated) updatedRoom = event.room
             }
             changeRoomName(alice.generalRoom, NOT_GENERAL).run()
@@ -84,20 +84,34 @@ class RoomSpek : Spek({
         }
 
         it("notifies '$ALICE' when room '$GENERAL' receives a new message") {
-            setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, ALICE, PUSHERINO))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(ALICE, PUSHERINO),
+                    newRoom(GENERAL, ALICE, PUSHERINO))
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
-            val originalCount = alice.generalRoom.unreadCount!!
-
-            var updatedCount by FutureValue<Int>()
+            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
+            
+            var lastMessageAtRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
+            var unreadCountRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
             alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
-                if (event is RoomEvent.RoomUpdated) updatedCount = event.room.unreadCount!!
+                if (event is RoomEvent.RoomUpdated) {
+                    if (event.room.unreadCount == 1) {
+                        unreadCountRoomUpdatedEvent = event
+                    } else {
+                        lastMessageAtRoomUpdatedEvent = event
+                    }
+                }
             }
 
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             pusherino.sendSimpleMessage(pusherino.generalRoom, "hi")
 
-            assertThat(updatedCount).isEqualTo(originalCount + 1)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.lastMessageAt).isNotEmpty()
+            assertThat(unreadCountRoomUpdatedEvent.room.unreadCount).isEqualTo(1)
+
+            assertThat(alice.rooms[0].unreadCount).isEqualTo(1)
+            assertThat(alice.rooms[0].lastMessageAt).isEqualTo(
+                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
         }
 
         it("notifies '$PUSHERINO' when room '$GENERAL' is deleted") {
@@ -107,7 +121,7 @@ class RoomSpek : Spek({
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
             val expectedRoomId = pusherino.generalRoom.id
 
-            pusherino.subscribeToRoom(pusherino.generalRoom) { event ->
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { event ->
                 if (event is RoomEvent.RoomDeleted) deletedRoomId = event.roomId
             }
             deleteRoom(pusherino.generalRoom).run()
@@ -152,17 +166,17 @@ class RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            val message1Id = pusherino.sendMessage(pusherino.generalRoom, "Message 1").assumeSuccess()
-            pusherino.sendMessage(pusherino.generalRoom, "Message 2").assumeSuccess()
+            val message1Id = pusherino.sendSimpleMessage(pusherino.generalRoom, "Message 1").assumeSuccess()
+            pusherino.sendSimpleMessage(pusherino.generalRoom, "Message 2").assumeSuccess()
             pusherino.setReadCursor(pusherino.generalRoom, message1Id).get().assumeSuccess()
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
             val badEvents = ConcurrentLinkedQueue<RoomEvent>()
-            alice.subscribeToRoom(alice.generalRoom) { event ->
+            alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
                 when (event) {
-                    is RoomEvent.Message ->
-                        if (!alice.generalRoom.memberUserIds.contains(event.message.userId)) {
+                    is RoomEvent.MultipartMessage ->
+                        if (!alice.generalRoom.memberUserIds.contains(event.message.sender.id)) {
                             badEvents.add(event)
                         }
                     is RoomEvent.NewReadCursor ->
@@ -221,10 +235,9 @@ class RoomSpek : Spek({
         it("always has the correct memberUserIds after added to room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL))
 
-            val addedEvent = FutureValue<ChatEvent.AddedToRoom>()
+            var addedEvent by FutureValue<ChatEvent.AddedToRoom>()
             val alice = chatFor(ALICE).connect { event ->
-                if (event is ChatEvent.AddedToRoom)
-                    addedEvent.set(event)
+                if (event is ChatEvent.AddedToRoom) addedEvent = event
             }.assumeSuccess()
 
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
@@ -239,12 +252,8 @@ class RoomSpek : Spek({
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             assertThat(alice.rooms.size).isEqualTo(1)
-            assertThat(addedEvent.get().room.memberUserIds.size).isEqualTo(0)
-            assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(0)
-
-            alice.subscribeToRoomMultipart(alice.generalRoom, RoomListeners())
+            assertThat(addedEvent.room.memberUserIds.size).isEqualTo(2)
             assertThat(alice.generalRoom.memberUserIds.size).isEqualTo(2)
-
         }
     }
 
@@ -259,6 +268,13 @@ class RoomSpek : Spek({
 
             assertThat(room.name).isEqualTo(GENERAL)
             assertThat(room.id).isNotEmpty()
+            assertThat(room.memberUserIds).containsExactly(PUSHERINO)
+            assertThat(room.createdById).isEqualTo(PUSHERINO)
+
+            assertThat(pusherino.rooms[0].name).isEqualTo(GENERAL)
+            assertThat(pusherino.rooms[0].id).isNotEmpty()
+            assertThat(pusherino.rooms[0].memberUserIds).containsExactly(PUSHERINO)
+            assertThat(pusherino.rooms[0].createdById).isEqualTo(PUSHERINO)
         }
 
         it("creates room with a user supplied id") {
@@ -287,26 +303,6 @@ class RoomSpek : Spek({
             assertThat(room.isPrivate).isEqualTo(true)
         }
 
-        it("creates room with custom data") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
-
-            val customData = mapOf(
-                    "this is" to listOf("complex", "data"),
-                    "this key" to "has string value"
-            )
-
-            val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-
-            val room = pusherino.createRoom(
-                    id = null,
-                    name = GENERAL,
-                    customData = customData
-            ).assumeSuccess()
-
-            assertThat(room.name).isEqualTo(GENERAL)
-            assertThat(room.customData).isEqualTo(customData)
-        }
-
         it("creates room with pn title override") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
@@ -322,6 +318,25 @@ class RoomSpek : Spek({
 
             assertThat(room.name).isEqualTo(GENERAL)
             assertThat(room.pushNotificationTitleOverride).isEqualTo(pnTitleOverride)
+        }
+
+        it("creates room with a membership") {
+            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
+
+            var pusherinoAddedToRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
+            val pusherino = chatFor(PUSHERINO).connect{event ->
+                when (event) {
+                    is ChatEvent.AddedToRoom -> {
+                        pusherinoAddedToRoomEvent = event
+                    }
+                }
+            }.assumeSuccess()
+
+            val room = pusherino.createRoom(name =  GENERAL, userIds = listOf(ALICE)).assumeSuccess()
+
+            assertThat(room.memberUserIds).containsExactly(ALICE, PUSHERINO)
+            assertThat(pusherino.rooms[0].memberUserIds).containsExactly(ALICE, PUSHERINO)
+            assertThat(pusherinoAddedToRoomEvent.room.memberUserIds).containsExactly(ALICE, PUSHERINO)
         }
 
         it("updates room name") {
@@ -382,104 +397,6 @@ class RoomSpek : Spek({
             assertThat(updatedRoom.name).isEqualTo(GENERAL)
             assertThat(updatedRoom.isPrivate).isEqualTo(true)
             assertThat(updatedRoom.customData).isEqualTo(SAMPLE_CUSTOM_DATA)
-        }
-
-        it("adds room customData") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
-
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-            val roomUpdated = CountDownLatch(1)
-
-            val newCustomData = mapOf(
-                    "added" to "some",
-                    "custom" to "data"
-            )
-
-            chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> {
-                        assertThat(event.room.name).isEqualTo(GENERAL)
-                        assertThat(event.room.isPrivate).isEqualTo(false)
-                        assertThat(event.room.customData).isEqualTo(newCustomData)
-                        roomUpdated.countDown()
-                    }
-                }
-            }
-
-            superUser.updateRoom(
-                    room = superUser.generalRoom,
-                    customData = newCustomData
-            ).assumeSuccess()
-            roomUpdated.await()
-            assertThat(superUser.generalRoom.name).isEqualTo(GENERAL)
-            assertThat(superUser.generalRoom.isPrivate).isEqualTo(false)
-            assertThat(superUser.generalRoom.customData).isEqualTo(newCustomData)
-
-        }
-
-        it("updates existing room customData") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO, ALICE),
-                    newRoom(
-                            name = GENERAL,
-                            customData = SAMPLE_CUSTOM_DATA,
-                            userNames = *arrayOf(PUSHERINO, ALICE)
-                    )
-            )
-
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val updatedRoom by chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> event.room
-                    else -> null
-                }
-            }
-
-            val newCustomData = mapOf(
-                    "replaced" to "some",
-                    "custom" to "data"
-            )
-
-            superUser.updateRoom(
-                    room = superUser.generalRoom,
-                    customData = newCustomData
-            ).assumeSuccess()
-
-            assertThat(updatedRoom.name).isEqualTo(GENERAL)
-            assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.customData).isEqualTo(newCustomData)
-        }
-
-        it("updates to remove customData") {
-            setUpInstanceWith(
-                    createDefaultRole(),
-                    newUsers(PUSHERINO, ALICE),
-                    newRoom(
-                            name = GENERAL,
-                            customData = SAMPLE_CUSTOM_DATA,
-                            userNames = *arrayOf(PUSHERINO, ALICE)
-                    )
-            )
-
-            val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val updatedRoom by chatFor(ALICE).connectFor { event ->
-                when (event) {
-                    is ChatEvent.RoomUpdated -> event.room
-                    else -> null
-                }
-            }
-
-            superUser.updateRoom(
-                    room = superUser.generalRoom,
-                    customData = mapOf()
-            ).assumeSuccess()
-
-            assertThat(updatedRoom.name).isEqualTo(GENERAL)
-            assertThat(updatedRoom.isPrivate).isEqualTo(false)
-            assertThat(updatedRoom.customData).isEqualTo(emptyMap<String, Any?>())
         }
 
         it("updates room pn title override") {
@@ -583,17 +500,6 @@ class RoomSpek : Spek({
             check(room is Success) { (room as? Failure)?.error as Any }
         }
 
-        it("joins room") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
-
-            val pusherino = chatFor(SUPER_USER).connect().assumeSuccess()
-
-            val room = pusherino.joinRoom(pusherino.generalRoom)
-
-            check(room is Success) { (room as? Failure)?.error as Any }
-            assertThat(pusherino.rooms).contains(pusherino.generalRoom)
-        }
-
         it("leaves room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO))
 
@@ -607,7 +513,10 @@ class RoomSpek : Spek({
         }
 
         it("gets joinable rooms") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
@@ -615,10 +524,16 @@ class RoomSpek : Spek({
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+            assertThat(rooms[0].createdById).isEqualTo(SUPER_USER)
+            assertThat(rooms[0].memberUserIds.size).isEqualTo(0)
         }
 
         it("gets rooms") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO), newRoom(GENERAL, PUSHERINO), newRoom(NOT_GENERAL))
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, PUSHERINO, ALICE),
+                    newRoom(NOT_GENERAL))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
@@ -626,13 +541,14 @@ class RoomSpek : Spek({
 
             assertThat(rooms).hasSize(1)
             check(rooms[0].name == GENERAL) { "Expected to have room $GENERAL" }
+            assertThat(rooms[0].memberUserIds).containsExactly(PUSHERINO, ALICE, SUPER_USER)
         }
 
         it("provides users for a room") {
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            pusherino.subscribeToRoom(pusherino.generalRoom) { }
+            pusherino.subscribeToRoomMultipart(pusherino.generalRoom) { }
 
             val users = pusherino.usersForRoom(pusherino.generalRoom).assumeSuccess()
 
@@ -644,7 +560,7 @@ class RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { }
+            alice.subscribeToRoomMultipart(alice.generalRoom) { }
 
             val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
 
@@ -656,7 +572,7 @@ class RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
 
-            alice.subscribeToRoom(alice.generalRoom) { }.unsubscribe()
+            alice.subscribeToRoomMultipart(alice.generalRoom) { }.unsubscribe()
 
             val isSubscribed = alice.isSubscribedToRoom(alice.generalRoom)
 
@@ -667,34 +583,36 @@ class RoomSpek : Spek({
 
             setUpInstanceWith(createDefaultRole(), newUsers(ALICE, PUSHERINO), newRoom(GENERAL, PUSHERINO, SUPER_USER))
 
-            var usersJoined = 0
-            var roomUpdated = CountDownLatch(1)
-            val memberJoinedRoom = CountDownLatch(1)
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
+
+            var roomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
+
+            val userJoined = AtomicBoolean(false)
+            var userJoinedEvent by FutureValue<RoomEvent.UserJoined>()
 
             superUser.subscribeToRoomMultipart(superUser.generalRoom) { event ->
                 when (event) {
+                    is RoomEvent.RoomUpdated -> roomUpdatedEvent = event
                     is RoomEvent.UserJoined -> {
-                        usersJoined++
-                        memberJoinedRoom.countDown()
-                    }
-                    is RoomEvent.RoomUpdated -> {
-                        roomUpdated.countDown()
+                        userJoinedEvent = event
+                        userJoined.set(true)
                     }
                 }
             }
 
             //do something else to ensure that no user joined events were actually fired
             superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
-            roomUpdated.await()
-            assertThat(usersJoined).isEqualTo(0)
-            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) // super user doesn't count as a user
+
+            assertThat(roomUpdatedEvent.room.customData).containsExactly("key", "data")
+            assertThat(userJoined.get()).isEqualTo(false)
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
             //ensure that one new user did join and calls the UserJoined event
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE))
-            memberJoinedRoom.await()
-            assertThat(usersJoined).isEqualTo(1)
 
+            assertThat(userJoinedEvent.user.id).isEqualTo(ALICE)
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(3)
+            assertThat(userJoined.get()).isEqualTo(true)
         }
 
         it("room updated callback should be called after setting a read cursor") {

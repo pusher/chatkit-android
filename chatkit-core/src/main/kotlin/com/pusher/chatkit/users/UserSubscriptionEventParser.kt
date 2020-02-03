@@ -2,7 +2,6 @@ package com.pusher.chatkit.users
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.users.UserSubscriptionEvent.*
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
@@ -38,7 +37,9 @@ internal object UserSubscriptionEventParser : DataParser<UserSubscriptionEvent> 
         "removed_from_room" -> parseAs<RemovedFromRoomEvent>()
         "room_updated" -> parseAs<RoomUpdatedEvent>()
         "room_deleted" -> parseAs<RoomDeletedEvent>()
-        "new_cursor" -> parseAs<Cursor>().map { NewCursor(it) }
+        "read_state_updated" -> parseAs<ReadStateUpdatedEvent>()
+        "user_joined_room" -> parseAs<UserJoinedRoomEvent>()
+        "user_left_room" -> parseAs<UserLeftRoomEvent>()
         else -> Errors.other("Invalid event name: $eventName").asFailure()
     }.map { it } // Generics -_-
 }

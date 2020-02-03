@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentLinkedQueue
 
-const val MAX_LOG_LENGTH = 300
+const val MAX_LOG_LENGTH = 3000
 
 class TestDependencies : PlatformDependencies {
     override val logger: Logger = object : Logger {

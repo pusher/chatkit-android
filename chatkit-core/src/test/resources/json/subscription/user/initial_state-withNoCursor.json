@@ -1,0 +1,43 @@
+{
+  "event_name": "initial_state",
+  "data": {
+    "current_user": {
+      "id": "viv",
+      "name": "Vivan",
+      "custom_data": {
+        "email": "vivan@pusher.com"
+      },
+      "created_at": "2017-04-13T14:10:04Z",
+      "updated_at": "2017-04-13T14:10:04Z"
+    },
+    "rooms": [
+      {
+        "id": "cool-room-1",
+        "created_by_id": "jean",
+        "name": "mycoolroom",
+        "push_notification_title_override": null,
+        "private": false,
+        "custom_data": {
+          "something": "interesting"
+        },
+        "last_message_at": "2017-04-14T14:00:42Z",
+        "created_at": "2017-04-13T14:10:38Z",
+        "updated_at": "2017-04-13T14:10:38Z",
+        "deleted_at": null
+      }
+    ],
+    "read_states": [
+      {
+        "room_id": "cool-room-1",
+        "unread_count": 7
+      }
+    ],
+    "memberships": [
+      {
+        "room_id": "cool-room-1",
+        "user_ids": ["jean", "ham"]
+      }
+    ]
+  },
+  "timestamp": "2017-04-14T14:00:42Z"
+}

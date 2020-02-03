@@ -1,0 +1,66 @@
+{
+  "event_name": "initial_state",
+  "data": {
+    "current_user": {
+      "id": "viv",
+      "name": "Vivan",
+      "custom_data": {
+        "email": "vivan@pusher.com"
+      },
+      "created_at": "2017-04-13T14:10:04Z",
+      "updated_at": "2017-04-13T14:10:04Z"
+    },
+    "rooms": [
+      {
+        "id": "cool-room-1",
+        "created_by_id": "jean",
+        "name": "mycoolroom",
+        "push_notification_title_override": null,
+        "private": false,
+        "custom_data": {
+          "something": "interesting"
+        },
+        "last_message_at": "2017-04-14T14:00:42Z",
+        "created_at": "2017-04-13T14:10:38Z",
+        "updated_at": "2017-04-13T14:10:38Z",
+        "deleted_at": null
+      },
+      {
+        "id": "beyond-top-1000",
+        "created_by_id": "marek",
+        "name": "won't have corresponding read state",
+        "push_notification_title_override": null,
+        "private": false,
+        "custom_data": null,
+        "last_message_at": null,
+        "created_at": "2019-01-03T10:17:38Z",
+        "updated_at": "2019-01-03T10:17:38Z",
+        "deleted_at": null
+      }
+    ],
+    "read_states": [
+      {
+        "room_id": "cool-room-1",
+        "unread_count": 7,
+        "cursor": {
+          "room_id": "cool-room-1",
+          "user_id": "viv",
+          "cursor_type": 0,
+          "position": 123654,
+          "updated_at": "2017-04-13T14:10:04Z"
+        }
+      }
+    ],
+    "memberships": [
+      {
+        "room_id": "cool-room-1",
+        "user_ids": ["jean", "ham"]
+      },
+      {
+        "room_id": "beyond-top-1000",
+        "user_ids": ["marek"]
+      }
+    ]
+  },
+  "timestamp": "2017-04-14T14:00:42Z"
+}

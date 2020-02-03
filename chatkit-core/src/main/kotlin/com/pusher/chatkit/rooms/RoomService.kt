@@ -4,9 +4,9 @@ import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
+import com.pusher.chatkit.rooms.api.*
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -31,7 +31,7 @@ sealed class RoomPushNotificationTitle {
 }
 
 internal class RoomService(
-        private val v2client: PlatformClient,
+        private val legacyV2client: PlatformClient,
         private val client: PlatformClient,
         private val urlRefresher: UrlRefresher,
         private val userService: UserService,
@@ -42,26 +42,23 @@ internal class RoomService(
     // Access synchronised on itself
     private val openSubscriptions = HashMap<String, Subscription>()
     private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
-    private val roomsPassedInitialState : MutableSet<String> = mutableSetOf()
 
-    internal val roomStore = RoomStore()
+    val roomStore = RoomStore()
 
-    internal fun populateInitial(rooms: List<Room>) {
-        roomStore.initialiseContents(rooms)
+    private val joinedRoomApiMapper = JoinedRoomApiMapper()
+    private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
+
+    fun populateInitial(event: UserSubscriptionEvent.InitialState) {
+        roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
     }
 
-    fun fetchRoom(id: String): Result<Room, Error> =
-            getLocalRoom(id).flatRecover {
-                client.doGet("/rooms/${URLEncoder.encode(id, "UTF-8")}")
-            }
+    fun getJoinedRoom(id: String): Result<Room, Error> =
+            roomStore[id].orElse { Errors.other("Room not found locally") }
 
-    private fun getLocalRoom(id: String): Result<Room, Error> =
-            roomStore[id]
-                    .orElse { Errors.other("Room not found locally") }
-
-    fun fetchUserRooms(userId: String, joinable: Boolean = false): Result<List<Room>, Error> =
-            client.doGet<List<Room>>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms?joinable=$joinable")
-                    .map { rooms -> rooms.also { roomStore += it } }
+    fun fetchJoinableRooms(userId: String): Result<List<Room>, Error> =
+            client.doGet<JoinableRoomsResponse>(
+                    "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
+            ).map(notJoinedRoomApiMapper::toRooms)
 
     fun createRoom(
             id: String?,
@@ -72,7 +69,7 @@ internal class RoomService(
             customData: CustomData?,
             userIds: List<String>
     ): Result<Room, Error> =
-            RoomCreateRequest(
+            CreateRoomRequest(
                     id = id,
                     name = name,
                     pushNotificationTitleOverride = pushNotificationTitleOverride,
@@ -81,33 +78,33 @@ internal class RoomService(
                     customData = customData,
                     userIds = userIds
             ).toJson()
-                    .flatMap { body -> client.doPost<Room>("/rooms", body) }
-                    .map { room ->
-                        roomStore += room
-                        userService.populateUserStore(room.memberUserIds)
-                        room
+                    .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
+                    .map { response ->
+                        roomStore.add(response)
+                        userService.populateUserStore(response.membership.userIds.toSet())
+                        joinedRoomApiMapper.toRoom(response)
                     }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
-            v2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
+            legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
-                        roomStore -= roomId
+                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
             client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
-                        roomStore -= roomId
+                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            client.doPost<Room>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
-                    .map { room ->
-                        roomStore += room
-                        userService.populateUserStore(room.memberUserIds)
-                        room
+            client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+                    .map { response ->
+                        roomStore.add(response)
+                        userService.populateUserStore(response.membership.userIds.toSet())
+                        joinedRoomApiMapper.toRoom(response)
                     }
 
     fun updateRoom(
@@ -123,15 +120,18 @@ internal class RoomService(
         } else {
           when (pushNotificationTitleOverride) {
             is RoomPushNotificationTitle.NoOverride ->
-              UpdateRoomRequestWithPNTitleOverride(name, null, isPrivate, customData)
+              UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate, customData)
             is RoomPushNotificationTitle.Override ->
-              UpdateRoomRequestWithPNTitleOverride(name, pushNotificationTitleOverride.title, isPrivate, customData)
+              UpdateRoomRequestWithPushNotificationTitleOverride(name,
+                      pushNotificationTitleOverride.title, isPrivate, customData)
           }
         }
 
       return request
           .toJson()
-          .flatMap { body -> client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body) }
+          .flatMap { body ->
+              client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body)
+          }
     }
 
     fun isSubscribedTo(roomId: String) =
@@ -144,7 +144,7 @@ internal class RoomService(
             unsafeConsumer: RoomConsumer,
             messageLimit: Int
     ): Subscription =
-            subscribeToRoom(roomId, unsafeConsumer, messageLimit, v2client, RoomSubscriptionEventParserV2)
+            subscribeToRoom(roomId, unsafeConsumer, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
 
     fun subscribeToRoomMultipart(
             roomId: String,
@@ -182,17 +182,6 @@ internal class RoomService(
                 messageLimit = messageLimit,
                 roomId = roomId,
                 cursorService = cursorsService,
-                membershipConsumer = {
-                    if (it is MembershipSubscriptionEvent.InitialState
-                            && !roomsPassedInitialState.contains(roomId)) {
-                        //if it's the first initial state event we don't want to emit the callbacks for
-                        //people who were already in the room
-                        enrichEvents(roomStore.applyMembershipEvent(roomId, it))
-                        roomsPassedInitialState.add(roomId)
-                    } else {
-                        enrichEvents(roomStore.applyMembershipEvent(roomId, it)).forEach(emit)
-                    }
-                },
                 roomConsumer = { emit(enrichEvent(it, emit)) },
                 cursorConsumer = { emit(translateCursorEvent(it)) },
                 client = client,
@@ -213,6 +202,12 @@ internal class RoomService(
             }
             roomConsumers.remove(roomId)
         }.connect()
+
+        // ensure members are fetched and presence subscription is opened for each of them
+        val usersFetchResult = userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
+        if (usersFetchResult is Result.Failure) {
+            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
+        }
 
         synchronized(buffer) {
             buffer.forEach { event ->
@@ -254,51 +249,12 @@ internal class RoomService(
                 else -> RoomEvent.NoEvent
             }
 
-    private fun enrichEvents(events: List<MembershipSubscriptionEvent>): List<RoomEvent> {
-        val allUserIds = events.map {
-            when (it) {
-                is MembershipSubscriptionEvent.UserJoined -> it.userId
-                is MembershipSubscriptionEvent.UserLeft -> it.userId
-                else -> null
-            }
-        }.filterNotNull().toSet()
-
-        return userService.fetchUsersBy(allUserIds).map { users ->
-            events.map { event ->
-                when (event) {
-                    is MembershipSubscriptionEvent.UserJoined -> {
-                        val user = users[event.userId]
-                        when (user) {
-                            null -> RoomEvent.ErrorOccurred(Errors.other("Could not find user with id ${event.userId}"))
-                            else -> RoomEvent.UserJoined(user)
-                        }
-                    }
-                    is MembershipSubscriptionEvent.UserLeft -> {
-                        val user = users[event.userId]
-                        when (user) {
-                            null -> RoomEvent.ErrorOccurred(Errors.other("Could not find user with id ${event.userId}"))
-                            else -> RoomEvent.UserLeft(user)
-                        }
-                    }
-                    is MembershipSubscriptionEvent.ErrorOccurred -> {
-                        RoomEvent.ErrorOccurred(event.error)
-                    }
-                    is MembershipSubscriptionEvent.InitialState -> {
-                        logger.error("Should not have received membership initial state in RoomService")
-                        RoomEvent.NoEvent
-                    }
-                }
-            }
-        }.recover {
-            listOf(RoomEvent.ErrorOccurred(it))
-        }
-    }
-
     private fun enrichEvent(event: RoomSubscriptionEvent, consumer: RoomConsumer): RoomEvent =
             when (event) {
                 is RoomSubscriptionEvent.NewMessage ->
                     userService.fetchUserBy(event.message.userId).map { user ->
                         event.message.user = user
+                        @Suppress("DEPRECATION") // we're translating here from the legacy event
                         RoomEvent.Message(event.message) as RoomEvent
                     }.recover {
                         RoomEvent.ErrorOccurred(it)
@@ -332,8 +288,6 @@ internal class RoomService(
                     }
                 is RoomSubscriptionEvent.ErrorOccurred ->
                     RoomEvent.ErrorOccurred(event.error)
-                is RoomSubscriptionEvent.NoEvent ->
-                    RoomEvent.NoEvent
             }
 
     // Access synchronized on itself
@@ -362,13 +316,17 @@ internal class RoomService(
     fun distributeGlobalEvent(event: ChatEvent) {
         // This function must map events which we wish to report at room scope that
         // are not received at room scope from the backend.
-        // Be careful, if you map an event where which originated here, you will create
+        // Be careful, if you map an event which originated here, you will create
         // an infinite loop consuming that event.
         when (event) {
             is ChatEvent.RoomUpdated ->
                 roomConsumers[event.room.id]?.invoke(RoomEvent.RoomUpdated(event.room))
             is ChatEvent.RoomDeleted ->
                 roomConsumers[event.roomId]?.invoke(RoomEvent.RoomDeleted(event.roomId))
+            is ChatEvent.UserJoinedRoom ->
+                roomConsumers[event.room.id]?.invoke(RoomEvent.UserJoined(event.user))
+            is ChatEvent.UserLeftRoom ->
+                roomConsumers[event.room.id]?.invoke(RoomEvent.UserLeft(event.user))
             is ChatEvent.PresenceChange ->
                 roomConsumers.keys.forEach { roomId ->
                     if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
@@ -380,29 +338,3 @@ internal class RoomService(
         }
     }
 }
-
-private fun noRoomMembershipError(room: Room): Error =
-        Errors.other("User is not a member of ${room.name}")
-
-internal data class UpdateRoomRequest(
-        val name: String?,
-        val private: Boolean?,
-        val customData: CustomData?
-)
-
-internal data class UpdateRoomRequestWithPNTitleOverride(
-        val name: String?,
-        val pushNotificationTitleOverride: String?,
-        val private: Boolean?,
-        val customData: CustomData?
-)
-
-private data class RoomCreateRequest(
-        val id: String?,
-        val name: String,
-        val pushNotificationTitleOverride: String?,
-        val private: Boolean,
-        val createdById: String,
-        val customData: CustomData?,
-        var userIds: List<String> = emptyList()
-)

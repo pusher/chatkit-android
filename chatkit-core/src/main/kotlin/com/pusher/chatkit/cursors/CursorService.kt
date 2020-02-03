@@ -23,7 +23,7 @@ class CursorService(
         private val client: PlatformClient,
         private val logger: Logger
 ) {
-    private val cursorsStore = CursorsStore()
+    private val cursorStore = CursorStore()
 
     private val setReadCursorThrottler =
             Throttler { options: RequestOptions ->
@@ -33,12 +33,12 @@ class CursorService(
                 )
             }
 
-    internal fun populateInitial(cursors: List<Cursor>) {
-        cursorsStore.initialiseContents(cursors)
+    internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
+        cursorStore.initialiseContents(event.readStates.mapNotNull { it.cursor })
     }
 
     fun close() {
-        cursorsStore.clear()
+        cursorStore.clear()
     }
 
     fun setReadCursor(
@@ -52,7 +52,7 @@ class CursorService(
                     body = """{ "position" : $position }"""
             )
     ).mapResult {
-        cursorsStore[userId] += Cursor(
+        cursorStore[userId] += Cursor(
                 userId = userId,
                 roomId = roomId,
                 position = position
@@ -64,7 +64,7 @@ class CursorService(
     // The error should additionally be more descriptive instead of just assuming you aren't
     // subscribed to the room!
     fun getReadCursor(userId: String, roomId: String): Result<Cursor, Error> =
-            (cursorsStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure())
+            (cursorStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure())
 
     private fun notSubscribedToRoom(name: String) =
             Errors.other("Must be subscribed to room $name to access member's read cursors")
@@ -92,11 +92,11 @@ class CursorService(
             logger = logger
     )
 
-    fun applyEvent(event: CursorSubscriptionEvent) =
-            cursorsStore.applyEvent(event).map(::enrichEvent)
+    internal fun applyEvent(event: UserSubscriptionEvent) =
+            cursorStore.applyEvent(event)
 
-    fun applyEvent(event: UserSubscriptionEvent) =
-            cursorsStore.applyEvent(event)
+    private fun applyEvent(event: CursorSubscriptionEvent) =
+            cursorStore.applyEvent(event).map(::enrichEvent)
 
     private fun enrichEvent(event: CursorSubscriptionEvent): ChatEvent =
             when (event) {

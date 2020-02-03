@@ -1,9 +1,11 @@
 package com.pusher.chatkit.cursors
 
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
+import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
 
-class CursorsStore {
+class CursorStore {
     private val map = mutableMapOf<String, UserCursorStore>()
 
     operator fun get(userId: String) =
@@ -28,18 +30,28 @@ class CursorsStore {
         this += cursors
     }
 
-    fun applyEvent(event: UserSubscriptionEvent): List<UserSubscriptionEvent> =
+    internal fun applyEvent(event: UserSubscriptionEvent): List<UserInternalEvent> =
             when (event) {
                 is UserSubscriptionEvent.InitialState ->
-                    integrateCursors(event.cursors).map(UserSubscriptionEvent::NewCursor)
-                is UserSubscriptionEvent.NewCursor ->
-                    integrateCursors(listOf(event.cursor)).map(UserSubscriptionEvent::NewCursor)
+                    integrateCursors(event.readStates.mapNotNull { it.cursor })
+                            .map(UserInternalEvent::NewCursor)
+                is UserSubscriptionEvent.ReadStateUpdatedEvent ->
+                    applyReadState(event.readState)
+                is UserSubscriptionEvent.AddedToRoomEvent ->
+                    applyReadState(event.readState)
                 else ->
-                    // Do not "apply" events which don't relate to cursors
                     listOf()
             }
 
-    fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
+    private fun applyReadState(readState: RoomReadStateApiType) : List<UserInternalEvent> =
+            if (readState.cursor != null) {
+                integrateCursors(listOf(readState.cursor))
+                        .map { UserInternalEvent.NewCursor(readState.cursor) }
+            } else {
+                listOf()
+            }
+
+    internal fun applyEvent(event: CursorSubscriptionEvent): List<CursorSubscriptionEvent> =
             when (event) {
                 is CursorSubscriptionEvent.InitialState ->
                     integrateCursors(event.cursors).map(CursorSubscriptionEvent::OnCursorSet)

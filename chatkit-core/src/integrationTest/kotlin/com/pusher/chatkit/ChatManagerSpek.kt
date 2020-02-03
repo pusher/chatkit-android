@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.ChatEvent.*
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
@@ -30,9 +29,10 @@ import mockitox.stub
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
-import elements.Error as ElementsError
+import java.util.concurrent.TimeUnit
 
 class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -76,8 +76,8 @@ class ChatManagerSpek : Spek({
                     consumer = { e: ChatEvent -> firstEvent = e }
             )
 
-            assertThat(firstEvent is CurrentUserReceived).isTrue()
-            with (firstEvent as CurrentUserReceived) {
+            assertThat(firstEvent is ChatEvent.CurrentUserReceived).isTrue()
+            with (firstEvent as ChatEvent.CurrentUserReceived) {
                 assertThat(currentUser.id).isEqualTo(PUSHERINO)
                 assertThat(currentUser.name).isEqualTo("pusherino")
                 assertThat(currentUser.avatarURL).isEqualTo("https://example.com/face.png")
@@ -114,7 +114,7 @@ class ChatManagerSpek : Spek({
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(PUSHERINO))
 
-            done.await()
+            assertThat(done.await(10, TimeUnit.SECONDS)).isTrue()
             assertThat(events.count { it is ChatEvent.CurrentUserReceived }).isEqualTo(1)
         }
 
@@ -145,23 +145,45 @@ class ChatManagerSpek : Spek({
             val superUser = chatFor(SUPER_USER).connect().assumeSuccess()
             superUser.sendSimpleMessage(superUser.generalRoom, "message1").assumeSuccess()
 
-            var updatedEvent by FutureValue<ChatEvent.RoomUpdated>()
+            var lastMessageAtRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
+            var unreadCountRoomUpdatedEvent by FutureValue<ChatEvent.RoomUpdated>()
             val user = chatFor(PUSHERINO).connect { event ->
-                if (event is ChatEvent.RoomUpdated) updatedEvent = event
+                if (event is ChatEvent.RoomUpdated) {
+                    if (event.room.unreadCount == 2) {
+                        unreadCountRoomUpdatedEvent = event
+                    } else {
+                        lastMessageAtRoomUpdatedEvent = event
+                    }
+                }
             }.assumeSuccess()
 
+            sleep(1000) // just so lastMessageAt surely changes for the room
+            val message1Timestamp = user.rooms[0].lastMessageAt!!
             superUser.sendSimpleMessage(superUser.generalRoom, "message2").assumeSuccess()
 
-            assertThat(updatedEvent.room.unreadCount).isEqualTo(2)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.lastMessageAt).isGreaterThan(
+                    message1Timestamp)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.unreadCount).isAtLeast(1)
+            assertThat(lastMessageAtRoomUpdatedEvent.room.unreadCount).isAtMost(
+                    unreadCountRoomUpdatedEvent.room.unreadCount!!)
+
+            assertThat(unreadCountRoomUpdatedEvent.room.lastMessageAt).isAtLeast(message1Timestamp)
+            assertThat(unreadCountRoomUpdatedEvent.room.lastMessageAt).isAtMost(
+                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt!!)
+
             assertThat(user.rooms[0].unreadCount).isEqualTo(2)
-            assertThat(user.rooms[0].lastMessageAt).isNotEmpty()
+            assertThat(user.rooms[0].lastMessageAt).isEqualTo(
+                    lastMessageAtRoomUpdatedEvent.room.lastMessageAt)
         }
 
-        it("loads users related to current user") {
-            setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, PUSHERINO, ALICE))
+        it("loads members of the current user's joined rooms") {
+            setUpInstanceWith(
+                    createDefaultRole(),
+                    newUsers(PUSHERINO, ALICE),
+                    newRoom(GENERAL, PUSHERINO, ALICE)
+            )
 
             val user = chatFor(PUSHERINO).connect().assumeSuccess()
-            user.rooms.forEach { room -> user.subscribeToRoomMultipart(room) { } }
 
             val users = user.users
             val relatedUserIds = users.recover { emptyList() }.map { it.id }
@@ -177,14 +199,14 @@ class ChatManagerSpek : Spek({
 
             val room = pusherino.assumeSuccess().generalRoom
 
-            var messageReceived by FutureValue<com.pusher.chatkit.messages.multipart.Message>()
+            var messageReceived by FutureValue<Message>()
 
             pusherino.assumeSuccess().subscribeToRoomMultipart(room, RoomListeners(
                     onMultipartMessage = { message -> messageReceived = message },
                     onErrorOccurred = { e -> error("error: $e") }
             ))
 
-            val messageResult = alice.assumeSuccess().sendMessage(room, "message text")
+            val messageResult = alice.assumeSuccess().sendSimpleMessage(room, "message text")
 
             check(messageResult is Result.Success)
             assertThat(messageReceived.parts[0].partType).isEqualTo(PartType.Inline)
@@ -291,8 +313,9 @@ class ChatManagerSpek : Spek({
     val currentUser = stub<SynchronousCurrentUser>("currentUser")
     val user = stub<User>("user")
     val room = stub<Room>("room")
-    val v2message = stub<com.pusher.chatkit.messages.Message>("message")
-    val v3message = stub<Message>("message")
+    @Suppress("DEPRECATION")
+    val legacyV2message = stub<com.pusher.chatkit.messages.Message>("message")
+    val message = stub<Message>("message")
     val cursor = stub<Cursor>("cursor")
     val error = stub<elements.Error>("error")
     val roomId = "123"
@@ -316,19 +339,19 @@ class ChatManagerSpek : Spek({
                     onUserStoppedTyping = { u, r -> actual += "onUserStoppedTyping" to u to r }
             ).toCallback()
 
-            consume(CurrentUserReceived(currentUser))
-            consume(UserStartedTyping(user, room))
-            consume(UserStoppedTyping(user, room))
-            consume(UserJoinedRoom(user, room))
-            consume(UserLeftRoom(user, room))
-            consume(PresenceChange(user, Presence.Online, Presence.Unknown))
-            consume(AddedToRoom(room))
-            consume(RemovedFromRoom(roomId))
-            consume(RoomUpdated(room))
-            consume(NoEvent)
-            consume(RoomDeleted(roomId))
-            consume(NewReadCursor(cursor))
-            consume(ErrorOccurred(error))
+            consume(ChatEvent.CurrentUserReceived(currentUser))
+            consume(ChatEvent.UserStartedTyping(user, room))
+            consume(ChatEvent.UserStoppedTyping(user, room))
+            consume(ChatEvent.UserJoinedRoom(user, room))
+            consume(ChatEvent.UserLeftRoom(user, room))
+            consume(ChatEvent.PresenceChange(user, Presence.Online, Presence.Unknown))
+            consume(ChatEvent.AddedToRoom(room))
+            consume(ChatEvent.RemovedFromRoom(roomId))
+            consume(ChatEvent.RoomUpdated(room))
+            consume(ChatEvent.NoEvent)
+            consume(ChatEvent.RoomDeleted(roomId))
+            consume(ChatEvent.NewReadCursor(cursor))
+            consume(ChatEvent.ErrorOccurred(error))
 
             assertThat(actual).containsExactly(
                     "onErrorOccurred" to error,
@@ -372,8 +395,9 @@ class ChatManagerSpek : Spek({
             consume(RoomEvent.RoomDeleted(roomId))
             consume(RoomEvent.NewReadCursor(cursor))
             consume(RoomEvent.ErrorOccurred(error))
-            consume(RoomEvent.Message(v2message))
-            consume(RoomEvent.MultipartMessage(v3message))
+            @Suppress("DEPRECATION")
+            consume(RoomEvent.Message(legacyV2message))
+            consume(RoomEvent.MultipartMessage(message))
 
             assertThat(actual).containsExactly(
                     "onUserStartedTyping" to user,
@@ -384,8 +408,8 @@ class ChatManagerSpek : Spek({
                     "onRoomDeleted" to roomId,
                     "onNewReadCursor" to cursor,
                     "onErrorOccurred" to error,
-                    "onMessage" to v2message,
-                    "onMultipartMessage" to v3message
+                    "onMessage" to legacyV2message,
+                    "onMultipartMessage" to message
             )
         }
     }

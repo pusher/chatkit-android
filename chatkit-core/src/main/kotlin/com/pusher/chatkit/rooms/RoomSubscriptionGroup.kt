@@ -3,9 +3,6 @@ package com.pusher.chatkit.rooms
 import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.memberships.MembershipSubscriptionConsumer
-import com.pusher.chatkit.memberships.MembershipSubscriptionEvent
-import com.pusher.chatkit.memberships.MembershipSubscriptionEventParser
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.platform.SubscriptionListeners
@@ -20,7 +17,6 @@ internal class RoomSubscriptionGroup(
         roomId: String,
         cursorService: CursorService,
         cursorConsumer: ChatManagerEventConsumer,
-        membershipConsumer: MembershipSubscriptionConsumer,
         roomConsumer: RoomSubscriptionConsumer,
         client: PlatformClient,
         messageParser: DataParser<RoomSubscriptionEvent>,
@@ -42,19 +38,6 @@ internal class RoomSubscriptionGroup(
             logger = logger
     )
 
-    private val membershipSubscription = ResolvableSubscription(
-            resolveOnFirstEvent = true,
-            client = client,
-            path = "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/memberships",
-            listeners = SubscriptionListeners(
-                    onEvent = { membershipConsumer(it.body) },
-                    onError = { membershipConsumer(MembershipSubscriptionEvent.ErrorOccurred(it)) }
-            ),
-            messageParser = MembershipSubscriptionEventParser,
-            description = "Memberships room $roomId",
-            logger = logger
-    )
-
     private val cursorsSubscription = cursorService.subscribeForRoom(
             roomId,
             consumer = cursorConsumer
@@ -62,7 +45,6 @@ internal class RoomSubscriptionGroup(
 
     override fun connect(): Subscription {
         roomSubscription.await()
-        membershipSubscription.await()
         cursorsSubscription.await()
 
         return this
@@ -70,7 +52,6 @@ internal class RoomSubscriptionGroup(
 
     override fun unsubscribe() {
         roomSubscription.unsubscribe()
-        membershipSubscription.unsubscribe()
         cursorsSubscription.unsubscribe()
     }
 }
