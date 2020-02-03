@@ -24,7 +24,7 @@ A new up-to-date instance is always provided with relevant events or can be retr
 via `CurrentUser`s `rooms` property.
 - Made Room objects to have standard, as for data classes, content (not identity) based
 equals/hashCode implementations.
-- Remove accidentally added deprecation annotations on `subscribeRoomMultipart` that accept
+- Removed accidentally added deprecation annotations on `subscribeRoomMultipart` that accept
 `RoomConsumer` as opposed to `RoomListeners`.
 
 ### Changed
