@@ -18,7 +18,7 @@ after connecting (without the previous need to subscribe to individual rooms).
 - Made rooms accessible via `CurrentUser` object sorted by room activity
 (`lastMessageAt` or `createdAt`), with recently active first.
 - Made user fetch report original error and fail transactionally.
-- Made processing of initial state on connect and immediate subsequent events reliable.
+- Made processing of initial state on `connect` and immediate subsequent events reliable.
 - Stopped mutating `Room` objects in response to user joined/left events as it was not thread-safe
 and not consistent with the behaviour on reconnection. A new up-to-date instance is always
 provided with relevant events or can be retrieved via `CurrentUser`'s `rooms` property.
