@@ -53,20 +53,20 @@ dependencies {
     }
     api project(':chatkit-core')
 
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.pusher:push-notifications-android:1.5.1'
+
     testImplementation "junit:junit:$junit_legacy_version"
-    testImplementation junit5.unitTests()
-    testCompileOnly junit5.unitTestsRuntime()
-    testImplementation junit5.parameterized()
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
     testImplementation "org.mockito:mockito-inline:$mockito_version"
     testImplementation 'com.google.truth:truth:0.40'
 
     androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-
-    implementation 'android.arch.lifecycle:extensions:1.1.1'
-    implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.pusher:push-notifications-android:1.5.1'
 }
 
 bintray {
