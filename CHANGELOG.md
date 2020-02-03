@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Remove accidentally added deprecation annotations on `subscribeRoomMultipart`
+- Remove accidentally added deprecation annotations on `subscribeRoomMultipart` that accept `RoomConsumer` as opposed to `RoomListeners`.
 
 ## [1.8.4](https://github.com/pusher/chatkit-android/compare/v1.8.3...v1.8.4)
 
