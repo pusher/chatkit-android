@@ -26,6 +26,8 @@ provided with relevant events or can be retrieved via `CurrentUser`'s `rooms` pr
 `equals`/`hashCode` implementations.
 - Removed accidentally added deprecation annotations on `subscribeRoomMultipart` that accept
 `RoomConsumer` as opposed to `RoomListeners`.
+- Marked `Room`'s `deletedAt` property explicitly as optional (earlier it would hold a `null`
+put there by Gson).
 
 ### Changed
 
