@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased](https://github.com/pusher/chatkit-android/compare/v1.8.4...HEAD)
 
+### Fixed
+
+- Remove accidentally added deprecation annotations on `subscribeRoomMultipart`
+
 ## [1.8.4](https://github.com/pusher/chatkit-android/compare/v1.8.3...v1.8.4)
 
 ### Fixed
