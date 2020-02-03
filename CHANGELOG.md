@@ -15,7 +15,7 @@ after connecting (without the previous need to subscribe to individual rooms).
 
 ### Fixed
 
-- Made rooms accessible via `CurrentUser` object sorted by room activity
+- Made `rooms` accessible via `CurrentUser` object sorted by room activity
 (`lastMessageAt` or `createdAt`), with recently active first.
 - Made user fetch report original error and fail transactionally.
 - Made processing of initial state on `connect` and immediate subsequent events reliable.
