@@ -38,7 +38,7 @@ object RoomCustomDataTest : Spek({
                     customData = customData
             ).assumeSuccess()
 
-            assertThat(room.name).isEqualTo(GENERAL)
+            assertThat(room.name).isEqualTo(NOT_GENERAL)
             assertThat(room.customData).isEqualTo(customData)
         }
 
