@@ -9,16 +9,16 @@ plugins {
 apply plugin: 'org.jetbrains.dokka'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.3'
 
     defaultConfig {
         minSdkVersion 19
-        targetSdkVersion 27
+        targetSdkVersion 29
         versionCode 1
         versionName '1.0'
 
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     buildTypes {
@@ -53,9 +53,8 @@ dependencies {
     }
     api project(':chatkit-core')
 
-    implementation 'android.arch.lifecycle:extensions:1.1.1'
-    implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.pusher:push-notifications-android:1.5.1'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'com.pusher:push-notifications-android:1.6.0'
 
     testImplementation "junit:junit:$junit_legacy_version"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
@@ -64,9 +63,6 @@ dependencies {
     testImplementation "org.mockito:mockito-inline:$mockito_version"
     testImplementation 'com.google.truth:truth:0.40'
 
-    androidTestImplementation("com.android.support.test.espresso:espresso-core:$espresso_version", {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
 }
 
 bintray {
