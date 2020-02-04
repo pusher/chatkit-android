@@ -9,10 +9,9 @@ buildscript {
         spek_version = '2.0.9'
         legacy_spek_version = '1.1.5'
         mockito_version = '3.2.4'
-        constraints_layout_version = '1.1.0'
-        junit_legacy_version = '4.12'
         pusher_platform_version = '1.0.5'
-        dokka_version = '0.9.17'
+        dokka_version = '0.10.0'
+        junit_jupiter_version = '5.5.2'
 
         bintray_user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
         bintray_api_key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')

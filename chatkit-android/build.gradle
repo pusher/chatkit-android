@@ -45,7 +45,6 @@ android {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     if (rootProject.properties.containsKey('pusher_platform_local')) {
         api project(':pusher-platform-android')
     } else {
@@ -55,13 +54,15 @@ dependencies {
 
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'com.pusher:push-notifications-android:1.6.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    testImplementation "junit:junit:$junit_legacy_version"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
-    testImplementation "org.mockito:mockito-inline:$mockito_version"
+    testImplementation "junit:junit:4.12"
     testImplementation 'com.google.truth:truth:0.40'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_jupiter_version"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_jupiter_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:$junit_jupiter_version"
+    testImplementation "org.mockito:mockito-inline:$mockito_version"
+
 
 }
 
