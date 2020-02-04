@@ -24,7 +24,6 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$android_gradle_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.1.0'
         classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.5.2.0'
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
     }
@@ -66,5 +65,5 @@ static def tasksFor(project, tasks) {
 
 task ciBuild(type: GradleBuild) {
     tasks = tasksFor('chatkit-core', ['assemble', 'test']) +
-            tasksFor('chatkit-android', ['assembleDebug', 'junitPlatformTestDebug', 'lintDebug'])
+            tasksFor('chatkit-android', ['assembleDebug', 'test', 'lintDebug'])
 }

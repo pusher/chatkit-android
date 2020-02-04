@@ -1,7 +1,6 @@
 plugins {
     id 'kotlin'
     id 'java-library'
-    id 'org.junit.platform.gradle.plugin'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
 }
@@ -31,7 +30,7 @@ dependencies {
     testImplementation "org.jetbrains.spek:spek-api:$legacy_spek_version"
     testImplementation "org.jetbrains.spek:spek-junit-platform-engine:$legacy_spek_version"
 
-    testImplementation 'org.junit.platform:junit-platform-runner:1.1.0'
+    testImplementation 'org.junit.platform:junit-platform-runner:1.6.0'
     testImplementation "com.auth0:java-jwt:3.3.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_jupiter_version"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_jupiter_version"
@@ -52,18 +51,9 @@ sourceSets.test {
     resources.srcDirs = ['src/test/resources', 'src/integrationTest/resources']
 }
 
-junitPlatform {
-    details 'tree'
-    filters {
-        engines {
-            include 'junit-jupiter', 'spek', 'spek2'
-        }
-    }
-}
-
 afterEvaluate {
     // adds properties for tests
-    def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
+    def junitPlatformTestTask = tasks.getByName('test')
     junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
     junitPlatformTestTask.systemProperties += System.env
 }
