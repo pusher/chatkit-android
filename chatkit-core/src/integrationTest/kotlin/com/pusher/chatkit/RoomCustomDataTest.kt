@@ -2,6 +2,7 @@ package com.pusher.chatkit
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
+import com.pusher.chatkit.Rooms.NOT_GENERAL
 import com.pusher.chatkit.Rooms.SAMPLE_CUSTOM_DATA
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
