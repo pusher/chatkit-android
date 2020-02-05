@@ -26,6 +26,7 @@ sealed class JoinedRoomsState {
     data class Degraded(
             val rooms: Set<Room>,
             val update: JoinedRoomsStateUpdate?,
+            // TODO: model degraded details
             val error: Error
     ): JoinedRoomsState()
 
@@ -34,9 +35,9 @@ sealed class JoinedRoomsState {
 
 sealed class JoinedRoomsStateUpdate {
     data class JoinedRoom(val joinedRoom: Room): JoinedRoomsStateUpdate()
-    data class RoomUpdated(val updatedRoom: Room): JoinedRoomsStateUpdate()
+    data class RoomUpdated(val updatedRoom: Room, val previousValue: Room): JoinedRoomsStateUpdate()
     data class LeftRoom(val leftRoom: Room): JoinedRoomsStateUpdate()
-    data class RoomDeleted(val roomDeleted: Room): JoinedRoomsStateUpdate()
+    data class RoomDeleted(val deletedRoom: Room): JoinedRoomsStateUpdate()
 }
 
 class JoinedRoomsProvider /* TODO: check : Closeable */ { // Repository?
