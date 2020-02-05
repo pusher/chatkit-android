@@ -9,8 +9,9 @@ import elements.Error
 import java.util.concurrent.Future
 
 internal fun chatForFunctionalTest(
-        userId: String,
-        platformClientFactory: PlatformClientFactory = DefaultPlatformClientFactory()) =
+    userId: String,
+    platformClientFactory: PlatformClientFactory = DefaultPlatformClientFactory()
+) =
         SynchronousChatManager(
                 "dummyVersion:dummyCluster:dummyInstanceId",
                 userId,
@@ -24,14 +25,15 @@ class DummyTokenProvider : TokenProvider {
         Futures.now("dummyToken".asSuccess())
 
     override fun clearToken(token: String?) { /* nop */ }
-
 }
 
 internal fun testPlatformClientFactory(mockPlatformClient: PlatformClient) =
         object : PlatformClientFactory {
 
-            override fun createPlatformClient(instance: Instance,
-                                              tokenProvider: TokenProvider): PlatformClient {
+            override fun createPlatformClient(
+                instance: Instance,
+                tokenProvider: TokenProvider
+            ): PlatformClient {
 
                 return mockPlatformClient
             }

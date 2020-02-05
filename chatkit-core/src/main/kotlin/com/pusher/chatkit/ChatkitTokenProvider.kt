@@ -3,12 +3,20 @@ package com.pusher.chatkit
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.network.Futures
 import com.pusher.platform.tokenProvider.TokenProvider
-import com.pusher.util.*
+import com.pusher.util.Result
+import com.pusher.util.asFailure
+import com.pusher.util.asSuccess
+import com.pusher.util.flatten
+import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import okhttp3.*
-import java.util.*
+import java.util.Date
 import java.util.concurrent.Future
+import okhttp3.FormBody
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 /**
  * Simple token provider for Chatkit. Uses an in-memory cache for storing token.
@@ -19,11 +27,11 @@ import java.util.concurrent.Future
  * */
 data class ChatkitTokenProvider
 @JvmOverloads constructor(
-        val endpoint: String,
-        internal var userId: String,
-        private val authData: Map<String, String> = emptyMap(),
-        private val client: OkHttpClient = OkHttpClient(),
-        private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
+    val endpoint: String,
+    internal var userId: String,
+    private val authData: Map<String, String> = emptyMap(),
+    private val client: OkHttpClient = OkHttpClient(),
+    private val tokenCache: TokenCache = InMemoryTokenCache(Clock())
 ) : TokenProvider {
 
     private val httpUrl =
@@ -92,14 +100,14 @@ data class ChatkitTokenProvider
 }
 
 data class TokenResponse(
-        val accessToken: String,
-        val tokenType: String,
-        val expiresIn: String,
-        val refreshToken: String
+    val accessToken: String,
+    val tokenType: String,
+    val expiresIn: String,
+    val refreshToken: String
 )
 
 data class ChatkitTokenParams(
-        val extras: Map<String, String> = emptyMap()
+    val extras: Map<String, String> = emptyMap()
 )
 
 /**
@@ -114,7 +122,6 @@ interface TokenCache {
      * @param expiresIn seconds until token expiry.
      * */
     fun cache(token: String, expiresIn: Long)
-
 
     /**
      * Get the currently cached token, if any
@@ -135,7 +142,6 @@ class InMemoryTokenCache(private val clock: Clock) : TokenCache {
     private var token: String? = null
     private var expiration: Long = -1
 
-
     override fun cache(token: String, expiresIn: Long) {
         this.token = token
         this.expiration = clock.currentTimestampInSeconds() + expiresIn - CACHE_EXPIRY_TOLERANCE
@@ -147,7 +153,6 @@ class InMemoryTokenCache(private val clock: Clock) : TokenCache {
 
         return if (token != null && now < expiration) token
         else null
-
     }
 
     override fun clearCache() {
@@ -155,7 +160,6 @@ class InMemoryTokenCache(private val clock: Clock) : TokenCache {
         expiration = -1
     }
 }
-
 
 /**
  * Utility class we can use for mocking

@@ -25,14 +25,14 @@ import com.pusher.chatkit.test.run
 import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result
-import mockitox.stub
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
 import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import mockitox.stub
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.describe
+import org.jetbrains.spek.api.dsl.it
 
 class ChatManagerSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -77,7 +77,7 @@ class ChatManagerSpek : Spek({
             )
 
             assertThat(firstEvent is ChatEvent.CurrentUserReceived).isTrue()
-            with (firstEvent as ChatEvent.CurrentUserReceived) {
+            with(firstEvent as ChatEvent.CurrentUserReceived) {
                 assertThat(currentUser.id).isEqualTo(PUSHERINO)
                 assertThat(currentUser.name).isEqualTo("pusherino")
                 assertThat(currentUser.avatarURL).isEqualTo("https://example.com/face.png")
@@ -210,7 +210,7 @@ class ChatManagerSpek : Spek({
 
             check(messageResult is Result.Success)
             assertThat(messageReceived.parts[0].partType).isEqualTo(PartType.Inline)
-            with (messageReceived.parts[0].payload as Payload.Inline) {
+            with(messageReceived.parts[0].payload as Payload.Inline) {
                 assertThat(content).isEqualTo("message text")
             }
         }
@@ -305,9 +305,7 @@ class ChatManagerSpek : Spek({
                 } // Pass
                 else -> throw IllegalStateException("$event is not the expected ChatEvent.CurrentUserReceived")
             }
-
         }
-
     }
 
     val currentUser = stub<SynchronousCurrentUser>("currentUser")

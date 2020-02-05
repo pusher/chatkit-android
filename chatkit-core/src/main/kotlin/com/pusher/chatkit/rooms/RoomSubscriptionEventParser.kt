@@ -13,7 +13,7 @@ import com.pusher.util.asFailure
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors
-import java.util.*
+import java.util.Date
 
 internal object RoomSubscriptionEventParserV2 : DataParser<RoomSubscriptionEvent> {
     override fun invoke(body: String): Result<RoomSubscriptionEvent, Error> =
@@ -70,28 +70,28 @@ internal object RoomSubscriptionEventParserV3 : DataParser<RoomSubscriptionEvent
 }
 
 internal data class V3MessageBody(
-        val id: Int,
-        val userId: String,
-        val roomId: String,
-        val parts: List<V3PartBody>,
-        val createdAt: Date,
-        val updatedAt: Date,
-        val deletedAt: Date?
+    val id: Int,
+    val userId: String,
+    val roomId: String,
+    val parts: List<V3PartBody>,
+    val createdAt: Date,
+    val updatedAt: Date,
+    val deletedAt: Date?
 )
 
 internal data class V3PartBody(
-        val content: String?,
-        val type: String,
-        val url: String?,
-        val attachment: V3AttachmentBody?
+    val content: String?,
+    val type: String,
+    val url: String?,
+    val attachment: V3AttachmentBody?
 )
 
 internal data class V3AttachmentBody(
-        val id: String,
-        val downloadUrl: String,
-        val refreshUrl: String,
-        val expiration: Date,
-        val name: String?,
-        val customData: CustomData?,
-        val size: Int
+    val id: String,
+    val downloadUrl: String,
+    val refreshUrl: String,
+    val expiration: Date,
+    val name: String?,
+    val customData: CustomData?,
+    val size: Int
 )

@@ -10,12 +10,12 @@ import com.pusher.platform.network.DataParser
 // either on opening a subscription (default behaviour) or
 // on receiving the first event on the subscription
 fun <A> loggingSubscription(
-        path: String,
-        client: PlatformClient,
-        listeners: SubscriptionListeners<A>,
-        messageParser: DataParser<A>,
-        logger: Logger,
-        description: String
+    path: String,
+    client: PlatformClient,
+    listeners: SubscriptionListeners<A>,
+    messageParser: DataParser<A>,
+    logger: Logger,
+    description: String
 ) = client.subscribeResuming(
         path = path,
         listeners = SubscriptionListeners.compose(

@@ -6,7 +6,6 @@ import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.users.User
 import elements.Error
 
-
 typealias RoomConsumer = (RoomEvent) -> Unit
 
 /**
@@ -20,7 +19,7 @@ sealed class RoomEvent {
     @Deprecated("use onMultipartMessage")
     data class Message(val message: com.pusher.chatkit.messages.Message) : RoomEvent()
     data class MultipartMessage(val message: com.pusher.chatkit.messages.multipart.Message) : RoomEvent()
-    data class MessageDeleted(val messageId: Int): RoomEvent()
+    data class MessageDeleted(val messageId: Int) : RoomEvent()
     data class UserStartedTyping(val user: User) : RoomEvent()
     data class UserStoppedTyping(val user: User) : RoomEvent()
     data class UserJoined(val user: User) : RoomEvent()
@@ -39,19 +38,19 @@ sealed class RoomEvent {
  * consuming RoomEvents.
  */
 data class RoomListeners @JvmOverloads constructor(
-        @Deprecated("use onMultipartMessage")
-        val onMessage: (com.pusher.chatkit.messages.Message) -> Unit = {},
-        val onMultipartMessage: (com.pusher.chatkit.messages.multipart.Message) -> Unit = {},
-        val onMessageDeleted: (Int) -> Unit = {},
-        val onUserStartedTyping: (User) -> Unit = {},
-        val onUserStoppedTyping: (User) -> Unit = {},
-        val onUserJoined: (User) -> Unit = {},
-        val onUserLeft: (User) -> Unit = {},
-        val onPresenceChange: (User) -> Unit = {},
-        val onNewReadCursor: (Cursor) -> Unit = {},
-        val onRoomUpdated: (Room) -> Unit = {},
-        val onRoomDeleted: (String) -> Unit = {},
-        val onErrorOccurred: (Error) -> Unit = {}
+    @Deprecated("use onMultipartMessage")
+    val onMessage: (com.pusher.chatkit.messages.Message) -> Unit = {},
+    val onMultipartMessage: (com.pusher.chatkit.messages.multipart.Message) -> Unit = {},
+    val onMessageDeleted: (Int) -> Unit = {},
+    val onUserStartedTyping: (User) -> Unit = {},
+    val onUserStoppedTyping: (User) -> Unit = {},
+    val onUserJoined: (User) -> Unit = {},
+    val onUserLeft: (User) -> Unit = {},
+    val onPresenceChange: (User) -> Unit = {},
+    val onNewReadCursor: (Cursor) -> Unit = {},
+    val onRoomUpdated: (Room) -> Unit = {},
+    val onRoomDeleted: (String) -> Unit = {},
+    val onErrorOccurred: (Error) -> Unit = {}
 )
 
 internal fun RoomListeners.toCallback(): RoomConsumer = { event ->

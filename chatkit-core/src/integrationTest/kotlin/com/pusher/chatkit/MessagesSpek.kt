@@ -13,24 +13,23 @@ import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.messages.multipart.PartType
 import com.pusher.chatkit.messages.multipart.Payload
 import com.pusher.chatkit.rooms.RoomEvent
-import com.pusher.chatkit.test.InstanceActions
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
+import com.pusher.chatkit.test.InstanceActions.deleteMessage
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
-import com.pusher.chatkit.test.InstanceActions.deleteMessage
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.test.run
 import com.pusher.chatkit.util.FutureValue
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.net.URL
+import java.util.Date
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.net.URL
-import java.util.*
 
 class MessagesSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -193,7 +192,7 @@ class MessagesSpek : Spek({
 
             val (firstMessage) = pusherino.fetchMultipartMessages(pusherino.generalRoom.id).assumeSuccess()
 
-            assertThat(firstMessage.parts.map { (it.payload as Payload.Inline).content } ).containsExactly(
+            assertThat(firstMessage.parts.map { (it.payload as Payload.Inline).content }).containsExactly(
                     "Fire and brimstone coming down from the skies. Rivers and seas boiling.",
                     "Forty years of darkness. Earthquakes, volcanoes...",
                     "The dead rising from the grave.",
@@ -659,7 +658,7 @@ class MessagesSpek : Spek({
                     is RoomEvent.MultipartMessage -> {
                         receivedMessageId = event.message.id
                         deleteMessage(
-                                roomId =  pusherino.generalRoom.id,
+                                roomId = pusherino.generalRoom.id,
                                 messageId = event.message.id
                         ).run()
                     }
@@ -683,9 +682,7 @@ class MessagesSpek : Spek({
             with(receivedMessageId) {
                 assertThat(receivedMessageId).isEqualTo(deletedMessageId)
             }
-
         }
-
     }
 })
 

@@ -30,16 +30,16 @@ import elements.Errors
 class SynchronousChatManager : AppHookListener {
 
     constructor(
-            instanceLocator: String,
-            userId: String,
-            dependencies: ChatkitDependencies
+        instanceLocator: String,
+        userId: String,
+        dependencies: ChatkitDependencies
     ) : this(instanceLocator, userId, dependencies, DefaultPlatformClientFactory())
 
     internal constructor(
-            instanceLocator: String,
-            userId: String,
-            dependencies: ChatkitDependencies,
-            platformClientFactory: PlatformClientFactory
+        instanceLocator: String,
+        userId: String,
+        dependencies: ChatkitDependencies,
+        platformClientFactory: PlatformClientFactory
     ) {
         this.instanceLocator = instanceLocator
         this.userId = userId
@@ -181,7 +181,7 @@ class SynchronousChatManager : AppHookListener {
     }
 
     private fun consumeUserSubscriptionEvent(incomingEvent: UserSubscriptionEvent) {
-        synchronized(populatedInitialStateLock) {  // wait for initial state to be processed first
+        synchronized(populatedInitialStateLock) { // wait for initial state to be processed first
             // loop for spurious wakeup protection https://en.wikipedia.org/wiki/Spurious_wakeup
             while (!populatedInitialState) populatedInitialStateLock.wait()
         }
@@ -211,15 +211,15 @@ class SynchronousChatManager : AppHookListener {
 
     private fun transformUserInternalEvent(event: UserInternalEvent): ChatEvent =
             when (event) {
-                is UserInternalEvent.AddedToRoom->
+                is UserInternalEvent.AddedToRoom ->
                     ChatEvent.AddedToRoom(event.room)
-                is UserInternalEvent.RemovedFromRoom->
+                is UserInternalEvent.RemovedFromRoom ->
                     ChatEvent.RemovedFromRoom(event.roomId)
-                is UserInternalEvent.RoomUpdated->
+                is UserInternalEvent.RoomUpdated ->
                     ChatEvent.RoomUpdated(event.room)
-                is UserInternalEvent.RoomDeleted->
+                is UserInternalEvent.RoomDeleted ->
                     ChatEvent.RoomDeleted(event.roomId)
-                is UserInternalEvent.UserJoinedRoom->
+                is UserInternalEvent.UserJoinedRoom ->
                     userService.fetchUserBy(event.userId).fold(
                             onSuccess = { user ->
                                 val room = roomService.roomStore[event.roomId]!!
@@ -227,7 +227,7 @@ class SynchronousChatManager : AppHookListener {
                             },
                             onFailure = { ChatEvent.ErrorOccurred(it) }
                     )
-                is UserInternalEvent.UserLeftRoom->
+                is UserInternalEvent.UserLeftRoom ->
                     userService.fetchUserBy(event.userId).fold(
                             onSuccess = { user ->
                                 val room = roomService.roomStore[event.roomId]!!

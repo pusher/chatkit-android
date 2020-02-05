@@ -41,9 +41,9 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
     )
 
     fun applyInitialState(
-            rooms: List<JoinedRoomApiType>? = null,
-            readStates: List<RoomReadStateApiType>? = null,
-            memberships: List<RoomMembershipApiType>? = null
+        rooms: List<JoinedRoomApiType>? = null,
+        readStates: List<RoomReadStateApiType>? = null,
+        memberships: List<RoomMembershipApiType>? = null
     ) =
             subject.applyUserSubscriptionEvent(
                     UserSubscriptionEvent.InitialState(
