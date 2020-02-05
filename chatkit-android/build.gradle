@@ -53,7 +53,7 @@ dependencies {
     api project(':chatkit-core')
 
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'com.pusher:push-notifications-android:1.6.0'
+    implementation 'com.pusher:push-notifications-android:1.6.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     testImplementation "junit:junit:4.13"
@@ -62,8 +62,6 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_jupiter_version"
     testImplementation "org.junit.jupiter:junit-jupiter-params:$junit_jupiter_version"
     testImplementation "org.mockito:mockito-inline:$mockito_version"
-
-
 }
 
 bintray {
