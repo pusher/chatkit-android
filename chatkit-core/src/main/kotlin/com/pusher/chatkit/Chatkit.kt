@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")  // public entry point
+
 package com.pusher.chatkit
 
 import com.pusher.chatkit.rooms.JoinedRoomsProvider
@@ -7,7 +9,6 @@ import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
 
-@Suppress("unused") // public entry point
 class ChatkitConnector(
         private val instanceLocator: String,
         private val tokenProvider: TokenProvider
@@ -19,7 +20,6 @@ class ChatkitConnector(
 
 }
 
-@Suppress("unused") // public entry point
 class Chatkit internal constructor(val currentUser: User) {
 
     private var _connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
