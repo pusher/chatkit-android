@@ -15,7 +15,8 @@ class ChatkitConnector(
 ) {
 
     fun connect(resultHandler: (Result<Chatkit, Error>) -> Unit) {
-        resultHandler.invoke(Chatkit(User()).asSuccess())
+        // ...
+        resultHandler(Chatkit(User()).asSuccess())
     }
 
 }
