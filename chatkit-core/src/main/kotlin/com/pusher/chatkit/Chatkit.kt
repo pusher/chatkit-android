@@ -14,16 +14,16 @@ class ChatkitConnector(
         private val tokenProvider: TokenProvider
 ) {
 
-    fun connect(): Result<Chatkit, Error> {
-        return Chatkit(User()).asSuccess()
+    fun connect(resultHandler: (Result<Chatkit, Error>) -> Unit) {
+        resultHandler.invoke(Chatkit(User()).asSuccess())
     }
 
 }
 
 class Chatkit internal constructor(val currentUser: User) {
 
-    private var _connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
-    val connectionStatus get() = _connectionStatus
+    private var _status: Status = Status.Connecting()
+    val status get() = _status
 
     fun createJoinedRoomProvider(): JoinedRoomsProvider =
         JoinedRoomsProvider()
@@ -31,8 +31,14 @@ class Chatkit internal constructor(val currentUser: User) {
     fun createJoinedRoomViewModel(): JoinedRoomsViewModel =
             JoinedRoomsViewModel(createJoinedRoomProvider())
 
-    fun disconnect() {
-        _connectionStatus = ConnectionStatus.Disconnected
+    fun close() {
+        _status = Status.Closed()
     }
 
+}
+
+sealed class Status {
+    data class Connecting(val error: Error? = null) : Status()
+    object Connected : Status()
+    data class Closed(val error: Error? = null) : Status()
 }

@@ -1,3 +1,5 @@
+@file:Suppress("unused") // TODO: remove when no longer just a sketch (unused)
+
 package com.pusher.chatkit.rooms
 
 import elements.Error // repackage, rename PusherError, alias ChatkitError
@@ -17,7 +19,7 @@ data class Room( // JoinedRoom?
 
 sealed class JoinedRoomsState {
 
-    data class Initializing(val error: Error?): JoinedRoomsState()
+    data class Initializing(val error: Error? = null): JoinedRoomsState()
 
     data class Connected(
             val rooms: Set<Room>,
@@ -45,7 +47,10 @@ class JoinedRoomsProvider /* TODO: check : Closeable */ { // Repository?
 
     val rooms: Set<Room> get() = setOf() // get from the store and map
 
-    fun observe(observer: (JoinedRoomsState) -> Unit) { }
+    fun observe(observer: (JoinedRoomsState) -> Unit) {
+        // observe the relevant sub-store and translate delegating stuff to a mapper
+        observer(JoinedRoomsState.Initializing())
+    }
 
     fun close() {}
 

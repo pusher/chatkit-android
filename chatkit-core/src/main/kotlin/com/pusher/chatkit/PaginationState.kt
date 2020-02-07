@@ -1,3 +1,5 @@
+@file:Suppress("unused") // TODO: remove when no longer just a sketch (unused)
+
 package com.pusher.chatkit
 
 sealed class PaginationState {

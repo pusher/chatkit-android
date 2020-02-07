@@ -1,3 +1,5 @@
+@file:Suppress("unused") // TODO: remove when no longer just a sketch (unused)
+
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.PaginationState
@@ -5,7 +7,7 @@ import elements.Error
 
 sealed class MessagesState {
 
-    data class Initializing(val error: Error?): MessagesState()
+    data class Initializing(val error: Error? = null): MessagesState()
 
     data class Connected(
             val messages: List<Message>,
@@ -47,11 +49,14 @@ sealed class MessagesState {
 
 }
 
-class MessagesProvider {
+class MessagesProvider { // Repository?
 
     val messages: List<Message> get() = TODO()
 
-    fun observe(observer: (MessagesState) -> Unit) { }
+    fun observe(observer: (MessagesState) -> Unit) {
+        // observe the relevant sub-store and translate delegating stuff to a mapper
+        observer(MessagesState.Initializing())
+    }
 
     fun close() {}
 

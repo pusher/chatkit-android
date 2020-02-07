@@ -1,3 +1,5 @@
+@file:Suppress("unused")  // public api
+
 package com.pusher.chatkit.rooms
 
 import elements.Error
