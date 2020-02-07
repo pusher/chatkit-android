@@ -54,7 +54,7 @@ class MessagesProvider { // Repository?
     val messages: List<Message> get() = TODO()
 
     fun observe(observer: (MessagesState) -> Unit) {
-        // observe the relevant sub-store and translate delegating stuff to a mapper
+        // observe the store and translate delegating stuff to a mapper
         observer(MessagesState.Initializing())
     }
 
