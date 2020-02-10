@@ -4,6 +4,8 @@ package com.pusher.chatkit.rooms
 
 import elements.Error
 import java.text.DateFormat
+import java.text.DateFormat.LONG
+import java.text.DateFormat.SHORT
 import java.util.Date
 
 data class RoomViewType(val source: Room) { // JoinedRoom?
@@ -24,10 +26,14 @@ data class RoomViewType(val source: Room) { // JoinedRoom?
     private fun format(dateFormat: DateFormat, millis: Long?): String? =
             millis?.let { dateFormat.format(Date(millis)) }
 
-    // TODO: use android.text.format.DateFormat for correct sys localization
-    private val dateFormat by lazy { DateFormat.getDateInstance() }
-    private val dateFormatShort by lazy { DateFormat.getDateInstance(DateFormat.SHORT) }
-    private val dateFormatLong by lazy { DateFormat.getDateInstance(DateFormat.LONG) }
+    // TODO: use android.text.format.DateFormat for appropriate localization, probably best
+    //  retrieve via reflection (once in the entry point and falling back to java.text.DateFormat)
+    //  to not impose mandatory dependency on Android or not to require the client code to pass it
+    //  (it would be good to have it but as an option — for custom client-provided DateFormat's,
+    //  not as a requirement)
+    private val dateFormat by lazy { DateFormat.getDateTimeInstance() }
+    private val dateFormatShort by lazy { DateFormat.getDateTimeInstance(SHORT, SHORT) }
+    private val dateFormatLong by lazy { DateFormat.getDateTimeInstance(LONG, LONG) }
 }
 
 sealed class JoinedRoomsViewModelState {
