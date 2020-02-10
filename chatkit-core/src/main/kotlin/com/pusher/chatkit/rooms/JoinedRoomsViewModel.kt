@@ -3,18 +3,44 @@
 package com.pusher.chatkit.rooms
 
 import elements.Error
+import java.text.DateFormat
+import java.util.Date
+
+data class RoomViewType(private val room: Room) { // JoinedRoom?
+    val name: CharSequence get() = room.name
+    val isPrivate: Boolean get() = room.isPrivate
+
+    val unreadCount: Int? get() = room.unreadCount
+
+    val lastMessageAt: CharSequence? by lazy { format(dateFormat, room.lastMessageAt) }
+    val lastMessageAtShort: CharSequence? by lazy { format(dateFormatShort, room.lastMessageAt) }
+    val lastMessageAtLong: CharSequence? by lazy { format(dateFormat, room.lastMessageAt) }
+
+    // TODO: follow the same pattern as for lastMessageAt
+//    val createdAt: CharSequence,
+//    val updatedAt: CharSequence,
+//    val deletedAt: CharSequence?
+
+    private fun format(dateFormat: DateFormat, millis: Long?): String? =
+            millis?.let { dateFormat.format(Date(millis)) }
+
+    // TODO: use android.text.format.DateFormat for correct sys localization
+    private val dateFormat by lazy { DateFormat.getDateInstance() }
+    private val dateFormatShort by lazy { DateFormat.getDateInstance(DateFormat.SHORT) }
+    private val dateFormatLong by lazy { DateFormat.getDateInstance(DateFormat.LONG) }
+}
 
 sealed class JoinedRoomsViewModelState {
 
     data class Initializing(val error: Error?): JoinedRoomsViewModelState()
 
     data class Connected(
-            val rooms: List<Room>,
+            val rooms: List<RoomViewType>,
             val changeReason: ChangeReason?
     ): JoinedRoomsViewModelState()
 
     class Degraded(
-            val rooms: List<Room>,
+            val rooms: List<RoomViewType>,
             val changeReason: ChangeReason?,
             // TODO: model degrade details
             val error: Error
@@ -25,8 +51,8 @@ sealed class JoinedRoomsViewModelState {
     sealed class ChangeReason {
         data class ItemInserted(val position: Int): ChangeReason()
         data class ItemMoved(val fromPosition: Int, val toPosition: Int): ChangeReason()
-        data class ItemChanged(val position: Int, val previousValue: Room): ChangeReason()
-        data class ItemRemoved(val position: Int, val previousValue: Room): ChangeReason()
+        data class ItemChanged(val position: Int, val previousValue: RoomViewType): ChangeReason()
+        data class ItemRemoved(val position: Int, val previousValue: RoomViewType): ChangeReason()
     }
 }
 
