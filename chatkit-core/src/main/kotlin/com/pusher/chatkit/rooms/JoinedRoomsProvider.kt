@@ -2,8 +2,7 @@
 
 package com.pusher.chatkit.rooms
 
-import elements.Error // repackage, rename PusherError, alias ChatkitError
-import java.util.*
+import elements.Error
 
 data class Room( // JoinedRoom?
         val id: String,
@@ -11,10 +10,10 @@ data class Room( // JoinedRoom?
         val isPrivate: Boolean,
         val createdById: String,
         val unreadCount: Int?,
-        val lastMessageAt: String?,
-        val createdAt: Date,
-        val updatedAt: Date,
-        val deletedAt: Date?
+        val lastMessageAt: Long?,
+        val createdAt: Long,
+        val updatedAt: Long,
+        val deletedAt: Long?
 )
 
 sealed class JoinedRoomsState {
