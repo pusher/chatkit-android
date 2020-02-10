@@ -6,15 +6,15 @@ import elements.Error
 import java.text.DateFormat
 import java.util.Date
 
-data class RoomViewType(private val room: Room) { // JoinedRoom?
-    val name: CharSequence get() = room.name
-    val isPrivate: Boolean get() = room.isPrivate
+data class RoomViewType(private val source: Room) { // JoinedRoom?
+    val name: CharSequence get() = source.name
+    val isPrivate: Boolean get() = source.isPrivate
 
-    val unreadCount: Int? get() = room.unreadCount
+    val unreadCount: Int? get() = source.unreadCount
 
-    val lastMessageAt: CharSequence? by lazy { format(dateFormat, room.lastMessageAt) }
-    val lastMessageAtShort: CharSequence? by lazy { format(dateFormatShort, room.lastMessageAt) }
-    val lastMessageAtLong: CharSequence? by lazy { format(dateFormat, room.lastMessageAt) }
+    val lastMessageAt: CharSequence? by lazy { format(dateFormat, source.lastMessageAt) }
+    val lastMessageAtShort: CharSequence? by lazy { format(dateFormatShort, source.lastMessageAt) }
+    val lastMessageAtLong: CharSequence? by lazy { format(dateFormat, source.lastMessageAt) }
 
     // TODO: follow the same pattern as for lastMessageAt
 //    val createdAt: CharSequence,
