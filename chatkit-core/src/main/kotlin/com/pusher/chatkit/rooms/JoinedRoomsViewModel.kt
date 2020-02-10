@@ -14,7 +14,7 @@ data class RoomViewType(private val source: Room) { // JoinedRoom?
 
     val lastMessageAt: CharSequence? by lazy { format(dateFormat, source.lastMessageAt) }
     val lastMessageAtShort: CharSequence? by lazy { format(dateFormatShort, source.lastMessageAt) }
-    val lastMessageAtLong: CharSequence? by lazy { format(dateFormat, source.lastMessageAt) }
+    val lastMessageAtLong: CharSequence? by lazy { format(dateFormatLong, source.lastMessageAt) }
 
     // TODO: follow the same pattern as for lastMessageAt
 //    val createdAt: CharSequence,
