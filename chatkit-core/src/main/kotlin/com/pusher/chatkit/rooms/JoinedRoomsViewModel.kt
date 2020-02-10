@@ -6,7 +6,7 @@ import elements.Error
 import java.text.DateFormat
 import java.util.Date
 
-data class RoomViewType(private val source: Room) { // JoinedRoom?
+data class RoomViewType(val source: Room) { // JoinedRoom?
     val name: CharSequence get() = source.name
     val isPrivate: Boolean get() = source.isPrivate
 
