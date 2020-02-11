@@ -37,7 +37,7 @@ env:
   - ANDROID_HOME=$HOME/android-sdk
 
 script:
-  - travis_retry ./gradlew ciBuild --stacktrace
+  - ./gradlew ciBuild
 
 after_success:
   # report coverage
