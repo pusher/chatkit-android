@@ -53,7 +53,7 @@ sourceSets.test {
 
 afterEvaluate {
     // adds properties for tests
-    def junitPlatformTestTask = tasks.getByName('test')
+    def testTask = tasks.getByName('test')
     junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
     junitPlatformTestTask.systemProperties += System.env
 }
