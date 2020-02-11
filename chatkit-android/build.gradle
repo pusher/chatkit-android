@@ -52,6 +52,7 @@ dependencies {
     }
     api project(':chatkit-core')
 
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'com.pusher:push-notifications-android:1.6.2'
 
