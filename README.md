@@ -124,8 +124,9 @@ You can use `ktlintCheck` to check if there are any errors.
 Most errors can be automatically resolved by using `ktlintFormat` — if it can't auto resolve the issue,
 it will let you know what to do.
 
-You may want to configure your Android Studio to more closely match what ktlint expects:
-* wildcards - to disable Android Studio using wildcard imports head to settings - editor - code style - kotlin - imports (it's a tab) - and select use single name import for top level imports and java statics and enum members.
+We have configured our project to to be compliant with Android Kotlin Style Guide,
+however if you're finding that hasn't worked for you please read the installation
+instructions over at https://github.com/pinterest/ktlint#-with-intellij-idea.
 
 ## Publishing
 
