@@ -119,7 +119,10 @@ chatkit_integration_key=<SECRET_KEY>
 
 ## Linting
 
-We currently use [ktlint](https://github.com/pinterest/ktlint). You can use `ktlintCheck` to check if there are any errors. Most errors can be automatically resolved by using `ktlintFormat` - if it can't auto resolve the issue, it will let you know what to do.
+We currently use [ktlint](https://github.com/pinterest/ktlint).
+You can use `ktlintCheck` to check if there are any errors.
+Most errors can be automatically resolved by using `ktlintFormat` — if it can't auto resolve the issue,
+it will let you know what to do.
 
 You may want to configure your Android Studio to more closely match what ktlint expects:
 * wildcards - to disable Android Studio using wildcard imports head to settings - editor - code style - kotlin - imports (it's a tab) - and select use single name import for top level imports and java statics and enum members.
