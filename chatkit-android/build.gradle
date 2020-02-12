@@ -4,9 +4,11 @@ plugins {
     id 'de.mannodermaus.android-junit5'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'jacoco'
 }
 
 apply plugin: 'org.jetbrains.dokka'
+apply plugin: "jacoco"
 
 android {
     compileSdkVersion 29
@@ -163,4 +165,8 @@ publishing {
             }
         }
     }
+}
+
+jacoco {
+    toolVersion = "0.8.4"
 }
