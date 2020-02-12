@@ -1,7 +1,6 @@
 plugins {
     id 'kotlin'
     id 'java-library'
-    id 'org.junit.platform.gradle.plugin'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
 }
@@ -9,19 +8,21 @@ plugins {
 apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    api 'com.squareup.okhttp3:okhttp:3.12.6'
-    implementation 'com.google.code.gson:gson:2.8.2'
+
     if (rootProject.properties.containsKey('pusher_platform_local')) {
         api project(':pusher-platform-core')
     } else {
         api "com.pusher:pusher-platform-core:$pusher_platform_version"
     }
 
-    testImplementation "org.mockito:mockito-inline:$mockito_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    api 'com.squareup.okhttp3:okhttp:3.12.6'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
     testImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
     testImplementation 'com.google.truth:truth:0.40'
+    testImplementation "org.mockito:mockito-inline:$mockito_version"
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
@@ -29,11 +30,11 @@ dependencies {
     testImplementation "org.jetbrains.spek:spek-api:$legacy_spek_version"
     testImplementation "org.jetbrains.spek:spek-junit-platform-engine:$legacy_spek_version"
 
-    testImplementation 'org.junit.platform:junit-platform-runner:1.1.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.3'
+    testImplementation 'org.junit.platform:junit-platform-runner:1.6.0'
     testImplementation "com.auth0:java-jwt:3.3.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_jupiter_version"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_jupiter_version"
 
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.0.3'
 }
 
 test {
@@ -50,20 +51,11 @@ sourceSets.test {
     resources.srcDirs = ['src/test/resources', 'src/integrationTest/resources']
 }
 
-junitPlatform {
-    details 'tree'
-    filters {
-        engines {
-            include 'junit-jupiter', 'spek', 'spek2'
-        }
-    }
-}
-
 afterEvaluate {
     // adds properties for tests
-    def junitPlatformTestTask = tasks.getByName('junitPlatformTest')
-    junitPlatformTestTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
-    junitPlatformTestTask.systemProperties += System.env
+    def testTask = tasks.getByName('test')
+    testTask.systemProperties += rootProject.properties.findAll { it.value instanceof String }
+    testTask.systemProperties += System.env
 }
 
 bintray {
