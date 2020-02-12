@@ -9,6 +9,12 @@ import java.text.DateFormat.SHORT
 import java.util.Date
 
 data class RoomViewType(val source: Room) { // JoinedRoom?
+
+    /**
+     * Identifier intended to be used for navigation (to create ViewModels in consecutive screens).
+     */
+    val id: CharSequence get() = source.id
+
     val name: CharSequence get() = source.name
     val isPrivate: Boolean get() = source.isPrivate
 
