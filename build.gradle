@@ -64,6 +64,7 @@ static def tasksFor(project, tasks) {
 }
 
 task ciBuild(type: GradleBuild) {
-    tasks = tasksFor('chatkit-core', ['assemble', 'test', 'ktlintCheck']) +
-            tasksFor('chatkit-android', ['assembleDebug', 'test', 'lintDebug', 'ktlintCheck'])
+    tasks = tasksFor('chatkit-core', ['assemble', 'test', 'ktlintCheck', 'detekt']) +
+            tasksFor('chatkit-android', ['assembleDebug', 'test', 'lintDebug',
+                                         'ktlintCheck', 'detekt'])
 }

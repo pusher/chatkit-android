@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <Blacklist></Blacklist>
+  <Whitelist>
+    <ID>MaxLineLength:BeamsPushNotifications.kt$BeamsPushNotifications$Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))</ID>
+    <ID>MaxLineLength:BeamsPushNotifications.kt$BeamsPushNotifications$pushNotificationsInstance</ID>
+    <ID>MaxLineLength:BeamsPushNotifications.kt$BeamsPushNotifications$return Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))</ID>
+    <ID>ReturnCount:BeamsPushNotifications.kt$BeamsPushNotifications$override fun setUserId(userId: String): Result&lt;Unit, Error&gt;</ID>
+    <ID>ReturnCount:BeamsPushNotifications.kt$BeamsPushNotifications$override fun stop(): Result&lt;Unit, Error&gt;</ID>
+    <ID>TooGenericExceptionCaught:BeamsPushNotifications.kt$BeamsPushNotifications$ex: Throwable</ID>
+  </Whitelist>
+</SmellBaseline>
