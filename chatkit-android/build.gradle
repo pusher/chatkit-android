@@ -4,6 +4,7 @@ plugins {
     id 'de.mannodermaus.android-junit5'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'io.gitlab.arturbosch.detekt' version '1.5.1'
 }
 
 apply plugin: 'org.jetbrains.dokka'
@@ -162,5 +163,13 @@ publishing {
                 root.children().last() + pomConfig
             }
         }
+    }
+}
+
+detekt {
+    baseline = file("$projectDir/config/baseline.xml")
+
+    reports {
+        html.enabled = true
     }
 }
