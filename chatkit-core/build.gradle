@@ -147,3 +147,9 @@ jacoco {
     toolVersion = "0.8.4"
 }
 
+jacocoTestReport {
+    reports.xml.enabled = true
+    reports.xml.setDestination(file('build/reports/jacoco_chatkit_core.xml').absoluteFile)
+    reports.html.enabled = false
+    reports.csv.enabled = false
+}
