@@ -5,7 +5,7 @@
     <ID>LongMethod:RoomStore.kt$RoomStore$applyUserSubscriptionEvent</ID>
     <ID>LongParameterList:CurrentUser.kt$CurrentUser$( id: String? = null, name: String, pushNotificationTitleOverride: String? = null, isPrivate: Boolean = false, customData: CustomData? = null, userIds: List&lt;String&gt; = emptyList(), callback: (Result&lt;Room, Error&gt;) -&gt; Unit )</ID>
     <ID>LongParameterList:CurrentUser.kt$CurrentUser$( room: Room, name: String, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null, callback: (Result&lt;Unit, Error&gt;) -&gt; Unit )</ID>
-    <ID>LongParameterList:CurrentUser.kt$CurrentUser$(roomId: String, name: String, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null, callback: (Result&lt;Unit, Error&gt;) -&gt; Unit )</ID>
+    <ID>LongParameterList:CurrentUser.kt$CurrentUser$( roomId: String, name: String, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null, callback: (Result&lt;Unit, Error&gt;) -&gt; Unit )</ID>
     <ID>LongParameterList:LoggingSubscription.kt$( path: String, client: PlatformClient, listeners: SubscriptionListeners&lt;A&gt;, messageParser: DataParser&lt;A&gt;, logger: Logger, description: String )</ID>
     <ID>LongParameterList:RoomService.kt$RoomService$( id: String?, creatorId: String, name: String, pushNotificationTitleOverride: String?, isPrivate: Boolean, customData: CustomData?, userIds: List&lt;String&gt; )</ID>
     <ID>LongParameterList:SynchronousCurrentUser.kt$SynchronousCurrentUser$( id: String? = null, name: String, pushNotificationTitleOverride: String? = null, isPrivate: Boolean = false, customData: CustomData? = null, userIds: List&lt;String&gt; = emptyList() )</ID>
@@ -18,52 +18,16 @@
     <ID>MagicNumber:Message.kt$Payload.Attachment$60</ID>
     <ID>MagicNumber:RoomService.kt$RoomService$1_500</ID>
     <ID>MagicNumber:SynchronousCurrentUser.kt$SynchronousCurrentUser$500</ID>
-    <ID>MatchingDeclarationName:GetJoinableRooms.kt$JoinableRoomsResponse</ID>
-    <ID>MatchingDeclarationName:JoinRoom.kt$JoinRoomResponse</ID>
     <ID>MaxLineLength:ChatEvents.kt$ChatEvent$PresenceChange : ChatEvent</ID>
     <ID>MaxLineLength:CurrentUser.kt$CurrentUser$( id: String? = null, name: String, pushNotificationTitleOverride: String? = null, isPrivate: Boolean = false, customData: CustomData? = null, userIds: List&lt;String&gt; = emptyList(), callback: (Result&lt;Room, Error&gt;) -&gt; Unit )</ID>
     <ID>MaxLineLength:CurrentUser.kt$CurrentUser$( room: Room, name: String, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null, callback: (Result&lt;Unit, Error&gt;) -&gt; Unit )</ID>
-    <ID>MaxLineLength:CurrentUser.kt$CurrentUser$(roomId: String, name: String, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null, callback: (Result&lt;Unit, Error&gt;) -&gt; Unit )</ID>
+    <ID>MaxLineLength:CurrentUser.kt$CurrentUser$( roomId: String, name: String, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null, callback: (Result&lt;Unit, Error&gt;) -&gt; Unit )</ID>
     <ID>MaxLineLength:FilesService.kt$FilesService$"/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/${URLEncoder.encode(userId, "UTF-8")}/files/${URLEncoder.encode(attachment.name, "UTF-8")}"</ID>
     <ID>MaxLineLength:RoomService.kt$RoomService$client.doPost&lt;JoinRoomResponse&gt;("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")</ID>
     <ID>MaxLineLength:RoomService.kt$RoomService$client.doPost&lt;Unit?&gt;("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")</ID>
     <ID>MaxLineLength:RoomSubscriptionEventParser.kt$RoomSubscriptionEventParserV2$"new_message" -&gt; parseAs&lt;com.pusher.chatkit.messages.Message&gt;().map { message -&gt; RoomSubscriptionEvent.NewMessage(message) }</ID>
     <ID>MaxLineLength:SynchronousCurrentUser.kt$SynchronousCurrentUser$@JvmOverloads fun updateRoom(room: Room, name: String? = null, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result&lt;Unit, Error&gt;</ID>
     <ID>MaxLineLength:SynchronousCurrentUser.kt$SynchronousCurrentUser$@JvmOverloads fun updateRoom(roomId: String, name: String? = null, pushNotificationTitleOverride: RoomPushNotificationTitle? = null, isPrivate: Boolean? = null, customData: CustomData? = null): Result&lt;Unit, Error&gt;</ID>
-    <ID>NewLineAtEndOfFile:ChatkitSubscription.kt$com.pusher.chatkit.subscription.ChatkitSubscription.kt</ID>
-    <ID>NewLineAtEndOfFile:CreateRoom.kt$com.pusher.chatkit.rooms.api.CreateRoom.kt</ID>
-    <ID>NewLineAtEndOfFile:CursorService.kt$com.pusher.chatkit.cursors.CursorService.kt</ID>
-    <ID>NewLineAtEndOfFile:CursorStore.kt$com.pusher.chatkit.cursors.CursorStore.kt</ID>
-    <ID>NewLineAtEndOfFile:CursorSubscriptionEvent.kt$com.pusher.chatkit.cursors.CursorSubscriptionEvent.kt</ID>
-    <ID>NewLineAtEndOfFile:CursorSubscriptionEventParser.kt$com.pusher.chatkit.cursors.CursorSubscriptionEventParser.kt</ID>
-    <ID>NewLineAtEndOfFile:FilesService.kt$com.pusher.chatkit.files.FilesService.kt</ID>
-    <ID>NewLineAtEndOfFile:GetJoinableRooms.kt$com.pusher.chatkit.rooms.api.GetJoinableRooms.kt</ID>
-    <ID>NewLineAtEndOfFile:JoinRoom.kt$com.pusher.chatkit.rooms.api.JoinRoom.kt</ID>
-    <ID>NewLineAtEndOfFile:JoinedRoomApiMapper.kt$com.pusher.chatkit.rooms.api.JoinedRoomApiMapper.kt</ID>
-    <ID>NewLineAtEndOfFile:JoinedRoomApiType.kt$com.pusher.chatkit.rooms.api.JoinedRoomApiType.kt</ID>
-    <ID>NewLineAtEndOfFile:Message.kt$com.pusher.chatkit.messages.multipart.Message.kt</ID>
-    <ID>NewLineAtEndOfFile:Message.kt$com.pusher.chatkit.messages.multipart.request.Message.kt</ID>
-    <ID>NewLineAtEndOfFile:NotJoinedRoomApiMapper.kt$com.pusher.chatkit.rooms.api.NotJoinedRoomApiMapper.kt</ID>
-    <ID>NewLineAtEndOfFile:NotJoinedRoomApiType.kt$com.pusher.chatkit.rooms.api.NotJoinedRoomApiType.kt</ID>
-    <ID>NewLineAtEndOfFile:PlatformClient.kt$com.pusher.chatkit.PlatformClient.kt</ID>
-    <ID>NewLineAtEndOfFile:PresenceSubscriptionEvent.kt$com.pusher.chatkit.presence.PresenceSubscriptionEvent.kt</ID>
-    <ID>NewLineAtEndOfFile:PresenceSubscriptionEventParser.kt$com.pusher.chatkit.presence.PresenceSubscriptionEventParser.kt</ID>
-    <ID>NewLineAtEndOfFile:PushNotificationsFactory.kt$com.pusher.chatkit.pushnotifications.PushNotificationsFactory.kt</ID>
-    <ID>NewLineAtEndOfFile:ResolvableSubscription.kt$com.pusher.chatkit.subscription.ResolvableSubscription.kt</ID>
-    <ID>NewLineAtEndOfFile:Room.kt$com.pusher.chatkit.rooms.Room.kt</ID>
-    <ID>NewLineAtEndOfFile:RoomEvent.kt$com.pusher.chatkit.rooms.RoomEvent.kt</ID>
-    <ID>NewLineAtEndOfFile:RoomMembershipApiType.kt$com.pusher.chatkit.rooms.api.RoomMembershipApiType.kt</ID>
-    <ID>NewLineAtEndOfFile:RoomReadStateApiType.kt$com.pusher.chatkit.rooms.api.RoomReadStateApiType.kt</ID>
-    <ID>NewLineAtEndOfFile:RoomStore.kt$com.pusher.chatkit.rooms.RoomStore.kt</ID>
-    <ID>NewLineAtEndOfFile:RoomSubscriptionEventParser.kt$com.pusher.chatkit.rooms.RoomSubscriptionEventParser.kt</ID>
-    <ID>NewLineAtEndOfFile:RoomSubscriptionGroup.kt$com.pusher.chatkit.rooms.RoomSubscriptionGroup.kt</ID>
-    <ID>NewLineAtEndOfFile:UpdateRoom.kt$com.pusher.chatkit.rooms.api.UpdateRoom.kt</ID>
-    <ID>NewLineAtEndOfFile:UserInternalEvent.kt$com.pusher.chatkit.users.UserInternalEvent.kt</ID>
-    <ID>NewLineAtEndOfFile:UserPresence.kt$com.pusher.chatkit.presence.UserPresence.kt</ID>
-    <ID>NewLineAtEndOfFile:UserService.kt$com.pusher.chatkit.users.UserService.kt</ID>
-    <ID>NewLineAtEndOfFile:UserSubscription.kt$com.pusher.chatkit.users.UserSubscription.kt</ID>
-    <ID>NewLineAtEndOfFile:UserSubscriptionEvent.kt$com.pusher.chatkit.users.UserSubscriptionEvent.kt</ID>
-    <ID>NewLineAtEndOfFile:UserSubscriptionEventParser.kt$com.pusher.chatkit.users.UserSubscriptionEventParser.kt</ID>
     <ID>TooGenericExceptionCaught:ChatManager.kt$e: Throwable</ID>
     <ID>TooGenericExceptionCaught:Message.kt$e: Exception</ID>
     <ID>TooGenericExceptionCaught:Parser.kt$e: Exception</ID>
@@ -74,13 +38,5 @@
     <ID>TooManyFunctions:RoomService.kt$RoomService$RoomService</ID>
     <ID>TooManyFunctions:SynchronousChatManager.kt$SynchronousChatManager$SynchronousChatManager</ID>
     <ID>TooManyFunctions:SynchronousCurrentUser.kt$SynchronousCurrentUser$SynchronousCurrentUser</ID>
-    <ID>WildcardImport:ChatEvents.kt$import com.pusher.chatkit.ChatEvent.*</ID>
-    <ID>WildcardImport:ChatkitTokenProvider.kt$import com.pusher.util.*</ID>
-    <ID>WildcardImport:ChatkitTokenProvider.kt$import okhttp3.*</ID>
-    <ID>WildcardImport:MessageService.kt$import com.pusher.chatkit.files.*</ID>
-    <ID>WildcardImport:RoomService.kt$import com.pusher.chatkit.rooms.api.*</ID>
-    <ID>WildcardImport:RoomStore.kt$import com.pusher.chatkit.rooms.api.*</ID>
-    <ID>WildcardImport:SynchronousCurrentUser.kt$import com.pusher.chatkit.rooms.*</ID>
-    <ID>WildcardImport:UserSubscriptionEventParser.kt$import com.pusher.chatkit.users.UserSubscriptionEvent.*</ID>
   </Whitelist>
 </SmellBaseline>
