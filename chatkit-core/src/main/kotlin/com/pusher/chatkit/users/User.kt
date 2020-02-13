@@ -1,7 +1,7 @@
 package com.pusher.chatkit.users
 
 import com.google.gson.annotations.SerializedName
-import com.pusher.chatkit.CustomData
+//import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.util.dateFormat
 import java.util.Date
@@ -14,7 +14,7 @@ data class User(
     val name: String?,
     @SerializedName("avatar_url")
     val avatarURL: String?,
-    val customData: CustomData?,
+//    val customData: CustomData?,
     private var online: Boolean = false
 ) {
     var presence: Presence

@@ -80,7 +80,7 @@ internal class RoomService(
                     pushNotificationTitleOverride = pushNotificationTitleOverride,
                     private = isPrivate,
                     createdById = creatorId,
-                    customData = mapOf<String, Any>(),
+//                    customData = mapOf<String, Any>(),
                     userIds = userIds
             ).toJson()
                     .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
@@ -121,14 +121,14 @@ internal class RoomService(
     ): Result<Unit, Error> {
         val request: Any =
                 if (pushNotificationTitleOverride == null) {
-                    UpdateRoomRequest(name, isPrivate, mapOf<String, Any>())
+                    UpdateRoomRequest(name, isPrivate)
                 } else {
                     when (pushNotificationTitleOverride) {
                         is RoomPushNotificationTitle.NoOverride ->
-                            UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate, customData)
+                            UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate)
                         is RoomPushNotificationTitle.Override ->
                             UpdateRoomRequestWithPushNotificationTitleOverride(name,
-                                    pushNotificationTitleOverride.title, isPrivate, mapOf<String, Any>())
+                                    pushNotificationTitleOverride.title, isPrivate)
                     }
                 }
 
@@ -277,20 +277,20 @@ internal class RoomService(
 //                    }
                 is RoomSubscriptionEvent.MessageDeleted -> RoomEvent.NoEvent
 //                    RoomEvent.MessageDeleted(event.messageId)
-                is RoomSubscriptionEvent.UserIsTyping ->
-                    userService.fetchUserBy(event.userId).map { user ->
-                        val onStop = {
-                            consumer(RoomEvent.UserStoppedTyping(user))
-                        }
-
-                        if (scheduleStopTypingEvent(event.userId, onStop)) {
-                            RoomEvent.UserStartedTyping(user)
-                        } else {
-                            RoomEvent.NoEvent
-                        }
-                    }.recover {
-                        RoomEvent.ErrorOccurred(it)
-                    }
+                is RoomSubscriptionEvent.UserIsTyping -> RoomEvent.NoEvent
+//                    userService.fetchUserBy(event.userId).map { user ->
+//                        val onStop = {
+//                            consumer(RoomEvent.UserStoppedTyping(user))
+//                        }
+//
+//                        if (scheduleStopTypingEvent(event.userId, onStop)) {
+//                            RoomEvent.UserStartedTyping(user)
+//                        } else {
+//                            RoomEvent.NoEvent
+//                        }
+//                    }.recover {
+//                        RoomEvent.ErrorOccurred(it)
+//                    }
                 is RoomSubscriptionEvent.ErrorOccurred ->
                     RoomEvent.ErrorOccurred(event.error)
             }

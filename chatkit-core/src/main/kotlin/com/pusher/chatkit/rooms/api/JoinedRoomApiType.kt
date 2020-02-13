@@ -1,6 +1,6 @@
 package com.pusher.chatkit.rooms.api
 
-import com.pusher.chatkit.CustomData
+//import com.pusher.chatkit.CustomData
 
 internal data class JoinedRoomApiType(
     val id: String,
@@ -8,7 +8,7 @@ internal data class JoinedRoomApiType(
     val name: String,
     val pushNotificationTitleOverride: String?,
     val private: Boolean,
-    val customData: CustomData?,
+//    val customData: CustomData?,
     val lastMessageAt: String?,
     val createdAt: String,
     val updatedAt: String,

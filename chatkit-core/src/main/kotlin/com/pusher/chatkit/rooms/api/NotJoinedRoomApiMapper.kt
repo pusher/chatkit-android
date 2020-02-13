@@ -11,7 +11,7 @@ internal class NotJoinedRoomApiMapper {
                 name = room.name,
                 pushNotificationTitleOverride = room.pushNotificationTitleOverride,
                 isPrivate = false,
-                customData = room.customData,
+//                customData = room.customData,
                 unreadCount = null,
                 createdAt = room.createdAt,
                 lastMessageAt = null,

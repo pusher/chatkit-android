@@ -13,57 +13,65 @@ class UserService(
     private val client: PlatformClient,
     private val presenceService: PresenceService
 ) {
-    private val knownUsers = ConcurrentHashMap<String, User>()
 
-    fun fetchUsersBy(userIds: Set<String>): Result<Map<String, User>, Error> {
-        val missingUserIds = userIds.filter { id -> knownUsers[id] == null }
+    @Suppress("UNUSED_PARAMETER")
+    fun fetchUsersBy(userIds: Set<String>) {}
+            //: Result<Map<String, User>, Error> {
+//        val missingUserIds = userIds.filter { id -> knownUsers[id] == null }
+//        val fetchResult {}
+                // : Result<List<User>, Error>
+//                if (missingUserIds.isNotEmpty()) {
+//                    val missingUserIdsQueryParams = missingUserIds.joinToString(separator = "&") {
+//                        "id=${URLEncoder.encode(it, "UTF-8")}"
+//                    }
+//
+//                    client.doGet("/users_by_ids?$missingUserIdsQueryParams")
+//                } else {
+//                    listOf<User>().asSuccess()
+//                }
 
-        val fetchResult: Result<List<User>, Error> =
-                if (missingUserIds.isNotEmpty()) {
-                    val missingUserIdsQueryParams = missingUserIds.joinToString(separator = "&") {
-                        "id=${URLEncoder.encode(it, "UTF-8")}"
-                    }
+//        return
+//        fetchResult.map { fetchedUsers ->
+//            fetchedUsers.forEach { fetchedUser ->
+//                knownUsers[fetchedUser.id] = fetchedUser
+//            }
+//
+//            userIds.forEach {
+//                presenceService.subscribeToUser(it)
+//            }
+//
+//            userIds.map { userId ->
+//                userId to knownUsers[userId]!!
+//            }.toMap()
+//        }
+//    }
 
-                    client.doGet("/users_by_ids?$missingUserIdsQueryParams")
-                } else {
-                    listOf<User>().asSuccess()
-                }
+    @Suppress("UNUSED_PARAMETER")
+    fun fetchUserBy(userId: String) {}
+            //: Result<User, Error> =
+//            fetchUsersBy(setOf(userId)).map { users ->
+//                users.values.first()
+//            }
 
-        return fetchResult.map { fetchedUsers ->
-            fetchedUsers.forEach { fetchedUser ->
-                knownUsers[fetchedUser.id] = fetchedUser
-            }
+    @Suppress("UNUSED_PARAMETER")
+    fun addUsersToRoom(roomId: String, userIds: List<String>) {}
+//            UserIdsWrapper(userIds).toJson()
+//                    .flatMap { body ->
+//                        client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/add", body)
+//                    }
 
-            userIds.forEach {
-                presenceService.subscribeToUser(it)
-            }
-
-            userIds.map { userId ->
-                userId to knownUsers[userId]!!
-            }.toMap()
-        }
-    }
-
-    fun fetchUserBy(userId: String): Result<User, Error> =
-            fetchUsersBy(setOf(userId)).map { users ->
-                users.values.first()
-            }
-
-    fun addUsersToRoom(roomId: String, userIds: List<String>) =
-            UserIdsWrapper(userIds).toJson()
-                    .flatMap { body ->
-                        client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/add", body)
-                    }
-
-    fun removeUsersFromRoom(roomId: String, userIds: List<String>) =
-            UserIdsWrapper(userIds).toJson()
-                    .flatMap { body ->
-                        client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/remove", body)
-                    }
+    @Suppress("UNUSED_PARAMETER")
+    fun removeUsersFromRoom(roomId: String, userIds: List<String>) {}
+//            UserIdsWrapper(userIds).toJson()
+//                    .flatMap { body ->
+//                        client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/remove", body)
+//                    }
 
     internal data class UserIdsWrapper(val userIds: List<String>)
 
+    @Suppress("UNUSED_PARAMETER")
     internal fun populateUserStore(userIds: Set<String>) {
-        fetchUsersBy(userIds)
+//        fetchUsersBy(userIds)
     }
+
 }

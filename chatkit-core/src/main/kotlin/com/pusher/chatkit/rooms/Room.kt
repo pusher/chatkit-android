@@ -1,7 +1,7 @@
 package com.pusher.chatkit.rooms
 
 import com.google.gson.annotations.SerializedName
-import com.pusher.chatkit.CustomData
+//import com.pusher.chatkit.CustomData
 
 data class Room(
     val id: String,
@@ -10,7 +10,7 @@ data class Room(
     var pushNotificationTitleOverride: String?,
     @SerializedName("private")
     var isPrivate: Boolean,
-    var customData: CustomData?,
+//    var customData: CustomData?,
     val unreadCount: Int?,
     val lastMessageAt: String?,
     val createdAt: String,
