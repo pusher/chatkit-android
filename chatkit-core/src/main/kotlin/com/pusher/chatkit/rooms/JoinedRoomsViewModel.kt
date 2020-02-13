@@ -68,8 +68,9 @@ sealed class JoinedRoomsViewModelState {
     }
 }
 
-class JoinedRoomsViewModel(private val providerFactory: JoinedRoomsProviderFactory) : ViewModel {
+// TODO: Fix ViewModel/LiveData dependency. Is because of non-Android module?
+class JoinedRoomsViewModel(private val providerFactory: Any/*JoinedRoomsProviderFactory*/) : Any()/*ViewModel*/ {
 
-    val state: LiveData<JoinedRoomsViewModelState> = TODO()
+    val state: Lazy/*LiveData*/<JoinedRoomsViewModelState> = TODO()
 
 }
