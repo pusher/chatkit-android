@@ -1,6 +1,10 @@
 package com.pusher.chatkit
 
-import androidx.lifecycle.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.ProcessLifecycleOwner
 import java.util.concurrent.ConcurrentHashMap
 
 class AndroidAppHookEmitter : AppHookEmitter {

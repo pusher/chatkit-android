@@ -20,17 +20,16 @@ import elements.Error
 import elements.Errors
 import java.io.InputStream
 import java.net.URL
-import java.util.*
-
+import java.util.Date
 
 data class Message(
-        val id: Int,
-        val sender: User,
-        val room: Room,
-        val parts: List<Part>,
-        val createdAt: Date,
-        val updatedAt: Date,
-        val deletedAt: Date?
+    val id: Int,
+    val sender: User,
+    val room: Room,
+    val parts: List<Part>,
+    val createdAt: Date,
+    val updatedAt: Date,
+    val deletedAt: Date?
 )
 
 enum class PartType {
@@ -40,30 +39,30 @@ enum class PartType {
 }
 
 data class Part(
-        val partType: PartType,
-        val payload: Payload
+    val partType: PartType,
+    val payload: Payload
 )
 
 sealed class Payload {
     data class Inline(
-            val type: String,
-            val content: String
+        val type: String,
+        val content: String
     ) : Payload()
 
     data class Url(
-            val type: String,
-            val url: URL
+        val type: String,
+        val url: URL
     ) : Payload()
 
     class Attachment(
-            val type: String,
-            val size: Int,
-            val name: String?,
-            val customData: CustomData?,
-            private val refresher: UrlRefresher,
-            internal val refreshUrl: String,
-            internal var downloadUrl: String,
-            internal var expiration: Date
+        val type: String,
+        val size: Int,
+        val name: String?,
+        val customData: CustomData?,
+        private val refresher: UrlRefresher,
+        internal val refreshUrl: String,
+        internal var downloadUrl: String,
+        internal var expiration: Date
     ) : Payload() {
         fun url(): Result<String, Error> =
                 if (expiration.time - Date().time > 30 * 60 * 1000) {
@@ -86,17 +85,17 @@ sealed class Payload {
 }
 
 data class Attachment(
-        val id: String,
-        val downloadUrl: String,
-        val refreshUrl: String,
-        val expiration: Date,
-        val name: String,
-        val customData: CustomData,
-        val size: Int
+    val id: String,
+    val downloadUrl: String,
+    val refreshUrl: String,
+    val expiration: Date,
+    val name: String,
+    val customData: CustomData,
+    val size: Int
 )
 
 class UrlRefresher(
-        private val client: PlatformClient
+    private val client: PlatformClient
 ) {
     fun refresh(attachment: Payload.Attachment): Result<String, Error> =
             client.doRequest(RequestOptions(RequestDestination.Absolute(attachment.refreshUrl))) {
@@ -111,28 +110,28 @@ class UrlRefresher(
 
 sealed class NewPart {
     data class Inline @JvmOverloads constructor(
-            val content: String,
-            val type: String = "text/plain"
+        val content: String,
+        val type: String = "text/plain"
     ) : NewPart()
 
     data class Url(
-            val url: String,
-            val type: String
+        val url: String,
+        val type: String
     ) : NewPart()
 
     data class Attachment @JvmOverloads constructor(
-            val type: String,
-            val file: InputStream,
-            val name: String? = null,
-            val customData: CustomData? = null
+        val type: String,
+        val file: InputStream,
+        val name: String? = null,
+        val customData: CustomData? = null
     ) : NewPart()
 }
 
 internal fun upgradeMessageV3(
-        message: V3MessageBody,
-        roomService: RoomService,
-        userService: UserService,
-        urlRefresher: UrlRefresher
+    message: V3MessageBody,
+    roomService: RoomService,
+    userService: UserService,
+    urlRefresher: UrlRefresher
 ): Result<Message, Error> =
         userService.fetchUserBy(message.userId).flatMap { user ->
             roomService.getJoinedRoom(message.roomId).flatMap { room ->
@@ -151,8 +150,8 @@ internal fun upgradeMessageV3(
         }
 
 internal fun makePart(
-        body: V3PartBody,
-        urlRefresher: UrlRefresher
+    body: V3PartBody,
+    urlRefresher: UrlRefresher
 ): Result<Part, Error> =
         try {
             when {

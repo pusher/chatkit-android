@@ -22,7 +22,6 @@ object Users {
     const val ALICE = "alice"
 }
 
-
 object Rooms {
     const val GENERAL = "general"
     const val NOT_GENERAL = "not-general"

@@ -6,7 +6,14 @@ import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.messages.multipart.UrlRefresher
 import com.pusher.chatkit.messages.multipart.upgradeMessageV3
-import com.pusher.chatkit.rooms.api.*
+import com.pusher.chatkit.rooms.api.CreateRoomRequest
+import com.pusher.chatkit.rooms.api.CreateRoomResponse
+import com.pusher.chatkit.rooms.api.JoinRoomResponse
+import com.pusher.chatkit.rooms.api.JoinableRoomsResponse
+import com.pusher.chatkit.rooms.api.JoinedRoomApiMapper
+import com.pusher.chatkit.rooms.api.NotJoinedRoomApiMapper
+import com.pusher.chatkit.rooms.api.UpdateRoomRequest
+import com.pusher.chatkit.rooms.api.UpdateRoomRequestWithPushNotificationTitleOverride
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -26,18 +33,18 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
 sealed class RoomPushNotificationTitle {
-  data class Override(val title: String): RoomPushNotificationTitle()
-  object NoOverride : RoomPushNotificationTitle()
+    data class Override(val title: String) : RoomPushNotificationTitle()
+    object NoOverride : RoomPushNotificationTitle()
 }
 
 internal class RoomService(
-        private val legacyV2client: PlatformClient,
-        private val client: PlatformClient,
-        private val urlRefresher: UrlRefresher,
-        private val userService: UserService,
-        private val cursorsService: CursorService,
-        private val makeGlobalConsumer: (String) -> RoomConsumer,
-        private val logger: Logger
+    private val legacyV2client: PlatformClient,
+    private val client: PlatformClient,
+    private val urlRefresher: UrlRefresher,
+    private val userService: UserService,
+    private val cursorsService: CursorService,
+    private val makeGlobalConsumer: (String) -> RoomConsumer,
+    private val logger: Logger
 ) {
     // Access synchronised on itself
     private val openSubscriptions = HashMap<String, Subscription>()
@@ -61,13 +68,13 @@ internal class RoomService(
             ).map(notJoinedRoomApiMapper::toRooms)
 
     fun createRoom(
-            id: String?,
-            creatorId: String,
-            name: String,
-            pushNotificationTitleOverride: String?,
-            isPrivate: Boolean,
-            customData: CustomData?,
-            userIds: List<String>
+        id: String?,
+        creatorId: String,
+        name: String,
+        pushNotificationTitleOverride: String?,
+        isPrivate: Boolean,
+        customData: CustomData?,
+        userIds: List<String>
     ): Result<Room, Error> =
             CreateRoomRequest(
                     id = id,
@@ -108,30 +115,30 @@ internal class RoomService(
                     }
 
     fun updateRoom(
-            roomId: String,
-            name: String? = null,
-            pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
-            isPrivate: Boolean? = null,
-            customData: CustomData? = null
+        roomId: String,
+        name: String? = null,
+        pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
+        isPrivate: Boolean? = null,
+        customData: CustomData? = null
     ): Result<Unit, Error> {
-      val request: Any =
-        if (pushNotificationTitleOverride == null) {
-          UpdateRoomRequest(name, isPrivate, customData)
-        } else {
-          when (pushNotificationTitleOverride) {
-            is RoomPushNotificationTitle.NoOverride ->
-              UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate, customData)
-            is RoomPushNotificationTitle.Override ->
-              UpdateRoomRequestWithPushNotificationTitleOverride(name,
-                      pushNotificationTitleOverride.title, isPrivate, customData)
-          }
-        }
+        val request: Any =
+                if (pushNotificationTitleOverride == null) {
+                    UpdateRoomRequest(name, isPrivate, customData)
+                } else {
+                    when (pushNotificationTitleOverride) {
+                        is RoomPushNotificationTitle.NoOverride ->
+                            UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate, customData)
+                        is RoomPushNotificationTitle.Override ->
+                            UpdateRoomRequestWithPushNotificationTitleOverride(name,
+                                    pushNotificationTitleOverride.title, isPrivate, customData)
+                    }
+                }
 
-      return request
-          .toJson()
-          .flatMap { body ->
-              client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body)
-          }
+        return request
+                .toJson()
+                .flatMap { body ->
+                    client.doPut<Unit>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}", body)
+                }
     }
 
     fun isSubscribedTo(roomId: String) =
@@ -140,25 +147,25 @@ internal class RoomService(
             }
 
     fun subscribeToRoom(
-            roomId: String,
-            unsafeConsumer: RoomConsumer,
-            messageLimit: Int
+        roomId: String,
+        unsafeConsumer: RoomConsumer,
+        messageLimit: Int
     ): Subscription =
             subscribeToRoom(roomId, unsafeConsumer, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
 
     fun subscribeToRoomMultipart(
-            roomId: String,
-            unsafeConsumer: RoomConsumer,
-            messageLimit: Int
+        roomId: String,
+        unsafeConsumer: RoomConsumer,
+        messageLimit: Int
     ): Subscription =
             subscribeToRoom(roomId, unsafeConsumer, messageLimit, client, RoomSubscriptionEventParserV3)
 
     private fun subscribeToRoom(
-            roomId: String,
-            unsafeConsumer: RoomConsumer,
-            messageLimit: Int,
-            client: PlatformClient,
-            parser: DataParser<RoomSubscriptionEvent>
+        roomId: String,
+        unsafeConsumer: RoomConsumer,
+        messageLimit: Int,
+        client: PlatformClient,
+        parser: DataParser<RoomSubscriptionEvent>
     ): Subscription {
         // This consumer is made safe by the layer providing it
         val globalConsumer = makeGlobalConsumer(roomId)

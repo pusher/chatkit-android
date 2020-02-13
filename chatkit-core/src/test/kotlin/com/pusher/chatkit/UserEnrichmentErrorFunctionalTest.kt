@@ -8,11 +8,11 @@ import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.usersFetchFailingWith
 import com.pusher.util.Result
 import elements.Errors
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object UserEnrichmentErrorFunctionalTest : Spek({
 
@@ -54,5 +54,4 @@ object UserEnrichmentErrorFunctionalTest : Spek({
             }
         }
     }
-
 })

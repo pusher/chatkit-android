@@ -156,5 +156,4 @@ object CursorStoreApplyingAddedToRoomEventTest : Spek({
             }
         }
     }
-
 })

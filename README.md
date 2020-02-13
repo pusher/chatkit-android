@@ -117,6 +117,17 @@ chatkit_integration_locator=<INSTANCE_LOCATOR>
 chatkit_integration_key=<SECRET_KEY>
 ```
 
+## Linting
+
+We currently use [ktlint](https://github.com/pinterest/ktlint).
+You can use the `ktlintCheck` gradle task to check if there are any errors.
+Most errors can be automatically resolved by using `ktlintFormat` gradle task
+— if it can't auto resolve the issue, it will let you know what to do.
+
+We have configured our project to to be compliant with Android Kotlin Style Guide,
+however if you're finding that hasn't worked for you please read the installation
+instructions over at https://github.com/pinterest/ktlint#-with-intellij-idea.
+
 ## Publishing
 
 ### jCenter

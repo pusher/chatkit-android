@@ -1,6 +1,18 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.ChatEvent.*
+import com.pusher.chatkit.ChatEvent.AddedToRoom
+import com.pusher.chatkit.ChatEvent.CurrentUserReceived
+import com.pusher.chatkit.ChatEvent.ErrorOccurred
+import com.pusher.chatkit.ChatEvent.NewReadCursor
+import com.pusher.chatkit.ChatEvent.NoEvent
+import com.pusher.chatkit.ChatEvent.PresenceChange
+import com.pusher.chatkit.ChatEvent.RemovedFromRoom
+import com.pusher.chatkit.ChatEvent.RoomDeleted
+import com.pusher.chatkit.ChatEvent.RoomUpdated
+import com.pusher.chatkit.ChatEvent.UserJoinedRoom
+import com.pusher.chatkit.ChatEvent.UserLeftRoom
+import com.pusher.chatkit.ChatEvent.UserStartedTyping
+import com.pusher.chatkit.ChatEvent.UserStoppedTyping
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
@@ -11,18 +23,18 @@ import elements.Error
  * Used along with [SynchronousChatManager] to observe global changes in the chat.
  */
 data class ChatListeners @JvmOverloads constructor(
-        val onCurrentUserReceived: (SynchronousCurrentUser) -> Unit = {},
-        val onUserStartedTyping: (User, Room) -> Unit = { _, _ -> },
-        val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
-        val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
-        val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
-        val onPresenceChanged: (User, Presence, Presence) -> Unit = { _, _, _ -> },
-        val onAddedToRoom: (Room) -> Unit = { },
-        val onRemovedFromRoom: (String) -> Unit = { },
-        val onRoomUpdated: (Room) -> Unit = { },
-        val onRoomDeleted: (String) -> Unit = { },
-        val onNewReadCursor: (Cursor) -> Unit = { },
-        val onErrorOccurred: (Error) -> Unit = { }
+    val onCurrentUserReceived: (SynchronousCurrentUser) -> Unit = {},
+    val onUserStartedTyping: (User, Room) -> Unit = { _, _ -> },
+    val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
+    val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
+    val onUserLeftRoom: (User, Room) -> Unit = { _, _ -> },
+    val onPresenceChanged: (User, Presence, Presence) -> Unit = { _, _, _ -> },
+    val onAddedToRoom: (Room) -> Unit = { },
+    val onRemovedFromRoom: (String) -> Unit = { },
+    val onRoomUpdated: (Room) -> Unit = { },
+    val onRoomDeleted: (String) -> Unit = { },
+    val onNewReadCursor: (Cursor) -> Unit = { },
+    val onErrorOccurred: (Error) -> Unit = { }
 )
 
 /**

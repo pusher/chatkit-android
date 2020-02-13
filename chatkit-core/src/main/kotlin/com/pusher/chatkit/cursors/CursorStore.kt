@@ -4,7 +4,6 @@ import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
-
 class CursorStore {
     private val map = mutableMapOf<String, UserCursorStore>()
 
@@ -43,7 +42,7 @@ class CursorStore {
                     listOf()
             }
 
-    private fun applyReadState(readState: RoomReadStateApiType) : List<UserInternalEvent> =
+    private fun applyReadState(readState: RoomReadStateApiType): List<UserInternalEvent> =
             if (readState.cursor != null) {
                 integrateCursors(listOf(readState.cursor))
                         .map { UserInternalEvent.NewCursor(readState.cursor) }

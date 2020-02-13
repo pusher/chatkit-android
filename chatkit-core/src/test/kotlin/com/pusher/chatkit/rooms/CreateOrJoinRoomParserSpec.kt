@@ -50,5 +50,4 @@ object CreateOrJoinRoomParserSpec : Spek({
             assertThat(result.membership).isEqualTo(expectedMembership)
         }
     }
-
 })

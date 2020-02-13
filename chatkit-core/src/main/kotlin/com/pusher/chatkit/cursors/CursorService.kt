@@ -20,8 +20,8 @@ import elements.Errors
 import java.net.URLEncoder
 
 class CursorService(
-        private val client: PlatformClient,
-        private val logger: Logger
+    private val client: PlatformClient,
+    private val logger: Logger
 ) {
     private val cursorStore = CursorStore()
 
@@ -42,9 +42,9 @@ class CursorService(
     }
 
     fun setReadCursor(
-            userId: String,
-            roomId: String,
-            position: Int
+        userId: String,
+        roomId: String,
+        position: Int
     ) = setReadCursorThrottler.throttle(
             RequestOptions(
                     method = "PUT",
@@ -70,16 +70,16 @@ class CursorService(
             Errors.other("Must be subscribed to room $name to access member's read cursors")
 
     fun subscribeForRoom(
-            roomId: String,
-            consumer: (ChatEvent) -> Unit
+        roomId: String,
+        consumer: (ChatEvent) -> Unit
     ) = subscribe(
             "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}",
             consumer
     )
 
     private fun subscribe(
-            path: String,
-            consumer: ChatManagerEventConsumer
+        path: String,
+        consumer: ChatManagerEventConsumer
     ) = ResolvableSubscription(
             client = client,
             path = path,

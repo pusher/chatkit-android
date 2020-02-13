@@ -22,41 +22,41 @@ internal class DefaultPlatformClientFactory : PlatformClientFactory {
 }
 
 class PlatformClient(
-        private val platformInstance: Instance,
-        private val tokenProvider: TokenProvider
+    private val platformInstance: Instance,
+    private val tokenProvider: TokenProvider
 ) {
 
     internal inline fun <reified A> doPost(
-            path: String,
-            body: String = "",
-            noinline responseParser: DataParser<A> = { it.parseAs() }
+        path: String,
+        body: String = "",
+        noinline responseParser: DataParser<A> = { it.parseAs() }
     ): Result<A, Error> =
             doRequest("POST", path, body, responseParser)
 
     internal inline fun <reified A> doPut(
-            path: String,
-            body: String = "",
-            noinline responseParser: DataParser<A> = { it.parseAs() }
+        path: String,
+        body: String = "",
+        noinline responseParser: DataParser<A> = { it.parseAs() }
     ): Result<A, Error> =
             doRequest("PUT", path, body, responseParser)
 
     internal inline fun <reified A> doGet(
-            path: String,
-            noinline responseParser: DataParser<A> = { it.parseAs() }
+        path: String,
+        noinline responseParser: DataParser<A> = { it.parseAs() }
     ): Result<A, Error> =
             doRequest("GET", path, null, responseParser)
 
     internal inline fun <reified A> doDelete(
-            path: String,
-            noinline responseParser: DataParser<A> = { it.parseAs() }
+        path: String,
+        noinline responseParser: DataParser<A> = { it.parseAs() }
     ): Result<A, Error> =
             doRequest("DELETE", path, null, responseParser)
 
     internal fun <A> doRequest(
-            method: String,
-            path: String,
-            body: String?,
-            responseParser: DataParser<A>
+        method: String,
+        path: String,
+        body: String?,
+        responseParser: DataParser<A>
     ): Result<A, Error> =
             platformInstance.request(
                     options = RequestOptions(
@@ -69,8 +69,8 @@ class PlatformClient(
             ).get()
 
     fun <A> doRequest(
-            options: RequestOptions,
-            responseParser: DataParser<A>
+        options: RequestOptions,
+        responseParser: DataParser<A>
     ): Result<A, Error> =
             platformInstance.request(
                     options = options,
@@ -80,10 +80,10 @@ class PlatformClient(
 
     @Suppress("unused") // public API
     fun <A> externalUpload(
-            url: String,
-            mimeType: String,
-            data: ByteArray,
-            responseParser: DataParser<A>
+        url: String,
+        mimeType: String,
+        data: ByteArray,
+        responseParser: DataParser<A>
     ): Result<A, Error> =
             platformInstance.externalUpload(
                     url = url,
@@ -95,8 +95,8 @@ class PlatformClient(
 
     @Suppress("UNCHECKED_CAST")
     internal fun upload(
-            path: String,
-            attachment: DataAttachment
+        path: String,
+        attachment: DataAttachment
     ): Result<AttachmentBody, Error> =
             platformInstance.upload(
                     path = path,
@@ -106,9 +106,9 @@ class PlatformClient(
             ).get()
 
     internal fun <A> subscribeResuming(
-            path: String,
-            listeners: SubscriptionListeners<A>,
-            messageParser: DataParser<A>
+        path: String,
+        listeners: SubscriptionListeners<A>,
+        messageParser: DataParser<A>
     ): Subscription =
             platformInstance.subscribeResuming(
                     path = path,

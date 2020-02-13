@@ -13,12 +13,12 @@ import com.pusher.util.Result
 import elements.Error
 import elements.Errors
 import elements.emptyHeaders
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.lang.Thread.sleep
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object ChatManagerWithFailingTokenProviderSpec : Spek({
     afterEachTest(::tearDownInstance)
@@ -32,15 +32,14 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
         val subject by memoized {
             createChatManager(tokenProvider = object : TokenProvider {
 
-                override fun fetchToken(tokenParams: Any?)
-                        : Future<Result<String, Error>> =
+                override fun fetchToken(tokenParams: Any?):
+                        Future<Result<String, Error>> =
                         Futures.schedule {
                             sleep(200) // more realistic with that delay
                             Result.failure<String, Error>(tokenProviderError)
                         }
 
                 override fun clearToken(token: String?) { /* nop */ }
-
             })
         }
         afterEachTest { subject.close { /* nop */ } }
@@ -79,8 +78,8 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
 
                 var errorCounter = AtomicInteger(2)
 
-                override fun fetchToken(tokenParams: Any?)
-                        : Future<Result<String, Error>> =
+                override fun fetchToken(tokenParams: Any?):
+                        Future<Result<String, Error>> =
                         if (errorCounter.getAndDecrement() > 0) {
                             Futures.schedule {
                                 sleep(10) // more realistic with that tiny delay
@@ -89,7 +88,6 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
                         } else {
                             testTokenProvider.fetchToken(tokenParams)
                         }
-
             })
         }
         afterEachTest { subject.close { /* nop */ } }
@@ -112,5 +110,4 @@ object ChatManagerWithFailingTokenProviderSpec : Spek({
             }
         }
     }
-
 })

@@ -1,6 +1,8 @@
 package mockitox
 
-import org.mockito.BDDMockito.*
+import org.mockito.BDDMockito.given
+import org.mockito.BDDMockito.mock
+import org.mockito.BDDMockito.withSettings
 
 inline fun <reified T> mock(f: T.(T) -> Unit): T =
         mock(T::class.java).also { it.f(it) }

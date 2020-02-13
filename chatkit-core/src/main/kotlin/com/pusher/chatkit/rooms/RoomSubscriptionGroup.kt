@@ -11,16 +11,15 @@ import com.pusher.platform.network.DataParser
 import elements.Subscription
 import java.net.URLEncoder
 
-
 internal class RoomSubscriptionGroup(
-        messageLimit: Int,
-        roomId: String,
-        cursorService: CursorService,
-        cursorConsumer: ChatManagerEventConsumer,
-        roomConsumer: RoomSubscriptionConsumer,
-        client: PlatformClient,
-        messageParser: DataParser<RoomSubscriptionEvent>,
-        logger: Logger
+    messageLimit: Int,
+    roomId: String,
+    cursorService: CursorService,
+    cursorConsumer: ChatManagerEventConsumer,
+    roomConsumer: RoomSubscriptionConsumer,
+    client: PlatformClient,
+    messageParser: DataParser<RoomSubscriptionEvent>,
+    logger: Logger
 ) : ChatkitSubscription {
     init {
         check(messageLimit >= 0) { "messageLimit must be greater than or equal to 0" }
