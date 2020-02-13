@@ -4,18 +4,6 @@ package com.pusher.chatkit.rooms
 
 import elements.Error
 
-data class Room( // JoinedRoom?
-        val id: String,
-        val name: String,
-        val isPrivate: Boolean,
-        val createdById: String,
-        val unreadCount: Int?,
-        val lastMessageAt: Long?,
-        val createdAt: Long,
-        val updatedAt: Long,
-        val deletedAt: Long?
-)
-
 sealed class JoinedRoomsState {
 
     data class Initializing(val error: Error? = null): JoinedRoomsState()

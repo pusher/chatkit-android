@@ -2,6 +2,7 @@
 
 package com.pusher.chatkit
 
+import com.pusher.chatkit.messages.MessagesProvider
 import com.pusher.chatkit.rooms.JoinedRoomsProvider
 import com.pusher.chatkit.rooms.JoinedRoomsViewModel
 import com.pusher.platform.tokenProvider.TokenProvider
@@ -26,11 +27,11 @@ class Chatkit internal constructor(val currentUser: User) {
     private var _status: Status = Status.Connecting()
     val status get() = _status
 
-    fun createJoinedRoomProvider(): JoinedRoomsProvider =
-        JoinedRoomsProvider()
+    fun createJoinedRoomProvider() = JoinedRoomsProvider()
 
-    fun createJoinedRoomViewModel(): JoinedRoomsViewModel =
-            JoinedRoomsViewModel(createJoinedRoomProvider())
+    fun createJoinedRoomViewModel() = JoinedRoomsViewModel(createJoinedRoomProvider())
+
+    fun createMessagesProvider() = MessagesProvider()
 
     fun close() {
         _status = Status.Closed()
