@@ -120,7 +120,7 @@ chatkit_integration_key=<SECRET_KEY>
 ## Code Analysis
 
 We are using [detekt](https://github.com/arturbosch/detekt) to help measure our
-technical debt. We have two baseline files (one for chatkit-android, and chatkit-core)
+technical debt. We have two baseline files (one for `chatkit-android`, and `chatkit-core`)
 which are the current issues we have accepted. Any new issues will fail the build
 on travis.
 
