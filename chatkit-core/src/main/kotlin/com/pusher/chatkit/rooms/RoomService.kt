@@ -50,17 +50,18 @@ internal class RoomService(
     private val openSubscriptions = HashMap<String, Subscription>()
     private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
 
-    val roomStore = RoomStore()
+//    val roomStore = RoomStore()
 
     private val joinedRoomApiMapper = JoinedRoomApiMapper()
     private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
 
     fun populateInitial(event: UserSubscriptionEvent.InitialState) {
-        roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
+//        roomStore.initialiseContents(event.rooms, event.memberships, event.readStates)
     }
 
-    fun getJoinedRoom(id: String): Result<Room, Error> =
-            roomStore[id].orElse { Errors.other("Room not found locally") }
+    fun getJoinedRoom(id: String) {}
+//            : Result<Room, Error> =
+//            roomStore[id].orElse { Errors.other("Room not found locally") }
 
     fun fetchJoinableRooms(userId: String): Result<List<Room>, Error> =
             client.doGet<JoinableRoomsResponse>(
@@ -87,7 +88,7 @@ internal class RoomService(
             ).toJson()
                     .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
                     .map { response ->
-                        roomStore.add(response)
+//                        roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
                         joinedRoomApiMapper.toRoom(response)
                     }
@@ -95,21 +96,21 @@ internal class RoomService(
     fun deleteRoom(roomId: String): Result<String, Error> =
             legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
-                        roomStore.remove(roomId)
+//                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
             client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
-                        roomStore.remove(roomId)
+//                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
             client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
                     .map { response ->
-                        roomStore.add(response)
+//                        roomStore.add(response)
                         userService.populateUserStore(response.membership.userIds.toSet())
                         joinedRoomApiMapper.toRoom(response)
                     }
@@ -211,10 +212,11 @@ internal class RoomService(
         }.connect()
 
         // ensure members are fetched and presence subscription is opened for each of them
-        val usersFetchResult = userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
-        if (usersFetchResult is Result.Failure) {
-            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
-        }
+        val usersFetchResult = listOf<String>()
+                //userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
+//        if (usersFetchResult is Result.Failure) {
+//            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
+//        }
 
         synchronized(buffer) {
             buffer.forEach { event ->
@@ -247,7 +249,7 @@ internal class RoomService(
                 sub.unsubscribe()
             }
         }
-        roomStore.clear()
+//        roomStore.clear()
     }
 
     private fun translateCursorEvent(event: ChatEvent): RoomEvent =
@@ -336,11 +338,11 @@ internal class RoomService(
                 roomConsumers[event.room.id]?.invoke(RoomEvent.UserLeft(event.user))
             is ChatEvent.PresenceChange ->
                 roomConsumers.keys.forEach { roomId ->
-                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
-                        roomConsumers[roomId]?.invoke(
-                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
-                        )
-                    }
+//                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
+//                        roomConsumers[roomId]?.invoke(
+//                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
+//                        )
+//                    }
                 }
         }
     }
