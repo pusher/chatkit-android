@@ -1,4 +1,4 @@
-@file:Suppress("unused")  // public api
+@file:Suppress("unused") // public api
 
 package com.pusher.chatkit.rooms
 
@@ -44,27 +44,27 @@ data class RoomViewType(val source: Room) { // JoinedRoom?
 
 sealed class JoinedRoomsViewModelState {
 
-    data class Initializing(val error: Error?): JoinedRoomsViewModelState()
+    data class Initializing(val error: Error?) : JoinedRoomsViewModelState()
 
     data class Connected(
-            val rooms: List<RoomViewType>,
-            val changeReason: ChangeReason?
-    ): JoinedRoomsViewModelState()
+        val rooms: List<RoomViewType>,
+        val changeReason: ChangeReason?
+    ) : JoinedRoomsViewModelState()
 
     class Degraded(
-            val rooms: List<RoomViewType>,
-            val changeReason: ChangeReason?,
+        val rooms: List<RoomViewType>,
+        val changeReason: ChangeReason?,
             // TODO: model degrade details
-            val error: Error
-    ): JoinedRoomsViewModelState()
+        val error: Error
+    ) : JoinedRoomsViewModelState()
 
-    object Closed: JoinedRoomsViewModelState()
+    object Closed : JoinedRoomsViewModelState()
 
     sealed class ChangeReason {
-        data class ItemInserted(val position: Int): ChangeReason()
-        data class ItemMoved(val fromPosition: Int, val toPosition: Int): ChangeReason()
-        data class ItemChanged(val position: Int, val previousValue: RoomViewType): ChangeReason()
-        data class ItemRemoved(val position: Int, val previousValue: RoomViewType): ChangeReason()
+        data class ItemInserted(val position: Int) : ChangeReason()
+        data class ItemMoved(val fromPosition: Int, val toPosition: Int) : ChangeReason()
+        data class ItemChanged(val position: Int, val previousValue: RoomViewType) : ChangeReason()
+        data class ItemRemoved(val position: Int, val previousValue: RoomViewType) : ChangeReason()
     }
 }
 
@@ -72,5 +72,4 @@ sealed class JoinedRoomsViewModelState {
 class JoinedRoomsViewModel(private val providerFactory: Any/*JoinedRoomsProviderFactory*/) : Any()/*ViewModel*/ {
 
     val state: Lazy/*LiveData*/<JoinedRoomsViewModelState> = TODO()
-
 }

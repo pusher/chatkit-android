@@ -7,46 +7,44 @@ import elements.Error
 
 sealed class MessagesState {
 
-    data class Initializing(val error: Error? = null): MessagesState()
+    data class Initializing(val error: Error? = null) : MessagesState()
 
     data class Connected(
-            val messages: List<Message>,
-            val changeDescription: ChangeDescription?,
-            val paginationState: PaginationState
-    ): MessagesState()
+        val messages: List<Message>,
+        val changeDescription: ChangeDescription?,
+        val paginationState: PaginationState
+    ) : MessagesState()
 
     data class Degraded(
-            val messages: List<Message>,
-            val changeDescription: ChangeDescription?,
-            val paginationState: PaginationState,
-            val error: Error
-    ): MessagesState()
+        val messages: List<Message>,
+        val changeDescription: ChangeDescription?,
+        val paginationState: PaginationState,
+        val error: Error
+    ) : MessagesState()
 
-    object Closed: MessagesState()
+    object Closed : MessagesState()
 
     sealed class ChangeDescription {
 
         data class OlderMessagesFetched(
-                val fromPosition: Int,
-                val toPosition: Int
-        ): ChangeDescription()
+            val fromPosition: Int,
+            val toPosition: Int
+        ) : ChangeDescription()
 
         data class NewMessageReceived(
-                val position: Int
-        ): ChangeDescription()
+            val position: Int
+        ) : ChangeDescription()
 
         data class MessageUpdated(
-                val position: Int,
-                val previousValue: Message
-        ): ChangeDescription()
+            val position: Int,
+            val previousValue: Message
+        ) : ChangeDescription()
 
         data class MessageDeleted(
-                val position: Int,
-                val previousValue: Message
-        ): ChangeDescription()
-
+            val position: Int,
+            val previousValue: Message
+        ) : ChangeDescription()
     }
-
 }
 
 class MessagesProvider { // Repository?
@@ -59,5 +57,4 @@ class MessagesProvider { // Repository?
     }
 
     fun close() {}
-
 }

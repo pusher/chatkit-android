@@ -20,7 +20,7 @@ sealed class MessagePart {
     data class Inline(val mediaType: String, val content: String) : MessagePart()
     data class Link(val mediaType: String, val url: String) : MessagePart()
     data class Attachment(
-        val mediaType: String,  // TODO: get consensus, it's mimeType in the current swift design
+        val mediaType: String, // TODO: get consensus, it's mimeType in the current swift design
         val id: String,
         val downloadUrl: String,
         val size: Long,
