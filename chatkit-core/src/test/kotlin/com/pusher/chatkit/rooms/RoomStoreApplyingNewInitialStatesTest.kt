@@ -16,28 +16,28 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
     val subject by memoized { RoomStore() }
 
     val initialReadStates = listOf(
-            RoomReadStateApiType("1", 11, null),
-            RoomReadStateApiType("2", 22, null),
-            RoomReadStateApiType("3", 33, null)
+        RoomReadStateApiType("1", 11, null),
+        RoomReadStateApiType("2", 22, null),
+        RoomReadStateApiType("3", 33, null)
     )
     val initialMemberships = listOf(
-            RoomMembershipApiType("1", listOf("viv")),
-            RoomMembershipApiType("2", listOf("viv", "ham")),
-            RoomMembershipApiType("3", listOf("viv"))
+        RoomMembershipApiType("1", listOf("viv")),
+        RoomMembershipApiType("2", listOf("viv", "ham")),
+        RoomMembershipApiType("3", listOf("viv"))
     )
     val initialRooms = listOf(
-            simpleRoom("1", "one", false, null),
-            simpleRoom("2", "two", true, null),
-            simpleRoom("3", "three", false, mapOf("custom" to "data"))
+        simpleRoom("1", "one", false, null),
+        simpleRoom("2", "two", true, null),
+        simpleRoom("3", "three", false, mapOf("custom" to "data"))
     )
 
     val currentUser = User(
-            id = "testUser",
-            name = "Test User",
-            createdAt = "blah",
-            updatedAt = "blah",
-            customData = null,
-            avatarURL = null
+        id = "testUser",
+        name = "Test User",
+        createdAt = "blah",
+        updatedAt = "blah",
+        customData = null,
+        avatarURL = null
     )
 
     fun applyInitialState(
@@ -45,21 +45,21 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
         readStates: List<RoomReadStateApiType>? = null,
         memberships: List<RoomMembershipApiType>? = null
     ) =
-            subject.applyUserSubscriptionEvent(
-                    UserSubscriptionEvent.InitialState(
-                            currentUser = currentUser,
-                            rooms = rooms ?: initialRooms,
-                            readStates = readStates ?: initialReadStates,
-                            memberships = memberships ?: initialMemberships
-                    )
+        subject.applyUserSubscriptionEvent(
+            UserSubscriptionEvent.InitialState(
+                currentUser = currentUser,
+                rooms = rooms ?: initialRooms,
+                readStates = readStates ?: initialReadStates,
+                memberships = memberships ?: initialMemberships
             )
+        )
 
     describe("A RoomStore") {
         beforeEachTest {
             subject.initialiseContents(
-                    initialRooms,
-                    memberships = initialMemberships,
-                    readStates = initialReadStates
+                initialRooms,
+                memberships = initialMemberships,
+                readStates = initialReadStates
             )
         }
 
@@ -67,12 +67,12 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
             lateinit var events: List<UserInternalEvent>
             beforeEachTest {
                 events = subject.applyUserSubscriptionEvent(
-                        UserSubscriptionEvent.InitialState(
-                                currentUser = currentUser,
-                                rooms = initialRooms,
-                                memberships = initialMemberships,
-                                readStates = initialReadStates
-                        )
+                    UserSubscriptionEvent.InitialState(
+                        currentUser = currentUser,
+                        rooms = initialRooms,
+                        memberships = initialMemberships,
+                        readStates = initialReadStates
+                    )
                 )
             }
 
@@ -88,7 +88,7 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            rooms = listOf(initialRooms[0], newRoom, initialRooms[2])
+                        rooms = listOf(initialRooms[0], newRoom, initialRooms[2])
                     )
                 }
 
@@ -107,9 +107,9 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            rooms = initialRooms + newRoom,
-                            memberships = initialMemberships + newMembers,
-                            readStates = initialReadStates + newReadState
+                        rooms = initialRooms + newRoom,
+                        memberships = initialMemberships + newMembers,
+                        readStates = initialReadStates + newReadState
                     )
                 }
 
@@ -137,8 +137,8 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            rooms = initialRooms + newRoom,
-                            memberships = initialMemberships + newMembers
+                        rooms = initialRooms + newRoom,
+                        memberships = initialMemberships + newMembers
                     )
                 }
 
@@ -164,7 +164,9 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            rooms = listOf(initialRooms[0], initialRooms[2])
+                        rooms = listOf(initialRooms[0], initialRooms[2]),
+                        readStates = listOf(initialReadStates[0], initialReadStates[2]),
+                        memberships = listOf(initialMemberships[0], initialMemberships[2])
                     )
                 }
 
@@ -182,7 +184,11 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            readStates = listOf(initialReadStates[0], newReadState, initialReadStates[2])
+                        readStates = listOf(
+                            initialReadStates[0],
+                            newReadState,
+                            initialReadStates[2]
+                        )
                     )
                 }
 
@@ -198,7 +204,7 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            readStates = listOf(initialReadStates[0], initialReadStates[2])
+                        readStates = listOf(initialReadStates[0], initialReadStates[2])
                     )
                 }
 
@@ -213,7 +219,7 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            readStates = initialReadStates + newReadState
+                        readStates = initialReadStates + newReadState
                     )
                 }
 
@@ -225,12 +231,17 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
         describe("differences in memberships") {
             describe("replacement state with a new member added") {
-                val newMemberships = RoomMembershipApiType(initialRooms[0].id, listOf("mike", "viv"))
+                val newMemberships =
+                    RoomMembershipApiType(initialRooms[0].id, listOf("mike", "viv"))
                 lateinit var events: List<UserInternalEvent>
 
                 beforeEachTest {
                     events = applyInitialState(
-                            memberships = listOf(newMemberships, initialMemberships[1], initialMemberships[2])
+                        memberships = listOf(
+                            newMemberships,
+                            initialMemberships[1],
+                            initialMemberships[2]
+                        )
                     )
                 }
 
@@ -247,7 +258,11 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            memberships = listOf(initialMemberships[0], newMemberships, initialMemberships[2])
+                        memberships = listOf(
+                            initialMemberships[0],
+                            newMemberships,
+                            initialMemberships[2]
+                        )
                     )
                 }
 
@@ -264,11 +279,11 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
                 val newReadState = RoomReadStateApiType(initialRooms[1].id, 23, null)
                 val newRoom = with(initialRooms[1]) {
                     simpleRoom(
-                            id = id,
-                            name = name,
-                            customData = customData,
-                            isPrivate = private,
-                            lastMessageAt = "2020-01-07T14:10:38Z"
+                        id = id,
+                        name = name,
+                        customData = customData,
+                        isPrivate = private,
+                        lastMessageAt = "2020-01-07T14:10:38Z"
                     )
                 }
 
@@ -276,8 +291,12 @@ class RoomStoreApplyingNewInitialStatesTest : Spek({
 
                 beforeEachTest {
                     events = applyInitialState(
-                            rooms = listOf(initialRooms[0], newRoom, initialRooms[2]),
-                            readStates = listOf(initialReadStates[0], newReadState, initialReadStates[2])
+                        rooms = listOf(initialRooms[0], newRoom, initialRooms[2]),
+                        readStates = listOf(
+                            initialReadStates[0],
+                            newReadState,
+                            initialReadStates[2]
+                        )
                     )
                 }
 
