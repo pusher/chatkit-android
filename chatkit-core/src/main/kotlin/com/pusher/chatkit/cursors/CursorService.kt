@@ -23,7 +23,7 @@ class CursorService(
     private val client: PlatformClient,
     private val logger: Logger
 ) {
-    private val cursorStore = CursorStore()
+//    private val cursorStore = CursorStore()
 
     private val setReadCursorThrottler =
             Throttler { options: RequestOptions ->
@@ -34,11 +34,11 @@ class CursorService(
             }
 
     internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
-        cursorStore.initialiseContents(event.readStates.mapNotNull { it.cursor })
+//        cursorStore.initialiseContents(event.readStates.mapNotNull { it.cursor })
     }
 
     fun close() {
-        cursorStore.clear()
+//        cursorStore.clear()
     }
 
     fun setReadCursor(
@@ -52,19 +52,21 @@ class CursorService(
                     body = """{ "position" : $position }"""
             )
     ).mapResult {
-        cursorStore[userId] += Cursor(
-                userId = userId,
-                roomId = roomId,
-                position = position
-        )
+//        cursorStore[userId] += Cursor(
+//                userId = userId,
+//                roomId = roomId,
+//                position = position
+//        )
     }
 
     // TODO v2: this signature isn't correct, the cursor should be an optional
     // e.g. for the case where you have a new room with no messages (or cursors) yet!
     // The error should additionally be more descriptive instead of just assuming you aren't
     // subscribed to the room!
-    fun getReadCursor(userId: String, roomId: String): Result<Cursor, Error> =
-            (cursorStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure())
+    fun getReadCursor(userId: String, roomId: String) {
+            //: Result<Cursor?, Error> {
+//        cursorStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure()
+    }
 
     private fun notSubscribedToRoom(name: String) =
             Errors.other("Must be subscribed to room $name to access member's read cursors")
@@ -72,10 +74,14 @@ class CursorService(
     fun subscribeForRoom(
         roomId: String,
         consumer: (ChatEvent) -> Unit
-    ) = subscribe(
-            "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}",
-            consumer
     )
+//           : ResolvableSubscription<CursorSubscriptionEvent>
+    {
+//        return subscribe(
+//                "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}",
+//                consumer
+//        )
+    }
 
     private fun subscribe(
         path: String,
@@ -92,11 +98,12 @@ class CursorService(
             logger = logger
     )
 
-    internal fun applyEvent(event: UserSubscriptionEvent) =
-            cursorStore.applyEvent(event)
+    internal fun applyEvent(event: UserSubscriptionEvent){}
+//            cursorStore.applyEvent(event)
 
-    private fun applyEvent(event: CursorSubscriptionEvent) =
-            cursorStore.applyEvent(event).map(::enrichEvent)
+    private fun applyEvent(event: CursorSubscriptionEvent)
+            = listOf<CursorSubscriptionEvent>(event).map(::enrichEvent)
+//            cursorStore.applyEvent(event).map(::enrichEvent)
 
     private fun enrichEvent(event: CursorSubscriptionEvent): ChatEvent =
             when (event) {
