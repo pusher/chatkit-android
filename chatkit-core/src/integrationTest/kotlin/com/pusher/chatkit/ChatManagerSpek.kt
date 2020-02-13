@@ -5,7 +5,6 @@ import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.messages.multipart.Message
 import com.pusher.chatkit.messages.multipart.PartType
 import com.pusher.chatkit.messages.multipart.Payload

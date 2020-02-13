@@ -2,7 +2,6 @@ package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.TestFileReader
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState

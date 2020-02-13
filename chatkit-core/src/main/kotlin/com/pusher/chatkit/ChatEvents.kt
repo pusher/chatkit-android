@@ -2,7 +2,6 @@ package com.pusher.chatkit
 
 import com.pusher.chatkit.ChatEvent.AddedToRoom
 import com.pusher.chatkit.ChatEvent.ErrorOccurred
-import com.pusher.chatkit.ChatEvent.NewReadCursor
 import com.pusher.chatkit.ChatEvent.NoEvent
 import com.pusher.chatkit.ChatEvent.PresenceChange
 import com.pusher.chatkit.ChatEvent.RemovedFromRoom
@@ -12,7 +11,6 @@ import com.pusher.chatkit.ChatEvent.UserJoinedRoom
 import com.pusher.chatkit.ChatEvent.UserLeftRoom
 import com.pusher.chatkit.ChatEvent.UserStartedTyping
 import com.pusher.chatkit.ChatEvent.UserStoppedTyping
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.users.User
@@ -32,7 +30,7 @@ data class ChatListeners @JvmOverloads constructor(
     val onRemovedFromRoom: (String) -> Unit = { },
     val onRoomUpdated: (Room) -> Unit = { },
     val onRoomDeleted: (String) -> Unit = { },
-    val onNewReadCursor: (Cursor) -> Unit = { },
+//    val onNewReadCursor: (Cursor) -> Unit = { },
     val onErrorOccurred: (Error) -> Unit = { }
 )
 
@@ -57,7 +55,7 @@ internal fun ChatListeners.toCallback(): ChatManagerEventConsumer = { event ->
         is RoomUpdated -> onRoomUpdated(event.room)
         is RoomDeleted -> onRoomDeleted(event.roomId)
         is ErrorOccurred -> onErrorOccurred(event.error)
-        is NewReadCursor -> onNewReadCursor(event.cursor)
+//        is NewReadCursor -> onNewReadCursor(event.cursor)
         is NoEvent -> Unit // Ignore
     }
 }
@@ -77,6 +75,6 @@ sealed class ChatEvent {
     data class RoomUpdated internal constructor(val room: Room) : ChatEvent()
     data class RoomDeleted internal constructor(val roomId: String) : ChatEvent()
     data class ErrorOccurred internal constructor(val error: elements.Error) : ChatEvent()
-    data class NewReadCursor internal constructor(val cursor: Cursor) : ChatEvent()
+//    data class NewReadCursor internal constructor(val cursor: Cursor) : ChatEvent()
     object NoEvent : ChatEvent()
 }

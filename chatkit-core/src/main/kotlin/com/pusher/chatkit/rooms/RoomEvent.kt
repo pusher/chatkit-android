@@ -1,6 +1,5 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.users.User
 import elements.Error
@@ -24,8 +23,8 @@ sealed class RoomEvent {
     data class UserJoined(val user: User) : RoomEvent()
     data class UserLeft(val user: User) : RoomEvent()
     data class PresenceChange(val user: User, val currentState: Presence, val prevState: Presence) : RoomEvent()
-    data class InitialReadCursors(val cursor: List<Cursor>) : RoomEvent()
-    data class NewReadCursor(val cursor: Cursor) : RoomEvent()
+//    data class InitialReadCursors(val cursor: List<Cursor>) : RoomEvent()
+//    data class NewReadCursor(val cursor: Cursor) : RoomEvent()
     data class RoomUpdated(val room: Room) : RoomEvent()
     data class RoomDeleted(val roomId: String) : RoomEvent()
     data class ErrorOccurred(val error: Error) : RoomEvent()
@@ -46,7 +45,7 @@ data class RoomListeners @JvmOverloads constructor(
     val onUserJoined: (User) -> Unit = {},
     val onUserLeft: (User) -> Unit = {},
     val onPresenceChange: (User) -> Unit = {},
-    val onNewReadCursor: (Cursor) -> Unit = {},
+//    val onNewReadCursor: (Cursor) -> Unit = {},
     val onRoomUpdated: (Room) -> Unit = {},
     val onRoomDeleted: (String) -> Unit = {},
     val onErrorOccurred: (Error) -> Unit = {}
@@ -62,7 +61,7 @@ internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
         is RoomEvent.UserJoined -> onUserJoined(event.user)
         is RoomEvent.UserLeft -> onUserLeft(event.user)
         is RoomEvent.PresenceChange -> onPresenceChange(event.user)
-        is RoomEvent.NewReadCursor -> onNewReadCursor(event.cursor)
+//        is RoomEvent.NewReadCursor -> onNewReadCursor(event.cursor)
         is RoomEvent.RoomUpdated -> onRoomUpdated(event.room)
         is RoomEvent.RoomDeleted -> onRoomDeleted(event.roomId)
         is RoomEvent.ErrorOccurred -> onErrorOccurred(event.error)

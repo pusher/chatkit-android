@@ -4,14 +4,12 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.Rooms.GENERAL
 import com.pusher.chatkit.Users.ALICE
 import com.pusher.chatkit.Users.PUSHERINO
-import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.RoomEvent
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.newRoom
 import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
-import com.pusher.platform.network.wait
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it

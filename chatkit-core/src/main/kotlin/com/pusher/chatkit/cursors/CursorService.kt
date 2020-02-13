@@ -86,6 +86,7 @@ class CursorService(
 //        )
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun subscribe(
         path: String,
         consumer: ChatManagerEventConsumer
@@ -93,8 +94,12 @@ class CursorService(
             client = client,
             path = path,
             listeners = SubscriptionListeners(
-                    onEvent = { event -> applyEvent(event.body).forEach(consumer) },
-                    onError = { error -> applyEvent(CursorSubscriptionEvent.OnError(error)).forEach(consumer) }
+                    onEvent = {
+                       // event -> applyEvent(event.body).forEach(consumer)
+                    },
+                    onError = {
+                       // error -> applyEvent(CursorSubscriptionEvent.OnError(error)).forEach(consumer)
+                    }
             ),
             messageParser = CursorSubscriptionEventParser,
             description = "Cursor user $path",
@@ -108,10 +113,11 @@ class CursorService(
     private fun applyEvent(event: CursorSubscriptionEvent)
             = listOf<CursorSubscriptionEvent>(event).map(::enrichEvent)
 //            cursorStore.applyEvent(event).map(::enrichEvent)
-
-    private fun enrichEvent(event: CursorSubscriptionEvent): ChatEvent =
-            when (event) {
-                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
-                else -> ChatEvent.NoEvent
-            }
+    @Suppress("UNUSED_PARAMETER")
+    private fun enrichEvent(event: CursorSubscriptionEvent) {}
+            //: ChatEvent =
+//            when (event) {
+//                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
+//                else -> ChatEvent.NoEvent
+//            }
 }

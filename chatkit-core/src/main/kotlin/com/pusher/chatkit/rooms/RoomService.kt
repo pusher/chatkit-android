@@ -251,7 +251,7 @@ internal class RoomService(
 
     private fun translateCursorEvent(event: ChatEvent): RoomEvent =
             when (event) {
-                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
+//                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
                 else -> RoomEvent.NoEvent
             }
 
