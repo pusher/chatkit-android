@@ -27,5 +27,4 @@ internal class DebounceTokenProvider(private val original: TokenProvider) : Toke
         original.clearToken(token)
         pending = null
     }
-
 }

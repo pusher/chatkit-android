@@ -18,9 +18,9 @@ import elements.Subscription
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class CurrentUser(
-        private val syncCurrentUser: SynchronousCurrentUser
+    private val syncCurrentUser: SynchronousCurrentUser
 ) {
-    //Delegate fields for the underlying SynchronousCurrentUsers
+    // Delegate fields for the underlying SynchronousCurrentUsers
     val id: String
         get() = syncCurrentUser.id
 
@@ -35,7 +35,6 @@ class CurrentUser(
 
     val rooms
         get() = syncCurrentUser.rooms
-
 
     fun users(callback: (Result<List<User>, Error>) -> Unit) =
             makeCallback({ syncCurrentUser.users }, callback)
@@ -73,39 +72,40 @@ class CurrentUser(
             makeCallback({ syncCurrentUser.addUsersToRoom(roomId, userIds) }, callback)
 
     fun removeUsersFromRoom(
-            roomId: String,
-            userIds: List<String>,
-            callback: (Result<Unit, Error>) -> Unit
+        roomId: String,
+        userIds: List<String>,
+        callback: (Result<Unit, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.removeUsersFromRoom(roomId, userIds) }, callback)
 
     @JvmOverloads
     fun createRoom(
-            id: String? = null,
-            name: String,
-            pushNotificationTitleOverride: String? = null,
-            isPrivate: Boolean = false,
-            customData: CustomData? = null,
-            userIds: List<String> = emptyList(),
-            callback: (Result<Room, Error>) -> Unit
+        id: String? = null,
+        name: String,
+        pushNotificationTitleOverride: String? = null,
+        isPrivate: Boolean = false,
+        customData: CustomData? = null,
+        userIds: List<String> = emptyList(),
+        callback: (Result<Room, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.createRoom(id, name, pushNotificationTitleOverride, isPrivate, customData, userIds) }, callback)
 
     @JvmOverloads
     fun updateRoom(
-            room: Room,
-            name: String,
-            pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
-            isPrivate: Boolean? = null,
-            customData: CustomData? = null,
-            callback: (Result<Unit, Error>) -> Unit
+        room: Room,
+        name: String,
+        pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
+        isPrivate: Boolean? = null,
+        customData: CustomData? = null,
+        callback: (Result<Unit, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.updateRoom(room, name, pushNotificationTitleOverride, isPrivate, customData) }, callback)
 
     @JvmOverloads
-    fun updateRoom(roomId: String,
-                   name: String,
-                   pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
-                   isPrivate: Boolean? = null,
-                   customData: CustomData? = null,
-                   callback: (Result<Unit, Error>) -> Unit
+    fun updateRoom(
+        roomId: String,
+        name: String,
+        pushNotificationTitleOverride: RoomPushNotificationTitle? = null,
+        isPrivate: Boolean? = null,
+        customData: CustomData? = null,
+        callback: (Result<Unit, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.updateRoom(roomId, name, pushNotificationTitleOverride, isPrivate, customData) }, callback)
 
     fun deleteRoom(room: Room, callback: (Result<String, Error>) -> Unit) =
@@ -129,130 +129,130 @@ class CurrentUser(
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            room: Room,
-            listeners: RoomListeners,
-            messageLimit: Int = 10,
-            callback: (Subscription) -> Unit
+        room: Room,
+        listeners: RoomListeners,
+        messageLimit: Int = 10,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            roomId: String,
-            listeners: RoomListeners,
-            messageLimit: Int = 10,
-            callback: (Subscription) -> Unit
+        roomId: String,
+        listeners: RoomListeners,
+        messageLimit: Int = 10,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            room: Room,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer,
-            callback: (Subscription) -> Unit
+        room: Room,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            roomId: String,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer,
-            callback: (Subscription) -> Unit
+        roomId: String,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoom(roomId, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            room: Room,
-            listeners: RoomListeners,
-            messageLimit: Int = 10,
-            callback: (Subscription) -> Unit
+        room: Room,
+        listeners: RoomListeners,
+        messageLimit: Int = 10,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(room, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            roomId: String,
-            listeners: RoomListeners,
-            messageLimit: Int = 10,
-            callback: (Subscription) -> Unit
+        roomId: String,
+        listeners: RoomListeners,
+        messageLimit: Int = 10,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(roomId, listeners, messageLimit) }, callback)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            room: Room,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer,
-            callback: (Subscription) -> Unit
+        room: Room,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(room, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            roomId: String,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer,
-            callback: (Subscription) -> Unit
+        roomId: String,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer,
+        callback: (Subscription) -> Unit
     ) = makeSingleCallback({ syncCurrentUser.subscribeToRoomMultipart(roomId, messageLimit, consumer) }, callback)
 
     @JvmOverloads
     @Deprecated("use fetchMultipartMessages")
     fun fetchMessages(
-            roomId: String,
-            initialId: Int? = null,
-            direction: Direction = Direction.OLDER_FIRST,
-            limit: Int = 10,
-            callback: (Result<List<Message>, Error>) -> Unit
+        roomId: String,
+        initialId: Int? = null,
+        direction: Direction = Direction.OLDER_FIRST,
+        limit: Int = 10,
+        callback: (Result<List<Message>, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.fetchMessages(roomId, initialId, direction, limit) }, callback)
 
     @JvmOverloads
     fun fetchMultipartMessages(
-            roomId: String,
-            initialId: Int? = null,
-            direction: Direction = Direction.OLDER_FIRST,
-            limit: Int = 10,
-            callback: (Result<List<com.pusher.chatkit.messages.multipart.Message>, Error>) -> Unit
+        roomId: String,
+        initialId: Int? = null,
+        direction: Direction = Direction.OLDER_FIRST,
+        limit: Int = 10,
+        callback: (Result<List<com.pusher.chatkit.messages.multipart.Message>, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.fetchMultipartMessages(roomId, initialId, direction, limit) }, callback)
 
     @JvmOverloads
     @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
-            room: Room,
-            messageText: String,
-            attachment: GenericAttachment = NoAttachment,
-            callback: (Result<Int, Error>) -> Unit
+        room: Room,
+        messageText: String,
+        attachment: GenericAttachment = NoAttachment,
+        callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMessage(room, messageText, attachment) }, callback)
 
     @JvmOverloads
     @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
-            roomId: String,
-            messageText: String,
-            attachment: GenericAttachment = NoAttachment,
-            callback: (Result<Int, Error>) -> Unit
+        roomId: String,
+        messageText: String,
+        attachment: GenericAttachment = NoAttachment,
+        callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMessage(roomId, messageText, attachment) }, callback)
 
     fun sendSimpleMessage(
-            roomId: String,
-            messageText: String,
-            callback: (Result<Int, Error>) -> Unit
+        roomId: String,
+        messageText: String,
+        callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendSimpleMessage(roomId, messageText) }, callback)
 
     fun sendSimpleMessage(
-            room: Room,
-            messageText: String,
-            callback: (Result<Int, Error>) -> Unit
+        room: Room,
+        messageText: String,
+        callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendSimpleMessage(room, messageText) }, callback)
 
     fun sendMultipartMessage(
-            room: Room,
-            parts: List<NewPart>,
-            callback: (Result<Int, Error>) -> Unit
+        room: Room,
+        parts: List<NewPart>,
+        callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(room, parts) }, callback)
 
     fun sendMultipartMessage(
-            roomId: String,
-            parts: List<NewPart>,
-            callback: (Result<Int, Error>) -> Unit
+        roomId: String,
+        parts: List<NewPart>,
+        callback: (Result<Int, Error>) -> Unit
     ) = makeCallback({ syncCurrentUser.sendMultipartMessage(roomId, parts) }, callback)
 
     fun isTypingIn(room: Room, callback: (Result<Unit, Error>) -> Unit) =

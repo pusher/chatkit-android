@@ -18,9 +18,11 @@ internal class JoinedRoomApiMapper {
                     null
             )
 
-    private fun toRoom(room: JoinedRoomApiType,
-                       membership: RoomMembershipApiType,
-                       readState: RoomReadStateApiType?) =
+    private fun toRoom(
+        room: JoinedRoomApiType,
+        membership: RoomMembershipApiType,
+        readState: RoomReadStateApiType?
+    ) =
             Room(
                     room.id,
                     room.createdById,
@@ -36,9 +38,11 @@ internal class JoinedRoomApiMapper {
                     membership.userIds.toSet()
             )
 
-    private fun toRoom(room: JoinedRoomApiType,
-                       membership: RoomMembershipApiType,
-                       unreadCount: Int) =
+    private fun toRoom(
+        room: JoinedRoomApiType,
+        membership: RoomMembershipApiType,
+        unreadCount: Int
+    ) =
             Room(
                     room.id,
                     room.createdById,
@@ -53,5 +57,4 @@ internal class JoinedRoomApiMapper {
                     room.deletedAt,
                     membership.userIds.toSet()
             )
-
 }

@@ -29,4 +29,3 @@ class FutureValue<A>(private val wait: Wait = Wait.For(10, TimeUnit.SECONDS)) {
  * [SynchronousQueue] doesn't take nullable objects so have to wrap it on this.
  */
 private data class Value<A>(val value: A)
-

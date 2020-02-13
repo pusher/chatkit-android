@@ -22,13 +22,13 @@ import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.util.Result.Failure
 import com.pusher.util.Result.Success
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.describe
+import org.jetbrains.spek.api.dsl.it
 
 object RoomSpek : Spek({
     beforeEachTest(::tearDownInstance)
@@ -91,7 +91,7 @@ object RoomSpek : Spek({
 
             val alice = chatFor(ALICE).connect().assumeSuccess()
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
-            
+
             var lastMessageAtRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
             var unreadCountRoomUpdatedEvent by FutureValue<RoomEvent.RoomUpdated>()
             alice.subscribeToRoomMultipart(alice.generalRoom) { event ->
@@ -204,11 +204,10 @@ object RoomSpek : Spek({
                 }
             }
 
-            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) // alice and super user
             superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
             roomUpdated.await()
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
-
         }
 
         it("always has the correct memberUserIds after message is sent to a room") {
@@ -226,7 +225,7 @@ object RoomSpek : Spek({
                 }
             }
 
-            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) //alice and super user
+            assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2) // alice and super user
             superUser.sendSimpleMessage(superUser.generalRoom, "hello").assumeSuccess()
             roomUpdated.await()
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
@@ -264,7 +263,7 @@ object RoomSpek : Spek({
 
             val pusherino = chatFor(PUSHERINO).connect().assumeSuccess()
 
-            val room = pusherino.createRoom(name =  GENERAL).assumeSuccess()
+            val room = pusherino.createRoom(name = GENERAL).assumeSuccess()
 
             assertThat(room.name).isEqualTo(GENERAL)
             assertThat(room.id).isNotEmpty()
@@ -324,7 +323,7 @@ object RoomSpek : Spek({
             setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE))
 
             var pusherinoAddedToRoomEvent by FutureValue<ChatEvent.AddedToRoom>()
-            val pusherino = chatFor(PUSHERINO).connect{event ->
+            val pusherino = chatFor(PUSHERINO).connect { event ->
                 when (event) {
                     is ChatEvent.AddedToRoom -> {
                         pusherinoAddedToRoomEvent = event
@@ -332,7 +331,7 @@ object RoomSpek : Spek({
                 }
             }.assumeSuccess()
 
-            val room = pusherino.createRoom(name =  GENERAL, userIds = listOf(ALICE)).assumeSuccess()
+            val room = pusherino.createRoom(name = GENERAL, userIds = listOf(ALICE)).assumeSuccess()
 
             assertThat(room.memberUserIds).containsExactly(ALICE, PUSHERINO)
             assertThat(pusherino.rooms[0].memberUserIds).containsExactly(ALICE, PUSHERINO)
@@ -600,14 +599,14 @@ object RoomSpek : Spek({
                 }
             }
 
-            //do something else to ensure that no user joined events were actually fired
+            // do something else to ensure that no user joined events were actually fired
             superUser.updateRoom(superUser.generalRoom, customData = mapOf("key" to "data")).assumeSuccess()
 
             assertThat(roomUpdatedEvent.room.customData).containsExactly("key", "data")
             assertThat(userJoined.get()).isEqualTo(false)
             assertThat(superUser.generalRoom.memberUserIds.size).isEqualTo(2)
 
-            //ensure that one new user did join and calls the UserJoined event
+            // ensure that one new user did join and calls the UserJoined event
             superUser.addUsersToRoom(superUser.generalRoom.id, listOf(ALICE))
 
             assertThat(userJoinedEvent.user.id).isEqualTo(ALICE)
@@ -640,11 +639,11 @@ object RoomSpek : Spek({
                 }
             }
 
-            //send a message and also a read cursor
+            // send a message and also a read cursor
             superUser.sendSimpleMessage(superUser.generalRoom, "hello")
             readCursorCountdownLatch.await(5, TimeUnit.SECONDS)
 
-            //update the room info
+            // update the room info
             val customDataUpdateTwo = mapOf("author" to "danielle")
             superUser.updateRoom(superUser.generalRoom, superUser.generalRoom.name,
                     customData = customDataUpdateTwo)

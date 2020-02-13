@@ -12,7 +12,6 @@ import com.pusher.chatkit.test.InstanceActions.newUsers
 import com.pusher.chatkit.test.InstanceSupervisor.setUpInstanceWith
 import com.pusher.chatkit.test.InstanceSupervisor.tearDownInstance
 import com.pusher.chatkit.util.FutureValue
-import junit.framework.Assert.assertNotNull
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

@@ -1,6 +1,10 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.rooms.api.*
+import com.pusher.chatkit.rooms.api.CreateRoomResponse
+import com.pusher.chatkit.rooms.api.JoinRoomResponse
+import com.pusher.chatkit.rooms.api.JoinedRoomApiType
+import com.pusher.chatkit.rooms.api.RoomMembershipApiType
+import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserInternalEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent
 
@@ -31,9 +35,11 @@ internal class RoomStore {
         }
     }
 
-    internal fun initialiseContents(rooms: List<JoinedRoomApiType>,
-                                    memberships: List<RoomMembershipApiType>,
-                                    readStates: List<RoomReadStateApiType>) {
+    internal fun initialiseContents(
+        rooms: List<JoinedRoomApiType>,
+        memberships: List<RoomMembershipApiType>,
+        readStates: List<RoomReadStateApiType>
+    ) {
 
         synchronized(this) {
             clear()
@@ -70,7 +76,7 @@ internal class RoomStore {
     }
 
     fun applyUserSubscriptionEvent(
-            event: UserSubscriptionEvent
+        event: UserSubscriptionEvent
     ): List<UserInternalEvent> = synchronized(this) {
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
@@ -160,9 +166,9 @@ internal class RoomStore {
 private class JoinedRoomInternalMapper {
 
     fun toRoom(
-            room: JoinedRoomApiType,
-            members: Set<String>,
-            unreadCount: Int?
+        room: JoinedRoomApiType,
+        members: Set<String>,
+        unreadCount: Int?
     ) = Room(
             room.id,
             room.createdById,
@@ -177,5 +183,4 @@ private class JoinedRoomInternalMapper {
             room.deletedAt,
             members
     )
-
 }

@@ -8,8 +8,8 @@ import java.util.concurrent.Future
  * Used to do a trailing throttle of actions.
  */
 internal class Throttler<A, B>(
-        private val delay: Long = 500,
-        private val action: (A) -> B
+    private val delay: Long = 500,
+    private val action: (A) -> B
 ) {
     private val updateLock = object {}
     private var target: A? = null
