@@ -26,6 +26,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.5.2.0'
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
+        classpath 'com.dicedmelon.gradle:jacoco-android:0.1.4'
     }
 }
 
@@ -65,5 +66,5 @@ static def tasksFor(project, tasks) {
 
 task ciBuild(type: GradleBuild) {
     tasks = tasksFor('chatkit-core', ['assemble','jacocoTestReport', 'test']) +
-            tasksFor('chatkit-android', ['assembleDebug', 'test', 'lintDebug'])
+            tasksFor('chatkit-android', ['assembleDebug', 'jacocoTestReport', 'test', 'lintDebug'])
 }

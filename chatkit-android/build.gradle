@@ -4,6 +4,7 @@ plugins {
     id 'de.mannodermaus.android-junit5'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'jacoco-android'
 }
 
 apply plugin: 'org.jetbrains.dokka'
@@ -163,4 +164,14 @@ publishing {
             }
         }
     }
+}
+
+jacoco {
+    toolVersion = "0.8.4"
+}
+
+jacocoAndroidUnitTestReport {
+    xml.enabled = true
+    html.enabled = false
+    csv.enabled = false
 }
