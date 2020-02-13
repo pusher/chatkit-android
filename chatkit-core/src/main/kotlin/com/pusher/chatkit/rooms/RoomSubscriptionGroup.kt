@@ -44,13 +44,13 @@ internal class RoomSubscriptionGroup(
 
     override fun connect(): Subscription {
         roomSubscription.await()
-        cursorsSubscription.await()
+//        cursorsSubscription.await()
 
         return this
     }
 
     override fun unsubscribe() {
         roomSubscription.unsubscribe()
-        cursorsSubscription.unsubscribe()
+//        cursorsSubscription.unsubscribe()
     }
 }

@@ -1,6 +1,5 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.messages.Message
 import elements.Error
 
 internal typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
@@ -12,7 +11,7 @@ internal typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
  * Contrast with RoomEvent, the user facing events which are related to a room.
  */
 internal sealed class RoomSubscriptionEvent {
-    data class NewMessage(val message: Message) : RoomSubscriptionEvent()
+//    data class NewMessage(val message: Message) : RoomSubscriptionEvent()
     data class NewMultipartMessage(val message: V3MessageBody) : RoomSubscriptionEvent()
     data class MessageDeleted(val messageId: Int) : RoomSubscriptionEvent()
     data class UserIsTyping(val userId: String) : RoomSubscriptionEvent()

@@ -8,7 +8,6 @@ import com.pusher.chatkit.files.AttachmentType.IMAGE
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.messages.Direction
-import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.messages.multipart.PartType
 import com.pusher.chatkit.messages.multipart.Payload
@@ -23,8 +22,6 @@ import com.pusher.chatkit.test.run
 import com.pusher.chatkit.util.FutureValue
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.net.URL
-import java.util.Date
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.spek.api.Spek

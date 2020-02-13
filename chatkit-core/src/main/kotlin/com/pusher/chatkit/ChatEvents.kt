@@ -1,7 +1,6 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.ChatEvent.AddedToRoom
-import com.pusher.chatkit.ChatEvent.CurrentUserReceived
 import com.pusher.chatkit.ChatEvent.ErrorOccurred
 import com.pusher.chatkit.ChatEvent.NewReadCursor
 import com.pusher.chatkit.ChatEvent.NoEvent
@@ -23,7 +22,7 @@ import elements.Error
  * Used along with [SynchronousChatManager] to observe global changes in the chat.
  */
 data class ChatListeners @JvmOverloads constructor(
-    val onCurrentUserReceived: (SynchronousCurrentUser) -> Unit = {},
+//    val onCurrentUserReceived: (SynchronousCurrentUser) -> Unit = {},
     val onUserStartedTyping: (User, Room) -> Unit = { _, _ -> },
     val onUserStoppedTyping: (User, Room) -> Unit = { _, _ -> },
     val onUserJoinedRoom: (User, Room) -> Unit = { _, _ -> },
@@ -47,7 +46,7 @@ typealias ChatManagerEventConsumer = (ChatEvent) -> Unit
  */
 internal fun ChatListeners.toCallback(): ChatManagerEventConsumer = { event ->
     when (event) {
-        is CurrentUserReceived -> onCurrentUserReceived(event.currentUser)
+//        is CurrentUserReceived -> onCurrentUserReceived(event.currentUser)
         is UserStartedTyping -> onUserStartedTyping(event.user, event.room)
         is UserStoppedTyping -> onUserStoppedTyping(event.user, event.room)
         is UserJoinedRoom -> onUserJoinedRoom(event.user, event.room)
@@ -67,7 +66,7 @@ internal fun ChatListeners.toCallback(): ChatManagerEventConsumer = { event ->
  * Same as [ChatListeners] but using events instead of individual listeners.
  */
 sealed class ChatEvent {
-    data class CurrentUserReceived internal constructor(val currentUser: SynchronousCurrentUser) : ChatEvent()
+//    data class CurrentUserReceived internal constructor(val currentUser: SynchronousCurrentUser) : ChatEvent()
     data class UserStartedTyping internal constructor(val user: User, val room: Room) : ChatEvent()
     data class UserStoppedTyping internal constructor(val user: User, val room: Room) : ChatEvent()
     data class UserJoinedRoom internal constructor(val user: User, val room: Room) : ChatEvent()

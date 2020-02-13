@@ -32,7 +32,7 @@ class CursorService(
                         responseParser = { it.parseAs() }
                 )
             }
-
+    @Suppress("UNUSED_PARAMETER")
     internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
 //        cursorStore.initialiseContents(event.readStates.mapNotNull { it.cursor })
     }
@@ -63,14 +63,17 @@ class CursorService(
     // e.g. for the case where you have a new room with no messages (or cursors) yet!
     // The error should additionally be more descriptive instead of just assuming you aren't
     // subscribed to the room!
+    @Suppress("UNUSED_PARAMETER")
     fun getReadCursor(userId: String, roomId: String) {
             //: Result<Cursor?, Error> {
 //        cursorStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun notSubscribedToRoom(name: String) =
             Errors.other("Must be subscribed to room $name to access member's read cursors")
 
+    @Suppress("UNUSED_PARAMETER")
     fun subscribeForRoom(
         roomId: String,
         consumer: (ChatEvent) -> Unit
@@ -98,6 +101,7 @@ class CursorService(
             logger = logger
     )
 
+    @Suppress("UNUSED_PARAMETER")
     internal fun applyEvent(event: UserSubscriptionEvent){}
 //            cursorStore.applyEvent(event)
 

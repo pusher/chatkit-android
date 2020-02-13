@@ -2,7 +2,6 @@ package com.pusher.chatkit.rooms
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
@@ -32,7 +31,7 @@ internal object RoomSubscriptionEventParserV2 : DataParser<RoomSubscriptionEvent
         get() = getValue("data").flatMap { it.asObject() }
 
     private fun JsonObject.parseEvent(eventName: String): Result<RoomSubscriptionEvent, Error> = when (eventName) {
-        "new_message" -> parseAs<com.pusher.chatkit.messages.Message>().map { message -> RoomSubscriptionEvent.NewMessage(message) }
+//        "new_message" -> parseAs<com.pusher.chatkit.messages.Message>().map { message -> RoomSubscriptionEvent.NewMessage(message) }
         "is_typing" -> parseAs<RoomSubscriptionEvent.UserIsTyping>()
         else -> Errors.other("Invalid event name: $eventName").asFailure()
     }.map { it } // generics :O
@@ -92,6 +91,6 @@ internal data class V3AttachmentBody(
     val refreshUrl: String,
     val expiration: Date,
     val name: String?,
-    val customData: CustomData?,
+//    val customData: CustomData?,
     val size: Int
 )

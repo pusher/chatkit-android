@@ -1,7 +1,6 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.cursors.Cursor
-import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.users.User
 import elements.Error
@@ -17,8 +16,8 @@ typealias RoomConsumer = (RoomEvent) -> Unit
  */
 sealed class RoomEvent {
     @Deprecated("use onMultipartMessage")
-    data class Message(val message: com.pusher.chatkit.messages.Message) : RoomEvent()
-    data class MultipartMessage(val message: com.pusher.chatkit.messages.multipart.Message) : RoomEvent()
+//    data class Message(val message: com.pusher.chatkit.messages.Message) : RoomEvent()
+//    data class MultipartMessage(val message: com.pusher.chatkit.messages.multipart.Message) : RoomEvent()
     data class MessageDeleted(val messageId: Int) : RoomEvent()
     data class UserStartedTyping(val user: User) : RoomEvent()
     data class UserStoppedTyping(val user: User) : RoomEvent()
@@ -39,8 +38,8 @@ sealed class RoomEvent {
  */
 data class RoomListeners @JvmOverloads constructor(
     @Deprecated("use onMultipartMessage")
-    val onMessage: (com.pusher.chatkit.messages.Message) -> Unit = {},
-    val onMultipartMessage: (com.pusher.chatkit.messages.multipart.Message) -> Unit = {},
+//    val onMessage: (com.pusher.chatkit.messages.Message) -> Unit = {},
+//    val onMultipartMessage: (com.pusher.chatkit.messages.multipart.Message) -> Unit = {},
     val onMessageDeleted: (Int) -> Unit = {},
     val onUserStartedTyping: (User) -> Unit = {},
     val onUserStoppedTyping: (User) -> Unit = {},
@@ -55,9 +54,9 @@ data class RoomListeners @JvmOverloads constructor(
 
 internal fun RoomListeners.toCallback(): RoomConsumer = { event ->
     when (event) {
-        is RoomEvent.Message -> onMessage(event.message)
-        is RoomEvent.MultipartMessage -> onMultipartMessage(event.message)
-        is RoomEvent.MessageDeleted -> onMessageDeleted(event.messageId)
+//        is RoomEvent.Message -> onMessage(event.message)
+//        is RoomEvent.MultipartMessage -> onMultipartMessage(event.message)
+//        is RoomEvent.MessageDeleted -> onMessageDeleted(event.messageId)
         is RoomEvent.UserStartedTyping -> onUserStartedTyping(event.user)
         is RoomEvent.UserStoppedTyping -> onUserStoppedTyping(event.user)
         is RoomEvent.UserJoined -> onUserJoined(event.user)
