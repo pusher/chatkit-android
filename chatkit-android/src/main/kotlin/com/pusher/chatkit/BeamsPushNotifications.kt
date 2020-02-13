@@ -5,17 +5,17 @@ import com.pusher.chatkit.pushnotifications.BeamsTokenProviderService
 import com.pusher.chatkit.pushnotifications.PushNotifications
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.pushnotifications.BeamsCallback
+import com.pusher.pushnotifications.PushNotificationsInstance as BeamsInstance
 import com.pusher.pushnotifications.PusherCallbackError
 import com.pusher.pushnotifications.auth.TokenProvider
 import com.pusher.util.Result
 import elements.Error
-import com.pusher.pushnotifications.PushNotificationsInstance as BeamsInstance
 
 // Implementation of `PushNotifications` interface using Pusher Beams!
 class BeamsPushNotifications(
-        private val context: Context,
-        private val instanceId: String,
-        private val beamsTokenProviderService: BeamsTokenProviderService
+    private val context: Context,
+    private val instanceId: String,
+    private val beamsTokenProviderService: BeamsTokenProviderService
 ) : PushNotifications {
 
     private val tokenProvider = object : TokenProvider {

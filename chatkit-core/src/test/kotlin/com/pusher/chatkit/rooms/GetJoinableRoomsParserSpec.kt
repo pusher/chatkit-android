@@ -2,7 +2,8 @@ package com.pusher.chatkit.rooms
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.TestFileReader
-import com.pusher.chatkit.rooms.api.*
+import com.pusher.chatkit.rooms.api.JoinableRoomsResponse
+import com.pusher.chatkit.rooms.api.NotJoinedRoomApiType
 import com.pusher.chatkit.util.parseAs
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe

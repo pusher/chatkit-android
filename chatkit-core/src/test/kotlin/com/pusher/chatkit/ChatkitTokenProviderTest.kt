@@ -6,6 +6,7 @@ import com.pusher.util.Result
 import com.pusher.util.asFailure
 import elements.Error
 import elements.Errors
+import java.util.Date
 import mockitox.mock
 import mockitox.returns
 import mockitox.returnsStub
@@ -19,7 +20,6 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.notNull
-import java.util.*
 
 private val testProvider = ChatkitTokenProvider(
         endpoint = "https://localhost",
@@ -189,8 +189,6 @@ private fun RequestBody?.toBuffer() =
 private fun String.toBuffer() =
         Buffer().also { it.writeUtf8(this) }
 
-
 val badResponse = Errors.response(500, emptyMap(), "Bad Response").asFailure<String, Error>()
 
 val notOkResponse = Errors.response(300, emptyMap(), "Redirect").asFailure<String, Error>()
-

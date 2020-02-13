@@ -7,7 +7,11 @@ import com.pusher.chatkit.messages.Direction
 import com.pusher.chatkit.messages.Message
 import com.pusher.chatkit.messages.multipart.NewPart
 import com.pusher.chatkit.pushnotifications.PushNotifications
-import com.pusher.chatkit.rooms.*
+import com.pusher.chatkit.rooms.Room
+import com.pusher.chatkit.rooms.RoomConsumer
+import com.pusher.chatkit.rooms.RoomListeners
+import com.pusher.chatkit.rooms.RoomPushNotificationTitle
+import com.pusher.chatkit.rooms.toCallback
 import com.pusher.chatkit.users.User
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
@@ -18,13 +22,13 @@ import java.net.URLEncoder
 
 @Suppress("MemberVisibilityCanBePrivate") // Entry points
 class SynchronousCurrentUser(
-        val id: String,
-        var avatarURL: String?,
-        var customData: CustomData?,
-        var name: String?,
-        private val chatManager: SynchronousChatManager,
-        private val client: PlatformClient,
-        private val pushNotifications: PushNotifications?
+    val id: String,
+    var avatarURL: String?,
+    var customData: CustomData?,
+    var name: String?,
+    private val chatManager: SynchronousChatManager,
+    private val client: PlatformClient,
+    private val pushNotifications: PushNotifications?
 ) {
 
     val rooms: List<Room> get() = chatManager.roomService.roomStore.toList()
@@ -72,12 +76,12 @@ class SynchronousCurrentUser(
 
     @JvmOverloads
     fun createRoom(
-            id: String? = null,
-            name: String,
-            pushNotificationTitleOverride: String? = null,
-            isPrivate: Boolean = false,
-            customData: CustomData? = null,
-            userIds: List<String> = emptyList()
+        id: String? = null,
+        name: String,
+        pushNotificationTitleOverride: String? = null,
+        isPrivate: Boolean = false,
+        customData: CustomData? = null,
+        userIds: List<String> = emptyList()
     ): Result<Room, Error> = chatManager.roomService.createRoom(
             id = id,
             creatorId = this.id,
@@ -117,88 +121,88 @@ class SynchronousCurrentUser(
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            room: Room,
-            listeners: RoomListeners,
-            messageLimit: Int = 10
+        room: Room,
+        listeners: RoomListeners,
+        messageLimit: Int = 10
     ): Subscription =
             subscribeToRoom(room.id, listeners, messageLimit)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            roomId: String,
-            listeners: RoomListeners,
-            messageLimit: Int = 10
+        roomId: String,
+        listeners: RoomListeners,
+        messageLimit: Int = 10
     ): Subscription =
             subscribeToRoom(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            room: Room,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer
+        room: Room,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer
     ): Subscription =
             subscribeToRoom(room.id, messageLimit, consumer)
 
     @JvmOverloads
     @Deprecated("use subscribeToRoomMultipart")
     fun subscribeToRoom(
-            roomId: String,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer
+        roomId: String,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer
     ): Subscription =
             chatManager.roomService.subscribeToRoom(roomId, consumer, messageLimit)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            room: Room,
-            listeners: RoomListeners,
-            messageLimit: Int = 10
+        room: Room,
+        listeners: RoomListeners,
+        messageLimit: Int = 10
     ): Subscription =
             subscribeToRoomMultipart(room.id, listeners, messageLimit)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            roomId: String,
-            listeners: RoomListeners,
-            messageLimit: Int = 10
+        roomId: String,
+        listeners: RoomListeners,
+        messageLimit: Int = 10
     ): Subscription =
             subscribeToRoomMultipart(roomId, messageLimit, listeners.toCallback())
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            room: Room,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer
+        room: Room,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer
     ): Subscription =
             subscribeToRoomMultipart(room.id, messageLimit, consumer)
 
     @JvmOverloads
     fun subscribeToRoomMultipart(
-            roomId: String,
-            messageLimit: Int = 10,
-            consumer: RoomConsumer
+        roomId: String,
+        messageLimit: Int = 10,
+        consumer: RoomConsumer
     ): Subscription =
             chatManager.roomService.subscribeToRoomMultipart(roomId, consumer, messageLimit)
 
     @JvmOverloads
     @Deprecated("use fetchMultipartMessages")
     fun fetchMessages(
-            roomId: String,
-            initialId: Int? = null,
-            direction: Direction = Direction.OLDER_FIRST,
-            limit: Int = 10
+        roomId: String,
+        initialId: Int? = null,
+        direction: Direction = Direction.OLDER_FIRST,
+        limit: Int = 10
     ): Result<List<Message>, Error> = chatManager
             .messageService
             .fetchMessages(roomId, limit, initialId, direction)
 
     @JvmOverloads
     fun fetchMultipartMessages(
-            roomId: String,
-            initialId: Int? = null,
-            direction: Direction = Direction.OLDER_FIRST,
-            limit: Int = 10
+        roomId: String,
+        initialId: Int? = null,
+        direction: Direction = Direction.OLDER_FIRST,
+        limit: Int = 10
     ): Result<List<com.pusher.chatkit.messages.multipart.Message>, Error> = chatManager
             .messageService
             .fetchMultipartMessages(roomId, limit, initialId, direction)
@@ -206,42 +210,42 @@ class SynchronousCurrentUser(
     @JvmOverloads
     @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
-            room: Room,
-            messageText: String,
-            attachment: GenericAttachment = NoAttachment
+        room: Room,
+        messageText: String,
+        attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
             sendMessage(room.id, messageText, attachment)
 
     @JvmOverloads
     @Deprecated("use sendSimpleMessage or sendMultipartMessage")
     fun sendMessage(
-            roomId: String,
-            messageText: String,
-            attachment: GenericAttachment = NoAttachment
+        roomId: String,
+        messageText: String,
+        attachment: GenericAttachment = NoAttachment
     ): Result<Int, Error> =
             chatManager.messageService.sendMessage(roomId, id, messageText, attachment)
 
     fun sendSimpleMessage(
-            room: Room,
-            messageText: String
+        room: Room,
+        messageText: String
     ): Result<Int, Error> =
             sendSimpleMessage(room.id, messageText)
 
     fun sendSimpleMessage(
-            roomId: String,
-            messageText: String
+        roomId: String,
+        messageText: String
     ): Result<Int, Error> =
             sendMultipartMessage(roomId, listOf(NewPart.Inline(messageText)))
 
     fun sendMultipartMessage(
-            room: Room,
-            parts: List<NewPart>
+        room: Room,
+        parts: List<NewPart>
     ): Result<Int, Error> =
             sendMultipartMessage(room.id, parts)
 
     fun sendMultipartMessage(
-            roomId: String,
-            parts: List<NewPart>
+        roomId: String,
+        parts: List<NewPart>
     ): Result<Int, Error> =
             chatManager.messageService.sendMultipartMessage(roomId, parts)
 
@@ -272,13 +276,12 @@ class SynchronousCurrentUser(
                     .map { it.values.toList() }
 
     fun usersForRoom(roomId: String): Result<List<User>, Error> {
-        val room = rooms.find { it.id == roomId  }
+        val room = rooms.find { it.id == roomId }
         return if (room != null) {
             usersForRoom(room)
         } else {
             Result.failure(Errors.other("Could not find a room with id $roomId to get users"))
         }
-
     }
 
     fun enablePushNotifications(): Result<Unit, Error> {

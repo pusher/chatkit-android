@@ -22,7 +22,7 @@ object JoinRoomTest : Spek({
     val addedToRoomEvent = FutureValue<ChatEvent.AddedToRoom>()
     beforeEachGroup {
         setUpInstanceWith(createDefaultRole(), newUsers(PUSHERINO, ALICE), newRoom(GENERAL, ALICE))
-        pusherino = chatFor(PUSHERINO).connect{ event ->
+        pusherino = chatFor(PUSHERINO).connect { event ->
             if (event is ChatEvent.AddedToRoom) addedToRoomEvent.set(event)
         }.assumeSuccess()
     }
@@ -66,7 +66,6 @@ object JoinRoomTest : Spek({
             }
         }
     }
-
 })
 
 private fun assertMatchesExpectedRoom(room: Room) {

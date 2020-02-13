@@ -1,6 +1,5 @@
 package com.pusher.chatkit.test
 
-import okhttp3.OkHttpClient
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.logging.Level
@@ -8,6 +7,7 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.OkHttpClient
 
 val trustyCertificate: X509TrustManager = object : X509TrustManager {
     override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()

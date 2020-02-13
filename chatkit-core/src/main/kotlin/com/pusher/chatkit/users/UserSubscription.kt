@@ -13,10 +13,10 @@ import elements.Subscription
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class UserSubscription(
-        userId: String,
-        client: PlatformClient,
-        logger: Logger,
-        private val listeners: UserSubscriptionConsumer
+    userId: String,
+    client: PlatformClient,
+    logger: Logger,
+    private val listeners: UserSubscriptionConsumer
 ) : Subscription {
 
     private val initialized = AtomicBoolean(false)
@@ -36,11 +36,11 @@ internal class UserSubscription(
     )
 
     private fun consumeEvent(event: UserSubscriptionEvent) {
-        if (event is UserSubscriptionEvent.InitialState
-                && !initialized.getAndSet(true)) {
+        if (event is UserSubscriptionEvent.InitialState &&
+                !initialized.getAndSet(true)) {
             initialState.set(event.asSuccess())
-        } else if (event is UserSubscriptionEvent.ErrorOccurred
-                && !initialized.getAndSet(true)) {
+        } else if (event is UserSubscriptionEvent.ErrorOccurred &&
+                !initialized.getAndSet(true)) {
             initialState.set(event.error.asFailure())
         } else {
             listeners.invoke(event)

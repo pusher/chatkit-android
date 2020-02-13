@@ -20,5 +20,4 @@ internal class NotJoinedRoomApiMapper {
                 memberUserIds = emptySet()
         )
     }
-
 }

@@ -10,7 +10,7 @@ import java.net.URLEncoder
 data class BeamsTokenProviderResponse(val token: String?)
 
 class BeamsTokenProviderService(
-        private val beamsTokenProviderClient: PlatformClient
+    private val beamsTokenProviderClient: PlatformClient
 ) {
     fun fetchToken(userId: String): String =
             beamsTokenProviderClient.doRequest(

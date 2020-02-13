@@ -14,7 +14,7 @@ import elements.Error
 import elements.Errors
 
 internal class PresenceSubscriptionEventParser(
-        private val userId: String
+    private val userId: String
 ) : DataParser<PresenceSubscriptionEvent> {
 
     override fun invoke(body: String): Result<PresenceSubscriptionEvent, Error> =
@@ -52,5 +52,5 @@ internal class PresenceSubscriptionEventParser(
 }
 
 private class PresenceStateBody(
-        val state: String
+    val state: String
 )

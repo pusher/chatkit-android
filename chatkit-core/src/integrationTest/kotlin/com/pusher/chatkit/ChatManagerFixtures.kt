@@ -9,11 +9,11 @@ import com.pusher.platform.PlatformDependencies
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
-import okhttp3.OkHttpClient
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentLinkedQueue
+import okhttp3.OkHttpClient
 
 const val MAX_LOG_LENGTH = 3000
 
@@ -43,8 +43,8 @@ class TestDependencies : PlatformDependencies {
 }
 
 class TestChatkitDependencies(
-        override val tokenProvider: TokenProvider,
-        platformDependencies: PlatformDependencies = TestDependencies()
+    override val tokenProvider: TokenProvider,
+    platformDependencies: PlatformDependencies = TestDependencies()
 ) : ChatkitDependencies, PlatformDependencies by platformDependencies {
     override val okHttpClient: OkHttpClient = insecureOkHttpClient.newBuilder().apply {
         addInterceptor { chain ->

@@ -4,8 +4,8 @@ import com.nhaarman.mockitokotlin2.KStubbing
 import com.nhaarman.mockitokotlin2.mock
 
 internal fun mockPlatformClient(
-        vararg stubbings: KStubbing<PlatformClient>.(PlatformClient) -> Unit
-) : PlatformClient {
+    vararg stubbings: KStubbing<PlatformClient>.(PlatformClient) -> Unit
+): PlatformClient {
 
     val mockPlatformClientStubbing = KStubbing(mock<PlatformClient>())
 

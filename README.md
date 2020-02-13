@@ -117,6 +117,17 @@ chatkit_integration_locator=<INSTANCE_LOCATOR>
 chatkit_integration_key=<SECRET_KEY>
 ```
 
+## Linting
+
+We currently use [ktlint](https://github.com/pinterest/ktlint).
+You can use the `ktlintCheck` gradle task to check if there are any errors.
+Most errors can be automatically resolved by using `ktlintFormat` gradle task
+— if it can't auto resolve the issue, it will let you know what to do.
+
+We have configured our project to to be compliant with Android Kotlin Style Guide,
+however if you're finding that hasn't worked for you please read the installation
+instructions over at https://github.com/pinterest/ktlint#-with-intellij-idea.
+
 ## Code Analysis
 
 We are using [detekt](https://github.com/arturbosch/detekt) to help measure our
@@ -124,11 +135,11 @@ technical debt. We have two baseline files (one for `chatkit-android`, and `chat
 which are the current issues we have accepted. Any new issues will fail the build
 on Travis.
 
-You can run `./gradlew <module_name>:detekt` yourself before submitting a PR to
+You can run the `detekt` gradle task yourself before submitting a PR to
 find out if you have introduced any new issues.
 
-When we resolve one of the baseline issues, we can run
-`./gradlew <module_name>:detektBaseline` to update the baseline config file.
+When a baseline issue is resolved, run the `detektBaseline` to update the
+baseline config file.
 
 ## Publishing
 

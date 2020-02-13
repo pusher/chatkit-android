@@ -7,15 +7,15 @@ import com.pusher.platform.tokenProvider.TokenProvider
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
 import elements.Error
-import java.util.*
+import java.util.Date
 import java.util.concurrent.Future
 
 data class TestTokenProvider(
-        private val instanceId: String,
-        private val userId: String,
-        private val keyId: String,
-        private val secret: String,
-        private val su: Boolean = false
+    private val instanceId: String,
+    private val userId: String,
+    private val keyId: String,
+    private val secret: String,
+    private val su: Boolean = false
 ) : TokenProvider {
     override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> = Futures.now(
             JWT.create()

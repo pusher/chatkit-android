@@ -4,7 +4,10 @@ import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.TestFileReader
 import com.pusher.chatkit.cursors.Cursor
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.users.UserSubscriptionEvent.*
+import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
+import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState
+import com.pusher.chatkit.users.UserSubscriptionEvent.UserJoinedRoomEvent
+import com.pusher.chatkit.users.UserSubscriptionEvent.UserLeftRoomEvent
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -126,5 +129,4 @@ object UserSubscriptionEventParserSpec : Spek({
             assertThat(addedToRoomEvent.readState).isEqualTo(expectedReadState)
         }
     }
-
 })

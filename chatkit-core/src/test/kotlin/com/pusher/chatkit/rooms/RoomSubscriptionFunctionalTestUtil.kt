@@ -11,8 +11,8 @@ import com.pusher.platform.network.DataParser
 import elements.emptyHeaders
 import org.mockito.ArgumentMatchers.startsWith
 
-internal fun justConnectingRoomSubscription()
-        : KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
+internal fun justConnectingRoomSubscription():
+        KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
         client.subscribeResuming(
                 path = startsWith("/rooms/"),

@@ -10,8 +10,8 @@ import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
 class UserService(
-        private val client: PlatformClient,
-        private val presenceService: PresenceService
+    private val client: PlatformClient,
+    private val presenceService: PresenceService
 ) {
     private val knownUsers = ConcurrentHashMap<String, User>()
 
@@ -66,5 +66,4 @@ class UserService(
     internal fun populateUserStore(userIds: Set<String>) {
         fetchUsersBy(userIds)
     }
-
 }
