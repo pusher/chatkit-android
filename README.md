@@ -122,7 +122,7 @@ chatkit_integration_key=<SECRET_KEY>
 We are using [detekt](https://github.com/arturbosch/detekt) to help measure our
 technical debt. We have two baseline files (one for `chatkit-android`, and `chatkit-core`)
 which are the current issues we have accepted. Any new issues will fail the build
-on travis.
+on Travis.
 
 You can run `./gradlew <module_name>:detekt` yourself before submitting a PR to
 find out if you have introduced any new issues.
