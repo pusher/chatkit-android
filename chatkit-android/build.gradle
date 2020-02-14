@@ -4,6 +4,7 @@ plugins {
     id 'de.mannodermaus.android-junit5'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'io.gitlab.arturbosch.detekt' version '1.5.1'
     id 'org.jlleitschuh.gradle.ktlint' version '9.1.1'
     id 'jacoco-android'
 }
@@ -164,6 +165,14 @@ publishing {
                 root.children().last() + pomConfig
             }
         }
+    }
+}
+
+detekt {
+    baseline = file("$projectDir/config/baseline.xml")
+
+    reports {
+        html.enabled = true
     }
 }
 

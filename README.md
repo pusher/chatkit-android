@@ -128,6 +128,19 @@ We have configured our project to to be compliant with Android Kotlin Style Guid
 however if you're finding that hasn't worked for you please read the installation
 instructions over at https://github.com/pinterest/ktlint#-with-intellij-idea.
 
+## Code Analysis
+
+We are using [detekt](https://github.com/arturbosch/detekt) to help measure our
+technical debt. We have two baseline files (one for `chatkit-android`, and `chatkit-core`)
+which are the current issues we have accepted. Any new issues will fail the build
+on Travis.
+
+You can run the `detekt` gradle task yourself before submitting a PR to
+find out if you have introduced any new issues.
+
+When a baseline issue is resolved, run the `detektBaseline` to update the
+baseline config file.
+
 ## Publishing
 
 ### jCenter
