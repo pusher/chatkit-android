@@ -1,12 +1,7 @@
 package com.pusher.chatkit
 
-import com.google.common.truth.Truth.assertThat
-import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import com.pusher.chatkit.util.FutureValue
-import com.pusher.util.Result
-import elements.Error
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

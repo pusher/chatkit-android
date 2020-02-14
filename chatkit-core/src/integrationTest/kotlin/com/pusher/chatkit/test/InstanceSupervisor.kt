@@ -17,14 +17,11 @@ import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.network.Futures
-import com.pusher.platform.network.Wait
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
 import java.net.URLEncoder
-import java.util.Date
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 import org.junit.runner.notification.Failure
 
 /**
@@ -44,7 +41,7 @@ object InstanceSupervisor {
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) {
         waitForIdleInstance()
-                //.wait(Wait.For(60, TimeUnit.SECONDS))
+                // .wait(Wait.For(60, TimeUnit.SECONDS))
         listOf(tearDown(), setInstanceBusy(), createSuperUser())
                 .plus(actions)
                 .forEach(InstanceAction::run)
@@ -52,7 +49,7 @@ object InstanceSupervisor {
 }
 
 private fun waitForIdleInstance() {}
-//: Future<Result<Boolean, Error>> = Futures.schedule {
+// : Future<Result<Boolean, Error>> = Futures.schedule {
 //    generateSequence { isInstanceIdle() }
 //            .map {
 //                it.also {
@@ -64,18 +61,18 @@ private fun waitForIdleInstance() {}
 //            }
 //            .filter { it is Result.Success && it.value }
 //            .first()
-//}
+// }
 
 private fun isInstanceIdle() {}
 //        : Result<Boolean, Error> = chatkitInstance.request(
 //        options = RequestOptions("/users", "GET"),
 //        tokenProvider = sudoTokenProvider,
 //        responseParser = { it.parseAs<List<String>>() }
-//).wait().map { users ->
+// ).wait().map { users ->
 //    users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
-//}
+// }
 
-//private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
+// private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
 //        Date().time - created.time > millisecondsAgo
 
 private val sudoTokenProvider by lazy {
@@ -306,8 +303,12 @@ object InstanceActions {
         )
     }.withName("Create new users: ${names.joinToString(", ")}")
 
-    fun newRoom(name: String, vararg userNames: String, pushNotificationTitleOverride: String? = null,
-                isPrivate: Boolean = false) = {
+    fun newRoom(
+        name: String,
+        vararg userNames: String,
+        pushNotificationTitleOverride: String? = null,
+        isPrivate: Boolean = false
+    ) = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
                         path = "/rooms",

@@ -2,7 +2,6 @@ package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.cursors.api.CursorApiType
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue

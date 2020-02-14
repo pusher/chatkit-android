@@ -1,6 +1,5 @@
 package com.pusher.chatkit.messages
 
-
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.files.AttachmentBody
 import com.pusher.chatkit.files.DataAttachment
@@ -29,7 +28,7 @@ internal class MessageService(
         limit: Int,
         initialId: Int?,
         direction: Direction
-    ){}
+    ) {}
 //            : Result<List<Message>, Error> =
 //            fetchMessagesParams(limit, initialId, direction).let { params ->
 //                legacyV2client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
@@ -89,7 +88,7 @@ internal class MessageService(
     fun sendMultipartMessage(
         roomId: String
 //        parts: List<NewPart>
-    ){}
+    ) {}
 //            : Result<Int, Error> =
 //            parts.map {
 //                toPartRequest(roomId, it)
@@ -124,7 +123,7 @@ internal class MessageService(
     private fun uploadAttachment(
         roomId: String
 //        part: NewPart.Attachment
-    ){}
+    ) {}
 //            : Result<String, Error> {
 //        val outputStream = ByteArrayOutputStream()
 //        val length = part.file.copyTo(outputStream)

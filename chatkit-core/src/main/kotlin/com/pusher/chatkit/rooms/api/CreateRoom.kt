@@ -1,6 +1,5 @@
 package com.pusher.chatkit.rooms.api
 
-
 internal data class CreateRoomRequest(
     val id: String?,
     val name: String,

@@ -12,7 +12,6 @@ import com.pusher.util.Result
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.ConcurrentLinkedQueue
 import okhttp3.OkHttpClient
 
 const val MAX_LOG_LENGTH = 3000
@@ -55,25 +54,25 @@ class TestChatkitDependencies(
     override val appHooks = NoAppHooks()
 }
 
-//val SynchronousCurrentUser.generalRoom
+// val SynchronousCurrentUser.generalRoom
 //    get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
 //
-//private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
+// private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
 //
-//fun chatFor(userName: String) = SynchronousChatManager(
+// fun chatFor(userName: String) = SynchronousChatManager(
 //        instanceLocator = INSTANCE_LOCATOR,
 //        userId = userName,
 //        dependencies = TestChatkitDependencies(
 //                tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
 //        )
-//).also { managers += it }
+// ).also { managers += it }
 //
-//fun closeChatManagers() {
+// fun closeChatManagers() {
 //    for (manager in managers) {
 //        manager.close()
 //    }
 //    managers.clear()
-//}
+// }
 
 fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
     is Result.Success -> value

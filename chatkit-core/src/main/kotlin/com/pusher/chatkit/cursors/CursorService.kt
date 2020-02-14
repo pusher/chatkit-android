@@ -9,13 +9,8 @@ import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
-import com.pusher.util.Result
-import com.pusher.util.asFailure
-import com.pusher.util.asSuccess
 import com.pusher.util.mapResult
-import elements.Error
 import elements.Errors
-import java.net.URLEncoder
 
 class CursorService(
     private val client: PlatformClient,
@@ -50,7 +45,7 @@ class CursorService(
                     body = """{ "position" : $position }"""
             )
     ).mapResult {
-//        cursorStore[userId] += Cursor(
+        //        cursorStore[userId] += Cursor(
 //                userId = userId,
 //                roomId = roomId,
 //                position = position
@@ -63,7 +58,7 @@ class CursorService(
     // subscribed to the room!
     @Suppress("UNUSED_PARAMETER")
     fun getReadCursor(userId: String, roomId: String) {
-            //: Result<Cursor?, Error> {
+        // : Result<Cursor?, Error> {
 //        cursorStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure()
     }
 
@@ -75,9 +70,8 @@ class CursorService(
     fun subscribeForRoom(
         roomId: String
 //        consumer: (ChatEvent) -> Unit
-    )
+    ) {
 //           : ResolvableSubscription<CursorSubscriptionEvent>
-    {
 //        return subscribe(
 //                "/cursors/0/rooms/${URLEncoder.encode(roomId, "UTF-8")}",
 //                consumer
@@ -93,10 +87,10 @@ class CursorService(
             path = path,
             listeners = SubscriptionListeners(
                     onEvent = {
-                       // event -> applyEvent(event.body).forEach(consumer)
+                        // event -> applyEvent(event.body).forEach(consumer)
                     },
                     onError = {
-                       // error -> applyEvent(CursorSubscriptionEvent.OnError(error)).forEach(consumer)
+                        // error -> applyEvent(CursorSubscriptionEvent.OnError(error)).forEach(consumer)
                     }
             ),
             messageParser = CursorSubscriptionEventParser,
@@ -105,15 +99,15 @@ class CursorService(
     )
 
     @Suppress("UNUSED_PARAMETER")
-    internal fun applyEvent(event: UserSubscriptionEvent){}
+    internal fun applyEvent(event: UserSubscriptionEvent) {}
 //            cursorStore.applyEvent(event)
 
-    private fun applyEvent(event: CursorSubscriptionEvent)
-            = listOf<CursorSubscriptionEvent>(event).map(::enrichEvent)
-//            cursorStore.applyEvent(event).map(::enrichEvent)
+    private fun applyEvent(event: CursorSubscriptionEvent) =
+            listOf<CursorSubscriptionEvent>(event).map(::enrichEvent)
+    //            cursorStore.applyEvent(event).map(::enrichEvent)
     @Suppress("UNUSED_PARAMETER")
     private fun enrichEvent(event: CursorSubscriptionEvent) {}
-            //: ChatEvent =
+    // : ChatEvent =
 //            when (event) {
 //                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
 //                else -> ChatEvent.NoEvent

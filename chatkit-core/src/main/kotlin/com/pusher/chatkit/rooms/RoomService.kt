@@ -2,16 +2,11 @@ package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
-import com.pusher.chatkit.rooms.api.CreateRoomRequest
-import com.pusher.chatkit.rooms.api.CreateRoomResponse
-import com.pusher.chatkit.rooms.api.JoinRoomResponse
-import com.pusher.chatkit.rooms.api.JoinableRoomsResponse
 import com.pusher.chatkit.rooms.api.UpdateRoomRequest
 import com.pusher.chatkit.rooms.api.UpdateRoomRequestWithPushNotificationTitleOverride
 import com.pusher.chatkit.subscription.ChatkitSubscription
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.users.UserSubscriptionEvent
-import com.pusher.chatkit.util.makeSafe
 import com.pusher.chatkit.util.toJson
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.network.DataParser
@@ -21,7 +16,6 @@ import com.pusher.util.Result
 import elements.Error
 import elements.Subscription
 import java.net.URLEncoder
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
 sealed class RoomPushNotificationTitle {
@@ -79,12 +73,12 @@ internal class RoomService(
 //                    pushNotificationTitleOverride = pushNotificationTitleOverride,
 //                    private = isPrivate,
 //                    createdById = creatorId,
-////                    customData = mapOf<String, Any>(),
+//                    customData = mapOf<String, Any>(),
 //                    userIds = userIds
 //            ).toJson()
 //                    .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
 //                    .map { response ->
-////                        roomStore.add(response)
+//                        roomStore.add(response)
 //                        userService.populateUserStore(response.membership.userIds.toSet())
 //                        joinedRoomApiMapper.toRoom(response)
 //                    }
@@ -92,14 +86,14 @@ internal class RoomService(
     fun deleteRoom(roomId: String): Result<String, Error> =
             legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
                     .map {
-//                        roomStore.remove(roomId)
+                        //                        roomStore.remove(roomId)
                         roomId
                     }
 
     fun leaveRoom(userId: String, roomId: String): Result<String, Error> =
             client.doPost<Unit?>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/leave")
                     .map {
-//                        roomStore.remove(roomId)
+                        //                        roomStore.remove(roomId)
                         roomId
                     }
 
@@ -107,7 +101,7 @@ internal class RoomService(
 //            : Result<Room, Error> =
 //            client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
 //                    .map { response ->
-////                        roomStore.add(response)
+// //                        roomStore.add(response)
 //                        userService.populateUserStore(response.membership.userIds.toSet())
 //                        joinedRoomApiMapper.toRoom(response)
 //                    }
@@ -149,16 +143,16 @@ internal class RoomService(
 //        unsafeConsumer: RoomConsumer,
         messageLimit: Int
     ) {}
-            //: Subscription =
-           // subscribeToRoom(roomId, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
+    // : Subscription =
+    // subscribeToRoom(roomId, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
 
     fun subscribeToRoomMultipart(
         roomId: String,
 //        unsafeConsumer: RoomConsumer,
         messageLimit: Int
     ) {}
-            //: Subscription =
-            //subscribeToRoom(roomId, messageLimit, client, RoomSubscriptionEventParserV3)
+    // : Subscription =
+    // subscribeToRoom(roomId, messageLimit, client, RoomSubscriptionEventParserV3)
 
     private fun subscribeToRoom(
         roomId: String,
@@ -166,9 +160,7 @@ internal class RoomService(
         messageLimit: Int,
         client: PlatformClient,
         parser: DataParser<RoomSubscriptionEvent>
-    )
-            //: Subscription
-    {
+    ) {
         // This consumer is made safe by the layer providing it
 //        val globalConsumer = makeGlobalConsumer(roomId)
 //        val consumer: RoomConsumer = { event -> makeSafe(logger) { unsafeConsumer(event) } }
@@ -215,9 +207,9 @@ internal class RoomService(
         // ensure members are fetched and presence subscription is opened for each of them
 //        val usersFetchResult = listOf<String>()
 //                //userService.fetchUsersBy(roomStore[roomId]!!.memberUserIds)
-////        if (usersFetchResult is Result.Failure) {
-////            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
-////        }
+//        if (usersFetchResult is Result.Failure) {
+//            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
+//        }
 
 //        synchronized(buffer) {
 //            buffer.forEach { event ->
@@ -245,58 +237,58 @@ internal class RoomService(
             }
 
     fun close() {
-        synchronized(openSubscriptions) {
-            openSubscriptions.forEach { (_, sub) ->
-                sub.unsubscribe()
-            }
-        }
+//        synchronized(openSubscriptions) {
+//            openSubscriptions.forEach { (_, sub) ->
+//                sub.unsubscribe()
+//            }
+//        }
 //        roomStore.clear()
     }
 
     private fun translateCursorEvent() {}
-            //(event: ChatEvent): RoomEvent =
+    // (event: ChatEvent): RoomEvent =
 //            when (event) {
-////                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
+//                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
 //                else -> RoomEvent.NoEvent
 //            }
 
     private fun enrichEvent(event: RoomSubscriptionEvent) {}
-            //: RoomEvent =
+    // : RoomEvent =
 //            when (event) {
-////                is RoomSubscriptionEvent.NewMessage -> RoomEvent.NoEvent
-////                    userService.fetchUserBy(event.message.userId).map { user ->
-////                        event.message.user = user
-//////                        RoomEvent.Message(event.message) as RoomEvent
-////                    }.recover {
-//////                        RoomEvent.ErrorOccurred(it)
-////                    }
+//                is RoomSubscriptionEvent.NewMessage -> RoomEvent.NoEvent
+//                    userService.fetchUserBy(event.message.userId).map { user ->
+//                        event.message.user = user
+//                        RoomEvent.Message(event.message) as RoomEvent
+//                    }.recover {
+//                        RoomEvent.ErrorOccurred(it)
+//                    }
 //                is RoomSubscriptionEvent.NewMultipartMessage -> RoomEvent.NoEvent
-////                    upgradeMessageV3(
-////                            event.message,
-////                            this,
-////                            userService,
-////                            urlRefresher
-////                    ).map {
-////                        RoomEvent.MultipartMessage(it) as RoomEvent
-////                    }.recover {
-////                        RoomEvent.ErrorOccurred(it)
-////                    }
+//                    upgradeMessageV3(
+//                            event.message,
+//                            this,
+//                            userService,
+//                            urlRefresher
+//                    ).map {
+//                        RoomEvent.MultipartMessage(it) as RoomEvent
+//                    }.recover {
+//                        RoomEvent.ErrorOccurred(it)
+//                    }
 //                is RoomSubscriptionEvent.MessageDeleted -> RoomEvent.NoEvent
-////                    RoomEvent.MessageDeleted(event.messageId)
+//                     RoomEvent.MessageDeleted(event.messageId)
 //                is RoomSubscriptionEvent.UserIsTyping -> RoomEvent.NoEvent
-////                    userService.fetchUserBy(event.userId).map { user ->
-////                        val onStop = {
-////                            consumer(RoomEvent.UserStoppedTyping(user))
-////                        }
-////
-////                        if (scheduleStopTypingEvent(event.userId, onStop)) {
-////                            RoomEvent.UserStartedTyping(user)
-////                        } else {
-////                            RoomEvent.NoEvent
-////                        }
-////                    }.recover {
-////                        RoomEvent.ErrorOccurred(it)
-////                    }
+//                    userService.fetchUserBy(event.userId).map { user ->
+//                        val onStop = {
+//                            consumer(RoomEvent.UserStoppedTyping(user))
+//                        }
+//
+//                        if (scheduleStopTypingEvent(event.userId, onStop)) {
+//                            RoomEvent.UserStartedTyping(user)
+//                        } else {
+//                            RoomEvent.NoEvent
+//                        }
+//                    }.recover {
+//                        RoomEvent.ErrorOccurred(it)
+//                    }
 //                is RoomSubscriptionEvent.ErrorOccurred ->
 //                    RoomEvent.ErrorOccurred(event.error)
 //            }
@@ -340,11 +332,11 @@ internal class RoomService(
 //                roomConsumers[event.room.id]?.invoke(RoomEvent.UserLeft(event.user))
 //            is ChatEvent.PresenceChange ->
 //                roomConsumers.keys.forEach { _ ->
-////                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
-////                        roomConsumers[roomId]?.invoke(
-////                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
-////                        )
-////                    }
+//                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
+//                        roomConsumers[roomId]?.invoke(
+//                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
+//                        )
+//                    }
 //                }
 //        }
 //    }

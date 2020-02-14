@@ -7,4 +7,4 @@ fun createChatManager(
     userId: String = Users.PUSHERINO,
     tokenProvider: TokenProvider
 ) {}
-//= ChatManager(instanceLocator, userId, TestChatkitDependencies(tokenProvider))
+// = ChatManager(instanceLocator, userId, TestChatkitDependencies(tokenProvider))
