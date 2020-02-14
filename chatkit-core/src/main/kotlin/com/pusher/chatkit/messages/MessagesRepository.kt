@@ -47,7 +47,7 @@ sealed class MessagesState {
     }
 }
 
-class MessagesProvider { // Repository?
+class MessagesRepository {
 
     val messages: List<Message> get() = TODO()
 

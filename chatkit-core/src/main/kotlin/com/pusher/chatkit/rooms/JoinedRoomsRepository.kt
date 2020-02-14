@@ -30,7 +30,7 @@ sealed class JoinedRoomsState {
     }
 }
 
-class JoinedRoomsProvider /* TODO: check : Closeable */ { // Repository?
+class JoinedRoomsRepository /* TODO: check : Closeable */ {
 
     val rooms: Set<Room> get() = setOf() // get from the store and map
 
