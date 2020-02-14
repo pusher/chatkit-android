@@ -17,10 +17,13 @@ import org.spekframework.spek2.style.specification.describe
 object UserEnrichmentErrorFunctionalTest : Spek({
 
     val initialState = UserSubscriptionEvent.InitialState(
-            simpleUser("alice"),
-            listOf(simpleRoom("roomId1", "Room 1")),
-            listOf(RoomReadStateApiType("roomId1", 0)),
-            listOf(RoomMembershipApiType("roomId1", listOf("alice")))
+//            simpleUser("alice"),
+            listOf(),
+            listOf(),
+            listOf()
+//            listOf(simpleRoom("roomId1", "Room 1")),
+//            listOf(RoomReadStateApiType("roomId1", 0)),
+//            listOf(RoomMembershipApiType("roomId1", listOf("alice")))
     )
     val networkError = Errors.network("test error")
 

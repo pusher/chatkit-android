@@ -15,10 +15,13 @@ import org.spekframework.spek2.style.specification.describe
 object RoomSubscriptionMemberFetchErrorFunctionalTest : Spek({
 
     val initialState = UserSubscriptionEvent.InitialState(
-            simpleUser("alice"),
-            listOf(simpleRoom("roomId1", "Room 1")),
-            listOf(RoomReadStateApiType("roomId1", 0)),
-            listOf(RoomMembershipApiType("roomId1", listOf("alice", "bob")))
+//            simpleUser("alice"),
+            listOf(),
+            listOf(),
+            listOf()
+//            listOf(simpleRoom("roomId1", "Room 1")),
+//            listOf(RoomReadStateApiType("roomId1", 0)),
+//            listOf(RoomMembershipApiType("roomId1", listOf("alice", "bob")))
     )
 
     describe("given error when fetching joined room members") {

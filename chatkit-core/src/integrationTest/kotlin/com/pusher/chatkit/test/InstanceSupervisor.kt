@@ -13,7 +13,6 @@ import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
 import com.pusher.chatkit.test.InstanceActions.tearDown
-import com.pusher.chatkit.users.User
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -44,37 +43,40 @@ object InstanceSupervisor {
      * Tear downs the instance and runs the provided actions.
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) {
-        waitForIdleInstance().wait(Wait.For(60, TimeUnit.SECONDS))
+        waitForIdleInstance()
+                //.wait(Wait.For(60, TimeUnit.SECONDS))
         listOf(tearDown(), setInstanceBusy(), createSuperUser())
                 .plus(actions)
                 .forEach(InstanceAction::run)
     }
 }
 
-private fun waitForIdleInstance(): Future<Result<Boolean, Error>> = Futures.schedule {
-    generateSequence { isInstanceIdle() }
-            .map {
-                it.also {
-                    when {
-                        it is Result.Success && !it.value -> Thread.sleep(1_000)
-                        it is Result.Failure -> error(it.error)
-                    }
-                }
-            }
-            .filter { it is Result.Success && it.value }
-            .first()
-}
+private fun waitForIdleInstance() {}
+//: Future<Result<Boolean, Error>> = Futures.schedule {
+//    generateSequence { isInstanceIdle() }
+//            .map {
+//                it.also {
+//                    when {
+//                        it is Result.Success && !it.value -> Thread.sleep(1_000)
+//                        it is Result.Failure -> error(it.error)
+//                    }
+//                }
+//            }
+//            .filter { it is Result.Success && it.value }
+//            .first()
+//}
 
-private fun isInstanceIdle(): Result<Boolean, Error> = chatkitInstance.request(
-        options = RequestOptions("/users", "GET"),
-        tokenProvider = sudoTokenProvider,
-        responseParser = { it.parseAs<List<User>>() }
-).wait().map { users ->
-    users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
-}
+private fun isInstanceIdle() {}
+//        : Result<Boolean, Error> = chatkitInstance.request(
+//        options = RequestOptions("/users", "GET"),
+//        tokenProvider = sudoTokenProvider,
+//        responseParser = { it.parseAs<List<String>>() }
+//).wait().map { users ->
+//    users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
+//}
 
-private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
-        Date().time - created.time > millisecondsAgo
+//private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
+//        Date().time - created.time > millisecondsAgo
 
 private val sudoTokenProvider by lazy {
     TestTokenProvider(

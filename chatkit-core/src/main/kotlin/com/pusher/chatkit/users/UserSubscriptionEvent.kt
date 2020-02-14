@@ -9,7 +9,7 @@ internal typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 internal sealed class UserSubscriptionEvent {
 
     internal data class InitialState(
-        val currentUser: User,
+//        val currentUser: User,
         val rooms: List<JoinedRoomApiType>,
         val readStates: List<RoomReadStateApiType>,
         val memberships: List<RoomMembershipApiType>
