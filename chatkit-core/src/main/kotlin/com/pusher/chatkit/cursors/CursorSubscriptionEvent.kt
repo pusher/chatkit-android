@@ -1,12 +1,13 @@
 package com.pusher.chatkit.cursors
 
+import com.pusher.chatkit.cursors.api.CursorApiType
 import elements.Error
 
-sealed class CursorSubscriptionEvent {
-//    data class OnCursorSet(val cursor: Cursor) : CursorSubscriptionEvent()
-//    data class InitialState(val cursors: List<Cursor>) : CursorSubscriptionEvent()
+internal sealed class CursorSubscriptionEvent {
+    data class OnCursorSet(val cursor: CursorApiType) : CursorSubscriptionEvent()
+    data class InitialState(val cursors: List<CursorApiType>) : CursorSubscriptionEvent()
     data class OnError(val error: Error) : CursorSubscriptionEvent()
     object NoEvent : CursorSubscriptionEvent()
 }
 
-typealias CursorSubscriptionConsumer = (CursorSubscriptionEvent) -> Unit
+internal typealias CursorSubscriptionConsumer = (CursorSubscriptionEvent) -> Unit
