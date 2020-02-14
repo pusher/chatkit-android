@@ -16,7 +16,6 @@ sealed class JoinedRoomsState {
     data class Degraded(
         val rooms: Set<Room>,
         val changeDescription: ChangeDescription?,
-            // TODO: model degraded details
         val error: Error
     ) : JoinedRoomsState()
 

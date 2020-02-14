@@ -19,6 +19,12 @@ data class RoomViewType(val source: Room) { // JoinedRoom?
     val id: CharSequence get() = source.id
 
     val name: CharSequence get() = source.name
+
+    /**
+     * Comma separated, e.g. `Alice, Bob`
+     */
+    val namesOfOtherMembers: CharSequence get() = TODO()
+
     val isPrivate: Boolean get() = source.isPrivate
 
     val unreadCount: Int? get() = source.unreadCount
@@ -53,7 +59,6 @@ sealed class JoinedRoomsViewModelState {
     class Degraded(
         val rooms: List<RoomViewType>,
         val changeReason: ChangeReason?,
-            // TODO: model degrade details
         val error: Error
     ) : JoinedRoomsViewModelState()
 
