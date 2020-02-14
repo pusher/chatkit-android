@@ -69,12 +69,14 @@ task ciBuild(type: GradleBuild) {
                     ['assemble',
                      'jacocoTestReport',
                      'test',
-                     'ktlintCheck']) +
+                     'ktlintCheck',
+                     'detekt']) +
 
             tasksFor('chatkit-android',
                     ['assembleDebug',
                      'jacocoTestReport',
                      'test',
                      'lintDebug',
-                     'ktlintCheck'])
+                     'ktlintCheck',
+                     'detekt'])
 }
