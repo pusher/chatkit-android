@@ -54,7 +54,7 @@ class PresenceService(
                         messageParser = PresenceSubscriptionEventParser(userId),
                         logger = logger,
                         client = client,
-                        description = "Presence $userId"
+                        description = "PresenceApiType $userId"
                 )
             }
         }

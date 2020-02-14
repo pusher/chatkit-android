@@ -2,6 +2,8 @@ package com.pusher.chatkit.presence
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.pusher.chatkit.presence.api.PresenceApiType
+import com.pusher.chatkit.presence.api.UserPresenceApiType
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
@@ -37,11 +39,11 @@ internal class PresenceSubscriptionEventParser(
                 "presence_state" -> parseAs<PresenceStateBody>()
                         .map { parsedEvent ->
                             PresenceSubscriptionEvent.PresenceUpdate(
-                                    UserPresence(
+                                    UserPresenceApiType(
                                             when (parsedEvent.state) {
-                                                "online" -> Presence.Online
-                                                "offline" -> Presence.Offline
-                                                else -> Presence.Unknown
+                                                "online" -> PresenceApiType.Online
+                                                "offline" -> PresenceApiType.Offline
+                                                else -> PresenceApiType.Unknown
                                             },
                                             userId
                                     )
