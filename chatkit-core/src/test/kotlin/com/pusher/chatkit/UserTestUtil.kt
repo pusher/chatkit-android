@@ -6,5 +6,5 @@ import java.util.Date
 
 fun simpleUser(id: String): User {
     val createdUpdatedAt = dateFormat.format(Date())
-    return User(id, createdUpdatedAt, createdUpdatedAt, null, null, null)
+    return User(id, createdUpdatedAt, createdUpdatedAt, null, null)
 }

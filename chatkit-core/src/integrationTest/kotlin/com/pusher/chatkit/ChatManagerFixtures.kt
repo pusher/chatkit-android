@@ -55,25 +55,25 @@ class TestChatkitDependencies(
     override val appHooks = NoAppHooks()
 }
 
-val SynchronousCurrentUser.generalRoom
-    get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
-
-private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
-
-fun chatFor(userName: String) = SynchronousChatManager(
-        instanceLocator = INSTANCE_LOCATOR,
-        userId = userName,
-        dependencies = TestChatkitDependencies(
-                tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
-        )
-).also { managers += it }
-
-fun closeChatManagers() {
-    for (manager in managers) {
-        manager.close()
-    }
-    managers.clear()
-}
+//val SynchronousCurrentUser.generalRoom
+//    get() = rooms.find { it.name == Rooms.GENERAL } ?: error("Could not find room general")
+//
+//private val managers = ConcurrentLinkedQueue<SynchronousChatManager>()
+//
+//fun chatFor(userName: String) = SynchronousChatManager(
+//        instanceLocator = INSTANCE_LOCATOR,
+//        userId = userName,
+//        dependencies = TestChatkitDependencies(
+//                tokenProvider = TestTokenProvider(INSTANCE_ID, userName, AUTH_KEY_ID, AUTH_KEY_SECRET)
+//        )
+//).also { managers += it }
+//
+//fun closeChatManagers() {
+//    for (manager in managers) {
+//        manager.close()
+//    }
+//    managers.clear()
+//}
 
 fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
     is Result.Success -> value

@@ -6,7 +6,7 @@ internal fun simpleRoom(
     id: String,
     name: String,
     isPrivate: Boolean = false,
-    customData: CustomData? = null,
+//    customData: CustomData? = null,
     lastMessageAt: String? = "2017-04-14T14:10:38Z"
 ) =
         JoinedRoomApiType(
@@ -15,7 +15,7 @@ internal fun simpleRoom(
                 name = name,
                 pushNotificationTitleOverride = null,
                 private = isPrivate,
-                customData = customData,
+//                customData = customData,
                 createdAt = "2017-04-13T14:10:38Z",
                 updatedAt = "2017-04-13T14:10:38Z",
                 lastMessageAt = lastMessageAt,

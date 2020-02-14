@@ -19,7 +19,7 @@ object CreateOrJoinRoomParserSpec : Spek({
             name = "Chatkit chat",
             pushNotificationTitleOverride = null,
             private = false,
-            customData = mapOf("highlight_color" to "blue"),
+//            customData = mapOf("highlight_color" to "blue"),
             lastMessageAt = "2020-01-08T14:55:10Z",
             createdAt = "2017-03-23T11:36:42Z",
             updatedAt = "2017-03-23T11:36:42Z",
