@@ -1,16 +1,8 @@
 package com.pusher.chatkit
 
-import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
-import com.pusher.chatkit.rooms.api.RoomMembershipApiType
-import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.users.usersFetchFailingWith
-import com.pusher.util.Result
 import elements.Errors
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -27,15 +19,15 @@ object UserEnrichmentErrorFunctionalTest : Spek({
     )
     val networkError = Errors.network("test error")
 
-    describe("given error when fetching user joining the room") {
-        val userJoinedEvent = UserSubscriptionEvent.UserJoinedRoomEvent("bob", "roomId1")
-
-        val mockPlatformClient = mockPlatformClient(
-                userSubscription(initialState, userJoinedEvent),
-                usersFetchFailingWith(networkError)
-        )
-
-        val subject = chatForFunctionalTest("alice", testPlatformClientFactory(mockPlatformClient))
+//    describe("given error when fetching user joining the room") {
+//        val userJoinedEvent = UserSubscriptionEvent.UserJoinedRoomEvent("bob", "roomId1")
+//
+//        val mockPlatformClient = mockPlatformClient(
+//                userSubscription(initialState, userJoinedEvent),
+//                usersFetchFailingWith(networkError)
+//        )
+//
+//        val subject = chatForFunctionalTest("alice", testPlatformClientFactory(mockPlatformClient))
 
 //        describe("when connect is called") {
 //            val notifiedEvents: BlockingQueue<ChatEvent> = LinkedBlockingQueue()
@@ -56,5 +48,5 @@ object UserEnrichmentErrorFunctionalTest : Spek({
 //                        .that(notifiedEvents.poll(1, TimeUnit.MILLISECONDS)).isNull()
 //            }
 //        }
-    }
+//    }
 })
