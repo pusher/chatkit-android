@@ -1,8 +1,6 @@
 package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
-import com.pusher.chatkit.ChatEvent
-import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ResolvableSubscription
 import com.pusher.chatkit.users.UserSubscriptionEvent
@@ -75,8 +73,8 @@ class CursorService(
 
     @Suppress("UNUSED_PARAMETER")
     fun subscribeForRoom(
-        roomId: String,
-        consumer: (ChatEvent) -> Unit
+        roomId: String
+//        consumer: (ChatEvent) -> Unit
     )
 //           : ResolvableSubscription<CursorSubscriptionEvent>
     {
@@ -88,8 +86,8 @@ class CursorService(
 
     @Suppress("UNUSED_PARAMETER")
     private fun subscribe(
-        path: String,
-        consumer: ChatManagerEventConsumer
+        path: String
+//        consumer: ChatManagerEventConsumer
     ) = ResolvableSubscription(
             client = client,
             path = path,

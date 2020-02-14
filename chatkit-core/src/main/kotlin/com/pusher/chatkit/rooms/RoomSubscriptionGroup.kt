@@ -1,6 +1,5 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatManagerEventConsumer
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.subscription.ChatkitSubscription
@@ -15,7 +14,7 @@ internal class RoomSubscriptionGroup(
     messageLimit: Int,
     roomId: String,
     cursorService: CursorService,
-    cursorConsumer: ChatManagerEventConsumer,
+//    cursorConsumer: ChatManagerEventConsumer,
     roomConsumer: RoomSubscriptionConsumer,
     client: PlatformClient,
     messageParser: DataParser<RoomSubscriptionEvent>,
@@ -38,8 +37,8 @@ internal class RoomSubscriptionGroup(
     )
 
     private val cursorsSubscription = cursorService.subscribeForRoom(
-            roomId,
-            consumer = cursorConsumer
+            roomId
+//            consumer = cursorConsumer
     )
 
     override fun connect(): Subscription {

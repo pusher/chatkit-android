@@ -1,14 +1,11 @@
 package com.pusher.chatkit.rooms
 
-import com.pusher.chatkit.ChatEvent
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.cursors.CursorService
 import com.pusher.chatkit.rooms.api.CreateRoomRequest
 import com.pusher.chatkit.rooms.api.CreateRoomResponse
 import com.pusher.chatkit.rooms.api.JoinRoomResponse
 import com.pusher.chatkit.rooms.api.JoinableRoomsResponse
-import com.pusher.chatkit.rooms.api.JoinedRoomApiMapper
-import com.pusher.chatkit.rooms.api.NotJoinedRoomApiMapper
 import com.pusher.chatkit.rooms.api.UpdateRoomRequest
 import com.pusher.chatkit.rooms.api.UpdateRoomRequestWithPushNotificationTitleOverride
 import com.pusher.chatkit.subscription.ChatkitSubscription
@@ -38,17 +35,17 @@ internal class RoomService(
 //    private val urlRefresher: UrlRefresher,
     private val userService: UserService,
     private val cursorsService: CursorService,
-    private val makeGlobalConsumer: (String) -> RoomConsumer,
+//    private val makeGlobalConsumer: (String) -> RoomConsumer,
     private val logger: Logger
 ) {
     // Access synchronised on itself
     private val openSubscriptions = HashMap<String, Subscription>()
-    private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
+//    private val roomConsumers = ConcurrentHashMap<String, RoomConsumer>()
 
 //    val roomStore = RoomStore()
 
-    private val joinedRoomApiMapper = JoinedRoomApiMapper()
-    private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
+//    private val joinedRoomApiMapper = JoinedRoomApiMapper()
+//    private val notJoinedRoomApiMapper = NotJoinedRoomApiMapper()
 
     @Suppress("UNUSED_PARAMETER")
     fun populateInitial(event: UserSubscriptionEvent.InitialState) {
@@ -60,10 +57,11 @@ internal class RoomService(
 //            : Result<Room, Error> =
 //            roomStore[id].orElse { Errors.other("Room not found locally") }
 
-    fun fetchJoinableRooms(userId: String): Result<List<Room>, Error> =
-            client.doGet<JoinableRoomsResponse>(
-                    "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
-            ).map(notJoinedRoomApiMapper::toRooms)
+    fun fetchJoinableRooms(userId: String) {}
+//            : Result<List<Room>, Error> =
+//            client.doGet<JoinableRoomsResponse>(
+//                    "/users/${URLEncoder.encode(userId, "UTF-8")}/joinable_rooms"
+//            ).map(notJoinedRoomApiMapper::toRooms)
 
     fun createRoom(
         id: String?,
@@ -73,22 +71,23 @@ internal class RoomService(
         isPrivate: Boolean,
 //        customData: CustomData?,
         userIds: List<String>
-    ): Result<Room, Error> =
-            CreateRoomRequest(
-                    id = id,
-                    name = name,
-                    pushNotificationTitleOverride = pushNotificationTitleOverride,
-                    private = isPrivate,
-                    createdById = creatorId,
-//                    customData = mapOf<String, Any>(),
-                    userIds = userIds
-            ).toJson()
-                    .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
-                    .map { response ->
-//                        roomStore.add(response)
-                        userService.populateUserStore(response.membership.userIds.toSet())
-                        joinedRoomApiMapper.toRoom(response)
-                    }
+    ) {}
+//            : Result<Room, Error> =
+//            CreateRoomRequest(
+//                    id = id,
+//                    name = name,
+//                    pushNotificationTitleOverride = pushNotificationTitleOverride,
+//                    private = isPrivate,
+//                    createdById = creatorId,
+////                    customData = mapOf<String, Any>(),
+//                    userIds = userIds
+//            ).toJson()
+//                    .flatMap { body -> client.doPost<CreateRoomResponse>("/rooms", body) }
+//                    .map { response ->
+////                        roomStore.add(response)
+//                        userService.populateUserStore(response.membership.userIds.toSet())
+//                        joinedRoomApiMapper.toRoom(response)
+//                    }
 
     fun deleteRoom(roomId: String): Result<String, Error> =
             legacyV2client.doDelete<Unit?>("/rooms/${URLEncoder.encode(roomId, "UTF-8")}")
@@ -104,13 +103,14 @@ internal class RoomService(
                         roomId
                     }
 
-    fun joinRoom(userId: String, roomId: String): Result<Room, Error> =
-            client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
-                    .map { response ->
-//                        roomStore.add(response)
-                        userService.populateUserStore(response.membership.userIds.toSet())
-                        joinedRoomApiMapper.toRoom(response)
-                    }
+    fun joinRoom(userId: String, roomId: String) {}
+//            : Result<Room, Error> =
+//            client.doPost<JoinRoomResponse>("/users/${URLEncoder.encode(userId, "UTF-8")}/rooms/${URLEncoder.encode(roomId, "UTF-8")}/join")
+//                    .map { response ->
+////                        roomStore.add(response)
+//                        userService.populateUserStore(response.membership.userIds.toSet())
+//                        joinedRoomApiMapper.toRoom(response)
+//                    }
 
     fun updateRoom(
         roomId: String,
@@ -146,67 +146,71 @@ internal class RoomService(
 
     fun subscribeToRoom(
         roomId: String,
-        unsafeConsumer: RoomConsumer,
+//        unsafeConsumer: RoomConsumer,
         messageLimit: Int
-    ): Subscription =
-            subscribeToRoom(roomId, unsafeConsumer, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
+    ) {}
+            //: Subscription =
+           // subscribeToRoom(roomId, messageLimit, legacyV2client, RoomSubscriptionEventParserV2)
 
     fun subscribeToRoomMultipart(
         roomId: String,
-        unsafeConsumer: RoomConsumer,
+//        unsafeConsumer: RoomConsumer,
         messageLimit: Int
-    ): Subscription =
-            subscribeToRoom(roomId, unsafeConsumer, messageLimit, client, RoomSubscriptionEventParserV3)
+    ) {}
+            //: Subscription =
+            //subscribeToRoom(roomId, messageLimit, client, RoomSubscriptionEventParserV3)
 
     private fun subscribeToRoom(
         roomId: String,
-        unsafeConsumer: RoomConsumer,
+//        unsafeConsumer: RoomConsumer,
         messageLimit: Int,
         client: PlatformClient,
         parser: DataParser<RoomSubscriptionEvent>
-    ): Subscription {
+    )
+            //: Subscription
+    {
         // This consumer is made safe by the layer providing it
-        val globalConsumer = makeGlobalConsumer(roomId)
-        val consumer: RoomConsumer = { event -> makeSafe(logger) { unsafeConsumer(event) } }
+//        val globalConsumer = makeGlobalConsumer(roomId)
+//        val consumer: RoomConsumer = { event -> makeSafe(logger) { unsafeConsumer(event) } }
+//
+//        val buffer = ArrayList<RoomEvent>()
+//        var ready = false
+//        val emit = { event: RoomEvent ->
+//            synchronized(buffer) {
+//                if (ready) {
+//                    consumer(event)
+//                    globalConsumer(event)
+//                } else {
+//                    buffer.add(event)
+//                }
+//            }
+//            Unit
+//        }
 
-        val buffer = ArrayList<RoomEvent>()
-        var ready = false
-        val emit = { event: RoomEvent ->
-            synchronized(buffer) {
-                if (ready) {
-                    consumer(event)
-                    globalConsumer(event)
-                } else {
-                    buffer.add(event)
-                }
-            }
-            Unit
-        }
+//        val sub = RoomSubscriptionGroup(
+//                messageLimit = messageLimit,
+//                roomId = roomId,
+//                cursorService = cursorsService,
+//                roomConsumer = { emit(enrichEvent(it, emit)) },
+//                cursorConsumer = { emit(translateCursorEvent(it)) },
+//                client = client,
+//                messageParser = parser,
+//                logger = logger
+//        )
+//        synchronized(openSubscriptions) {
+//            openSubscriptions[roomId]?.unsubscribe()
+//            openSubscriptions[roomId] = sub
+//            roomConsumers[roomId] = consumer
+//        }
 
-        val sub = RoomSubscriptionGroup(
-                messageLimit = messageLimit,
-                roomId = roomId,
-                cursorService = cursorsService,
-                roomConsumer = { emit(enrichEvent(it, emit)) },
-                cursorConsumer = { emit(translateCursorEvent(it)) },
-                client = client,
-                messageParser = parser,
-                logger = logger
-        )
-        synchronized(openSubscriptions) {
-            openSubscriptions[roomId]?.unsubscribe()
-            openSubscriptions[roomId] = sub
-            roomConsumers[roomId] = consumer
-        }
-
-        val proxiedSub = unsubscribeProxy(sub) {
-            synchronized(openSubscriptions) {
-                if (openSubscriptions[roomId] == sub) {
-                    openSubscriptions.remove(roomId)
-                }
-            }
-            roomConsumers.remove(roomId)
-        }.connect()
+//        val proxiedSub = unsubscribeProxy(sub) {
+//            synchronized(openSubscriptions) {
+//                if (openSubscriptions[roomId] == sub) {
+//                    openSubscriptions.remove(roomId)
+//                }
+//            }
+//            roomConsumers.remove(roomId)
+//        }.connect()
 
         // ensure members are fetched and presence subscription is opened for each of them
 //        val usersFetchResult = listOf<String>()
@@ -215,16 +219,16 @@ internal class RoomService(
 ////            emit(RoomEvent.ErrorOccurred(usersFetchResult.error))
 ////        }
 
-        synchronized(buffer) {
-            buffer.forEach { event ->
-                consumer(event)
-                globalConsumer(event)
-            }
-            buffer.clear()
-            ready = true
-        }
-
-        return proxiedSub
+//        synchronized(buffer) {
+//            buffer.forEach { event ->
+//                consumer(event)
+//                globalConsumer(event)
+//            }
+//            buffer.clear()
+//            ready = true
+//        }
+//
+//        return proxiedSub
     }
 
     private fun unsubscribeProxy(sub: ChatkitSubscription, hook: (Subscription) -> Unit) =
@@ -249,51 +253,53 @@ internal class RoomService(
 //        roomStore.clear()
     }
 
-    private fun translateCursorEvent(event: ChatEvent): RoomEvent =
-            when (event) {
-//                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
-                else -> RoomEvent.NoEvent
-            }
+    private fun translateCursorEvent() {}
+            //(event: ChatEvent): RoomEvent =
+//            when (event) {
+////                is ChatEvent.NewReadCursor -> RoomEvent.NewReadCursor(event.cursor)
+//                else -> RoomEvent.NoEvent
+//            }
 
-    private fun enrichEvent(event: RoomSubscriptionEvent, consumer: RoomConsumer): RoomEvent =
-            when (event) {
-//                is RoomSubscriptionEvent.NewMessage -> RoomEvent.NoEvent
-//                    userService.fetchUserBy(event.message.userId).map { user ->
-//                        event.message.user = user
-////                        RoomEvent.Message(event.message) as RoomEvent
-//                    }.recover {
+    private fun enrichEvent(event: RoomSubscriptionEvent) {}
+            //: RoomEvent =
+//            when (event) {
+////                is RoomSubscriptionEvent.NewMessage -> RoomEvent.NoEvent
+////                    userService.fetchUserBy(event.message.userId).map { user ->
+////                        event.message.user = user
+//////                        RoomEvent.Message(event.message) as RoomEvent
+////                    }.recover {
+//////                        RoomEvent.ErrorOccurred(it)
+////                    }
+//                is RoomSubscriptionEvent.NewMultipartMessage -> RoomEvent.NoEvent
+////                    upgradeMessageV3(
+////                            event.message,
+////                            this,
+////                            userService,
+////                            urlRefresher
+////                    ).map {
+////                        RoomEvent.MultipartMessage(it) as RoomEvent
+////                    }.recover {
 ////                        RoomEvent.ErrorOccurred(it)
-//                    }
-                is RoomSubscriptionEvent.NewMultipartMessage -> RoomEvent.NoEvent
-//                    upgradeMessageV3(
-//                            event.message,
-//                            this,
-//                            userService,
-//                            urlRefresher
-//                    ).map {
-//                        RoomEvent.MultipartMessage(it) as RoomEvent
-//                    }.recover {
-//                        RoomEvent.ErrorOccurred(it)
-//                    }
-                is RoomSubscriptionEvent.MessageDeleted -> RoomEvent.NoEvent
-//                    RoomEvent.MessageDeleted(event.messageId)
-                is RoomSubscriptionEvent.UserIsTyping -> RoomEvent.NoEvent
-//                    userService.fetchUserBy(event.userId).map { user ->
-//                        val onStop = {
-//                            consumer(RoomEvent.UserStoppedTyping(user))
-//                        }
-//
-//                        if (scheduleStopTypingEvent(event.userId, onStop)) {
-//                            RoomEvent.UserStartedTyping(user)
-//                        } else {
-//                            RoomEvent.NoEvent
-//                        }
-//                    }.recover {
-//                        RoomEvent.ErrorOccurred(it)
-//                    }
-                is RoomSubscriptionEvent.ErrorOccurred ->
-                    RoomEvent.ErrorOccurred(event.error)
-            }
+////                    }
+//                is RoomSubscriptionEvent.MessageDeleted -> RoomEvent.NoEvent
+////                    RoomEvent.MessageDeleted(event.messageId)
+//                is RoomSubscriptionEvent.UserIsTyping -> RoomEvent.NoEvent
+////                    userService.fetchUserBy(event.userId).map { user ->
+////                        val onStop = {
+////                            consumer(RoomEvent.UserStoppedTyping(user))
+////                        }
+////
+////                        if (scheduleStopTypingEvent(event.userId, onStop)) {
+////                            RoomEvent.UserStartedTyping(user)
+////                        } else {
+////                            RoomEvent.NoEvent
+////                        }
+////                    }.recover {
+////                        RoomEvent.ErrorOccurred(it)
+////                    }
+//                is RoomSubscriptionEvent.ErrorOccurred ->
+//                    RoomEvent.ErrorOccurred(event.error)
+//            }
 
     // Access synchronized on itself
     private val typingTimers = HashMap<String, Future<Unit>>()
@@ -318,28 +324,28 @@ internal class RoomService(
         }
     }
 
-    fun distributeGlobalEvent(event: ChatEvent) {
-        // This function must map events which we wish to report at room scope that
-        // are not received at room scope from the backend.
-        // Be careful, if you map an event which originated here, you will create
-        // an infinite loop consuming that event.
-        when (event) {
-            is ChatEvent.RoomUpdated ->
-                roomConsumers[event.room.id]?.invoke(RoomEvent.RoomUpdated(event.room))
-            is ChatEvent.RoomDeleted ->
-                roomConsumers[event.roomId]?.invoke(RoomEvent.RoomDeleted(event.roomId))
-            is ChatEvent.UserJoinedRoom ->
-                roomConsumers[event.room.id]?.invoke(RoomEvent.UserJoined(event.user))
-            is ChatEvent.UserLeftRoom ->
-                roomConsumers[event.room.id]?.invoke(RoomEvent.UserLeft(event.user))
-            is ChatEvent.PresenceChange ->
-                roomConsumers.keys.forEach { _ ->
-//                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
-//                        roomConsumers[roomId]?.invoke(
-//                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
-//                        )
-//                    }
-                }
-        }
-    }
+//    fun distributeGlobalEvent(event: ChatEvent) {
+//        // This function must map events which we wish to report at room scope that
+//        // are not received at room scope from the backend.
+//        // Be careful, if you map an event which originated here, you will create
+//        // an infinite loop consuming that event.
+//        when (event) {
+//            is ChatEvent.RoomUpdated ->
+//                roomConsumers[event.room.id]?.invoke(RoomEvent.RoomUpdated(event.room))
+//            is ChatEvent.RoomDeleted ->
+//                roomConsumers[event.roomId]?.invoke(RoomEvent.RoomDeleted(event.roomId))
+//            is ChatEvent.UserJoinedRoom ->
+//                roomConsumers[event.room.id]?.invoke(RoomEvent.UserJoined(event.user))
+//            is ChatEvent.UserLeftRoom ->
+//                roomConsumers[event.room.id]?.invoke(RoomEvent.UserLeft(event.user))
+//            is ChatEvent.PresenceChange ->
+//                roomConsumers.keys.forEach { _ ->
+////                    if (roomStore[roomId]?.memberUserIds?.contains(event.user.id) == true) {
+////                        roomConsumers[roomId]?.invoke(
+////                                RoomEvent.PresenceChange(event.user, event.currentState, event.prevState)
+////                        )
+////                    }
+//                }
+//        }
+//    }
 }

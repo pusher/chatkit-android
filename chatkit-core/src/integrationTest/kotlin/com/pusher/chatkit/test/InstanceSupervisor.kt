@@ -9,7 +9,6 @@ import com.pusher.chatkit.INSTANCE_LOCATOR
 import com.pusher.chatkit.TestDependencies
 import com.pusher.chatkit.TestTokenProvider
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
@@ -264,28 +263,28 @@ object InstanceActions {
         )
     }.withName("Create new user: $id")
 
-    fun changeRoomName(room: Room, newName: String): InstanceAction = {
-        chatkitInstance.request<JsonElement>(
-                options = RequestOptions(
-                        path = "/rooms/${room.id}",
-                        method = "PUT",
-                        body = mapOf("name" to newName).toJson()
-                ),
-                tokenProvider = sudoTokenProvider,
-                responseParser = { it.parseAs() }
-        )
-    }.withName("Changing name of room ${room.name} to $newName ")
+//    fun changeRoomName(room: Room, newName: String): InstanceAction = {
+//        chatkitInstance.request<JsonElement>(
+//                options = RequestOptions(
+//                        path = "/rooms/${room.id}",
+//                        method = "PUT",
+//                        body = mapOf("name" to newName).toJson()
+//                ),
+//                tokenProvider = sudoTokenProvider,
+//                responseParser = { it.parseAs() }
+//        )
+//    }.withName("Changing name of room ${room.name} to $newName ")
 
-    fun deleteRoom(room: Room): InstanceAction = {
-        chatkitInstanceV2.request<JsonElement>(
-                options = RequestOptions(
-                        path = "/rooms/${room.id}",
-                        method = "DELETE"
-                ),
-                tokenProvider = sudoTokenProvider,
-                responseParser = { it.parseAs() }
-        )
-    }.withName("Deleting room ${room.name} ")
+//    fun deleteRoom(room: Room): InstanceAction = {
+//        chatkitInstanceV2.request<JsonElement>(
+//                options = RequestOptions(
+//                        path = "/rooms/${room.id}",
+//                        method = "DELETE"
+//                ),
+//                tokenProvider = sudoTokenProvider,
+//                responseParser = { it.parseAs() }
+//        )
+//    }.withName("Deleting room ${room.name} ")
 
     fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
