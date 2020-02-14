@@ -2,6 +2,9 @@
 
 package com.pusher.chatkit.rooms
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import com.pusher.chatkit.JoinedRoomsRepositoryFactory
 import elements.Error
 import java.text.DateFormat
 import java.text.DateFormat.LONG
@@ -32,11 +35,7 @@ data class RoomViewType(val source: Room) { // JoinedRoom?
     private fun format(dateFormat: DateFormat, millis: Long?): String? =
             millis?.let { dateFormat.format(Date(millis)) }
 
-    // TODO: use android.text.format.DateFormat for appropriate localization, probably best
-    //  retrieve via reflection (once in the entry point and falling back to java.text.DateFormat)
-    //  to not impose mandatory dependency on Android or not to require the client code to pass it
-    //  (it would be good to have it but as an option — for custom client-provided DateFormat's,
-    //  not as a requirement)
+    // TODO: use android.text.format.DateFormat for appropriate localization (requires Context)
     private val dateFormat by lazy { DateFormat.getDateTimeInstance() }
     private val dateFormatShort by lazy { DateFormat.getDateTimeInstance(SHORT, SHORT) }
     private val dateFormatLong by lazy { DateFormat.getDateTimeInstance(LONG, LONG) }
@@ -68,8 +67,9 @@ sealed class JoinedRoomsViewModelState {
     }
 }
 
-// TODO: Fix ViewModel/LiveData dependency. Is because of non-Android module?
-class JoinedRoomsViewModel(private val providerFactory: Any/*JoinedRoomsProviderFactory*/) : Any()/*ViewModel*/ {
+class JoinedRoomsViewModel(
+    private val providerFactory: JoinedRoomsRepositoryFactory
+) : ViewModel() {
 
-    val state: Lazy/*LiveData*/<JoinedRoomsViewModelState> = TODO()
+    val state: LiveData<JoinedRoomsViewModelState> = TODO()
 }
