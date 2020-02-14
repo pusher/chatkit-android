@@ -9,17 +9,11 @@ import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.files.NoAttachment
 import com.pusher.chatkit.rooms.RoomService
-import com.pusher.chatkit.rooms.V3MessageBody
 import com.pusher.chatkit.users.UserService
-import com.pusher.chatkit.util.parseAs
 import com.pusher.chatkit.util.toJson
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
-import com.pusher.util.collect
 import elements.Error
-import elements.Errors
-import java.io.ByteArrayOutputStream
-import java.net.URLEncoder
 
 internal class MessageService(
     private val legacyV2client: PlatformClient,
