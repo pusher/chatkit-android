@@ -1,7 +1,7 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.chatkit.files.DataAttachment
+import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions

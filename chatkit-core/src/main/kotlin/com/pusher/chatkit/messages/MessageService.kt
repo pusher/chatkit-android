@@ -1,12 +1,12 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.files.GenericAttachment
 import com.pusher.chatkit.files.LinkAttachment
 import com.pusher.chatkit.files.NoAttachment
+import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.chatkit.rooms.RoomService
 import com.pusher.chatkit.users.UserService
 import com.pusher.chatkit.util.toJson
