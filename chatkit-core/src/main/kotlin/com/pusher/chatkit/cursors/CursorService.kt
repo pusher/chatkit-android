@@ -26,10 +26,6 @@ internal class CursorService(
                 )
             }
 
-    fun close() {
-//        cursorStore.clear()
-    }
-
     fun setReadCursor(
         userId: String,
         roomId: String,
