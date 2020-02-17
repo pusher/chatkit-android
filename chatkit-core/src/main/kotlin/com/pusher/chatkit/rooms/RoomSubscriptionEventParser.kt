@@ -2,7 +2,7 @@ package com.pusher.chatkit.rooms
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.messages.api.MessageBodyApiType
+import com.pusher.chatkit.messages.api.MessageApiType
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
@@ -35,7 +35,7 @@ internal object RoomSubscriptionEventParser : DataParser<RoomSubscriptionEvent> 
             try {
                 when (eventName) {
                     "new_message" ->
-                        parseAs<MessageBodyApiType>().map(RoomSubscriptionEvent::NewMultipartMessage)
+                        parseAs<MessageApiType>().map(RoomSubscriptionEvent::NewMultipartMessage)
                     "is_typing" -> parseAs<RoomSubscriptionEvent.UserIsTyping>()
                     "message_deleted" -> parseAs<RoomSubscriptionEvent.MessageDeleted>()
                     else -> Errors.other("Invalid event name: $eventName").asFailure()

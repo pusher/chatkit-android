@@ -2,7 +2,7 @@ package com.pusher.chatkit.messages.api
 
 import java.util.Date
 
-internal data class MessageBodyApiType(
+internal data class MessageApiType(
     val id: Int,
     val userId: String,
     val roomId: String,
