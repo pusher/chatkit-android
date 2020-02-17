@@ -2,6 +2,7 @@ package com.pusher.chatkit.cursors
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.pusher.chatkit.cursors.api.CursorApiType
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
@@ -31,8 +32,8 @@ internal object CursorSubscriptionEventParser : DataParser<CursorSubscriptionEve
 
     private fun JsonObject.parseEvent(eventName: String): Result<CursorSubscriptionEvent, Error> =
             when (eventName) {
-                "new_cursor" -> parseAs<CursorSubscriptionEvent.OnCursorSet>()
-                "cursor_set" -> CursorSubscriptionEvent.NoEvent.asSuccess()
+                "new_cursor" -> parseAs<CursorApiType>().map(CursorSubscriptionEvent::OnCursorSet)
+                "cursor_set" -> parseAs<CursorApiType>().map(CursorSubscriptionEvent::OnCursorSet)
                 "initial_state" -> parseAs<CursorSubscriptionEvent.InitialState>()
                 else -> CursorSubscriptionEvent.OnError(
                         Errors.other("Unexpected event name $eventName")
