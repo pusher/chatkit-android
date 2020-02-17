@@ -45,10 +45,6 @@ internal class CursorService(
     }
     
     @Suppress("UNUSED_PARAMETER")
-    private fun notSubscribedToRoom(name: String) =
-            Errors.other("Must be subscribed to room $name to access member's read cursors")
-
-    @Suppress("UNUSED_PARAMETER")
     fun subscribeForRoom(
         roomId: String
 //        consumer: (ChatEvent) -> Unit
