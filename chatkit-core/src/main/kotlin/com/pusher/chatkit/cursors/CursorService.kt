@@ -75,19 +75,4 @@ internal class CursorService(
             description = "Cursor user $path",
             logger = logger
     )
-
-    @Suppress("UNUSED_PARAMETER")
-    internal fun applyEvent(event: UserSubscriptionEvent) {}
-//            cursorStore.applyEvent(event)
-
-    private fun applyEvent(event: CursorSubscriptionEvent) =
-            listOf<CursorSubscriptionEvent>(event).map(::enrichEvent)
-    //            cursorStore.applyEvent(event).map(::enrichEvent)
-    @Suppress("UNUSED_PARAMETER")
-    private fun enrichEvent(event: CursorSubscriptionEvent) {}
-    // : ChatEvent =
-//            when (event) {
-//                is CursorSubscriptionEvent.OnCursorSet -> ChatEvent.NewReadCursor(event.cursor)
-//                else -> ChatEvent.NoEvent
-//            }
 }
