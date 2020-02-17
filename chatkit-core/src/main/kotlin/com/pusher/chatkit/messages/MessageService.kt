@@ -22,26 +22,6 @@ internal class MessageService(
 //    private val urlRefresher: UrlRefresher,
     private val filesService: FilesService
 ) {
-    @Suppress("UNUSED_PARAMETER")
-    fun fetchMessages(
-        roomId: String,
-        limit: Int,
-        initialId: Int?,
-        direction: Direction
-    ) {}
-//            : Result<List<Message>, Error> =
-//            fetchMessagesParams(limit, initialId, direction).let { params ->
-//                legacyV2client.doGet<List<Message>>("/rooms/$roomId/messages$params").flatMap { messages ->
-//                    messages.map { message ->
-//                        userService.fetchUserBy(message.userId).map { user ->
-//                            message.user = user
-//                            message
-//                        }
-//                    }.collect().mapFailure { errors ->
-//                        Errors.compose(errors)
-//                    }
-//                }
-//            }
 
     @Suppress("UNUSED_PARAMETER")
     fun fetchMultipartMessages(
@@ -173,19 +153,6 @@ internal class MessageService(
                 is NoAttachment -> AttachmentBodyApiType.None
                         .asSuccess()
             }
-
-    private fun sendMessage(
-        roomId: String,
-        text: String = "",
-        attachment: AttachmentBodyApiType
-    ): Result<Int, Error> =
-            MessageRequest(text, attachment.takeIf { it !== AttachmentBodyApiType.None })
-                    .toJson()
-                    .flatMap { body ->
-                        legacyV2client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
-                    }.map {
-                        it.messageId
-                    }
 }
 
 private data class MessageSendingResponse(
