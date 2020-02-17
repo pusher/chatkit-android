@@ -3,14 +3,12 @@ package com.pusher.chatkit.cursors
 import com.google.gson.JsonElement
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.ResolvableSubscription
-import com.pusher.chatkit.users.UserSubscriptionEvent
 import com.pusher.chatkit.util.Throttler
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
 import com.pusher.util.mapResult
-import elements.Errors
 
 internal class CursorService(
     private val client: PlatformClient,
@@ -43,7 +41,7 @@ internal class CursorService(
 //                position = position
 //        )
     }
-    
+
     @Suppress("UNUSED_PARAMETER")
     fun subscribeForRoom(
         roomId: String

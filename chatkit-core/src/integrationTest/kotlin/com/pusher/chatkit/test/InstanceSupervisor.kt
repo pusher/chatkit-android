@@ -23,9 +23,9 @@ import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
 import java.net.URLEncoder
+import java.util.Date
 import java.util.concurrent.Future
 import org.junit.runner.notification.Failure
-import java.util.Date
 
 /**
  * In charge of setting the right state of an instance for a test
@@ -63,18 +63,18 @@ private fun waitForIdleInstance(): Future<Result<Boolean, Error>> = Futures.sche
             }
             .filter { it is Result.Success && it.value }
             .first()
- }
+}
 
-private fun isInstanceIdle()
-        : Result<Boolean, Error> = chatkitInstance.request(
+private fun isInstanceIdle():
+        Result<Boolean, Error> = chatkitInstance.request(
         options = RequestOptions("/users", "GET"),
         tokenProvider = sudoTokenProvider,
         responseParser = { it.parseAs<List<UserApiType>>() }
- ).wait().map { users ->
+).wait().map { users ->
     users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
- }
+}
 
- private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long) =
+private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long) =
         Date().time - created.time > millisecondsAgo
 
 private val sudoTokenProvider by lazy {
@@ -279,13 +279,13 @@ object InstanceActions {
     fun deleteRoom(roomId: String): InstanceAction = {
         chatkitInstanceV2.request<JsonElement>(
                 options = RequestOptions(
-                        path = "/rooms/${roomId}",
+                        path = "/rooms/$roomId",
                         method = "DELETE"
                 ),
                 tokenProvider = sudoTokenProvider,
                 responseParser = { it.parseAs() }
         )
-    }.withName("Deleting room ${roomId} ")
+    }.withName("Deleting room $roomId ")
 
     fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
