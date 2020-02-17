@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.pusher.chatkit.AUTH_KEY_ID
 import com.pusher.chatkit.AUTH_KEY_SECRET
+import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.INSTANCE_ID
 import com.pusher.chatkit.INSTANCE_LOCATOR
 import com.pusher.chatkit.TestDependencies
@@ -244,8 +245,8 @@ object InstanceActions {
     fun newUser(
         id: String,
         name: String = "No name",
-        avatarUrl: String = "https://gravatar.com/img/2124"
-//        customData: CustomData? = null
+        avatarUrl: String = "https://gravatar.com/img/2124",
+        customData: CustomData? = null
     ): InstanceAction = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
@@ -255,7 +256,7 @@ object InstanceActions {
                                 "name" to name,
                                 "id" to id,
                                 "avatar_url" to avatarUrl
-//                                "custom_data" to customData
+                                "custom_data" to customData
                         ).toJson()
                 ),
                 tokenProvider = sudoTokenProvider,
