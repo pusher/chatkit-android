@@ -64,6 +64,19 @@ internal class MessageService(
             attachment.asAttachmentBody(roomId, userId)
                     .flatMap { sendMessage(roomId, text, it) }
 
+    private fun sendMessage(
+            roomId: String,
+            text: String = "",
+            attachment: AttachmentBodyApiType
+    ): Result<Int, Error> =
+            MessageRequest(text, attachment.takeIf { it !== AttachmentBodyApiType.None })
+                    .toJson()
+                    .flatMap { body ->
+                        legacyV2client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
+                    }.map {
+                        it.messageId
+                    }
+
     @Suppress("UNUSED_PARAMETER")
     fun sendMultipartMessage(
         roomId: String
