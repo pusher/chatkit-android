@@ -43,17 +43,7 @@ internal class CursorService(
 //                position = position
 //        )
     }
-
-    // TODO v2: this signature isn't correct, the cursor should be an optional
-    // e.g. for the case where you have a new room with no messages (or cursors) yet!
-    // The error should additionally be more descriptive instead of just assuming you aren't
-    // subscribed to the room!
-    @Suppress("UNUSED_PARAMETER")
-    fun getReadCursor(userId: String, roomId: String) {
-        // : Result<Cursor?, Error> {
-//        cursorStore[userId][roomId]?.asSuccess() ?: notSubscribedToRoom(roomId).asFailure()
-    }
-
+    
     @Suppress("UNUSED_PARAMETER")
     private fun notSubscribedToRoom(name: String) =
             Errors.other("Must be subscribed to room $name to access member's read cursors")
