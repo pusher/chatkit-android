@@ -3,7 +3,7 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.presence.PresenceService
 
-class UserService(
+internal class UserService(
     private val client: PlatformClient,
     private val presenceService: PresenceService
 ) {

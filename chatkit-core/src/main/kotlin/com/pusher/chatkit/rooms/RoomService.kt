@@ -18,7 +18,7 @@ import elements.Subscription
 import java.net.URLEncoder
 import java.util.concurrent.Future
 
-sealed class RoomPushNotificationTitle {
+internal sealed class RoomPushNotificationTitle {
     data class Override(val title: String) : RoomPushNotificationTitle()
     object NoOverride : RoomPushNotificationTitle()
 }
@@ -115,14 +115,14 @@ internal class RoomService(
     ): Result<Unit, Error> {
         val request: Any =
                 if (pushNotificationTitleOverride == null) {
-                    UpdateRoomRequest(name, isPrivate)
+                    UpdateRoomRequest(name, isPrivate, customData)
                 } else {
                     when (pushNotificationTitleOverride) {
                         is RoomPushNotificationTitle.NoOverride ->
-                            UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate)
+                            UpdateRoomRequestWithPushNotificationTitleOverride(name, null, isPrivate, customData)
                         is RoomPushNotificationTitle.Override ->
                             UpdateRoomRequestWithPushNotificationTitleOverride(name,
-                                    pushNotificationTitleOverride.title, isPrivate)
+                                    pushNotificationTitleOverride.title, isPrivate, customData)
                     }
                 }
 

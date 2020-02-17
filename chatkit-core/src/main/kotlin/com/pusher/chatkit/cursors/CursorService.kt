@@ -12,7 +12,7 @@ import com.pusher.platform.logger.Logger
 import com.pusher.util.mapResult
 import elements.Errors
 
-class CursorService(
+internal class CursorService(
     private val client: PlatformClient,
     private val logger: Logger
 ) {

@@ -2,7 +2,7 @@ package com.pusher.chatkit.util
 
 import com.pusher.platform.logger.Logger
 
-fun makeSafe(logger: Logger, f: () -> Unit) {
+internal fun makeSafe(logger: Logger, f: () -> Unit) {
     try {
         f()
     } catch (t: Throwable) {

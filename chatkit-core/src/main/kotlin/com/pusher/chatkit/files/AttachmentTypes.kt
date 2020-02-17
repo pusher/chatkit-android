@@ -4,7 +4,7 @@ import java.io.File
 
 sealed class GenericAttachment
 
-data class DataAttachment constructor(
+internal data class DataAttachment constructor(
     val file: File,
     val name: String
 ) : GenericAttachment()
