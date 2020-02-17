@@ -255,7 +255,7 @@ object InstanceActions {
                         body = mapOf(
                                 "name" to name,
                                 "id" to id,
-                                "avatar_url" to avatarUrl
+                                "avatar_url" to avatarUrl,
                                 "custom_data" to customData
                         ).toJson()
                 ),
