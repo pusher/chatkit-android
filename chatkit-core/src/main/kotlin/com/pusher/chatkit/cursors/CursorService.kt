@@ -25,10 +25,6 @@ internal class CursorService(
                         responseParser = { it.parseAs() }
                 )
             }
-    @Suppress("UNUSED_PARAMETER")
-    internal fun populateInitial(event: UserSubscriptionEvent.InitialState) {
-//        cursorStore.initialiseContents(event.readStates.mapNotNull { it.cursor })
-    }
 
     fun close() {
 //        cursorStore.clear()
