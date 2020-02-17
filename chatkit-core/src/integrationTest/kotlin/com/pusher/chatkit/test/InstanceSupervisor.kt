@@ -276,16 +276,16 @@ object InstanceActions {
 //        )
 //    }.withName("Changing name of room ${room.name} to $newName ")
 
-//    fun deleteRoom(room: Room): InstanceAction = {
-//        chatkitInstanceV2.request<JsonElement>(
-//                options = RequestOptions(
-//                        path = "/rooms/${room.id}",
-//                        method = "DELETE"
-//                ),
-//                tokenProvider = sudoTokenProvider,
-//                responseParser = { it.parseAs() }
-//        )
-//    }.withName("Deleting room ${room.name} ")
+    fun deleteRoom(roomId: String): InstanceAction = {
+        chatkitInstanceV2.request<JsonElement>(
+                options = RequestOptions(
+                        path = "/rooms/${roomId}",
+                        method = "DELETE"
+                ),
+                tokenProvider = sudoTokenProvider,
+                responseParser = { it.parseAs() }
+        )
+    }.withName("Deleting room ${roomId} ")
 
     fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
