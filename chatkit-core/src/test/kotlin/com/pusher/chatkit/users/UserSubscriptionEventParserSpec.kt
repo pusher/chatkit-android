@@ -2,6 +2,7 @@ package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.TestFileReader
+import com.pusher.chatkit.cursors.api.CursorApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
 import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState
@@ -32,14 +33,14 @@ object UserSubscriptionEventParserSpec : Spek({
         it("then result's read states contains valid information") {
             val expectedReadState = RoomReadStateApiType(
                     roomId = "cool-room-1",
-                    unreadCount = 7
-//                    cursor = Cursor(
-//                            userId = "viv",
-//                            roomId = "cool-room-1",
-//                            position = 123654,
-//                            updatedAt = "2017-04-13T14:10:04Z",
-//                            type = 0
-//                    )
+                    unreadCount = 7,
+                    cursor = CursorApiType(
+                            userId = "viv",
+                            roomId = "cool-room-1",
+                            position = 123654,
+                            updatedAt = "2017-04-13T14:10:04Z",
+                            type = 0
+                    )
             )
 
             assertThat(initialStateEvent.readStates).containsExactly(expectedReadState)
@@ -61,14 +62,14 @@ object UserSubscriptionEventParserSpec : Spek({
         it("then result's read states contains valid information") {
             val expectedReadState = RoomReadStateApiType(
                     roomId = "cool-room-2",
-                    unreadCount = 15
-//                    cursor = Cursor(
-//                            userId = "viv",
-//                            roomId = "cool-room-2",
-//                            position = 123654,
-//                            updatedAt = "2017-04-13T14:10:04Z",
-//                            type = 0
-//                    )
+                    unreadCount = 15,
+                    cursor = CursorApiType(
+                            userId = "viv",
+                            roomId = "cool-room-2",
+                            position = 123654,
+                            updatedAt = "2017-04-13T14:10:04Z",
+                            type = 0
+                    )
             )
 
             assertThat(addedToRoomEvent.readState).isEqualTo(expectedReadState)
@@ -105,8 +106,8 @@ object UserSubscriptionEventParserSpec : Spek({
         it("then result's read states contains valid information") {
             val expectedReadState = RoomReadStateApiType(
                     roomId = "cool-room-1",
-                    unreadCount = 7
-//                    cursor = null
+                    unreadCount = 7,
+                    cursor = null
             )
 
             assertThat(initialStateEvent.readStates).containsExactly(expectedReadState)
@@ -121,8 +122,8 @@ object UserSubscriptionEventParserSpec : Spek({
         it("then result's read states contains valid information") {
             val expectedReadState = RoomReadStateApiType(
                     roomId = "cool-room-2",
-                    unreadCount = 15
-//                    cursor = null
+                    unreadCount = 15,
+                    cursor = null
             )
 
             assertThat(addedToRoomEvent.readState).isEqualTo(expectedReadState)

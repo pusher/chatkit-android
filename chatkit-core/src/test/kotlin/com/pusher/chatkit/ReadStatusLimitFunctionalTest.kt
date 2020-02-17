@@ -58,7 +58,7 @@ object ReadStatusLimitFunctionalTest : Spek({
             "(the one with no unread count)") {
 
         val readStateUpdatedEvent = UserSubscriptionEvent.ReadStateUpdatedEvent(
-                RoomReadStateApiType("roomId2", 1)
+                RoomReadStateApiType("roomId2", 1, null)
         )
         val mockPlatformClient by memoized {
             mockPlatformClientForUserSubscription(initialState, readStateUpdatedEvent)

@@ -21,7 +21,7 @@ object GetJoinableRoomsParserSpec : Spek({
                     createdById = "alice",
                     name = "Chatkit chat",
                     pushNotificationTitleOverride = null,
-//                    customData = mapOf("highlight_color" to "blue"),
+                    customData = mapOf("highlight_color" to "blue"),
                     createdAt = "2017-03-23T11:36:42Z",
                     updatedAt = "2017-03-23T11:36:42Z",
                     deletedAt = null)
