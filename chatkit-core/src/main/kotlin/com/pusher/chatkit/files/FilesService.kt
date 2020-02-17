@@ -1,6 +1,7 @@
 package com.pusher.chatkit.files
 
 import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.util.Result
 import elements.Error
 import java.net.URLEncoder
@@ -12,7 +13,7 @@ internal class FilesService(
         attachment: DataAttachment,
         roomId: String,
         userId: String
-    ): Result<AttachmentBody, Error> =
+    ): Result<AttachmentBodyApiType, Error> =
             client.upload(
                     "/rooms/${URLEncoder.encode(roomId, "UTF-8")}/users/${URLEncoder.encode(userId, "UTF-8")}/files/${URLEncoder.encode(attachment.name, "UTF-8")}",
                     attachment

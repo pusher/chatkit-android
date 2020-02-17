@@ -1,6 +1,6 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.files.AttachmentBody
+import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
@@ -97,12 +97,12 @@ class PlatformClient(
     internal fun upload(
         path: String,
         attachment: DataAttachment
-    ): Result<AttachmentBody, Error> =
+    ): Result<AttachmentBodyApiType, Error> =
             platformInstance.upload(
                     path = path,
                     file = attachment.file,
                     tokenProvider = tokenProvider,
-                    responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
+                    responseParser = { it.parseAs<AttachmentBodyApiType.Resource>() as Result<AttachmentBodyApiType, Error> }
             ).get()
 
     internal fun <A> subscribeResuming(

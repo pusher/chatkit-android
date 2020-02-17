@@ -1,7 +1,7 @@
 package com.pusher.chatkit.messages
 
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.files.AttachmentBody
+import com.pusher.chatkit.files.api.AttachmentBodyApiType
 import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.files.FilesService
 import com.pusher.chatkit.files.GenericAttachment
@@ -113,16 +113,16 @@ internal class MessageService(
 //                    Part.Inline(part.content, part.type).asSuccess()
 //                is NewPart.Url ->
 //                    Part.Url(part.url, part.type).asSuccess()
-//                is NewPart.Attachment ->
+//                is NewPart.AttachmentApiType ->
 //                    uploadAttachment(roomId, part).map { attachmentId ->
-//                        Part.Attachment(part.type, AttachmentId(attachmentId), part.name, part.customData)
+//                        Part.AttachmentApiType(part.type, AttachmentId(attachmentId), part.name, part.customData)
 //                    }
 //            }
 
     @Suppress("UNUSED_PARAMETER")
     private fun uploadAttachment(
         roomId: String
-//        part: NewPart.Attachment
+//        part: NewPart.AttachmentApiType
     ) {}
 //            : Result<String, Error> {
 //        val outputStream = ByteArrayOutputStream()
@@ -165,21 +165,21 @@ internal class MessageService(
     private fun GenericAttachment.asAttachmentBody(
         roomId: String,
         userId: String
-    ): Result<AttachmentBody, Error> =
+    ): Result<AttachmentBodyApiType, Error> =
             when (this) {
                 is DataAttachment -> filesService.uploadFile(this, roomId, userId)
-                is LinkAttachment -> AttachmentBody.Resource(link, type.toString())
+                is LinkAttachment -> AttachmentBodyApiType.Resource(link, type.toString())
                         .asSuccess()
-                is NoAttachment -> AttachmentBody.None
+                is NoAttachment -> AttachmentBodyApiType.None
                         .asSuccess()
             }
 
     private fun sendMessage(
         roomId: String,
         text: String = "",
-        attachment: AttachmentBody
+        attachment: AttachmentBodyApiType
     ): Result<Int, Error> =
-            MessageRequest(text, attachment.takeIf { it !== AttachmentBody.None })
+            MessageRequest(text, attachment.takeIf { it !== AttachmentBodyApiType.None })
                     .toJson()
                     .flatMap { body ->
                         legacyV2client.doPost<MessageSendingResponse>("/rooms/$roomId/messages", body)
@@ -194,5 +194,5 @@ private data class MessageSendingResponse(
 
 private data class MessageRequest(
     val text: String? = null,
-    val attachment: AttachmentBody? = null
+    val attachment: AttachmentBodyApiType? = null
 )
