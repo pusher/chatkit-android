@@ -2,8 +2,6 @@ package com.pusher.chatkit.rooms.api
 
 import com.pusher.chatkit.CustomData
 
-// import com.pusher.chatkit.CustomData
-
 internal data class NotJoinedRoomApiType(
     val id: String,
     val createdById: String,
