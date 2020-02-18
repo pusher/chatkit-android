@@ -1,6 +1,6 @@
 package com.pusher.chatkit.messages.api
 
-internal data class MessagePartBodyApiType(
+internal data class MessagePartApiType(
     val content: String?,
     val type: String,
     val url: String?,
