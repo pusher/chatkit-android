@@ -53,22 +53,22 @@ sealed class JoinedRoomsViewModelState {
 
     data class Connected(
         val rooms: List<RoomViewType>,
-        val changeReason: ChangeReason?
+        val changeDescription: ChangeDescription?
     ) : JoinedRoomsViewModelState()
 
     class Degraded(
         val rooms: List<RoomViewType>,
-        val changeReason: ChangeReason?,
+        val changeDescription: ChangeDescription?,
         val error: Error
     ) : JoinedRoomsViewModelState()
 
     object Closed : JoinedRoomsViewModelState()
 
-    sealed class ChangeReason {
-        data class ItemInserted(val position: Int) : ChangeReason()
-        data class ItemMoved(val fromPosition: Int, val toPosition: Int) : ChangeReason()
-        data class ItemChanged(val position: Int, val previousValue: RoomViewType) : ChangeReason()
-        data class ItemRemoved(val position: Int, val previousValue: RoomViewType) : ChangeReason()
+    sealed class ChangeDescription {
+        data class ItemInserted(val position: Int) : ChangeDescription()
+        data class ItemMoved(val fromPosition: Int, val toPosition: Int) : ChangeDescription()
+        data class ItemChanged(val position: Int, val previousValue: RoomViewType) : ChangeDescription()
+        data class ItemRemoved(val position: Int, val previousValue: RoomViewType) : ChangeDescription()
     }
 }
 
