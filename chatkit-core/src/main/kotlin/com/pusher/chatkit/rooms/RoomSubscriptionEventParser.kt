@@ -35,7 +35,7 @@ internal object RoomSubscriptionEventParser : DataParser<RoomSubscriptionEvent> 
             try {
                 when (eventName) {
                     "new_message" ->
-                        parseAs<MessageApiType>().map(RoomSubscriptionEvent::NewMultipartMessage)
+                        parseAs<MessageApiType>().map(RoomSubscriptionEvent::NewMessage)
                     "is_typing" -> parseAs<RoomSubscriptionEvent.UserIsTyping>()
                     "message_deleted" -> parseAs<RoomSubscriptionEvent.MessageDeleted>()
                     else -> Errors.other("Invalid event name: $eventName").asFailure()

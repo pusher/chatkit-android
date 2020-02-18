@@ -12,8 +12,7 @@ internal typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
  * Contrast with RoomEvent, the user facing events which are related to a room.
  */
 internal sealed class RoomSubscriptionEvent {
-    data class NewMultipartMessage(val message: MessageApiType) : RoomSubscriptionEvent()
+    data class NewMessage(val message: MessageApiType) : RoomSubscriptionEvent()
     data class MessageDeleted(val messageId: Int) : RoomSubscriptionEvent()
     data class UserIsTyping(val userId: String) : RoomSubscriptionEvent()
-    data class ErrorOccurred(val error: Error) : RoomSubscriptionEvent()
 }
