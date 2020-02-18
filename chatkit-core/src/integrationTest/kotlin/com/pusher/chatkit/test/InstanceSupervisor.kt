@@ -19,6 +19,7 @@ import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
 import com.pusher.platform.network.Futures
+import com.pusher.platform.network.Wait
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
@@ -26,6 +27,7 @@ import java.net.URLEncoder
 import java.util.Date
 import java.util.concurrent.Future
 import org.junit.runner.notification.Failure
+import java.util.concurrent.TimeUnit
 
 /**
  * In charge of setting the right state of an instance for a test
@@ -44,7 +46,7 @@ object InstanceSupervisor {
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) {
         waitForIdleInstance()
-                // .wait(Wait.For(60, TimeUnit.SECONDS))
+                 .wait(Wait.For(60, TimeUnit.SECONDS))
         listOf(tearDown(), setInstanceBusy(), createSuperUser())
                 .plus(actions)
                 .forEach(InstanceAction::run)
