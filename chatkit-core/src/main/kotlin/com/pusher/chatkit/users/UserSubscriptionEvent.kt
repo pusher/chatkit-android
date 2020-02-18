@@ -3,13 +3,14 @@ package com.pusher.chatkit.users
 import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
+import com.pusher.chatkit.users.api.UserApiType
 
 internal typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 
 internal sealed class UserSubscriptionEvent {
 
     internal data class InitialState(
-//        val currentUser: User,
+        val currentUser: UserApiType,
         val rooms: List<JoinedRoomApiType>,
         val readStates: List<RoomReadStateApiType>,
         val memberships: List<RoomMembershipApiType>
