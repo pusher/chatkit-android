@@ -38,14 +38,14 @@ internal class PresenceSubscriptionEventParser(
             when (eventName) {
                 "presence_state" -> parseAs<PresenceApiType>()
                         .map { parsedEvent ->
-                            PresenceSubscriptionEvent.PresenceUpdate(
+                            PresenceSubscriptionEvent(
                                     UserPresenceApiType(
+                                            userId,
                                             when (parsedEvent.state) {
                                                 "online" -> Presence.Online
                                                 "offline" -> Presence.Offline
                                                 else -> Presence.Unknown
-                                            },
-                                            userId
+                                            }
                                     )
                             )
                         }
