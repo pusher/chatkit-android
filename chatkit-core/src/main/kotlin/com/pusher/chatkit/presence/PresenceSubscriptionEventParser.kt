@@ -36,14 +36,14 @@ internal class PresenceSubscriptionEventParser(
 
     private fun JsonObject.parseEvent(eventName: String): Result<PresenceSubscriptionEvent, Error> =
             when (eventName) {
-                "presence_state" -> parseAs<PresenceStateBody>()
+                "presence_state" -> parseAs<PresenceApiType>()
                         .map { parsedEvent ->
                             PresenceSubscriptionEvent.PresenceUpdate(
                                     UserPresenceApiType(
                                             when (parsedEvent.state) {
-                                                "online" -> PresenceApiType.Online
-                                                "offline" -> PresenceApiType.Offline
-                                                else -> PresenceApiType.Unknown
+                                                "online" -> Presence.Online
+                                                "offline" -> Presence.Offline
+                                                else -> Presence.Unknown
                                             },
                                             userId
                                     )
@@ -52,7 +52,3 @@ internal class PresenceSubscriptionEventParser(
                 else -> Errors.other("Invalid event name: $eventName").asFailure()
             }.map { it } // generics -.-
 }
-
-private class PresenceStateBody(
-    val state: String
-)

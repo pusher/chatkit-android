@@ -2,7 +2,7 @@ package com.pusher.chatkit.users.api
 
 import com.google.gson.annotations.SerializedName
 import com.pusher.chatkit.CustomData
-import com.pusher.chatkit.presence.api.PresenceApiType
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.util.dateFormat
 import java.util.Date
 
@@ -17,10 +17,10 @@ internal data class UserApiType(
     val customData: CustomData?,
     private var online: Boolean = false
 ) {
-    var presence: PresenceApiType
-        get() = if (online) PresenceApiType.Online else PresenceApiType.Offline
+    var presence: Presence
+        get() = if (online) Presence.Online else Presence.Offline
         set(value) {
-            online = value === PresenceApiType.Online
+            online = value === Presence.Online
         }
 
     val created: Date by lazy { dateFormat.parse(createdAt) }
