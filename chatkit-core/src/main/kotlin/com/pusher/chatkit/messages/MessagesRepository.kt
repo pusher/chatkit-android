@@ -22,7 +22,7 @@ sealed class MessagesState {
         val error: Error
     ) : MessagesState()
 
-    object Closed : MessagesState()
+    data class Closed(val error: Error? = null) : MessagesState()
 
     sealed class ChangeDescription {
 

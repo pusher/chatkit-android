@@ -62,7 +62,7 @@ sealed class JoinedRoomsViewModelState {
         val error: Error
     ) : JoinedRoomsViewModelState()
 
-    object Closed : JoinedRoomsViewModelState()
+    data class Closed(val error: Error? = null) : JoinedRoomsViewModelState()
 
     sealed class ChangeDescription {
         data class ItemInserted(val position: Int) : ChangeDescription()

@@ -19,7 +19,7 @@ sealed class JoinedRoomsState {
         val error: Error
     ) : JoinedRoomsState()
 
-    object Closed : JoinedRoomsState()
+    data class Closed(val error: Error? = null) : JoinedRoomsState()
 
     sealed class ChangeDescription {
         data class JoinedRoom(val joinedRoom: Room) : ChangeDescription()
