@@ -8,17 +8,6 @@ import com.pusher.util.asSuccess
 import elements.Error
 import java.util.concurrent.Future
 
-internal fun chatForFunctionalTest(
-    userId: String,
-    platformClientFactory: PlatformClientFactory = DefaultPlatformClientFactory()
-) {}
-//        =
-//        SynchronousChatManager(
-//                "dummyVersion:dummyCluster:dummyInstanceId",
-//                userId,
-//                TestChatkitDependencies(DummyTokenProvider()),
-//                platformClientFactory
-//        )
 
 class DummyTokenProvider : TokenProvider {
 
