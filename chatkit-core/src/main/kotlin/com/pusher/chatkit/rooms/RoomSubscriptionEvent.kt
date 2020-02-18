@@ -1,7 +1,6 @@
 package com.pusher.chatkit.rooms
 
 import com.pusher.chatkit.messages.api.MessageApiType
-import elements.Error
 
 internal typealias RoomSubscriptionConsumer = (RoomSubscriptionEvent) -> Unit
 

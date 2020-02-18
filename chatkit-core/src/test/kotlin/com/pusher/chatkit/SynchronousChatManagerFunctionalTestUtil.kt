@@ -8,7 +8,6 @@ import com.pusher.util.asSuccess
 import elements.Error
 import java.util.concurrent.Future
 
-
 class DummyTokenProvider : TokenProvider {
 
     override fun fetchToken(tokenParams: Any?): Future<Result<String, Error>> =
