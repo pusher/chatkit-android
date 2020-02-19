@@ -53,8 +53,3 @@ class TestChatkitDependencies(
     override val pushNotifications = NoPushNotificationFactory()
     override val appHooks = NoAppHooks()
 }
-
-fun <A> Result<A, elements.Error>.assumeSuccess(): A = when (this) {
-    is Result.Success -> value
-    is Result.Failure -> error("Failure: $error")
-}
