@@ -33,7 +33,6 @@ internal object CursorSubscriptionEventParser : DataParser<CursorSubscriptionEve
     private fun JsonObject.parseEvent(eventName: String): Result<CursorSubscriptionEvent, Error> =
             when (eventName) {
                 "new_cursor" -> parseAs<CursorApiType>().map(CursorSubscriptionEvent::OnCursorSet)
-                "cursor_set" -> parseAs<CursorApiType>().map(CursorSubscriptionEvent::OnCursorSet)
                 "initial_state" -> parseAs<CursorSubscriptionEvent.InitialState>()
                 else -> CursorSubscriptionEvent.OnError(
                         Errors.other("Unexpected event name $eventName")
