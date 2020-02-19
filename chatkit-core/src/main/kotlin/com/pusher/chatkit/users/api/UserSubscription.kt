@@ -1,4 +1,4 @@
-package com.pusher.chatkit.users
+package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.loggingSubscription
