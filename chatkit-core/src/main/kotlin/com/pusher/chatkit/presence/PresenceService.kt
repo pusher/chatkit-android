@@ -10,10 +10,10 @@ import elements.Subscription
 import java.net.URLEncoder
 
 internal class PresenceService(
-        private val myUserId: String,
-        private val client: PlatformClient,
-        private val consumer: PresenceSubscriptionConsumer,
-        private val logger: Logger
+    private val myUserId: String,
+    private val client: PlatformClient,
+    private val consumer: PresenceSubscriptionConsumer,
+    private val logger: Logger
 ) {
     private val subscriptions = HashMap<String, Subscription>()
     private var registrationSub: Subscription? = null

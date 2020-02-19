@@ -8,7 +8,6 @@ import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.PlatformDependencies
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import com.pusher.util.Result
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

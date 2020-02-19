@@ -13,8 +13,8 @@ import elements.SubscriptionEvent
 import elements.emptyHeaders
 
 internal fun mockPlatformClientForUserSubscription(
-        vararg events: UserSubscriptionEvent,
-        error: Error? = null
+    vararg events: UserSubscriptionEvent,
+    error: Error? = null
 ): PlatformClient = mockPlatformClient(userSubscription(*events, error = error))
 
 internal fun userSubscription(vararg events: UserSubscriptionEvent, error: Error? = null):
