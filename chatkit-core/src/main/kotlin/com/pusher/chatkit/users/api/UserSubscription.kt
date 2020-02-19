@@ -2,9 +2,6 @@ package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.PlatformClient
 import com.pusher.chatkit.subscription.loggingSubscription
-import com.pusher.chatkit.users.api.UserSubscriptionConsumer
-import com.pusher.chatkit.users.api.UserSubscriptionEvent
-import com.pusher.chatkit.users.api.UserSubscriptionEventParser
 import com.pusher.chatkit.util.FutureValue
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger

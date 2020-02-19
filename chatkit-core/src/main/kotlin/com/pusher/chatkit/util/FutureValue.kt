@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KProperty
 
-class FutureValue<A>(private val wait: Wait = Wait.For(10, TimeUnit.SECONDS)) {
+private class FutureValue<A>(private val wait: Wait = Wait.For(10, TimeUnit.SECONDS)) {
     private val queue: BlockingQueue<Value<A>> = SynchronousQueue(true)
     private val future = Futures.schedule { queue.take().value }
     private val singleSetGuard = AtomicBoolean()
