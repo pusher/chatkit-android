@@ -39,7 +39,7 @@ dependencies {
 
 test {
     useJUnitPlatform {
-        includeEngines 'spek', 'spek2'
+        includeEngines 'spek2'
     }
 }
 
