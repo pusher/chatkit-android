@@ -15,11 +15,10 @@ import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okio.Buffer
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.notNull
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 private val testProvider = ChatkitTokenProvider(
         endpoint = "https://localhost",
