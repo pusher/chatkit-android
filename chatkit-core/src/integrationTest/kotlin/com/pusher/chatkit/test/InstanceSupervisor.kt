@@ -288,7 +288,8 @@ object InstanceActions {
         name: String,
         vararg userNames: String,
         pushNotificationTitleOverride: String? = null,
-        isPrivate: Boolean = false
+        isPrivate: Boolean = false,
+        customData: CustomData? = null
     ) = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
@@ -301,7 +302,7 @@ object InstanceActions {
                                 "user_ids" to userNames,
                                 "private" to isPrivate
                         ).apply {
-//                            if (customData != null) this += "custom_data" to customData
+                            if (customData != null) this += "custom_data" to customData
                         }.toJson()
                 ),
                 tokenProvider = sudoTokenProvider,
