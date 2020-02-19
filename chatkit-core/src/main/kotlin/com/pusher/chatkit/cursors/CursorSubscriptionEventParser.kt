@@ -9,6 +9,7 @@ import com.pusher.chatkit.util.getValue
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.network.DataParser
 import com.pusher.util.Result
+import com.pusher.util.asFailure
 import com.pusher.util.asSuccess
 import com.pusher.util.orElse
 import elements.Error
@@ -34,8 +35,6 @@ internal object CursorSubscriptionEventParser : DataParser<CursorSubscriptionEve
             when (eventName) {
                 "new_cursor" -> parseAs<CursorApiType>().map(CursorSubscriptionEvent::OnCursorSet)
                 "initial_state" -> parseAs<CursorSubscriptionEvent.InitialState>()
-                else -> CursorSubscriptionEvent.OnError(
-                        Errors.other("Unexpected event name $eventName")
-                ).asSuccess<CursorSubscriptionEvent, Error>()
+                else -> Errors.other("Unexpected event name: $eventName").asFailure()
             }.map { it }
 }
