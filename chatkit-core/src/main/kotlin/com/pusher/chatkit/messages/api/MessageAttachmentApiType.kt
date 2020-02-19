@@ -3,7 +3,7 @@ package com.pusher.chatkit.messages.api
 import com.pusher.chatkit.CustomData
 import java.util.Date
 
-internal data class MessageAttachmentBodyApiType(
+internal data class MessageAttachmentApiType(
     val id: String,
     val downloadUrl: String,
     val refreshUrl: String,

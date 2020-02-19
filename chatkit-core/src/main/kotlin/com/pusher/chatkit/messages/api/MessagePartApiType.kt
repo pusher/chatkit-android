@@ -4,5 +4,5 @@ internal data class MessagePartApiType(
     val content: String?,
     val type: String,
     val url: String?,
-    val attachment: MessageAttachmentBodyApiType?
+    val attachment: MessageAttachmentApiType?
 )
