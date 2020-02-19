@@ -1,7 +1,5 @@
 package com.pusher.chatkit
 
-import com.pusher.chatkit.files.AttachmentBody
-import com.pusher.chatkit.files.DataAttachment
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -91,18 +89,6 @@ class PlatformClient(
                     data = data,
                     mimeType = mimeType,
                     responseParser = responseParser
-            ).get()
-
-    @Suppress("UNCHECKED_CAST")
-    internal fun upload(
-        path: String,
-        attachment: DataAttachment
-    ): Result<AttachmentBody, Error> =
-            platformInstance.upload(
-                    path = path,
-                    file = attachment.file,
-                    tokenProvider = tokenProvider,
-                    responseParser = { it.parseAs<AttachmentBody.Resource>() as Result<AttachmentBody, Error> }
             ).get()
 
     internal fun <A> subscribeResuming(

@@ -12,7 +12,7 @@ import com.pusher.util.Result
 import elements.Error
 
 // Implementation of `PushNotifications` interface using Pusher Beams!
-class BeamsPushNotifications(
+internal class BeamsPushNotifications(
     private val context: Context,
     private val instanceId: String,
     private val beamsTokenProviderService: BeamsTokenProviderService

@@ -2,12 +2,13 @@ package com.pusher.chatkit.users
 
 import com.google.common.truth.Truth.assertThat
 import com.pusher.chatkit.TestFileReader
-import com.pusher.chatkit.cursors.Cursor
+import com.pusher.chatkit.cursors.api.CursorApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState
-import com.pusher.chatkit.users.UserSubscriptionEvent.UserJoinedRoomEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.UserLeftRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.AddedToRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.InitialState
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.UserJoinedRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.UserLeftRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEventParser
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -34,7 +35,7 @@ object UserSubscriptionEventParserSpec : Spek({
             val expectedReadState = RoomReadStateApiType(
                     roomId = "cool-room-1",
                     unreadCount = 7,
-                    cursor = Cursor(
+                    cursor = CursorApiType(
                             userId = "viv",
                             roomId = "cool-room-1",
                             position = 123654,
@@ -63,7 +64,7 @@ object UserSubscriptionEventParserSpec : Spek({
             val expectedReadState = RoomReadStateApiType(
                     roomId = "cool-room-2",
                     unreadCount = 15,
-                    cursor = Cursor(
+                    cursor = CursorApiType(
                             userId = "viv",
                             roomId = "cool-room-2",
                             position = 123654,

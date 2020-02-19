@@ -1,6 +1,6 @@
 package com.pusher.chatkit.presence
 
-sealed class Presence {
+internal sealed class Presence {
     object Online : Presence()
     object Offline : Presence()
     object Unknown : Presence()

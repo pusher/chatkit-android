@@ -4,8 +4,9 @@ import com.nhaarman.mockitokotlin2.KStubbing
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.cursors.api.CursorSubscriptionEventParser
 import com.pusher.chatkit.dummySubscription
-import com.pusher.chatkit.users.UserSubscriptionEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent
 import com.pusher.platform.SubscriptionListeners
 import elements.emptyHeaders
 import org.mockito.ArgumentMatchers.startsWith

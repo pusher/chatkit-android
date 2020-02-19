@@ -10,12 +10,11 @@ import com.pusher.chatkit.INSTANCE_LOCATOR
 import com.pusher.chatkit.TestDependencies
 import com.pusher.chatkit.TestTokenProvider
 import com.pusher.chatkit.Users.SUPER_USER
-import com.pusher.chatkit.rooms.Room
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
 import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
 import com.pusher.chatkit.test.InstanceActions.tearDown
-import com.pusher.chatkit.users.User
+import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -67,15 +66,16 @@ private fun waitForIdleInstance(): Future<Result<Boolean, Error>> = Futures.sche
             .first()
 }
 
-private fun isInstanceIdle(): Result<Boolean, Error> = chatkitInstance.request(
+private fun isInstanceIdle():
+        Result<Boolean, Error> = chatkitInstance.request(
         options = RequestOptions("/users", "GET"),
         tokenProvider = sudoTokenProvider,
-        responseParser = { it.parseAs<List<User>>() }
+        responseParser = { it.parseAs<List<UserApiType>>() }
 ).wait().map { users ->
     users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
 }
 
-private fun User.wasCreatedLongerThan(millisecondsAgo: Long) =
+private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long) =
         Date().time - created.time > millisecondsAgo
 
 private val sudoTokenProvider by lazy {
@@ -265,29 +265,6 @@ object InstanceActions {
         )
     }.withName("Create new user: $id")
 
-    fun changeRoomName(room: Room, newName: String): InstanceAction = {
-        chatkitInstance.request<JsonElement>(
-                options = RequestOptions(
-                        path = "/rooms/${room.id}",
-                        method = "PUT",
-                        body = mapOf("name" to newName).toJson()
-                ),
-                tokenProvider = sudoTokenProvider,
-                responseParser = { it.parseAs() }
-        )
-    }.withName("Changing name of room ${room.name} to $newName ")
-
-    fun deleteRoom(room: Room): InstanceAction = {
-        chatkitInstanceV2.request<JsonElement>(
-                options = RequestOptions(
-                        path = "/rooms/${room.id}",
-                        method = "DELETE"
-                ),
-                tokenProvider = sudoTokenProvider,
-                responseParser = { it.parseAs() }
-        )
-    }.withName("Deleting room ${room.name} ")
-
     fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
@@ -306,7 +283,13 @@ object InstanceActions {
         )
     }.withName("Create new users: ${names.joinToString(", ")}")
 
-    fun newRoom(name: String, vararg userNames: String, pushNotificationTitleOverride: String? = null, isPrivate: Boolean = false, customData: CustomData? = null) = {
+    fun newRoom(
+        name: String,
+        vararg userNames: String,
+        pushNotificationTitleOverride: String? = null,
+        isPrivate: Boolean = false,
+        customData: CustomData? = null
+    ) = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
                         path = "/rooms",

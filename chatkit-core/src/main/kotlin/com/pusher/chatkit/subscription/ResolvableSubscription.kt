@@ -10,7 +10,7 @@ import java.util.concurrent.CountDownLatch
 // Implements a subscription that can be used to resolve subscriptions
 // either on opening a subscription (default behaviour) or
 // on receiving the first event on the subscription
-class ResolvableSubscription<A>(
+internal class ResolvableSubscription<A>(
     path: String,
     client: PlatformClient,
     listeners: SubscriptionListeners<A>,

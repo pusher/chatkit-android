@@ -9,7 +9,7 @@ import com.pusher.platform.network.DataParser
 // Implements a subscription that can be used to resolve subscriptions
 // either on opening a subscription (default behaviour) or
 // on receiving the first event on the subscription
-fun <A> loggingSubscription(
+internal fun <A> loggingSubscription(
     path: String,
     client: PlatformClient,
     listeners: SubscriptionListeners<A>,
