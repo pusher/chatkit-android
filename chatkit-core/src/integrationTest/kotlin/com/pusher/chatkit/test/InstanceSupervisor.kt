@@ -45,8 +45,7 @@ object InstanceSupervisor {
      * Tear downs the instance and runs the provided actions.
      */
     fun setUpInstanceWith(vararg actions: InstanceAction) {
-        waitForIdleInstance()
-                .wait(Wait.For(60, TimeUnit.SECONDS))
+        waitForIdleInstance().wait(Wait.For(60, TimeUnit.SECONDS))
         listOf(tearDown(), setInstanceBusy(), createSuperUser())
                 .plus(actions)
                 .forEach(InstanceAction::run)
