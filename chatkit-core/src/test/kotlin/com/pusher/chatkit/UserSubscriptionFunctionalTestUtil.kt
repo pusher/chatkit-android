@@ -4,8 +4,8 @@ import com.nhaarman.mockitokotlin2.KStubbing
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.eq
-import com.pusher.chatkit.users.UserSubscriptionEvent
-import com.pusher.chatkit.users.UserSubscriptionEventParser
+import com.pusher.chatkit.users.api.UserSubscriptionEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEventParser
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.network.Futures
 import elements.Error
@@ -13,8 +13,8 @@ import elements.SubscriptionEvent
 import elements.emptyHeaders
 
 internal fun mockPlatformClientForUserSubscription(
-    vararg events: UserSubscriptionEvent,
-    error: Error? = null
+        vararg events: UserSubscriptionEvent,
+        error: Error? = null
 ): PlatformClient = mockPlatformClient(userSubscription(*events, error = error))
 
 internal fun userSubscription(vararg events: UserSubscriptionEvent, error: Error? = null):

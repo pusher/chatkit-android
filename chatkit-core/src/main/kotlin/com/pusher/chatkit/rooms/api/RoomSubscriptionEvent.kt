@@ -1,4 +1,4 @@
-package com.pusher.chatkit.rooms
+package com.pusher.chatkit.rooms.api
 
 import com.pusher.chatkit.messages.api.MessageApiType
 

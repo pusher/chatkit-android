@@ -1,9 +1,8 @@
-package com.pusher.chatkit.users
+package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.users.api.UserApiType
 
 internal typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
 

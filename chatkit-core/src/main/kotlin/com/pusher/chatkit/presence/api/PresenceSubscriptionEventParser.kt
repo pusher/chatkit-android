@@ -1,9 +1,8 @@
-package com.pusher.chatkit.presence
+package com.pusher.chatkit.presence.api
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.presence.api.PresenceApiType
-import com.pusher.chatkit.presence.api.UserPresenceApiType
+import com.pusher.chatkit.presence.Presence
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue

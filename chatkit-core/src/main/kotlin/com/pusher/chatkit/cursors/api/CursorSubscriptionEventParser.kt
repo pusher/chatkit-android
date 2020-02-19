@@ -1,8 +1,7 @@
-package com.pusher.chatkit.cursors
+package com.pusher.chatkit.cursors.api
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.cursors.api.CursorApiType
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue
@@ -10,7 +9,6 @@ import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.network.DataParser
 import com.pusher.util.Result
 import com.pusher.util.asFailure
-import com.pusher.util.asSuccess
 import com.pusher.util.orElse
 import elements.Error
 import elements.Errors

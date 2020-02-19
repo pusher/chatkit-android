@@ -1,6 +1,4 @@
-package com.pusher.chatkit.presence
-
-import com.pusher.chatkit.presence.api.UserPresenceApiType
+package com.pusher.chatkit.presence.api
 
 internal typealias PresenceSubscriptionConsumer = (PresenceSubscriptionEvent) -> Unit
 

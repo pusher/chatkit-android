@@ -1,15 +1,15 @@
-package com.pusher.chatkit.users
+package com.pusher.chatkit.users.api
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pusher.chatkit.users.UserSubscriptionEvent.AddedToRoomEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.InitialState
-import com.pusher.chatkit.users.UserSubscriptionEvent.ReadStateUpdatedEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.RemovedFromRoomEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.RoomDeletedEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.RoomUpdatedEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.UserJoinedRoomEvent
-import com.pusher.chatkit.users.UserSubscriptionEvent.UserLeftRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.AddedToRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.InitialState
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.ReadStateUpdatedEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.RemovedFromRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.RoomDeletedEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.RoomUpdatedEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.UserJoinedRoomEvent
+import com.pusher.chatkit.users.api.UserSubscriptionEvent.UserLeftRoomEvent
 import com.pusher.chatkit.util.asObject
 import com.pusher.chatkit.util.asString
 import com.pusher.chatkit.util.getValue

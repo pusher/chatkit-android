@@ -1,6 +1,8 @@
 package com.pusher.chatkit.presence
 
 import com.pusher.chatkit.PlatformClient
+import com.pusher.chatkit.presence.api.PresenceSubscriptionConsumer
+import com.pusher.chatkit.presence.api.PresenceSubscriptionEventParser
 import com.pusher.chatkit.subscription.loggingSubscription
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
@@ -8,10 +10,10 @@ import elements.Subscription
 import java.net.URLEncoder
 
 internal class PresenceService(
-    private val myUserId: String,
-    private val client: PlatformClient,
-    private val consumer: PresenceSubscriptionConsumer,
-    private val logger: Logger
+        private val myUserId: String,
+        private val client: PlatformClient,
+        private val consumer: PresenceSubscriptionConsumer,
+        private val logger: Logger
 ) {
     private val subscriptions = HashMap<String, Subscription>()
     private var registrationSub: Subscription? = null

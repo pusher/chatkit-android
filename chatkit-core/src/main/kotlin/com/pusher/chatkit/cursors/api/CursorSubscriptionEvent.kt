@@ -1,7 +1,4 @@
-package com.pusher.chatkit.cursors
-
-import com.pusher.chatkit.cursors.api.CursorApiType
-import elements.Error
+package com.pusher.chatkit.cursors.api
 
 internal sealed class CursorSubscriptionEvent {
     data class OnCursorSet(val cursor: CursorApiType) : CursorSubscriptionEvent()
