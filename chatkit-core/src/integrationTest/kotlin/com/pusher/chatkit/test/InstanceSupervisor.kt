@@ -266,17 +266,6 @@ object InstanceActions {
         )
     }.withName("Create new user: $id")
 
-    fun deleteRoom(roomId: String): InstanceAction = {
-        chatkitInstanceV2.request<JsonElement>(
-                options = RequestOptions(
-                        path = "/rooms/$roomId",
-                        method = "DELETE"
-                ),
-                tokenProvider = sudoTokenProvider,
-                responseParser = { it.parseAs() }
-        )
-    }.withName("Deleting room $roomId ")
-
     fun newUsers(vararg names: String): InstanceAction = {
         chatkitInstance.request<JsonElement>(
                 options = RequestOptions(
