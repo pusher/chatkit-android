@@ -1,8 +1,6 @@
-package com.pusher.chatkit.presence
+package com.pusher.chatkit.presence.api
 
 import com.pusher.chatkit.PlatformClient
-import com.pusher.chatkit.presence.api.PresenceSubscriptionConsumer
-import com.pusher.chatkit.presence.api.PresenceSubscriptionEventParser
 import com.pusher.chatkit.subscription.loggingSubscription
 import com.pusher.platform.SubscriptionListeners
 import com.pusher.platform.logger.Logger
