@@ -19,6 +19,7 @@ dependencies {
     }
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.reduxkotlin:redux-kotlin:0.3.1"
     api 'com.squareup.okhttp3:okhttp:3.12.6'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
