@@ -1,4 +1,4 @@
-package com.pusher.chatkit.rooms.internal
+package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.CustomData
 
