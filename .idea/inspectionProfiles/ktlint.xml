@@ -1,6 +1,10 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="ktlint" />
+
+    <!-- we do a lot of it in reducers and the code design clearly conveys that information -->
+    <inspection_tool class="CopyWithoutNamedArguments" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+
     <inspection_tool class="KotlinUnusedImport" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="RedundantSemicolon" enabled="true" level="ERROR" enabled_by_default="true" />
   </profile>
