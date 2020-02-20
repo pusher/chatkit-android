@@ -1,7 +1,7 @@
 dist: trusty
 jdk: oraclejdk8
 
-if: (type = pull_request AND repo = pusher/chatkit-android) OR (branch = master)
+if: (type = pull_request AND repo = pusher/chatkit-android) OR (branch = master) OR (branch = v2)
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
