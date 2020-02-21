@@ -44,51 +44,15 @@ class JoinedRoomsReceivedTest : Spek({
             null
     )
 
-    describe("JoinedRoomsReceived") {
-
-        it("with initial state of empty rooms") {
-            // given
-            val joinedRoomsState = JoinedRoomsState(
+    describe("given an initial empty state of rooms") {
+        val joinedRoomsState = JoinedRoomsState(
                 hashMapOf<String, JoinedRoomInternalType>(),
                 hashMapOf<String, Int>()
-            )
-            
-            val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
+        )
 
-            // when
-            val joinedRoomsReceived = JoinedRoomsReceived(
-                listOf<JoinedRoomInternalType>(
-                        roomOne,
-                        roomTwo
-                ),
-                hashMapOf<String, Int>(
-                        Pair("id1", 1),
-                        Pair("id2", 2)
-                )
-            )
-            val updatedState = joinedRoomsReceivedReducer(currentState, joinedRoomsReceived)
+        val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
-            // then
-            assertThat(updatedState.joinedRoomsState).isNotNull()
-
-            assertThat(updatedState.joinedRoomsState!!.rooms)
-                    .containsOnly(
-                            Pair("id1", roomOne),
-                            Pair("id2", roomTwo)
-                    )
-
-            assertThat(updatedState.joinedRoomsState.unreadCounts)
-                    .containsOnly(
-                            Pair("id1", 1),
-                            Pair("id2", 2)
-                    )
-        }
-
-        it("with initial state of null") {
-            // given
-            val currentState = ChatkitState(joinedRoomsState = null)
-
-            // when
+        describe("when an initial list of joined rooms is received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
                     listOf<JoinedRoomInternalType>(
                             roomOne,
@@ -101,35 +65,70 @@ class JoinedRoomsReceivedTest : Spek({
             )
             val updatedState = joinedRoomsReceivedReducer(currentState, joinedRoomsReceived)
 
-            // then
-            assertThat(updatedState.joinedRoomsState).isNotNull()
+            it("then the state should contain two joined rooms and unread counts") {
+                assertThat(updatedState.joinedRoomsState).isNotNull()
 
-            assertThat(updatedState.joinedRoomsState!!.rooms)
-                    .containsOnly(
-                            Pair("id1", roomOne),
-                            Pair("id2", roomTwo)
-                    )
+                assertThat(updatedState.joinedRoomsState!!.rooms)
+                        .containsOnly(
+                                Pair("id1", roomOne),
+                                Pair("id2", roomTwo)
+                        )
 
-            assertThat(updatedState.joinedRoomsState.unreadCounts)
-                    .containsOnly(
+                assertThat(updatedState.joinedRoomsState.unreadCounts)
+                        .containsOnly(
+                                Pair("id1", 1),
+                                Pair("id2", 2)
+                        )
+            }
+        }
+    }
+
+    describe("given a null joined rooms state") {
+        val currentState = ChatkitState(joinedRoomsState = null)
+
+        describe("when an initial list of joined rooms is received") {
+            val joinedRoomsReceived = JoinedRoomsReceived(
+                    listOf<JoinedRoomInternalType>(
+                            roomOne,
+                            roomTwo
+                    ),
+                    hashMapOf<String, Int>(
                             Pair("id1", 1),
                             Pair("id2", 2)
                     )
-        }
-
-        it("with initial state of one room") {
-            // given
-            val joinedRoomsState = JoinedRoomsState(
-                    hashMapOf<String, JoinedRoomInternalType>(
-                            Pair("id1", roomOne)
-                    ),
-                    hashMapOf<String, Int>(
-                            Pair("id1", 1)
-                    )
             )
-            val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
+            val updatedState = joinedRoomsReceivedReducer(currentState, joinedRoomsReceived)
 
-            // when
+            it("then the state should contain two joined rooms and unread counts") {
+                assertThat(updatedState.joinedRoomsState).isNotNull()
+
+                assertThat(updatedState.joinedRoomsState!!.rooms)
+                        .containsOnly(
+                                Pair("id1", roomOne),
+                                Pair("id2", roomTwo)
+                        )
+
+                assertThat(updatedState.joinedRoomsState.unreadCounts)
+                        .containsOnly(
+                                Pair("id1", 1),
+                                Pair("id2", 2)
+                        )
+            }
+        }
+    }
+
+    describe("given an initial joined room state with one room") {
+        val joinedRoomsState = JoinedRoomsState(
+                hashMapOf<String, JoinedRoomInternalType>(
+                        Pair("id1", roomOne)
+                ),
+                hashMapOf<String, Int>(
+                        Pair("id1", 1)
+                )
+        )
+        val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
+
+        describe("when a new initial list of joined rooms is received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
                     listOf<JoinedRoomInternalType>(
                             roomTwo,
@@ -142,20 +141,21 @@ class JoinedRoomsReceivedTest : Spek({
             )
             val updatedState = joinedRoomsReceivedReducer(currentState, joinedRoomsReceived)
 
-            // then
-            assertThat(updatedState.joinedRoomsState).isNotNull()
+            it("then the state should only contain the two new joined rooms") {
+                assertThat(updatedState.joinedRoomsState).isNotNull()
 
-            assertThat(updatedState.joinedRoomsState!!.rooms)
-                    .containsOnly(
-                            Pair("id2", roomTwo),
-                            Pair("id3", roomThree)
-                    )
+                assertThat(updatedState.joinedRoomsState!!.rooms)
+                        .containsOnly(
+                                Pair("id2", roomTwo),
+                                Pair("id3", roomThree)
+                        )
 
-            assertThat(updatedState.joinedRoomsState.unreadCounts)
-                    .containsOnly(
-                            Pair("id2", 2),
-                            Pair("id3", 3)
-                    )
+                assertThat(updatedState.joinedRoomsState.unreadCounts)
+                        .containsOnly(
+                                Pair("id2", 2),
+                                Pair("id3", 3)
+                        )
+            }
         }
     }
 })
