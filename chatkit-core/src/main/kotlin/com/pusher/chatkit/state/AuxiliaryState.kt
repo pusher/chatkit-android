@@ -9,10 +9,8 @@ internal data class AuxiliaryState(
 
 internal data class ReducerLastChange<T>(val version: Int, val data: T)
 
-internal object AuxiliaryStateUtil {
-    internal fun applyReducerLastChangeJoinedRoomsState(state: ChatkitState, joinedRoomsState: JoinedRoomsState):
-            AuxiliaryState {
-        val version = state.auxiliaryState.version + 1
-        return state.auxiliaryState.copy(version, ReducerLastChange(version, joinedRoomsState))
-    }
+internal fun applyReducerLastChangeJoinedRoomsState(state: ChatkitState, joinedRoomsState: JoinedRoomsState):
+        AuxiliaryState {
+    val version = state.auxiliaryState.version + 1
+    return state.auxiliaryState.copy(version, ReducerLastChange(version, joinedRoomsState))
 }
