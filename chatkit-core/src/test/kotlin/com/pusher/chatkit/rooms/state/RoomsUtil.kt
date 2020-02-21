@@ -13,6 +13,16 @@ object RoomsUtil {
             null,
             null
     )
+    internal val roomOneUpdated = JoinedRoomInternalType(
+            roomOneId,
+            "room1-Updated",
+            false,
+            1582283114,
+            1582283114,
+            null,
+            null,
+            null
+    )
 
     internal val roomTwoId = "id2"
     internal val roomTwo = JoinedRoomInternalType(
