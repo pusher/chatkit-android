@@ -1,7 +1,8 @@
 package com.pusher.chatkit.rooms.state
 
-import com.pusher.chatkit.state.AuxiliaryStateUtil
+import com.pusher.chatkit.state.AuxiliaryState
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.applyReducerLastChangeJoinedRoomsState
 import org.reduxkotlin.reducerForActionType
 
 internal data class JoinedRoomsReceived(
@@ -17,6 +18,6 @@ internal val joinedRoomsReceivedReducer =
         val joinedRoomsState = JoinedRoomsState(joinedRooms, action.unreadCounts)
         state.copy(
             joinedRoomsState,
-            AuxiliaryStateUtil.applyReducerLastChangeJoinedRoomsState(state, joinedRoomsState)
+            applyReducerLastChangeJoinedRoomsState(state, joinedRoomsState)
         )
 }
