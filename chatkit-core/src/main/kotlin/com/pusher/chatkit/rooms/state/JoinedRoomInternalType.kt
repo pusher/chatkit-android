@@ -8,8 +8,7 @@ internal data class JoinedRoomInternalType(
     val isPrivate: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
-    val deletedAt: Long?,
-    val pushNotificationTitleOverride: String?,
+    val lastMessageAt: Long?,
     val customData: CustomData?,
-    val lastMessageAt: Long?
+    val pushNotificationTitleOverride: String?
 )
