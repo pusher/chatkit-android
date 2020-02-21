@@ -2,7 +2,6 @@ package com.pusher.chatkit.rooms.state
 
 import assertk.assertThat
 import assertk.assertions.containsOnly
-import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import com.pusher.chatkit.state.AuxiliaryState
 import com.pusher.chatkit.state.ChatkitState
@@ -59,7 +58,7 @@ class JoinedRoomsReceivedTest : Spek({
             )
 
             // when
-            val joinedRoomsReceived = JoinedRoomsReceived (
+            val joinedRoomsReceived = JoinedRoomsReceived(
                 listOf<JoinedRoomInternalType>(
                         roomOne,
                         roomTwo
@@ -95,7 +94,7 @@ class JoinedRoomsReceivedTest : Spek({
             )
 
             // when
-            val joinedRoomsReceived = JoinedRoomsReceived (
+            val joinedRoomsReceived = JoinedRoomsReceived(
                     listOf<JoinedRoomInternalType>(
                             roomOne,
                             roomTwo
@@ -139,7 +138,7 @@ class JoinedRoomsReceivedTest : Spek({
             )
 
             // when
-            val joinedRoomsReceived = JoinedRoomsReceived (
+            val joinedRoomsReceived = JoinedRoomsReceived(
                     listOf<JoinedRoomInternalType>(
                             roomTwo,
                             roomThree

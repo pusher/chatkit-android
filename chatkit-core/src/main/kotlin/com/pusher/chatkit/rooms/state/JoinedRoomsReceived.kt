@@ -1,6 +1,5 @@
 package com.pusher.chatkit.rooms.state
 
-import com.pusher.chatkit.state.AuxiliaryState
 import com.pusher.chatkit.state.ChatkitState
 import com.pusher.chatkit.state.applyReducerLastChangeJoinedRoomsState
 import org.reduxkotlin.reducerForActionType
