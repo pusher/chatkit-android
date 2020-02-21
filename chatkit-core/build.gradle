@@ -25,6 +25,7 @@ dependencies {
 
     testImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
     testImplementation 'com.google.truth:truth:0.40'
+    testImplementation 'com.willowtreeapps.assertk:assertk:0.21'
     testImplementation "org.mockito:mockito-inline:$mockito_version"
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
