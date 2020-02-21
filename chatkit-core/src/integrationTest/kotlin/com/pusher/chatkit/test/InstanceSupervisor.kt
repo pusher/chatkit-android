@@ -7,7 +7,7 @@ import com.pusher.chatkit.AUTH_KEY_SECRET
 import com.pusher.chatkit.CustomData
 import com.pusher.chatkit.INSTANCE_ID
 import com.pusher.chatkit.INSTANCE_LOCATOR
-import com.pusher.chatkit.TestDependencies
+import com.pusher.chatkit.TestPlatformDependencies
 import com.pusher.chatkit.TestTokenProvider
 import com.pusher.chatkit.Users.SUPER_USER
 import com.pusher.chatkit.test.InstanceActions.createDefaultRole
@@ -23,11 +23,11 @@ import com.pusher.platform.network.Wait
 import com.pusher.platform.network.wait
 import com.pusher.util.Result
 import elements.Error
+import org.junit.runner.notification.Failure
 import java.net.URLEncoder
 import java.util.Date
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import org.junit.runner.notification.Failure
 
 /**
  * In charge of setting the right state of an instance for a test
@@ -93,7 +93,7 @@ private val chatkitInstance by lazy {
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit",
             serviceVersion = "v7",
-            dependencies = TestDependencies()
+            dependencies = TestPlatformDependencies()
     )
 }
 
@@ -102,7 +102,7 @@ private val chatkitInstanceV2 by lazy {
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit",
             serviceVersion = "v2",
-            dependencies = TestDependencies()
+            dependencies = TestPlatformDependencies()
     )
 }
 
@@ -111,7 +111,7 @@ private val authorizerInstance by lazy {
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit_authorizer",
             serviceVersion = "v2",
-            dependencies = TestDependencies()
+            dependencies = TestPlatformDependencies()
     )
 }
 
@@ -120,7 +120,7 @@ private val cursorsInstance by lazy {
             locator = INSTANCE_LOCATOR,
             serviceName = "chatkit_cursors",
             serviceVersion = "v2",
-            dependencies = TestDependencies()
+            dependencies = TestPlatformDependencies()
     )
 }
 
