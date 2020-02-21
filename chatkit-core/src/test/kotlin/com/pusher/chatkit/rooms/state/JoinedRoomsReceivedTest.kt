@@ -11,39 +11,6 @@ import org.spekframework.spek2.style.specification.describe
 
 class JoinedRoomsReceivedTest : Spek({
 
-    val roomOne = JoinedRoomInternalType(
-            "id1",
-            "room1",
-            false,
-            1582283111,
-            1582283111,
-            null,
-            null,
-            null
-    )
-
-    val roomTwo = JoinedRoomInternalType(
-            "id2",
-            "room2",
-            false,
-            1582283112,
-            1582283112,
-            null,
-            null,
-            null
-    )
-
-    val roomThree = JoinedRoomInternalType(
-            "id3",
-            "room3",
-            false,
-            1582283113,
-            1582283113,
-            null,
-            null,
-            null
-    )
-
     describe("JoinedRoomsReceived") {
 
         it("with initial state of empty rooms") {
@@ -60,12 +27,12 @@ class JoinedRoomsReceivedTest : Spek({
             // when
             val joinedRoomsReceived = JoinedRoomsReceived(
                 listOf<JoinedRoomInternalType>(
-                        roomOne,
-                        roomTwo
+                        RoomsUtil.roomOne,
+                        RoomsUtil.roomTwo
                 ),
                 hashMapOf<String, Int>(
-                        Pair("id1", 1),
-                        Pair("id2", 2)
+                        Pair(RoomsUtil.roomOneId, 1),
+                        Pair(RoomsUtil.roomTwoId, 2)
                 )
             )
             val updatedState = joinedRoomsReceivedReducer(currentState, joinedRoomsReceived)
@@ -75,14 +42,14 @@ class JoinedRoomsReceivedTest : Spek({
 
             assertThat(updatedState.joinedRoomsState!!.rooms)
                     .containsOnly(
-                            Pair("id1", roomOne),
-                            Pair("id2", roomTwo)
+                            Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
+                            Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
                     )
 
             assertThat(updatedState.joinedRoomsState.unreadCounts)
                     .containsOnly(
-                            Pair("id1", 1),
-                            Pair("id2", 2)
+                            Pair(RoomsUtil.roomOneId, 1),
+                            Pair(RoomsUtil.roomTwoId, 2)
                     )
         }
 
@@ -96,11 +63,11 @@ class JoinedRoomsReceivedTest : Spek({
             // when
             val joinedRoomsReceived = JoinedRoomsReceived(
                     listOf<JoinedRoomInternalType>(
-                            roomOne,
-                            roomTwo
+                            RoomsUtil.roomOne,
+                            RoomsUtil.roomTwo
                     ),
                     hashMapOf<String, Int>(
-                            Pair("id1", 1),
+                            Pair(RoomsUtil.roomOneId, 1),
                             Pair("id2", 2)
                     )
             )
@@ -111,14 +78,14 @@ class JoinedRoomsReceivedTest : Spek({
 
             assertThat(updatedState.joinedRoomsState!!.rooms)
                     .containsOnly(
-                            Pair("id1", roomOne),
-                            Pair("id2", roomTwo)
+                            Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
+                            Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
                     )
 
             assertThat(updatedState.joinedRoomsState.unreadCounts)
                     .containsOnly(
-                            Pair("id1", 1),
-                            Pair("id2", 2)
+                            Pair(RoomsUtil.roomOneId, 1),
+                            Pair(RoomsUtil.roomTwoId, 2)
                     )
         }
 
@@ -126,10 +93,10 @@ class JoinedRoomsReceivedTest : Spek({
             // given
             val joinedRoomsState = JoinedRoomsState(
                     hashMapOf<String, JoinedRoomInternalType>(
-                            Pair("id1", roomOne)
+                            Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne)
                     ),
                     hashMapOf<String, Int>(
-                            Pair("id1", 1)
+                            Pair(RoomsUtil.roomOneId, 1)
                     )
             )
             val currentState = ChatkitState(
@@ -140,12 +107,12 @@ class JoinedRoomsReceivedTest : Spek({
             // when
             val joinedRoomsReceived = JoinedRoomsReceived(
                     listOf<JoinedRoomInternalType>(
-                            roomTwo,
-                            roomThree
+                            RoomsUtil.roomTwo,
+                            RoomsUtil.roomThree
                     ),
                     hashMapOf<String, Int>(
-                            Pair("id2", 2),
-                            Pair("id3", 3)
+                            Pair(RoomsUtil.roomTwoId, 2),
+                            Pair(RoomsUtil.roomThreeId, 3)
                     )
             )
             val updatedState = joinedRoomsReceivedReducer(currentState, joinedRoomsReceived)
@@ -155,14 +122,14 @@ class JoinedRoomsReceivedTest : Spek({
 
             assertThat(updatedState.joinedRoomsState!!.rooms)
                     .containsOnly(
-                            Pair("id2", roomTwo),
-                            Pair("id3", roomThree)
+                            Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo),
+                            Pair(RoomsUtil.roomThreeId, RoomsUtil.roomThree)
                     )
 
             assertThat(updatedState.joinedRoomsState.unreadCounts)
                     .containsOnly(
-                            Pair("id2", 2),
-                            Pair("id3", 3)
+                            Pair(RoomsUtil.roomTwoId, 2),
+                            Pair(RoomsUtil.roomThreeId, 3)
                     )
         }
     }
