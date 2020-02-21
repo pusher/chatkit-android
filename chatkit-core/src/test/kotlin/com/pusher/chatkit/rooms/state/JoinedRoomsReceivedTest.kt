@@ -5,7 +5,7 @@ import assertk.assertions.containsOnly
 import assertk.assertions.isNotNull
 import com.pusher.chatkit.state.AuxiliaryState
 import com.pusher.chatkit.state.ChatkitState
-import com.pusher.chatkit.state.ReducerLastChange
+import com.pusher.chatkit.state.LastChange
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -52,10 +52,8 @@ class JoinedRoomsReceivedTest : Spek({
                 hashMapOf<String, JoinedRoomInternalType>(),
                 hashMapOf<String, Int>()
             )
-            val currentState = ChatkitState(
-                    joinedRoomsState,
-                    AuxiliaryState(0, ReducerLastChange(0, joinedRoomsState))
-            )
+            
+            val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
             // when
             val joinedRoomsReceived = JoinedRoomsReceived(
@@ -88,10 +86,7 @@ class JoinedRoomsReceivedTest : Spek({
 
         it("with initial state of null") {
             // given
-            val currentState = ChatkitState(
-                    null,
-                    null
-            )
+            val currentState = ChatkitState(joinedRoomsState = null)
 
             // when
             val joinedRoomsReceived = JoinedRoomsReceived(
@@ -132,10 +127,7 @@ class JoinedRoomsReceivedTest : Spek({
                             Pair("id1", 1)
                     )
             )
-            val currentState = ChatkitState(
-                    joinedRoomsState,
-                    AuxiliaryState(0, ReducerLastChange(0, joinedRoomsState))
-            )
+            val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
             // when
             val joinedRoomsReceived = JoinedRoomsReceived(
