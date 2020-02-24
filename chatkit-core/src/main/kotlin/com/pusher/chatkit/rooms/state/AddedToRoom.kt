@@ -1,7 +1,6 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.ChatkitState
-import com.pusher.chatkit.state.applyReducerLastChangeJoinedRoomsState
 import org.reduxkotlin.reducerForActionType
 
 internal data class AddedToRoom(
@@ -30,8 +29,5 @@ internal val addedToRoomReducer =
                     )
             }
 
-        state.copy(
-            joinedRoomsState,
-            applyReducerLastChangeJoinedRoomsState(state, joinedRoomsState)
-        )
+        state.with(joinedRoomsState)
 }
