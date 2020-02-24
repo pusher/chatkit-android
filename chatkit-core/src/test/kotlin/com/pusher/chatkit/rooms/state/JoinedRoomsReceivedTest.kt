@@ -118,7 +118,7 @@ class JoinedRoomsReceivedTest : Spek({
                 assertThat(updatedState.joinedRoomsState.unreadCounts)
                         .containsOnly(
                                 Pair(RoomsUtil.roomTwoId, 2),
-                                Pair(RoomsUtil.roomThreeId", 3)
+                                Pair(RoomsUtil.roomThreeId, 3)
                         )
             }
         }
