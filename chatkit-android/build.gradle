@@ -76,7 +76,7 @@ bintray {
     pkg {
         repo = 'maven'
         name = "$POM_ARTIFACT_ID"
-        userOrg = "$POM_DEVELOPER_ID"
+        userOrg = "$POM_DEVELOPER_NAME"
         licenses = ["$POM_LICENCE_NAME"]
         vcsUrl = "$POM_SCM_URL"
         version {
@@ -119,9 +119,8 @@ def pomConfig = {
     }
     developers {
         developer {
-            id 'hamchapman'
-            name 'Hamilton Chapman'
-            email 'hamilton@pusher.com'
+            name 'Pusher Limited'
+            email 'support@pusher.com'
         }
     }
 
