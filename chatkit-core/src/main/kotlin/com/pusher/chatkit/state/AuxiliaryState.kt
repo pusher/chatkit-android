@@ -2,20 +2,23 @@ package com.pusher.chatkit.state
 
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
 
+internal data class LastChange<T>(val version: Int, val changedData: T)
+
+@Suppress("CopyWithoutNamedArguments") // nextVersion (legible) passes as first param many times
 internal data class AuxiliaryState(
     val version: Int,
-    val joinedRoomsReceived: ReducerLastChange<JoinedRoomsState>?
-)
+    val joinedRoomsReceived: LastChange<JoinedRoomsState>?
+) {
 
-internal data class ReducerLastChange<T>(val version: Int, val data: T)
-
-internal fun applyReducerLastChangeJoinedRoomsState(state: ChatkitState, joinedRoomsState: JoinedRoomsState):
-        AuxiliaryState {
-
-    if (state.auxiliaryState != null) {
-        val version = state.auxiliaryState.version + 1
-        return state.auxiliaryState.copy(version, ReducerLastChange(version, joinedRoomsState))
-    } else {
-        return AuxiliaryState(0, ReducerLastChange(0, joinedRoomsState))
+    companion object {
+        fun initial() = AuxiliaryState(
+            0,
+            null
+        )
     }
+
+    fun with(joinedRoomsState: JoinedRoomsState) =
+        copy(nextVersion, joinedRoomsReceived = LastChange(nextVersion, joinedRoomsState))
+
+    private val nextVersion = version + 1
 }
