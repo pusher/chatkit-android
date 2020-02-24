@@ -3,110 +3,99 @@ package com.pusher.chatkit.rooms.state
 import assertk.assertThat
 import assertk.assertions.containsOnly
 import assertk.assertions.isNotNull
-import com.pusher.chatkit.state.AuxiliaryState
 import com.pusher.chatkit.state.ChatkitState
-import com.pusher.chatkit.state.ReducerLastChange
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 class RoomUpdatedTest : Spek({
 
-    describe("RoomUpdated") {
+    describe("given an initial state of two rooms") {
+        val joinedRoomsState = JoinedRoomsState(
+                hashMapOf<String, JoinedRoomInternalType>(
+                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
+                        Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                ),
+                hashMapOf<String, Int>(
+                        Pair(RoomsUtil.roomOneId, 1),
+                        Pair(RoomsUtil.roomTwoId, 2)
+                )
+        )
+        val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
-        it("with initial state of two rooms") {
-            // given
-            val joinedRoomsState = JoinedRoomsState(
-                    hashMapOf<String, JoinedRoomInternalType>(
-                            Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
-                            Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
-                    ),
-                    hashMapOf<String, Int>(
-                            Pair(RoomsUtil.roomOneId, 1),
-                            Pair(RoomsUtil.roomTwoId, 2)
-                    )
-            )
-            val currentState = ChatkitState(
-                    joinedRoomsState,
-                    AuxiliaryState(0, ReducerLastChange(0, joinedRoomsState))
-            )
-
-            // when
+        describe("when an updated room event is received") {
             val roomUpdated = RoomUpdated(
                     RoomsUtil.roomOneUpdated,
                     4
             )
             val updatedState = roomUpdatedReducer(currentState, roomUpdated)
 
-            // then
-            assertThat(updatedState.joinedRoomsState).isNotNull()
+            it("then the joined rooms state should contain the updated values") {
+                assertThat(updatedState.joinedRoomsState).isNotNull()
 
-            assertThat(updatedState.joinedRoomsState!!.rooms)
-                    .containsOnly(
-                            Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated),
-                            Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
-                    )
+                assertThat(updatedState.joinedRoomsState!!.rooms)
+                        .containsOnly(
+                                Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated),
+                                Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                        )
 
-            assertThat(updatedState.joinedRoomsState.unreadCounts)
-                    .containsOnly(
-                            Pair(RoomsUtil.roomOneId, 4),
-                            Pair(RoomsUtil.roomTwoId, 2)
-                    )
+                assertThat(updatedState.joinedRoomsState.unreadCounts)
+                        .containsOnly(
+                                Pair(RoomsUtil.roomOneId, 4),
+                                Pair(RoomsUtil.roomTwoId, 2)
+                        )
+            }
         }
+    }
 
-        it("with initial state of empty rooms") {
-            // given
-            val joinedRoomsState = JoinedRoomsState(
-                    hashMapOf<String, JoinedRoomInternalType>(),
-                    hashMapOf<String, Int>()
-            )
-            val currentState = ChatkitState(
-                    joinedRoomsState,
-                    AuxiliaryState(0, ReducerLastChange(0, joinedRoomsState))
-            )
+    describe("given an initial empty state") {
+        val joinedRoomsState = JoinedRoomsState(
+                hashMapOf<String, JoinedRoomInternalType>(),
+                hashMapOf<String, Int>()
+        )
+        val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
-            // when
+        describe("when an updated room event is received") {
             val roomUpdated = RoomUpdated(
                     RoomsUtil.roomOneUpdated,
                     4
             )
             val updatedState = roomUpdatedReducer(currentState, roomUpdated)
 
-            // then
-            assertThat(updatedState.joinedRoomsState).isNotNull()
+            it("then the updated room should be present in the joined room state") {
+                assertThat(updatedState.joinedRoomsState).isNotNull()
 
-            assertThat(updatedState.joinedRoomsState!!.rooms).containsOnly(
-                    Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated)
-            )
+                assertThat(updatedState.joinedRoomsState!!.rooms).containsOnly(
+                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated)
+                )
 
-            assertThat(updatedState.joinedRoomsState.unreadCounts).containsOnly(
-                    Pair(RoomsUtil.roomOneId, 4)
-            )
+                assertThat(updatedState.joinedRoomsState.unreadCounts).containsOnly(
+                        Pair(RoomsUtil.roomOneId, 4)
+                )
+            }
         }
+    }
 
-        it("with initial state of null rooms") {
-            // given
-            val currentState = ChatkitState(
-                    null,
-                    null
-            )
+    describe("given an initial null state") {
+        val currentState = ChatkitState(joinedRoomsState = null)
 
-            // when
+        describe("when an updated room event is received") {
             val roomUpdated = RoomUpdated(
                     RoomsUtil.roomOneUpdated,
                     4
             )
             val updatedState = roomUpdatedReducer(currentState, roomUpdated)
 
-            // then
-            assertThat(updatedState.joinedRoomsState).isNotNull()
+            it("then the updated room should be present in the joined room state") {
+                assertThat(updatedState.joinedRoomsState).isNotNull()
 
-            assertThat(updatedState.joinedRoomsState!!.rooms).containsOnly(
-                    Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated)
-            )
+                assertThat(updatedState.joinedRoomsState!!.rooms).containsOnly(
+                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated)
+                )
 
-            assertThat(updatedState.joinedRoomsState.unreadCounts).containsOnly(
-                    Pair(RoomsUtil.roomOneId, 4)
-            )
+                assertThat(updatedState.joinedRoomsState.unreadCounts).containsOnly(
+                        Pair(RoomsUtil.roomOneId, 4)
+                )
+            }
         }
     }
 })
