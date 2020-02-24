@@ -1,6 +1,5 @@
 package com.pusher.chatkit.state
 
-import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
 
 internal data class LastChange<T>(val version: Int, val changedData: T)
