@@ -12,19 +12,19 @@ class RoomUpdatedTest : Spek({
     describe("given an initial state of two rooms") {
         val joinedRoomsState = JoinedRoomsState(
                 hashMapOf<String, JoinedRoomInternalType>(
-                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
-                        Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOne),
+                        Pair(JoinedRoomsStateTestUtil.roomTwoId, JoinedRoomsStateTestUtil.roomTwo)
                 ),
                 hashMapOf<String, Int>(
-                        Pair(RoomsUtil.roomOneId, 1),
-                        Pair(RoomsUtil.roomTwoId, 2)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, 1),
+                        Pair(JoinedRoomsStateTestUtil.roomTwoId, 2)
                 )
         )
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when an updated room event is received") {
             val roomUpdated = RoomUpdated(
-                    RoomsUtil.roomOneUpdated,
+                    JoinedRoomsStateTestUtil.roomOneUpdated,
                     4
             )
             val updatedState = roomUpdatedReducer(currentState, roomUpdated)
@@ -34,14 +34,14 @@ class RoomUpdatedTest : Spek({
 
                 assertThat(updatedState.joinedRoomsState!!.rooms)
                         .containsOnly(
-                                Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated),
-                                Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                                Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOneUpdated),
+                                Pair(JoinedRoomsStateTestUtil.roomTwoId, JoinedRoomsStateTestUtil.roomTwo)
                         )
 
                 assertThat(updatedState.joinedRoomsState.unreadCounts)
                         .containsOnly(
-                                Pair(RoomsUtil.roomOneId, 4),
-                                Pair(RoomsUtil.roomTwoId, 2)
+                                Pair(JoinedRoomsStateTestUtil.roomOneId, 4),
+                                Pair(JoinedRoomsStateTestUtil.roomTwoId, 2)
                         )
             }
         }
@@ -56,7 +56,7 @@ class RoomUpdatedTest : Spek({
 
         describe("when an updated room event is received") {
             val roomUpdated = RoomUpdated(
-                    RoomsUtil.roomOneUpdated,
+                    JoinedRoomsStateTestUtil.roomOneUpdated,
                     4
             )
             val updatedState = roomUpdatedReducer(currentState, roomUpdated)
@@ -65,11 +65,11 @@ class RoomUpdatedTest : Spek({
                 assertThat(updatedState.joinedRoomsState).isNotNull()
 
                 assertThat(updatedState.joinedRoomsState!!.rooms).containsOnly(
-                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOneUpdated)
                 )
 
                 assertThat(updatedState.joinedRoomsState.unreadCounts).containsOnly(
-                        Pair(RoomsUtil.roomOneId, 4)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, 4)
                 )
             }
         }
@@ -80,7 +80,7 @@ class RoomUpdatedTest : Spek({
 
         describe("when an updated room event is received") {
             val roomUpdated = RoomUpdated(
-                    RoomsUtil.roomOneUpdated,
+                    JoinedRoomsStateTestUtil.roomOneUpdated,
                     4
             )
             val updatedState = roomUpdatedReducer(currentState, roomUpdated)
@@ -89,11 +89,11 @@ class RoomUpdatedTest : Spek({
                 assertThat(updatedState.joinedRoomsState).isNotNull()
 
                 assertThat(updatedState.joinedRoomsState!!.rooms).containsOnly(
-                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOneUpdated)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOneUpdated)
                 )
 
                 assertThat(updatedState.joinedRoomsState.unreadCounts).containsOnly(
-                        Pair(RoomsUtil.roomOneId, 4)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, 4)
                 )
             }
         }

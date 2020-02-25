@@ -13,19 +13,19 @@ class RemovedFromRoomTest : Spek({
     describe("given an initial state of two joined rooms") {
         val joinedRoomsState = JoinedRoomsState(
                 hashMapOf<String, JoinedRoomInternalType>(
-                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
-                        Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOne),
+                        Pair(JoinedRoomsStateTestUtil.roomTwoId, JoinedRoomsStateTestUtil.roomTwo)
                 ),
                 hashMapOf<String, Int>(
-                        Pair(RoomsUtil.roomOneId, 1),
-                        Pair(RoomsUtil.roomTwoId, 2)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, 1),
+                        Pair(JoinedRoomsStateTestUtil.roomTwoId, 2)
                 )
         )
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when a removed from room one event is received") {
             val removedFromRoom = RemovedFromRoom(
-                    RoomsUtil.roomOneId
+                    JoinedRoomsStateTestUtil.roomOneId
             )
             val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
 
@@ -34,12 +34,12 @@ class RemovedFromRoomTest : Spek({
 
                 assertThat(updatedState.joinedRoomsState!!.rooms)
                         .containsOnly(
-                                Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                                Pair(JoinedRoomsStateTestUtil.roomTwoId, JoinedRoomsStateTestUtil.roomTwo)
                         )
 
                 assertThat(updatedState.joinedRoomsState.unreadCounts)
                         .containsOnly(
-                                Pair(RoomsUtil.roomTwoId, 2)
+                                Pair(JoinedRoomsStateTestUtil.roomTwoId, 2)
                         )
             }
         }
@@ -54,7 +54,7 @@ class RemovedFromRoomTest : Spek({
 
         describe("when a removed from room one event is received") {
             val removedFromRoom = RemovedFromRoom(
-                    RoomsUtil.roomOneId
+                    JoinedRoomsStateTestUtil.roomOneId
             )
             val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
 
@@ -73,7 +73,7 @@ class RemovedFromRoomTest : Spek({
 
         describe("when a removed from room one event is received") {
             val removedFromRoom = RemovedFromRoom(
-                    RoomsUtil.roomOneId
+                    JoinedRoomsStateTestUtil.roomOneId
             )
             val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
 
@@ -90,12 +90,12 @@ class RemovedFromRoomTest : Spek({
     describe("given an initial state of two joined rooms") {
         val joinedRoomsState = JoinedRoomsState(
                 hashMapOf<String, JoinedRoomInternalType>(
-                        Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
-                        Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOne),
+                        Pair(JoinedRoomsStateTestUtil.roomTwoId, JoinedRoomsStateTestUtil.roomTwo)
                 ),
                 hashMapOf<String, Int>(
-                        Pair(RoomsUtil.roomOneId, 1),
-                        Pair(RoomsUtil.roomTwoId, 2)
+                        Pair(JoinedRoomsStateTestUtil.roomOneId, 1),
+                        Pair(JoinedRoomsStateTestUtil.roomTwoId, 2)
                 )
         )
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
@@ -103,7 +103,7 @@ class RemovedFromRoomTest : Spek({
         describe("when a removed from room one event is received which does not " +
                 "match a room in the current list") {
             val removedFromRoom = RemovedFromRoom(
-                    RoomsUtil.roomThreeId
+                    JoinedRoomsStateTestUtil.roomThreeId
             )
             val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
 
@@ -112,14 +112,14 @@ class RemovedFromRoomTest : Spek({
 
                 assertThat(updatedState.joinedRoomsState!!.rooms)
                         .containsOnly(
-                                Pair(RoomsUtil.roomOneId, RoomsUtil.roomOne),
-                                Pair(RoomsUtil.roomTwoId, RoomsUtil.roomTwo)
+                                Pair(JoinedRoomsStateTestUtil.roomOneId, JoinedRoomsStateTestUtil.roomOne),
+                                Pair(JoinedRoomsStateTestUtil.roomTwoId, JoinedRoomsStateTestUtil.roomTwo)
                         )
 
                 assertThat(updatedState.joinedRoomsState.unreadCounts)
                         .containsOnly(
-                                Pair(RoomsUtil.roomOneId, 1),
-                                Pair(RoomsUtil.roomTwoId, 2)
+                                Pair(JoinedRoomsStateTestUtil.roomOneId, 1),
+                                Pair(JoinedRoomsStateTestUtil.roomTwoId, 2)
                         )
             }
         }
