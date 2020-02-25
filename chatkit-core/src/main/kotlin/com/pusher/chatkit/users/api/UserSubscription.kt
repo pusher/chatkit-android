@@ -26,5 +26,4 @@ internal class UserSubscriber(
     private fun consumeEvent(event: UserSubscriptionEvent) {
         listeners.invoke(event)
     }
-
 }
