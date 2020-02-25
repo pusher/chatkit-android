@@ -8,6 +8,12 @@ internal data class ChatkitState(
     val joinedRoomsState: JoinedRoomsState?
 ) {
 
+    companion object {
+        fun initial() = ChatkitState(
+                joinedRoomsState = null
+        )
+    }
+
     fun with(joinedRoomsState: JoinedRoomsState) = copy(auxiliaryState.with(joinedRoomsState),
         joinedRoomsState = joinedRoomsState
     )
