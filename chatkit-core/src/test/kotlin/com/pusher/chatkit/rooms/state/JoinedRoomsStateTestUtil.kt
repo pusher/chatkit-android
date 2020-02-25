@@ -28,7 +28,6 @@ object JoinedRoomsStateTestUtil {
 
     internal val roomThreeId = "id3"
     internal val roomThree = simpleRoom(roomThreeId, "roomThree")
-
 }
 
 internal fun Assert<JoinedRoomsState>.isEmpty() {
@@ -37,16 +36,13 @@ internal fun Assert<JoinedRoomsState>.isEmpty() {
 }
 
 internal fun Assert<JoinedRoomsState>.containsOnly(
-        vararg rooms: Pair<String, JoinedRoomInternalType>
+    vararg rooms: Pair<String, JoinedRoomInternalType>
 ) {
     prop(JoinedRoomsState::rooms).containsOnly(*rooms)
 }
 
 internal fun Assert<JoinedRoomsState>.containsOnlyUnreadCounts(
-        vararg rooms: Pair<String, Int>
+    vararg rooms: Pair<String, Int>
 ) {
     prop(JoinedRoomsState::unreadCounts).containsOnly(*rooms)
 }
-
-
-
