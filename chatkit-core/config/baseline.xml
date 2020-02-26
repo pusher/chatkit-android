@@ -2,6 +2,7 @@
 <SmellBaseline>
   <Blacklist></Blacklist>
   <Whitelist>
+    <ID>ForbiddenComment:UserSubscriber.kt$UserSubscriber$// TODO: handle onEnd, e.g. when tackling connection status (terminal/non-terminal errs)</ID>
     <ID>LongParameterList:LoggingSubscription.kt$( path: String, client: PlatformClient, listeners: SubscriptionListeners&lt;A&gt;, messageParser: DataParser&lt;A&gt;, logger: Logger, description: String )</ID>
     <ID>MagicNumber:ChatkitTokenProvider.kt$ChatkitTokenProvider$200</ID>
     <ID>MagicNumber:ChatkitTokenProvider.kt$ChatkitTokenProvider$299</ID>

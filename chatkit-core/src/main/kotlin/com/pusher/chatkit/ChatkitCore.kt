@@ -46,6 +46,4 @@ class ChatkitCoreConnector {
 
 }
 
-class ChatkitCore {
-
-}
+class ChatkitCore

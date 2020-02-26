@@ -20,11 +20,11 @@ open class ChatkitDependencies(
 ) : PlatformDependencies
 
 open class EmptyLogger : Logger {
-    override fun debug(message: String, error: Error?) { }
-    override fun error(message: String, error: Error?) { }
-    override fun info(message: String, error: Error?) { }
-    override fun verbose(message: String, error: Error?) { }
-    override fun warn(message: String, error: Error?) { }
+    override fun debug(message: String, error: Error?) { /* nop */ }
+    override fun error(message: String, error: Error?) { /* nop */ }
+    override fun info(message: String, error: Error?) { /* nop */ }
+    override fun verbose(message: String, error: Error?) { /* nop */ }
+    override fun warn(message: String, error: Error?) { /* nop */ }
 }
 
 class NullMediaTypeResolver : MediaTypeResolver {
