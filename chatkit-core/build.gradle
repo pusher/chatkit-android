@@ -23,9 +23,13 @@ dependencies {
     api 'com.squareup.okhttp3:okhttp:3.12.6'
     implementation 'com.google.code.gson:gson:2.8.5'
 
+    testImplementation('com.willowtreeapps.assertk:assertk:0.21'){
+        because("we want to use assertk for all tests going forward")
+    }
+    testImplementation('com.google.truth:truth:0.40'){
+        because("google truth is used for existing v1 tests")
+    }
     testImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
-    testImplementation 'com.google.truth:truth:0.40'
-    testImplementation 'com.willowtreeapps.assertk:assertk:0.21'
     testImplementation "org.mockito:mockito-inline:$mockito_version"
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
