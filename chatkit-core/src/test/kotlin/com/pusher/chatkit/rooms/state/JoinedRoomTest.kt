@@ -12,7 +12,6 @@ class JoinedRoomTest : Spek({
         val initialState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(mapOf(), mapOf()))
 
-        // when 1 new room is joined
         describe("when one new room with unread counts is received") {
             val joinedRoom = JoinedRoom(JoinedRoomsStateTestUtil.roomOne, 1)
             val updatedState = joinedRoomReducer(initialState, joinedRoom)
