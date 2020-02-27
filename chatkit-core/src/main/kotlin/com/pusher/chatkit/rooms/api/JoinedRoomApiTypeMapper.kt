@@ -3,7 +3,7 @@ package com.pusher.chatkit.rooms.api
 import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
 import com.pusher.chatkit.util.dateFormat
 
-internal object JoinedRoomApiTypeMapper {
+internal class JoinedRoomApiTypeMapper {
     fun toRoomInternal(room: JoinedRoomApiType): JoinedRoomInternalType {
 
         var lastMessageAt : Long? = null
