@@ -11,7 +11,6 @@ internal data class UpdatedRoom(
 internal val updatedRoomReducer =
     reducerForActionType<ChatkitState, UpdatedRoom> { state, action ->
 
-
         state.with(joinedRoomsState = JoinedRoomsState(
                 state.joinedRoomsState!!.rooms
                         .plus(action.room.id to action.room),
