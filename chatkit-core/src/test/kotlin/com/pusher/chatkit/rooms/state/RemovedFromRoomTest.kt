@@ -24,10 +24,10 @@ class RemovedFromRoomTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when a removed from room one event is received") {
-            val removedFromRoom = RemovedFromRoom(
+            val removedFromRoom = LeftRoom(
                     JoinedRoomsStateTestUtil.roomOneId
             )
-            val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
+            val updatedState = leftRoomReducer(currentState, removedFromRoom)
 
             it("then the joined rooms state should only contain room two") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -53,10 +53,10 @@ class RemovedFromRoomTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when a removed from room one event is received") {
-            val removedFromRoom = RemovedFromRoom(
+            val removedFromRoom = LeftRoom(
                     JoinedRoomsStateTestUtil.roomOneId
             )
-            val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
+            val updatedState = leftRoomReducer(currentState, removedFromRoom)
 
             it("then the joined rooms state should still be empty") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -72,10 +72,10 @@ class RemovedFromRoomTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = null)
 
         describe("when a removed from room one event is received") {
-            val removedFromRoom = RemovedFromRoom(
+            val removedFromRoom = LeftRoom(
                     JoinedRoomsStateTestUtil.roomOneId
             )
-            val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
+            val updatedState = leftRoomReducer(currentState, removedFromRoom)
 
             it("then the joined rooms state should still be empty") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -102,10 +102,10 @@ class RemovedFromRoomTest : Spek({
 
         describe("when a removed from room one event is received which does not " +
                 "match a room in the current list") {
-            val removedFromRoom = RemovedFromRoom(
+            val removedFromRoom = LeftRoom(
                     JoinedRoomsStateTestUtil.roomThreeId
             )
-            val updatedState = removedFromRoomReducer(currentState, removedFromRoom)
+            val updatedState = leftRoomReducer(currentState, removedFromRoom)
 
             it("then the joined rooms state should contain the original two rooms") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()

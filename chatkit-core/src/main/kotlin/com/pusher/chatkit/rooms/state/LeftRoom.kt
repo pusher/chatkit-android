@@ -3,12 +3,12 @@ package com.pusher.chatkit.rooms.state
 import com.pusher.chatkit.state.ChatkitState
 import org.reduxkotlin.reducerForActionType
 
-internal data class RemovedFromRoom(
+internal data class LeftRoom(
     val roomId: String
 )
 
-internal val removedFromRoomReducer =
-    reducerForActionType<ChatkitState, RemovedFromRoom> { state, action ->
+internal val leftRoomReducer =
+    reducerForActionType<ChatkitState, LeftRoom> { state, action ->
 
             var joinedRoomsState = JoinedRoomsState(
                     mapOf(),
