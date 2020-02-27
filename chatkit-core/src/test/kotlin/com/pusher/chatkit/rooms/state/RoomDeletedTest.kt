@@ -24,10 +24,10 @@ class RoomDeletedTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when a deleted room event is received") {
-            val roomDeleted = RoomDeleted(
+            val roomDeleted = DeletedRoom(
                     JoinedRoomsStateTestUtil.roomOneId
             )
-            val updatedState = roomDeletedReducer(currentState, roomDeleted)
+            val updatedState = deletedRoomReducer(currentState, roomDeleted)
 
             it("then the joined rooms state should should only contain room two") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -53,10 +53,10 @@ class RoomDeletedTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when a deleted room event is received") {
-            val roomDeleted = RoomDeleted(
+            val roomDeleted = DeletedRoom(
                     JoinedRoomsStateTestUtil.roomOneId
             )
-            val updatedState = roomDeletedReducer(currentState, roomDeleted)
+            val updatedState = deletedRoomReducer(currentState, roomDeleted)
 
             it("then the joined rooms state should be empty") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -70,10 +70,10 @@ class RoomDeletedTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = null)
 
         describe("when a deleted room event is received") {
-            val roomDeleted = RoomDeleted(
+            val roomDeleted = DeletedRoom(
                     JoinedRoomsStateTestUtil.roomOneId
             )
-            val updatedState = roomDeletedReducer(currentState, roomDeleted)
+            val updatedState = deletedRoomReducer(currentState, roomDeleted)
 
             it("then the joined rooms state should be empty") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -98,10 +98,10 @@ class RoomDeletedTest : Spek({
 
         describe("when a deleted from room one event is received which does not " +
                 "match a room in the current list") {
-            val roomDeleted = RoomDeleted(
+            val roomDeleted = DeletedRoom(
                     JoinedRoomsStateTestUtil.roomThreeId
             )
-            val updatedState = roomDeletedReducer(currentState, roomDeleted)
+            val updatedState = deletedRoomReducer(currentState, roomDeleted)
 
             it("then the joined rooms state should contain the original two rooms") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
