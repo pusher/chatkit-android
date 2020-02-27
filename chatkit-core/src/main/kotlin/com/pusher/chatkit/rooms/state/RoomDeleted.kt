@@ -11,8 +11,8 @@ internal val roomDeletedReducer =
     reducerForActionType<ChatkitState, RoomDeleted> { state, action ->
 
             var joinedRoomsState = JoinedRoomsState(
-                    hashMapOf(),
-                    hashMapOf()
+                    mapOf(),
+                    mapOf()
             )
 
             if (state.joinedRoomsState != null) {

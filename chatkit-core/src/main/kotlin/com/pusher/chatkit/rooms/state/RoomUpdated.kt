@@ -12,9 +12,9 @@ internal val roomUpdatedReducer =
     reducerForActionType<ChatkitState, RoomUpdated> { state, action ->
 
             var joinedRoomsState = JoinedRoomsState(
-                    hashMapOf(
+                    mapOf(
                             Pair(action.room.id, action.room)),
-                    hashMapOf(
+                    mapOf(
                             Pair(action.room.id, action.unreadCount))
             )
 

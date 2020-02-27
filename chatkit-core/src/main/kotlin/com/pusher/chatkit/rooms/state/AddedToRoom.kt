@@ -14,8 +14,8 @@ internal val addedToRoomReducer =
             val joinedRoom = Pair(action.room.id, action.room)
             val joinedRoomUnreadCount = Pair(action.room.id, action.unreadCount)
             var joinedRoomsState = JoinedRoomsState(
-                    hashMapOf(joinedRoom),
-                    hashMapOf(joinedRoomUnreadCount)
+                    mapOf(joinedRoom),
+                    mapOf(joinedRoomUnreadCount)
             )
 
             if (state.joinedRoomsState != null) {
