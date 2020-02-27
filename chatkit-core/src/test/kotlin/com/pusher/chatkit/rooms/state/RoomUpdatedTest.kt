@@ -27,7 +27,7 @@ class RoomUpdatedTest : Spek({
                     JoinedRoomsStateTestUtil.roomOneUpdated,
                     4
             )
-            val updatedState = roomUpdatedReducer(currentState, roomUpdated)
+            val updatedState = updatedRoomReducer(currentState, roomUpdated)
 
             it("then the joined rooms state should contain the updated values") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -59,7 +59,7 @@ class RoomUpdatedTest : Spek({
                     JoinedRoomsStateTestUtil.roomOneUpdated,
                     4
             )
-            val updatedState = roomUpdatedReducer(currentState, roomUpdated)
+            val updatedState = updatedRoomReducer(currentState, roomUpdated)
 
             it("then the updated room should be present in the joined room state") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -83,7 +83,7 @@ class RoomUpdatedTest : Spek({
                     JoinedRoomsStateTestUtil.roomOneUpdated,
                     4
             )
-            val updatedState = roomUpdatedReducer(currentState, roomUpdated)
+            val updatedState = updatedRoomReducer(currentState, roomUpdated)
 
             it("then the updated room should be present in the joined room state") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
