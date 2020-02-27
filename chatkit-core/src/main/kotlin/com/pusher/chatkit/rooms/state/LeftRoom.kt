@@ -10,7 +10,7 @@ internal data class LeftRoom(
 internal val leftRoomReducer =
     reducerForActionType<ChatkitState, LeftRoom> { state, action ->
         state.with(JoinedRoomsState(
-                state.joinedRoomsState!!.rooms.filterNot { it.key == action.roomId },
-                state.joinedRoomsState.unreadCounts.filterNot { it.key == action.roomId }
+                state.joinedRoomsState!!.rooms - action.roomId,
+                state.joinedRoomsState.unreadCounts - action.roomId
         ))
 }

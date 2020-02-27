@@ -10,17 +10,8 @@ internal data class RoomDeleted(
 internal val roomDeletedReducer =
     reducerForActionType<ChatkitState, RoomDeleted> { state, action ->
 
-            var joinedRoomsState = JoinedRoomsState(
-                    mapOf(),
-                    mapOf()
-            )
-
-            if (state.joinedRoomsState != null) {
-                joinedRoomsState = JoinedRoomsState(
-                        state.joinedRoomsState.rooms.filterNot { it.key == action.roomId },
-                        state.joinedRoomsState.unreadCounts.filterNot { it.key == action.roomId }
-                )
-            }
-
-        state.with(joinedRoomsState)
+        state.with(JoinedRoomsState(
+                state.joinedRoomsState!!.rooms - action.roomId,
+                state.joinedRoomsState.unreadCounts - action.roomId
+        ))
 }
