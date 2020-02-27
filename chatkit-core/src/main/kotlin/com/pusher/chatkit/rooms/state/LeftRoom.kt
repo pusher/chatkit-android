@@ -9,18 +9,8 @@ internal data class LeftRoom(
 
 internal val leftRoomReducer =
     reducerForActionType<ChatkitState, LeftRoom> { state, action ->
-
-            var joinedRoomsState = JoinedRoomsState(
-                    mapOf(),
-                    mapOf()
-            )
-
-            if (state.joinedRoomsState != null) {
-                    joinedRoomsState = JoinedRoomsState(
-                            state.joinedRoomsState.rooms.filterNot { it.key == action.roomId },
-                            state.joinedRoomsState.unreadCounts.filterNot { it.key == action.roomId }
-                    )
-            }
-
-        state.with(joinedRoomsState)
+        state.with(JoinedRoomsState(
+                state.joinedRoomsState!!.rooms.filterNot { it.key == action.roomId },
+                state.joinedRoomsState.unreadCounts.filterNot { it.key == action.roomId }
+        ))
 }
