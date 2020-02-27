@@ -17,11 +17,11 @@ class AddedToRoomTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("when a new added to room event is received") {
-            val addedToRoomRoom = AddedToRoom(
+            val addedToRoomRoom = JoinedRoom(
                     JoinedRoomsStateTestUtil.roomOne,
                     1
             )
-            val updatedState = addedToRoomReducer(currentState, addedToRoomRoom)
+            val updatedState = joinedRoomReducer(currentState, addedToRoomRoom)
 
             it("then the state should contain the new joined room") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -43,11 +43,11 @@ class AddedToRoomTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = null)
 
         describe("when a new added to room event is received") {
-            val addedToRoomRoom = AddedToRoom(
+            val addedToRoomRoom = JoinedRoom(
                     JoinedRoomsStateTestUtil.roomOne,
                     1
             )
-            val updatedState = addedToRoomReducer(currentState, addedToRoomRoom)
+            val updatedState = joinedRoomReducer(currentState, addedToRoomRoom)
 
             it("then the state should contain the new joined room") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
@@ -77,11 +77,11 @@ class AddedToRoomTest : Spek({
         val currentState = ChatkitState(joinedRoomsState = joinedRoomsState)
 
         describe("then the state should contain the new and previously joined rooms") {
-            val addedToRoomRoom = AddedToRoom(
+            val addedToRoomRoom = JoinedRoom(
                     JoinedRoomsStateTestUtil.roomTwo,
                     2
             )
-            val updatedState = addedToRoomReducer(currentState, addedToRoomRoom)
+            val updatedState = joinedRoomReducer(currentState, addedToRoomRoom)
 
             it("then") {
                 assertThat(updatedState.joinedRoomsState).isNotNull()
