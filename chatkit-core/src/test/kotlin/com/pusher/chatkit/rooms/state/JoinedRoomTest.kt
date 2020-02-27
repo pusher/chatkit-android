@@ -13,7 +13,7 @@ class JoinedRoomTest : Spek({
                 joinedRoomsState = JoinedRoomsState(mapOf(), mapOf()))
 
         describe("when one new room with unread counts is received") {
-            val joinedRoom = JoinedRoom(JoinedRoomsStateTestUtil.roomOne, 1)
+            val joinedRoom = JoinedRoom(JoinedRoomsStateTestUtil.roomOne, unreadCount = 1)
             val updatedState = joinedRoomReducer(initialState, joinedRoom)
 
             it("then the state should contain the expected rooms") {
