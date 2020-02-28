@@ -2,7 +2,6 @@ package com.pusher.chatkit.rooms.api
 
 import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
 import com.pusher.chatkit.util.DateUtil
-import com.pusher.chatkit.util.dateFormat
 
 internal class JoinedRoomApiTypeMapper {
     fun toRoomInternal(room: JoinedRoomApiType): JoinedRoomInternalType {
