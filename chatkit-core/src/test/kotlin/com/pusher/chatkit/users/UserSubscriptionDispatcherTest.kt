@@ -6,9 +6,12 @@ import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.rooms.state.DeletedRoom
 import com.pusher.chatkit.rooms.state.JoinedRoom
+import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
+import com.pusher.chatkit.rooms.state.JoinedRoomsReceived
 import com.pusher.chatkit.rooms.state.LeftRoom
 import com.pusher.chatkit.rooms.state.UpdatedRoom
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
 import io.mockk.mockk
@@ -33,6 +36,15 @@ class UserSubscriptionDispatcherTest : Spek({
             deletedAt = null
     )
 
+    val simpleUser = UserApiType(
+            id = "user1",
+            createdAt =  "",
+            updatedAt = "",
+            name = "name",
+            avatarURL = null,
+            customData = null,
+            online = false)
+
     describe("given a user subscription dispatcher") {
 
         val state = mockk<GetState<ChatkitState>>(relaxed = true)
@@ -43,6 +55,23 @@ class UserSubscriptionDispatcherTest : Spek({
                 joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 dispatcher = dispatcher
                 )
+
+        describe("when I receive an InitialState event") {
+            val event = UserSubscriptionEvent.InitialState(
+                    currentUser = simpleUser,
+                    rooms = listOf(simpleJoinedRoomApiType),
+                    readStates = listOf(RoomReadStateApiType("id1", 1, null)),
+                    memberships = listOf(RoomMembershipApiType("id1", listOf()))
+            )
+            userSubscriptionDispatcher.onEvent(event)
+
+            it("then the dispatcher should send a JoinedRoomsReceived action") {
+                verify(exactly = 1) { dispatcher(JoinedRoomsReceived(
+                        rooms = joinedRoomApiTypeMapper.toManyRoomInternal(event.rooms),
+                        unreadCounts = joinedRoomApiTypeMapper.toManyUnreadCounts(event.readStates)
+                )) }
+            }
+        }
 
         describe("when I receive an AddedToRoomEvent") {
             val event = UserSubscriptionEvent.AddedToRoomEvent(

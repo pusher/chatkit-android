@@ -3,6 +3,8 @@ package com.pusher.chatkit.users.api
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.state.DeletedRoom
 import com.pusher.chatkit.rooms.state.JoinedRoom
+import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
+import com.pusher.chatkit.rooms.state.JoinedRoomsReceived
 import com.pusher.chatkit.rooms.state.LeftRoom
 import com.pusher.chatkit.rooms.state.UpdatedRoom
 import com.pusher.chatkit.state.ChatkitState
@@ -18,6 +20,12 @@ internal class UserSubscriptionDispatcher(
     internal fun onEvent(event: UserSubscriptionEvent) {
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
+
+                dispatcher(JoinedRoomsReceived(
+                        rooms = joinedRoomApiTypeMapper.toManyRoomInternal(event.rooms),
+                        unreadCounts = joinedRoomApiTypeMapper.toManyUnreadCounts(event.readStates)
+                ))
+
                 // todo - also check if there's already an initial state and calculate the difference
             }
             is UserSubscriptionEvent.AddedToRoomEvent -> {
