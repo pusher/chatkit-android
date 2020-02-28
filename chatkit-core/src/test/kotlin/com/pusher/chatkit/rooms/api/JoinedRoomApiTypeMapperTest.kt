@@ -72,8 +72,6 @@ class JoinedRoomApiTypeMapperTest : Spek({
             it("then the push notification override should be null") {
                 assertThat(joinedRoomInternalType.pushNotificationTitleOverride).isNull()
             }
-
         }
     }
-
 })

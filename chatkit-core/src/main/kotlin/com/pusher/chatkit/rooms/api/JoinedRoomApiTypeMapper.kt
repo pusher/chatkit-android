@@ -6,7 +6,7 @@ import com.pusher.chatkit.util.dateFormat
 internal class JoinedRoomApiTypeMapper {
     fun toRoomInternal(room: JoinedRoomApiType): JoinedRoomInternalType {
 
-        var lastMessageAt : Long? = null
+        var lastMessageAt: Long? = null
         if (room.lastMessageAt != null) {
             lastMessageAt = dateFormat.parse(room.lastMessageAt).time
         }
