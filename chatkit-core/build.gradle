@@ -167,3 +167,9 @@ jacocoTestReport {
     reports.html.enabled = false
     reports.csv.enabled = false
 }
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
