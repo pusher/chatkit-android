@@ -72,7 +72,7 @@ internal class UserSubscriptionDispatcher(
             val room = initialEvent.rooms.find { it.id == addedKey }
             val unreadCount = initialEvent.readStates.find { it.roomId == addedKey }
 
-            // todo: do we always get the unread count here?
+            // do we always get the unread count here?
             if (room != null &&
                     unreadCount != null) {
                 dispatcher(JoinedRoom(
