@@ -47,7 +47,7 @@ class UserSubscriptionDispatcherTest : Spek({
             customData = null,
             online = false)
 
-    describe("given a user subscription dispatcher") {
+    describe("given a user subscription dispatcher with no previous joined room state") {
 
         val state = mockk<GetState<ChatkitState>>(relaxed = true)
         val dispatcher = mockk<Dispatcher>(relaxed = true)
@@ -125,7 +125,7 @@ class UserSubscriptionDispatcherTest : Spek({
         }
     }
 
-    describe("given a user subscription dispatcher with current state") {
+    describe("given a user subscription dispatcher with previous state") {
 
         val state = mockk<GetState<ChatkitState>>(relaxed = true)
         val dispatcher = mockk<Dispatcher>(relaxed = true)

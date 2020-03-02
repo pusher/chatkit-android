@@ -54,12 +54,8 @@ internal class UserSubscriptionDispatcher(
     ) {
 
         determineNewRoomsJoined(currentState, initialEvent)
-
         determineNewRoomsLeft(currentState, initialEvent)
-
         determineNewUpdatedRooms(currentState, initialEvent)
-
-        // new read counts
     }
 
     private fun determineNewRoomsJoined(
@@ -72,7 +68,7 @@ internal class UserSubscriptionDispatcher(
             val room = initialEvent.rooms.find { it.id == addedKey }
             val unreadCount = initialEvent.readStates.find { it.roomId == addedKey }
 
-            // do we always get the unread count here?
+            // q: do we always get the unread count here?
             if (room != null &&
                     unreadCount != null) {
                 dispatcher(JoinedRoom(
