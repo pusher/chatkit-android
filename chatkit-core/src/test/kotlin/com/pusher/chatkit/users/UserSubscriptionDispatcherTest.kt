@@ -6,14 +6,15 @@ import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.rooms.state.DeletedRoom
 import com.pusher.chatkit.rooms.state.JoinedRoom
-import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
 import com.pusher.chatkit.rooms.state.JoinedRoomsReceived
+import com.pusher.chatkit.rooms.state.JoinedRoomsState
 import com.pusher.chatkit.rooms.state.LeftRoom
 import com.pusher.chatkit.rooms.state.UpdatedRoom
 import com.pusher.chatkit.state.ChatkitState
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.reduxkotlin.Dispatcher
@@ -38,7 +39,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
     val simpleUser = UserApiType(
             id = "user1",
-            createdAt =  "",
+            createdAt = "",
             updatedAt = "",
             name = "name",
             avatarURL = null,
@@ -55,6 +56,8 @@ class UserSubscriptionDispatcherTest : Spek({
                 joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 dispatcher = dispatcher
                 )
+
+        every { state().joinedRoomsState } returns null
 
         describe("when I receive an InitialState event") {
             val event = UserSubscriptionEvent.InitialState(
@@ -113,11 +116,43 @@ class UserSubscriptionDispatcherTest : Spek({
             )
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a JoinedRoom action") {
+            it("then the dispatcher should send a UpdateRoom action") {
                 verify(exactly = 1) { dispatcher(UpdatedRoom(
                         room = joinedRoomApiTypeMapper.toRoomInternal(event.room)
                 )) }
             }
         }
     }
-})
+
+    describe("given a user subscription dispatcher with current state") {
+
+        val state = mockk<GetState<ChatkitState>>(relaxed = true)
+        val dispatcher = mockk<Dispatcher>(relaxed = true)
+        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper()
+        val userSubscriptionDispatcher = UserSubscriptionDispatcher(
+                stateGetter = state,
+                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
+                dispatcher = dispatcher
+        )
+
+        every { state().joinedRoomsState } returns JoinedRoomsState(mapOf(), mapOf())
+
+        describe("when I receive a second InitialState event with a new room") {
+
+            val event = UserSubscriptionEvent.InitialState(
+                    currentUser = simpleUser,
+                    rooms = listOf(simpleJoinedRoomApiType),
+                    readStates = listOf(RoomReadStateApiType("id1", 1, null)),
+                    memberships = listOf(RoomMembershipApiType("id1", listOf()))
+            )
+            userSubscriptionDispatcher.onEvent(event)
+
+            it("then the dispatcher should send a JoinRoom action") {
+                verify(exactly = 1) { dispatcher(JoinedRoom(
+                        room = joinedRoomApiTypeMapper.toRoomInternal(event.rooms[0]),
+                        unreadCount = 1
+                )) }
+            }
+        }
+    }
+    })
