@@ -161,5 +161,32 @@ class UserSubscriptionDispatcherTest : Spek({
                 verify(exactly = 1) { dispatcher(LeftRoom(roomId = "id2")) }
             }
         }
+
+        describe("when I receive a second InitialState event with an updated room") {
+            val event = UserSubscriptionEvent.InitialState(
+                    currentUser = simpleUser,
+                    rooms = listOf(JoinedRoomApiType(
+                            id = "id2",
+                            name = "room2-updated",
+                            createdById = "person1",
+                            pushNotificationTitleOverride = "notification override",
+                            private = false,
+                            customData = mapOf("highlight" to "blue"),
+                            lastMessageAt = "2020-02-27T17:12:10Z",
+                            updatedAt = "2020-02-27T17:12:20Z",
+                            createdAt = "2020-02-27T17:12:30Z",
+                            deletedAt = null
+                    )),
+                    readStates = listOf(RoomReadStateApiType("id1", 1, null)),
+                    memberships = listOf(RoomMembershipApiType("id1", listOf()))
+            )
+            userSubscriptionDispatcher.onEvent(event)
+
+            it("then the dispatcher should send an UpdatedRoom action") {
+                verify(exactly = 1) { dispatcher(UpdatedRoom(
+                        room = joinedRoomApiTypeMapper.toRoomInternal(event.rooms.first())
+                )) }
+            }
+        }
     }
-    })
+})

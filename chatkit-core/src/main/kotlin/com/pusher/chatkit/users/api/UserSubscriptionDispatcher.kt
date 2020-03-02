@@ -57,7 +57,7 @@ internal class UserSubscriptionDispatcher(
 
         determineNewRoomsLeft(currentState, initialEvent)
 
-        // new updated rooms
+        determineNewUpdatedRooms(currentState, initialEvent)
 
         // new read counts
     }
@@ -90,6 +90,24 @@ internal class UserSubscriptionDispatcher(
 
         for (removedKey in removedRoomKeys) {
             dispatcher(LeftRoom(roomId = removedKey))
+        }
+    }
+
+    private fun determineNewUpdatedRooms(
+        currentState: JoinedRoomsState,
+        initialEvent: UserSubscriptionEvent.InitialState
+    ) {
+        val initialEventRooms = joinedRoomApiTypeMapper.toManyRoomInternal(initialEvent.rooms)
+        val changedRooms = currentState.rooms.values.mapNotNull { existing ->
+            initialEventRooms.find { it.id == existing.id }?.let { new ->
+                existing to new
+            }
+        }.filter { (existing, new) ->
+            new != existing
+        }
+
+        for (room in changedRooms) {
+            dispatcher(UpdatedRoom(room = room.second))
         }
     }
 }
