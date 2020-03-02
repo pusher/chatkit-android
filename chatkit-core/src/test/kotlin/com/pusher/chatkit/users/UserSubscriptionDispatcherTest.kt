@@ -8,6 +8,7 @@ import com.pusher.chatkit.rooms.state.DeletedRoom
 import com.pusher.chatkit.rooms.state.JoinedRoom
 import com.pusher.chatkit.rooms.state.JoinedRoomsReceived
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
+import com.pusher.chatkit.rooms.state.JoinedRoomsStateTestUtil
 import com.pusher.chatkit.rooms.state.LeftRoom
 import com.pusher.chatkit.rooms.state.UpdatedRoom
 import com.pusher.chatkit.state.ChatkitState
@@ -135,9 +136,11 @@ class UserSubscriptionDispatcherTest : Spek({
                 dispatcher = dispatcher
         )
 
-        every { state().joinedRoomsState } returns JoinedRoomsState(mapOf(), mapOf())
+        every { state().joinedRoomsState } returns JoinedRoomsState(
+                rooms = mapOf("id2" to JoinedRoomsStateTestUtil.roomTwo),
+                unreadCounts = mapOf("id2" to 2))
 
-        describe("when I receive a second InitialState event with a new room") {
+        describe("when I receive a second InitialState event with a different room") {
 
             val event = UserSubscriptionEvent.InitialState(
                     currentUser = simpleUser,
@@ -152,6 +155,10 @@ class UserSubscriptionDispatcherTest : Spek({
                         room = joinedRoomApiTypeMapper.toRoomInternal(event.rooms[0]),
                         unreadCount = 1
                 )) }
+            }
+
+            it("then the dispatcher should send a LeftRoom action") {
+                verify(exactly = 1) { dispatcher(LeftRoom(roomId = "id2")) }
             }
         }
     }
