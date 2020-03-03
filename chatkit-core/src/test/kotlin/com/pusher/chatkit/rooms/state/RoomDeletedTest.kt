@@ -7,7 +7,7 @@ import com.pusher.chatkit.state.DeletedRoom
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class DeletedRoomTest : Spek({
+class RoomDeletedTest : Spek({
 
     describe("given initial state of one room") {
         val initialState = ChatkitState(
@@ -16,7 +16,7 @@ class DeletedRoomTest : Spek({
                         mapOf(JoinedRoomsStateTestUtil.roomOneId to 1)))
 
         describe("when an event for deleting a room that is part of the state is received") {
-            val updatedState = deletedRoomReducer(initialState,
+            val updatedState = roomDeletedReducer(initialState,
                     DeletedRoom(JoinedRoomsStateTestUtil.roomOneId))
 
             it("then the state should be empty") {
@@ -30,7 +30,7 @@ class DeletedRoomTest : Spek({
                 joinedRoomsState = JoinedRoomsState(mapOf(), mapOf()))
 
         describe("when an event for deleting a room that is not a member of the state is received") {
-            val updatedState = deletedRoomReducer(initialState,
+            val updatedState = roomDeletedReducer(initialState,
                     DeletedRoom(JoinedRoomsStateTestUtil.roomOneId))
 
             it("then the state should be empty") {

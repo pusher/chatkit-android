@@ -4,7 +4,7 @@ import com.pusher.chatkit.state.ChatkitState
 import com.pusher.chatkit.state.DeletedRoom
 import org.reduxkotlin.reducerForActionType
 
-internal val deletedRoomReducer =
+internal val roomDeletedReducer =
     reducerForActionType<ChatkitState, DeletedRoom> { state, action ->
 
         state.with(JoinedRoomsState(
