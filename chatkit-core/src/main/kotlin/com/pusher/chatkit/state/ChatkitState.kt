@@ -14,7 +14,8 @@ internal data class ChatkitState(
         )
     }
 
-    fun with(joinedRoomsState: JoinedRoomsState) = copy(auxiliaryState.with(joinedRoomsState),
+    fun with(joinedRoomsState: JoinedRoomsState, auxiliaryState: AuxiliaryState) = copy(
+        auxiliaryState = auxiliaryState,
         joinedRoomsState = joinedRoomsState
     )
 }
