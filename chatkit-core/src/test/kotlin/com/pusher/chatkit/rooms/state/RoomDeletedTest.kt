@@ -9,32 +9,28 @@ import org.spekframework.spek2.style.specification.describe
 
 class RoomDeletedTest : Spek({
 
-    describe("given initial state of one room") {
+    describe("given a joined rooms state of two rooms") {
         val initialState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
-                        mapOf(JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne),
-                        mapOf(JoinedRoomsStateTestUtil.roomOneId to 1)))
+                        mapOf(
+                                JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
+                                JoinedRoomsStateTestUtil.roomTwoId to JoinedRoomsStateTestUtil.roomTwo
+                                ),
+                        mapOf(
+                                JoinedRoomsStateTestUtil.roomOneId to 1,
+                                JoinedRoomsStateTestUtil.roomTwoId to 2
+                        )
+                )
+        )
 
         describe("when an event for deleting a room that is part of the state is received") {
-            val updatedState = roomDeletedReducer(initialState,
+            val newState = roomDeletedReducer(initialState,
                     DeletedRoom(JoinedRoomsStateTestUtil.roomOneId))
 
-            it("then the state should be empty") {
-                assertThat(updatedState.joinedRoomsState).isNotNull().isEmpty()
-            }
-        }
-    }
-
-    describe("given initial empty state=") {
-        val initialState = ChatkitState(
-                joinedRoomsState = JoinedRoomsState(mapOf(), mapOf()))
-
-        describe("when an event for deleting a room that is not a member of the state is received") {
-            val updatedState = roomDeletedReducer(initialState,
-                    DeletedRoom(JoinedRoomsStateTestUtil.roomOneId))
-
-            it("then the state should be empty") {
-                assertThat(updatedState.joinedRoomsState).isNotNull().isEmpty()
+            it("then the state should contain the remaining room") {
+                assertThat(newState.joinedRoomsState).isNotNull()
+                        .containsOnly(JoinedRoomsStateTestUtil.roomTwoId
+                                to JoinedRoomsStateTestUtil.roomTwo)
             }
         }
     }
