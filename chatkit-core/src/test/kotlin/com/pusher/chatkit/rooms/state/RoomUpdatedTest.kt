@@ -3,7 +3,7 @@ package com.pusher.chatkit.rooms.state
 import assertk.assertThat
 import assertk.assertions.isNotNull
 import com.pusher.chatkit.state.ChatkitState
-import com.pusher.chatkit.state.UpdatedRoom
+import com.pusher.chatkit.state.RoomUpdated
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -17,7 +17,7 @@ class RoomUpdatedTest : Spek({
 
         describe("when an event for updating a room that is part of the state is received") {
             val newState = roomUpdatedReducer(initialState,
-                    UpdatedRoom(JoinedRoomsStateTestUtil.roomOneUpdated))
+                    RoomUpdated(JoinedRoomsStateTestUtil.roomOneUpdated))
 
             it("then the state should contain the updated room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
