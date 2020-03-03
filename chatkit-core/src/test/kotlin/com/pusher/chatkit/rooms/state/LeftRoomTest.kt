@@ -27,7 +27,7 @@ class LeftRoomTest : Spek({
             val newState = leftRoomReducer(givenState,
                     LeftRoom(roomOneId))
 
-            it("then the state should be empty") {
+            it("then the state contains the expected room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
                         .containsOnly(roomTwoId
                                 to roomTwo)
