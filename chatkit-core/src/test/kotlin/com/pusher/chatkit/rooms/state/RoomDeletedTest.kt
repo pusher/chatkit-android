@@ -13,24 +13,24 @@ class RoomDeletedTest : Spek({
         val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
                         mapOf(
-                                JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
-                                JoinedRoomsStateTestUtil.roomTwoId to JoinedRoomsStateTestUtil.roomTwo
+                                roomOneId to roomOne,
+                                roomTwoId to roomTwo
                                 ),
                         mapOf(
-                                JoinedRoomsStateTestUtil.roomOneId to 1,
-                                JoinedRoomsStateTestUtil.roomTwoId to 2
+                                roomOneId to 1,
+                                roomTwoId to 2
                         )
                 )
         )
 
         describe("when an event for deleting a room that is part of the state is received") {
             val newState = roomDeletedReducer(givenState,
-                    RoomDeleted(JoinedRoomsStateTestUtil.roomOneId))
+                    RoomDeleted(roomOneId))
 
             it("then the state should contain the remaining room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
-                        .containsOnly(JoinedRoomsStateTestUtil.roomTwoId
-                                to JoinedRoomsStateTestUtil.roomTwo)
+                        .containsOnly(roomTwoId
+                                to roomTwo)
             }
         }
     }

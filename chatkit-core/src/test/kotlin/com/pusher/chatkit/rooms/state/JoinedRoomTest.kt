@@ -13,18 +13,18 @@ class JoinedRoomTest : Spek({
         val givenState = ChatkitState(joinedRoomsState = JoinedRoomsState(emptyMap(), emptyMap()))
 
         describe("when one new room with unread counts is received") {
-            val joinedRoom = JoinedRoom(JoinedRoomsStateTestUtil.roomOne, unreadCount = 1)
+            val joinedRoom = JoinedRoom(roomOne, unreadCount = 1)
             val newState = joinedRoomReducer(givenState, joinedRoom)
 
             it("then the state should contain the expected room") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnly(
-                        JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne
+                        roomOneId to roomOne
                 )
             }
 
             it("then the state should contain the expected unread count") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnlyUnreadCounts(
-                        JoinedRoomsStateTestUtil.roomOneId to 1
+                        roomOneId to 1
                 )
             }
         }

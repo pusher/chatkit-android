@@ -12,17 +12,17 @@ class RoomUpdatedTest : Spek({
     describe("given a joined room state with one room") {
         val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
-                        mapOf(JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne),
-                        mapOf(JoinedRoomsStateTestUtil.roomOneId to 1)))
+                        mapOf(roomOneId to roomOne),
+                        mapOf(roomOneId to 1)))
 
         describe("when an event for updating a room that is part of the state is received") {
             val newState = roomUpdatedReducer(givenState,
-                    RoomUpdated(JoinedRoomsStateTestUtil.roomOneUpdated))
+                    RoomUpdated(roomOneUpdated))
 
             it("then the state should contain the updated room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
-                        .containsOnly(JoinedRoomsStateTestUtil.roomOneId
-                                to JoinedRoomsStateTestUtil.roomOneUpdated)
+                        .containsOnly(roomOneId
+                                to roomOneUpdated)
             }
         }
     }
