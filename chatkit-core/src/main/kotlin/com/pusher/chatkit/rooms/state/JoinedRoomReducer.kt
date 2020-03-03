@@ -15,6 +15,7 @@ internal val joinedRoomReducer =
             JoinedRoomsState(
                 state.joinedRoomsState.rooms + joinedRoom,
                 state.joinedRoomsState.unreadCounts + joinedRoomUnreadCount
-            ), state.auxiliaryState.with(action)
+            ),
+            state.auxiliaryState.with(action)
         )
     }
