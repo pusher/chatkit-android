@@ -10,7 +10,7 @@ import org.spekframework.spek2.style.specification.describe
 class LeftRoomTest : Spek({
 
     describe("given a joined rooms state of two rooms") {
-        val initialState = ChatkitState(
+        val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
                         mapOf(
                                 JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
@@ -24,7 +24,7 @@ class LeftRoomTest : Spek({
         )
 
         describe("when an event for leaving a room that is part of the state is received") {
-            val newState = leftRoomReducer(initialState,
+            val newState = leftRoomReducer(givenState,
                     LeftRoom(JoinedRoomsStateTestUtil.roomOneId))
 
             it("then the state should be empty") {

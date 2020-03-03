@@ -10,13 +10,13 @@ import org.spekframework.spek2.style.specification.describe
 class RoomUpdatedTest : Spek({
 
     describe("given a joined room state with one room") {
-        val initialState = ChatkitState(
+        val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
                         mapOf(JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne),
                         mapOf(JoinedRoomsStateTestUtil.roomOneId to 1)))
 
         describe("when an event for updating a room that is part of the state is received") {
-            val newState = roomUpdatedReducer(initialState,
+            val newState = roomUpdatedReducer(givenState,
                     RoomUpdated(JoinedRoomsStateTestUtil.roomOneUpdated))
 
             it("then the state should contain the updated room") {

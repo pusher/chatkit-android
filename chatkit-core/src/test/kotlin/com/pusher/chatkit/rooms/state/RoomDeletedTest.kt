@@ -10,7 +10,7 @@ import org.spekframework.spek2.style.specification.describe
 class RoomDeletedTest : Spek({
 
     describe("given a joined rooms state of two rooms") {
-        val initialState = ChatkitState(
+        val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
                         mapOf(
                                 JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
@@ -24,7 +24,7 @@ class RoomDeletedTest : Spek({
         )
 
         describe("when an event for deleting a room that is part of the state is received") {
-            val newState = roomDeletedReducer(initialState,
+            val newState = roomDeletedReducer(givenState,
                     RoomDeleted(JoinedRoomsStateTestUtil.roomOneId))
 
             it("then the state should contain the remaining room") {
