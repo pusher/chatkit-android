@@ -11,26 +11,26 @@ class LeftRoomTest : Spek({
 
     describe("given a joined rooms state of two rooms") {
         val givenState = ChatkitState(
-                joinedRoomsState = JoinedRoomsState(
-                       rooms = mapOf(
-                                roomOneId to roomOne,
-                                roomTwoId to roomTwo
-                        ),
-                        unreadCounts = mapOf(
-                                roomOneId to 1,
-                                roomTwoId to 2
-                        )
+            joinedRoomsState = JoinedRoomsState(
+                rooms = mapOf(
+                    roomOneId to roomOne,
+                    roomTwoId to roomTwo
+                ),
+                unreadCounts = mapOf(
+                    roomOneId to 1,
+                    roomTwoId to 2
                 )
+            )
         )
 
         describe("when an event for leaving a room that is part of the state is received") {
             val newState = leftRoomReducer(givenState,
-                    LeftRoom(roomOneId))
+                LeftRoom(roomOneId))
 
             it("then the state contains the expected room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
-                        .containsOnly(roomTwoId
-                                to roomTwo)
+                    .containsOnly(roomTwoId
+                        to roomTwo)
             }
         }
     }
