@@ -26,21 +26,21 @@ internal class UserSubscriptionDispatcher(
                     determineRoomDifferences(currentState, event)
                 } else {
                     dispatcher(JoinedRoomsReceived(
-                            rooms = joinedRoomApiTypeMapper.toManyRoomInternal(event.rooms),
-                            unreadCounts = joinedRoomApiTypeMapper.toManyUnreadCounts(event.readStates)
+                            rooms = joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
+                            unreadCounts = joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
                     ))
                 }
             }
             is UserSubscriptionEvent.AddedToRoomEvent -> {
                 dispatcher(JoinedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternal(event.room),
+                        room = joinedRoomApiTypeMapper.toRoomInternalType(event.room),
                         unreadCount = event.readState.unreadCount))
             }
             is UserSubscriptionEvent.RemovedFromRoomEvent -> {
                 dispatcher(LeftRoom(roomId = event.roomId))
             }
             is UserSubscriptionEvent.RoomUpdatedEvent -> {
-                dispatcher(UpdatedRoom(room = joinedRoomApiTypeMapper.toRoomInternal(event.room)))
+                dispatcher(UpdatedRoom(room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)))
             }
             is UserSubscriptionEvent.RoomDeletedEvent -> {
                 dispatcher(DeletedRoom(roomId = event.roomId))
@@ -72,7 +72,7 @@ internal class UserSubscriptionDispatcher(
             if (room != null &&
                     unreadCount != null) {
                 dispatcher(JoinedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternal(room),
+                        room = joinedRoomApiTypeMapper.toRoomInternalType(room),
                         unreadCount = unreadCount.unreadCount))
             }
         }
@@ -93,7 +93,7 @@ internal class UserSubscriptionDispatcher(
         currentState: JoinedRoomsState,
         initialEvent: UserSubscriptionEvent.InitialState
     ) {
-        val initialEventRooms = joinedRoomApiTypeMapper.toManyRoomInternal(initialEvent.rooms)
+        val initialEventRooms = joinedRoomApiTypeMapper.toRoomInternalTypes(initialEvent.rooms)
         val changedRooms = currentState.rooms.values.mapNotNull { existing ->
             initialEventRooms.find { it.id == existing.id }?.let { new ->
                 existing to new

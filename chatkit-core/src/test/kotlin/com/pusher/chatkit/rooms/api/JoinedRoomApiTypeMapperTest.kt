@@ -15,7 +15,7 @@ class JoinedRoomApiTypeMapperTest : Spek({
                 "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", null)
 
         describe("when I parse it as a JoinedRoomInternalType object") {
-            val joinedRoomInternalType = JoinedRoomApiTypeMapper().toRoomInternal(joinedRoomApiType)
+            val joinedRoomInternalType = JoinedRoomApiTypeMapper().toRoomInternalType(joinedRoomApiType)
 
             it("then the id should match") {
                 assertThat(joinedRoomInternalType.id).isEqualTo(joinedRoomApiType.id)
@@ -62,7 +62,7 @@ class JoinedRoomApiTypeMapperTest : Spek({
                 "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", null)
 
         describe("when I parse it as a JoinedRoomInternalType object") {
-            val joinedRoomInternalType = JoinedRoomApiTypeMapper().toRoomInternal(joinedRoomApiType)
+            val joinedRoomInternalType = JoinedRoomApiTypeMapper().toRoomInternalType(joinedRoomApiType)
 
             it("then the last message at should be null") {
                 assertThat(joinedRoomInternalType.lastMessageAt).isNull()

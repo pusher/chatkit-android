@@ -71,8 +71,8 @@ class UserSubscriptionDispatcherTest : Spek({
 
             it("then the dispatcher should send a JoinedRoomsReceived action") {
                 verify(exactly = 1) { dispatcher(JoinedRoomsReceived(
-                        rooms = joinedRoomApiTypeMapper.toManyRoomInternal(event.rooms),
-                        unreadCounts = joinedRoomApiTypeMapper.toManyUnreadCounts(event.readStates)
+                        rooms = joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
+                        unreadCounts = joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
                 )) }
             }
         }
@@ -87,7 +87,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
             it("then the dispatcher should send a JoinedRoom action") {
                 verify(exactly = 1) { dispatcher(JoinedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternal(event.room),
+                        room = joinedRoomApiTypeMapper.toRoomInternalType(event.room),
                         unreadCount = 1
                 )) }
             }
@@ -119,7 +119,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
             it("then the dispatcher should send a UpdateRoom action") {
                 verify(exactly = 1) { dispatcher(UpdatedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternal(event.room)
+                        room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)
                 )) }
             }
         }
@@ -152,7 +152,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
             it("then the dispatcher should send a JoinRoom action") {
                 verify(exactly = 1) { dispatcher(JoinedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternal(event.rooms[0]),
+                        room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms[0]),
                         unreadCount = 1
                 )) }
             }
@@ -184,7 +184,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
             it("then the dispatcher should send an UpdatedRoom action") {
                 verify(exactly = 1) { dispatcher(UpdatedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternal(event.rooms.first())
+                        room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms.first())
                 )) }
             }
         }

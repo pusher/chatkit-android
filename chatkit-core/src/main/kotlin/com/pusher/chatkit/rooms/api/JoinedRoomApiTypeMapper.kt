@@ -4,7 +4,7 @@ import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
 import com.pusher.chatkit.util.DateUtil
 
 internal class JoinedRoomApiTypeMapper {
-    fun toRoomInternal(room: JoinedRoomApiType): JoinedRoomInternalType {
+    fun toRoomInternalType(room: JoinedRoomApiType): JoinedRoomInternalType {
 
         var lastMessageAt: Long? = null
         if (room.lastMessageAt != null) {
@@ -23,15 +23,15 @@ internal class JoinedRoomApiTypeMapper {
         )
     }
 
-    fun toManyRoomInternal(rooms: List<JoinedRoomApiType>): List<JoinedRoomInternalType> {
+    fun toRoomInternalTypes(rooms: List<JoinedRoomApiType>): List<JoinedRoomInternalType> {
         val result = arrayListOf<JoinedRoomInternalType>()
         for (room in rooms) {
-            result.add(toRoomInternal(room))
+            result.add(toRoomInternalType(room))
         }
         return result
     }
 
-    fun toManyUnreadCounts(readStates: List<RoomReadStateApiType>): Map<String, Int> {
+    fun toUnreadCounts(readStates: List<RoomReadStateApiType>): Map<String, Int> {
         val unreadCounts = hashMapOf<String, Int>()
         for (readState in readStates) {
             unreadCounts[readState.roomId] = readState.unreadCount
