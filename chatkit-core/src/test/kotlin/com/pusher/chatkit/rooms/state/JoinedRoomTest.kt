@@ -16,7 +16,7 @@ class JoinedRoomTest : Spek({
             val joinedRoom = JoinedRoom(JoinedRoomsStateTestUtil.roomOne, unreadCount = 1)
             val newState = joinedRoomReducer(givenState, joinedRoom)
 
-            it("then the state should contain the expected rooms") {
+            it("then the state should contain the expected room") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnly(
                         JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne
                 )
