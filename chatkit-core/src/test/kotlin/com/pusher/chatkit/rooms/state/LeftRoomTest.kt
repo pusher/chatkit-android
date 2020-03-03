@@ -24,8 +24,7 @@ class LeftRoomTest : Spek({
         )
 
         describe("when an event for leaving a room that is part of the state is received") {
-            val newState = leftRoomReducer(givenState,
-                LeftRoom(roomOneId))
+            val newState = leftRoomReducer(givenState, LeftRoom(roomOneId))
 
             it("then the state contains the expected room") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnly(roomTwoId to roomTwo)
