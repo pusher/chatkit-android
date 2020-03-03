@@ -15,7 +15,7 @@ class JoinedRoomTest : Spek({
             unreadCounts = emptyMap()
         ))
 
-        describe("when one new room with unread counts is received") {
+        describe("when a room is joined") {
             val joinedRoom = JoinedRoom(roomOne, unreadCount = 1)
             val newState = joinedRoomReducer(givenState, joinedRoom)
 
