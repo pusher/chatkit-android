@@ -10,29 +10,28 @@ import org.spekframework.spek2.style.specification.describe
 class LeftRoomTest : Spek({
 
     describe("given a joined rooms state of two rooms") {
-        val initialState = ChatkitState(
-                joinedRoomsState = JoinedRoomsState(
-                        mapOf(
-                                JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
-                                JoinedRoomsStateTestUtil.roomTwoId to JoinedRoomsStateTestUtil.roomTwo
-                        ),
-                        mapOf(
-                                JoinedRoomsStateTestUtil.roomOneId to 1,
-                                JoinedRoomsStateTestUtil.roomTwoId to 2
-                        )
+        val givenState = ChatkitState(
+            joinedRoomsState = JoinedRoomsState(
+                rooms = mapOf(
+                    roomOneId to roomOne,
+                    roomTwoId to roomTwo
+                ),
+                unreadCounts = mapOf(
+                    roomOneId to 1,
+                    roomTwoId to 2
                 )
+            )
         )
 
         describe("when an event for leaving a room that is part of the state is received") {
-            val newState = leftRoomReducer(initialState,
-                    LeftRoom(JoinedRoomsStateTestUtil.roomOneId))
+            val newState = leftRoomReducer(givenState,
+                LeftRoom(roomOneId))
 
-            it("then the state should be empty") {
+            it("then the state contains the expected room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
-                        .containsOnly(JoinedRoomsStateTestUtil.roomTwoId
-                                to JoinedRoomsStateTestUtil.roomTwo)
+                    .containsOnly(roomTwoId
+                        to roomTwo)
             }
         }
     }
-
 })

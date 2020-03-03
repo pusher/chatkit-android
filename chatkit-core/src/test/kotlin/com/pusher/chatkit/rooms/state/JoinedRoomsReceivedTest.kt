@@ -14,8 +14,8 @@ class JoinedRoomsReceivedTest : Spek({
 
         describe("when no rooms are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
-                    emptyList(),
-                    emptyMap()
+                    rooms = emptyList(),
+                    unreadCounts = emptyMap()
             )
             val newState = joinedRoomsReceivedReducer(initialState, joinedRoomsReceived)
 
@@ -26,54 +26,54 @@ class JoinedRoomsReceivedTest : Spek({
 
         describe("when two rooms with unread counts are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
-                    listOf(
-                            JoinedRoomsStateTestUtil.roomOne,
-                            JoinedRoomsStateTestUtil.roomTwo
+                    rooms = listOf(
+                            roomOne,
+                            roomTwo
                     ),
-                    mapOf(
-                            JoinedRoomsStateTestUtil.roomOneId to 1,
-                            JoinedRoomsStateTestUtil.roomTwoId to 2
+                    unreadCounts = mapOf(
+                            roomOneId to 1,
+                            roomTwoId to 2
                     )
             )
             val newState = joinedRoomsReceivedReducer(initialState, joinedRoomsReceived)
 
             it("then the state should contain the expected rooms") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnly(
-                        JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
-                        JoinedRoomsStateTestUtil.roomTwoId to JoinedRoomsStateTestUtil.roomTwo
+                        roomOneId to roomOne,
+                        roomTwoId to roomTwo
                 )
             }
 
             it("then the state should contain the expected unread counts") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnlyUnreadCounts(
-                        JoinedRoomsStateTestUtil.roomOneId to 1,
-                        JoinedRoomsStateTestUtil.roomTwoId to 2
+                        roomOneId to 1,
+                        roomTwoId to 2
                 )
             }
         }
 
         describe("when two rooms with one missing unread count are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
-                    listOf(
-                            JoinedRoomsStateTestUtil.roomOne,
-                            JoinedRoomsStateTestUtil.roomTwo
+                    rooms = listOf(
+                            roomOne,
+                            roomTwo
                     ),
-                    mapOf(
-                            JoinedRoomsStateTestUtil.roomOneId to 1
+                    unreadCounts = mapOf(
+                            roomOneId to 1
                     )
             )
             val newState = joinedRoomsReceivedReducer(initialState, joinedRoomsReceived)
 
             it("then the state should contain the expected rooms") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnly(
-                        JoinedRoomsStateTestUtil.roomOneId to JoinedRoomsStateTestUtil.roomOne,
-                        JoinedRoomsStateTestUtil.roomTwoId to JoinedRoomsStateTestUtil.roomTwo
+                        roomOneId to roomOne,
+                        roomTwoId to roomTwo
                 )
             }
 
             it("then the state should contain the expected unread counts") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnlyUnreadCounts(
-                        JoinedRoomsStateTestUtil.roomOneId to 1
+                        roomOneId to 1
                 )
             }
         }
