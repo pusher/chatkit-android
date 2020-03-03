@@ -28,9 +28,7 @@ class LeftRoomTest : Spek({
                 LeftRoom(roomOneId))
 
             it("then the state contains the expected room") {
-                assertThat(newState.joinedRoomsState).isNotNull()
-                    .containsOnly(roomTwoId
-                        to roomTwo)
+                assertThat(newState.joinedRoomsState).isNotNull().containsOnly(roomTwoId to roomTwo)
             }
         }
     }
