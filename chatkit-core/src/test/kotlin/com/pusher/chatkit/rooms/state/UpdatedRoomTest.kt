@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.containsOnly
 import assertk.assertions.isNotNull
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.UpdatedRoom
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

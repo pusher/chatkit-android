@@ -1,21 +1,20 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.JoinedRoom
 import org.reduxkotlin.reducerForActionType
 
-internal data class JoinedRoom(
-    val room: JoinedRoomInternalType,
-    val unreadCount: Int
-)
-
 internal val joinedRoomReducer =
-        reducerForActionType<ChatkitState, JoinedRoom> { state, action ->
+    reducerForActionType<ChatkitState, JoinedRoom> { state, action ->
+        checkNotNull(state.joinedRoomsState)
 
-            val joinedRoom = Pair(action.room.id, action.room)
-            val joinedRoomUnreadCount = Pair(action.room.id, action.unreadCount)
+        val joinedRoom = action.room.id to action.room
+        val joinedRoomUnreadCount = action.room.id to action.unreadCount
 
-            state.with(JoinedRoomsState(
-                    (state.joinedRoomsState!!.rooms + joinedRoom),
-                    (state.joinedRoomsState.unreadCounts + joinedRoomUnreadCount)
-            ))
-        }
+        state.with(
+            JoinedRoomsState(
+                state.joinedRoomsState.rooms + joinedRoom,
+                state.joinedRoomsState.unreadCounts + joinedRoomUnreadCount
+            ), state.auxiliaryState.with(action)
+        )
+    }

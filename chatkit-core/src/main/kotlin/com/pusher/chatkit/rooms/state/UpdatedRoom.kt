@@ -1,11 +1,8 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.UpdatedRoom
 import org.reduxkotlin.reducerForActionType
-
-internal data class UpdatedRoom(
-    val room: JoinedRoomInternalType
-)
 
 internal val updatedRoomReducer =
     reducerForActionType<ChatkitState, UpdatedRoom> { state, action ->
@@ -14,5 +11,5 @@ internal val updatedRoomReducer =
                 state.joinedRoomsState!!.rooms
                         .plus(action.room.id to action.room),
                 state.joinedRoomsState.unreadCounts
-        ))
+        ), auxiliaryState = state.auxiliaryState.with(action))
 }

@@ -3,6 +3,7 @@ package com.pusher.chatkit.rooms.state
 import assertk.assertThat
 import assertk.assertions.isNotNull
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.JoinedRoomsReceived
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
