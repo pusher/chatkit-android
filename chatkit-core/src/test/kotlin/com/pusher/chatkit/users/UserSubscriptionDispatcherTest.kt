@@ -4,14 +4,9 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.rooms.state.DeletedRoom
-import com.pusher.chatkit.rooms.state.JoinedRoom
-import com.pusher.chatkit.rooms.state.JoinedRoomsReceived
-import com.pusher.chatkit.rooms.state.JoinedRoomsState
-import com.pusher.chatkit.rooms.state.JoinedRoomsStateTestUtil
-import com.pusher.chatkit.rooms.state.LeftRoom
-import com.pusher.chatkit.rooms.state.UpdatedRoom
-import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.rooms.state.*
+import com.pusher.chatkit.rooms.state.roomTwo
+import com.pusher.chatkit.state.*
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
@@ -107,7 +102,7 @@ class UserSubscriptionDispatcherTest : Spek({
             userSubscriptionDispatcher.onEvent(event)
 
             it("then the dispatcher should send a DeleteRoom action") {
-                verify(exactly = 1) { dispatcher(DeletedRoom(roomId = event.roomId)) }
+                verify(exactly = 1) { dispatcher(RoomDeleted(roomId = event.roomId)) }
             }
         }
 
@@ -118,7 +113,7 @@ class UserSubscriptionDispatcherTest : Spek({
             userSubscriptionDispatcher.onEvent(event)
 
             it("then the dispatcher should send a UpdateRoom action") {
-                verify(exactly = 1) { dispatcher(UpdatedRoom(
+                verify(exactly = 1) { dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)
                 )) }
             }
@@ -137,8 +132,8 @@ class UserSubscriptionDispatcherTest : Spek({
         )
 
         every { state().joinedRoomsState } returns JoinedRoomsState(
-                rooms = mapOf("id2" to JoinedRoomsStateTestUtil.roomTwo),
-                unreadCounts = mapOf("id2" to 2))
+                rooms = mapOf(roomTwoId to roomTwo),
+                unreadCounts = mapOf(roomTwoId to 2))
 
         describe("when I receive a second InitialState event with a different room") {
 
@@ -183,7 +178,7 @@ class UserSubscriptionDispatcherTest : Spek({
             userSubscriptionDispatcher.onEvent(event)
 
             it("then the dispatcher should send an UpdatedRoom action") {
-                verify(exactly = 1) { dispatcher(UpdatedRoom(
+                verify(exactly = 1) { dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms.first())
                 )) }
             }
