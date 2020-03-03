@@ -1,13 +1,13 @@
 package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
-import com.pusher.chatkit.rooms.state.DeletedRoom
-import com.pusher.chatkit.rooms.state.JoinedRoom
-import com.pusher.chatkit.rooms.state.JoinedRoomsReceived
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
-import com.pusher.chatkit.rooms.state.LeftRoom
-import com.pusher.chatkit.rooms.state.UpdatedRoom
 import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.JoinedRoom
+import com.pusher.chatkit.state.JoinedRoomsReceived
+import com.pusher.chatkit.state.LeftRoom
+import com.pusher.chatkit.state.RoomDeleted
+import com.pusher.chatkit.state.RoomUpdated
 import org.reduxkotlin.Dispatcher
 import org.reduxkotlin.GetState
 
@@ -40,10 +40,10 @@ internal class UserSubscriptionDispatcher(
                 dispatcher(LeftRoom(roomId = event.roomId))
             }
             is UserSubscriptionEvent.RoomUpdatedEvent -> {
-                dispatcher(UpdatedRoom(room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)))
+                dispatcher(RoomUpdated(room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)))
             }
             is UserSubscriptionEvent.RoomDeletedEvent -> {
-                dispatcher(DeletedRoom(roomId = event.roomId))
+                dispatcher(RoomDeleted(roomId = event.roomId))
             }
         }
     }
@@ -103,7 +103,7 @@ internal class UserSubscriptionDispatcher(
         }
 
         for (room in changedRooms) {
-            dispatcher(UpdatedRoom(room = room.second))
+            dispatcher(RoomUpdated(room = room.second))
         }
     }
 }
