@@ -1,11 +1,11 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.ChatkitState
-import com.pusher.chatkit.state.UpdatedRoom
+import com.pusher.chatkit.state.RoomUpdated
 import org.reduxkotlin.reducerForActionType
 
 internal val roomUpdatedReducer =
-    reducerForActionType<ChatkitState, UpdatedRoom> { state, action ->
+    reducerForActionType<ChatkitState, RoomUpdated> { state, action ->
         checkNotNull(state.joinedRoomsState)
 
         state.with(joinedRoomsState = JoinedRoomsState(

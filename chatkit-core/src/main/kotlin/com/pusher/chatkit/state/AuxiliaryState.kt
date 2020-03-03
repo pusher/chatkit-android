@@ -4,12 +4,12 @@ internal data class LastChange<T>(val version: Int, val action: Action)
 
 @Suppress("CopyWithoutNamedArguments") // nextVersion (legible) passes as first param many times
 internal data class AuxiliaryState(
-    val version: Int,
-    val joinedRoomsReceived: LastChange<JoinedRoomsReceived>?,
-    val joinedRoom: LastChange<JoinedRoom>?,
-    val leftRoom: LastChange<LeftRoom>?,
-    val roomUpdated: LastChange<UpdatedRoom>?,
-    val roomDeleted: LastChange<DeletedRoom>?
+        val version: Int,
+        val joinedRoomsReceived: LastChange<JoinedRoomsReceived>?,
+        val joinedRoom: LastChange<JoinedRoom>?,
+        val leftRoom: LastChange<LeftRoom>?,
+        val roomUpdated: LastChange<RoomUpdated>?,
+        val roomDeleted: LastChange<RoomDeleted>?
 ) {
 
     companion object {
@@ -31,9 +31,9 @@ internal data class AuxiliaryState(
                 copy(nextVersion, joinedRoom = LastChange(nextVersion, action))
             is LeftRoom ->
                 copy(nextVersion, leftRoom = LastChange(nextVersion, action))
-            is DeletedRoom ->
+            is RoomDeleted ->
                 copy(nextVersion, roomDeleted = LastChange(nextVersion, action))
-            is UpdatedRoom ->
+            is RoomUpdated ->
                 copy(nextVersion, roomUpdated = LastChange(nextVersion, action))
         }
 

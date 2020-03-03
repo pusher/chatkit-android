@@ -18,10 +18,10 @@ internal data class LeftRoom(
     val roomId: String
 ) : Action()
 
-internal data class DeletedRoom(
+internal data class RoomDeleted(
     val roomId: String
 ) : Action()
 
-internal data class UpdatedRoom(
+internal data class RoomUpdated(
     val room: JoinedRoomInternalType
 ) : Action()

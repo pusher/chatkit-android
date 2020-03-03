@@ -3,7 +3,7 @@ package com.pusher.chatkit.rooms.state
 import assertk.assertThat
 import assertk.assertions.isNotNull
 import com.pusher.chatkit.state.ChatkitState
-import com.pusher.chatkit.state.DeletedRoom
+import com.pusher.chatkit.state.RoomDeleted
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -25,7 +25,7 @@ class RoomDeletedTest : Spek({
 
         describe("when an event for deleting a room that is part of the state is received") {
             val newState = roomDeletedReducer(initialState,
-                    DeletedRoom(JoinedRoomsStateTestUtil.roomOneId))
+                    RoomDeleted(JoinedRoomsStateTestUtil.roomOneId))
 
             it("then the state should contain the remaining room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
