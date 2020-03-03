@@ -22,7 +22,7 @@ class JoinedRoomTest : Spek({
                 )
             }
 
-            it("then the state should contain the expected unread counts") {
+            it("then the state should contain the expected unread count") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnlyUnreadCounts(
                         JoinedRoomsStateTestUtil.roomOneId to 1
                 )
