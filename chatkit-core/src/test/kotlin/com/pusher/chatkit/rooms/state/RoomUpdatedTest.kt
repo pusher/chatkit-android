@@ -12,8 +12,8 @@ class RoomUpdatedTest : Spek({
     describe("given a joined room state with one room") {
         val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
-                        mapOf(roomOneId to roomOne),
-                        mapOf(roomOneId to 1)))
+                        rooms = mapOf(roomOneId to roomOne),
+                        unreadCounts = mapOf(roomOneId to 1)))
 
         describe("when an event for updating a room that is part of the state is received") {
             val newState = roomUpdatedReducer(givenState,

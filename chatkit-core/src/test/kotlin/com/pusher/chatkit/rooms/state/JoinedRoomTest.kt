@@ -10,7 +10,10 @@ import org.spekframework.spek2.style.specification.describe
 class JoinedRoomTest : Spek({
 
     describe("given no rooms") {
-        val givenState = ChatkitState(joinedRoomsState = JoinedRoomsState(emptyMap(), emptyMap()))
+        val givenState = ChatkitState(joinedRoomsState = JoinedRoomsState(
+            rooms = emptyMap(),
+            unreadCounts = emptyMap()
+        ))
 
         describe("when one new room with unread counts is received") {
             val joinedRoom = JoinedRoom(roomOne, unreadCount = 1)

@@ -12,11 +12,11 @@ class RoomDeletedTest : Spek({
     describe("given a joined rooms state of two rooms") {
         val givenState = ChatkitState(
                 joinedRoomsState = JoinedRoomsState(
-                        mapOf(
+                        rooms = mapOf(
                                 roomOneId to roomOne,
                                 roomTwoId to roomTwo
                                 ),
-                        mapOf(
+                        unreadCounts = mapOf(
                                 roomOneId to 1,
                                 roomTwoId to 2
                         )

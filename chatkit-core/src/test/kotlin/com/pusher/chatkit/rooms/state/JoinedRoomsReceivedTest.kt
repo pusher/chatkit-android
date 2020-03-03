@@ -14,8 +14,8 @@ class JoinedRoomsReceivedTest : Spek({
 
         describe("when no rooms are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
-                    emptyList(),
-                    emptyMap()
+                    rooms = emptyList(),
+                    unreadCounts = emptyMap()
             )
             val newState = joinedRoomsReceivedReducer(initialState, joinedRoomsReceived)
 
@@ -26,11 +26,11 @@ class JoinedRoomsReceivedTest : Spek({
 
         describe("when two rooms with unread counts are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
-                    listOf(
+                    rooms = listOf(
                             roomOne,
                             roomTwo
                     ),
-                    mapOf(
+                    unreadCounts = mapOf(
                             roomOneId to 1,
                             roomTwoId to 2
                     )
@@ -54,11 +54,11 @@ class JoinedRoomsReceivedTest : Spek({
 
         describe("when two rooms with one missing unread count are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(
-                    listOf(
+                    rooms = listOf(
                             roomOne,
                             roomTwo
                     ),
-                    mapOf(
+                    unreadCounts = mapOf(
                             roomOneId to 1
                     )
             )
