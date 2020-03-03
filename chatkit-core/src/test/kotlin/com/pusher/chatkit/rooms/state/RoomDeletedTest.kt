@@ -27,7 +27,7 @@ class RoomDeletedTest : Spek({
             val newState = roomDeletedReducer(givenState,
                     RoomDeleted(roomOneId))
 
-            it("then the state should contain the remaining room") {
+            it("then the state contains the remaining room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
                         .containsOnly(roomTwoId
                                 to roomTwo)

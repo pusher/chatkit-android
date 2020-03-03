@@ -19,7 +19,7 @@ class RoomUpdatedTest : Spek({
             val newState = roomUpdatedReducer(givenState,
                     RoomUpdated(roomOneUpdated))
 
-            it("then the state should contain the updated room") {
+            it("then the state contains the updated room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
                         .containsOnly(roomOneId
                                 to roomOneUpdated)
