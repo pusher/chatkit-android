@@ -1,6 +1,7 @@
 package com.pusher.chatkit
 
 import com.pusher.chatkit.api.createPlatformClientModule
+import com.pusher.chatkit.state.createStoreModule
 import com.pusher.chatkit.users.api.createUserSubscriberModule
 import com.pusher.util.Result
 import com.pusher.util.asSuccess
@@ -29,7 +30,9 @@ class ChatkitCoreConnector {
             modules(
                 createPlatformClientModule(instanceLocator, dependencies),
                 module { single { dependencies.logger }},
-                createUserSubscriberModule()
+                createUserSubscriberModule(),
+
+                createStoreModule()
             )
             modules(overrideModules)
         }

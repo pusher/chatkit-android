@@ -22,6 +22,8 @@ dependencies {
 
     implementation "org.koin:koin-core:2.1.0"
 
+    implementation "org.reduxkotlin:redux-kotlin:0.3.2"
+
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.squareup.okhttp3:okhttp:3.12.6'
 
