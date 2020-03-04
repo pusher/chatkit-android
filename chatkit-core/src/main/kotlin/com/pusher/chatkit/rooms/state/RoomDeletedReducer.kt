@@ -1,7 +1,7 @@
 package com.pusher.chatkit.rooms.state
 
-import com.pusher.chatkit.state.State
 import com.pusher.chatkit.state.RoomDeleted
+import com.pusher.chatkit.state.State
 import org.reduxkotlin.reducerForActionType
 
 internal val roomDeletedReducer =

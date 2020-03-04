@@ -83,5 +83,4 @@ internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
 
         return actions
     }
-    
 }

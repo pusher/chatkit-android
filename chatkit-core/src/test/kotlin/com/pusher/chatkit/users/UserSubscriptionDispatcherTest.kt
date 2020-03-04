@@ -4,10 +4,7 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.rooms.state.JoinedRoomsState
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
-import com.pusher.chatkit.rooms.state.roomTwo
-import com.pusher.chatkit.rooms.state.roomTwoId
 import com.pusher.chatkit.state.*
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
@@ -133,7 +130,7 @@ class UserSubscriptionDispatcherTest : Spek({
             dispatcher = dispatcher
         )
 
-        every {differ.stateExists()} returns true
+        every { differ.stateExists() } returns true
 
         describe("when I receive a second InitialState event") {
             val event = UserSubscriptionEvent.InitialState(
@@ -152,6 +149,5 @@ class UserSubscriptionDispatcherTest : Spek({
                 }
             }
         }
-
     }
 })

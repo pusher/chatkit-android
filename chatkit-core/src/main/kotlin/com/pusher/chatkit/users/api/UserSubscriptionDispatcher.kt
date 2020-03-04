@@ -1,17 +1,13 @@
 package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
-import com.pusher.chatkit.rooms.state.JoinedRoomsState
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
-import com.pusher.chatkit.state.Action
-import com.pusher.chatkit.state.State
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
 import org.reduxkotlin.Dispatcher
-import org.reduxkotlin.GetState
 
 internal class UserSubscriptionDispatcher(
     private val joinedRoomsStateDiffer: JoinedRoomsStateDiffer,
