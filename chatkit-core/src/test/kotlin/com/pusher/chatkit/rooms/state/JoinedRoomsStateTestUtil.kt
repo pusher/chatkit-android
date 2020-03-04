@@ -1,6 +1,7 @@
 package com.pusher.chatkit.rooms.state
 
 import assertk.Assert
+import assertk.assertions.contains
 import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.prop
@@ -29,6 +30,12 @@ internal val roomThree = simpleRoom(roomThreeId, "roomThree")
 internal fun Assert<JoinedRoomsState>.isEmpty() {
     prop(JoinedRoomsState::rooms).isEmpty()
     prop(JoinedRoomsState::unreadCounts).isEmpty()
+}
+
+internal fun Assert<JoinedRoomsState>.contains(
+    room: Pair<String, JoinedRoomInternalType>
+) {
+    prop(JoinedRoomsState::rooms).contains(room)
 }
 
 internal fun Assert<JoinedRoomsState>.containsOnly(

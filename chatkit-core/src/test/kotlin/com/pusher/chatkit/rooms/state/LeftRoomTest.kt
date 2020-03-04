@@ -9,7 +9,7 @@ import org.spekframework.spek2.style.specification.describe
 
 class LeftRoomTest : Spek({
 
-    describe("given a joined rooms state of two rooms") {
+    describe("given two rooms") {
         val givenState = ChatkitState(
             joinedRoomsState = JoinedRoomsState(
                 rooms = mapOf(
