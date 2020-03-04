@@ -46,7 +46,6 @@ class UserSubscriptionDispatcherTest : Spek({
 
     describe("given a user subscription dispatcher with no previous joined room state") {
 
-//        val state = mockk<GetState<State>>(relaxed = true)
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper()
