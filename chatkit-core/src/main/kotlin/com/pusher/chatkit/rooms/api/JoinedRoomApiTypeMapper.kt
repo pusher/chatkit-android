@@ -1,22 +1,22 @@
 package com.pusher.chatkit.rooms.api
 
 import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
-import com.pusher.chatkit.util.DateUtil
+import com.pusher.chatkit.util.DateApiTypeMapper
 
 internal class JoinedRoomApiTypeMapper {
     fun toRoomInternalType(room: JoinedRoomApiType): JoinedRoomInternalType {
 
         var lastMessageAt: Long? = null
         if (room.lastMessageAt != null) {
-            lastMessageAt = DateUtil.parseApiDateToEpoch(room.lastMessageAt)
+            lastMessageAt = DateApiTypeMapper().mapToEpochTime(room.lastMessageAt)
         }
 
         return JoinedRoomInternalType(
                 id = room.id,
                 name = room.name,
                 isPrivate = room.private,
-                createdAt = DateUtil.parseApiDateToEpoch(room.createdAt),
-                updatedAt = DateUtil.parseApiDateToEpoch(room.updatedAt),
+                createdAt = DateApiTypeMapper().mapToEpochTime(room.createdAt),
+                updatedAt = DateApiTypeMapper().mapToEpochTime(room.updatedAt),
                 customData = room.customData,
                 pushNotificationTitleOverride = room.pushNotificationTitleOverride,
                 lastMessageAt = lastMessageAt
