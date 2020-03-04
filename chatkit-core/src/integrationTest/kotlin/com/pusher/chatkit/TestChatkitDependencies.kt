@@ -45,4 +45,3 @@ class TestPlatformDependencies : PlatformDependencies {
 }
 
 private const val MAX_LOG_LENGTH = 3000
-

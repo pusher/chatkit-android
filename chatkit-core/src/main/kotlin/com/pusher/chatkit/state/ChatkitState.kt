@@ -1,6 +1,11 @@
 package com.pusher.chatkit.state
 
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
+import com.pusher.chatkit.rooms.state.joinedRoomReducer
+import com.pusher.chatkit.rooms.state.joinedRoomsReceivedReducer
+import com.pusher.chatkit.rooms.state.leftRoomReducer
+import com.pusher.chatkit.rooms.state.roomDeletedReducer
+import com.pusher.chatkit.rooms.state.roomUpdatedReducer
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -19,7 +24,11 @@ internal val createStoreModule: () -> Module = {
 
 private val store = createStore(
     combineReducers(
-
+        joinedRoomsReceivedReducer,
+        joinedRoomReducer,
+        roomUpdatedReducer,
+        leftRoomReducer,
+        roomDeletedReducer
     ),
     ChatkitState.initial()
 )

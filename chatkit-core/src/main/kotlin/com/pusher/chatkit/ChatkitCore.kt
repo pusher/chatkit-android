@@ -29,7 +29,7 @@ class ChatkitCoreConnector {
         chatkitKoinApplication = koinApplication {
             modules(
                 createPlatformClientModule(instanceLocator, dependencies),
-                module { single { dependencies.logger }},
+                module { single { dependencies.logger } },
                 createUserSubscriberModule(),
 
                 createStoreModule()
@@ -46,7 +46,6 @@ class ChatkitCoreConnector {
         // ...
         resultHandler(ChatkitCore().asSuccess())
     }
-
 }
 
 class ChatkitCore
