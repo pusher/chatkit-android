@@ -7,7 +7,7 @@ import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
 import com.pusher.chatkit.rooms.state.roomTwo
 import com.pusher.chatkit.rooms.state.roomTwoId
-import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.State
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
@@ -50,7 +50,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
     describe("given a user subscription dispatcher with no previous joined room state") {
 
-        val state = mockk<GetState<ChatkitState>>(relaxed = true)
+        val state = mockk<GetState<State>>(relaxed = true)
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper()
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
@@ -128,7 +128,7 @@ class UserSubscriptionDispatcherTest : Spek({
 
     describe("given a user subscription dispatcher with previous state") {
 
-        val state = mockk<GetState<ChatkitState>>(relaxed = true)
+        val state = mockk<GetState<State>>(relaxed = true)
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper()
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(

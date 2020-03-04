@@ -2,7 +2,7 @@ package com.pusher.chatkit.rooms.state
 
 import assertk.assertThat
 import assertk.assertions.isNotNull
-import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.State
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -10,7 +10,7 @@ import org.spekframework.spek2.style.specification.describe
 class JoinedRoomsReceivedTest : Spek({
 
     describe("given initial state") {
-        val initialState = ChatkitState.initial()
+        val initialState = State.initial()
 
         describe("when no rooms are received") {
             val joinedRoomsReceived = JoinedRoomsReceived(

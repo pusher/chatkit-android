@@ -2,7 +2,7 @@ package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
-import com.pusher.chatkit.state.ChatkitState
+import com.pusher.chatkit.state.State
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
@@ -12,7 +12,6 @@ import org.reduxkotlin.Dispatcher
 import org.reduxkotlin.GetState
 
 internal class UserSubscriptionDispatcher(
-    val stateGetter: GetState<ChatkitState>,
     val joinedRoomApiTypeMapper: JoinedRoomApiTypeMapper,
     val dispatcher: Dispatcher
 ) {
