@@ -15,9 +15,8 @@ class RoomUpdatedTest : Spek({
                         rooms = mapOf(roomOneId to roomOne),
                         unreadCounts = mapOf(roomOneId to 1)))
 
-        describe("when an event for updating a room that is part of the state is received") {
-            val newState = roomUpdatedReducer(givenState,
-                    RoomUpdated(roomOneUpdated))
+        describe("when a room is updated") {
+            val newState = roomUpdatedReducer(givenState, RoomUpdated(roomOneUpdated))
 
             it("then the state contains the updated room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
