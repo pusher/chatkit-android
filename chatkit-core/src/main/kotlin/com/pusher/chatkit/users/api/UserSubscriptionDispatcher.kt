@@ -2,6 +2,8 @@ package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
+import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
+import com.pusher.chatkit.state.Action
 import com.pusher.chatkit.state.State
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
@@ -12,96 +14,47 @@ import org.reduxkotlin.Dispatcher
 import org.reduxkotlin.GetState
 
 internal class UserSubscriptionDispatcher(
-    val joinedRoomApiTypeMapper: JoinedRoomApiTypeMapper,
-    val dispatcher: Dispatcher
+    private val joinedRoomsStateDiffer: JoinedRoomsStateDiffer,
+    private val joinedRoomApiTypeMapper: JoinedRoomApiTypeMapper,
+    private val dispatcher: Dispatcher
 ) {
 
     internal fun onEvent(event: UserSubscriptionEvent) {
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
 
-                val currentState: JoinedRoomsState? = stateGetter().joinedRoomsState
-                if (currentState != null) {
-                    determineRoomDifferences(currentState, event)
+                if (joinedRoomsStateDiffer.stateExists()) {
+                    joinedRoomsStateDiffer.toActions(
+                        joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
+                        joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
+                    ).forEach {
+                        action -> dispatcher(action) }
                 } else {
-                    dispatcher(JoinedRoomsReceived(
-                            rooms = joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
-                            unreadCounts = joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
-                    ))
+                    dispatcher(
+                        JoinedRoomsReceived(
+                            joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
+                            joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
+                        )
+                    )
                 }
             }
             is UserSubscriptionEvent.AddedToRoomEvent -> {
-                dispatcher(JoinedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternalType(event.room),
-                        unreadCount = event.readState.unreadCount))
+                dispatcher(
+                    JoinedRoom(
+                        joinedRoomApiTypeMapper.toRoomInternalType(event.room),
+                        event.readState.unreadCount
+                    )
+                )
             }
             is UserSubscriptionEvent.RemovedFromRoomEvent -> {
-                dispatcher(LeftRoom(roomId = event.roomId))
+                dispatcher(LeftRoom(event.roomId))
             }
             is UserSubscriptionEvent.RoomUpdatedEvent -> {
-                dispatcher(RoomUpdated(room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)))
+                dispatcher(RoomUpdated(joinedRoomApiTypeMapper.toRoomInternalType(event.room)))
             }
             is UserSubscriptionEvent.RoomDeletedEvent -> {
-                dispatcher(RoomDeleted(roomId = event.roomId))
+                dispatcher(RoomDeleted(event.roomId))
             }
-        }
-    }
-
-    private fun determineRoomDifferences(
-        currentState: JoinedRoomsState,
-        initialEvent: UserSubscriptionEvent.InitialState
-    ) {
-
-        determineNewRoomsJoined(currentState, initialEvent)
-        determineNewRoomsLeft(currentState, initialEvent)
-        determineNewUpdatedRooms(currentState, initialEvent)
-    }
-
-    private fun determineNewRoomsJoined(
-        currentState: JoinedRoomsState,
-        initialEvent: UserSubscriptionEvent.InitialState
-    ) {
-        val addedRoomKeys = initialEvent.rooms.map { it.id }.toSet() - currentState.rooms.keys.toSet()
-
-        for (addedKey in addedRoomKeys) {
-            val room = initialEvent.rooms.find { it.id == addedKey }
-            val unreadCount = initialEvent.readStates.find { it.roomId == addedKey }
-
-            if (room != null &&
-                    unreadCount != null) {
-                dispatcher(JoinedRoom(
-                        room = joinedRoomApiTypeMapper.toRoomInternalType(room),
-                        unreadCount = unreadCount.unreadCount))
-            }
-        }
-    }
-
-    private fun determineNewRoomsLeft(
-        currentState: JoinedRoomsState,
-        initialEvent: UserSubscriptionEvent.InitialState
-    ) {
-        val removedRoomKeys = currentState.rooms.keys.toSet() - initialEvent.rooms.map { it.id }.toSet()
-
-        for (removedKey in removedRoomKeys) {
-            dispatcher(LeftRoom(roomId = removedKey))
-        }
-    }
-
-    private fun determineNewUpdatedRooms(
-        currentState: JoinedRoomsState,
-        initialEvent: UserSubscriptionEvent.InitialState
-    ) {
-        val initialEventRooms = joinedRoomApiTypeMapper.toRoomInternalTypes(initialEvent.rooms)
-        val changedRooms = currentState.rooms.values.mapNotNull { existing ->
-            initialEventRooms.find { it.id == existing.id }?.let { new ->
-                existing to new
-            }
-        }.filter { (existing, new) ->
-            new != existing
-        }
-
-        for (room in changedRooms) {
-            dispatcher(RoomUpdated(room = room.second))
         }
     }
 }
