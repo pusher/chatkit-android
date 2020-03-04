@@ -70,7 +70,7 @@ class UserSubscriptionDispatcherTest : Spek({
             )
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a JoinedRoomsReceived action") {
+            it("then the dispatcher should will a JoinedRoomsReceived action") {
                 verify(exactly = 1) { dispatcher(JoinedRoomsReceived(
                         rooms = joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                         unreadCounts = joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
@@ -86,7 +86,7 @@ class UserSubscriptionDispatcherTest : Spek({
             )
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a JoinedRoom action") {
+            it("then the dispatcher will send a JoinedRoom action") {
                 verify(exactly = 1) { dispatcher(JoinedRoom(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(event.room),
                         unreadCount = 1
@@ -98,7 +98,7 @@ class UserSubscriptionDispatcherTest : Spek({
             val event = UserSubscriptionEvent.RemovedFromRoomEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a LeftRoom action") {
+            it("then the dispatcher will send a LeftRoom action") {
                 verify(exactly = 1) { dispatcher(LeftRoom(roomId = event.roomId)) }
             }
         }
@@ -107,7 +107,7 @@ class UserSubscriptionDispatcherTest : Spek({
             val event = UserSubscriptionEvent.RoomDeletedEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a DeleteRoom action") {
+            it("then the dispatcher will send a DeleteRoom action") {
                 verify(exactly = 1) { dispatcher(RoomDeleted(roomId = event.roomId)) }
             }
         }
@@ -118,7 +118,7 @@ class UserSubscriptionDispatcherTest : Spek({
             )
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a UpdateRoom action") {
+            it("then the dispatcher will send a UpdateRoom action") {
                 verify(exactly = 1) { dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)
                 )) }
@@ -151,14 +151,14 @@ class UserSubscriptionDispatcherTest : Spek({
             )
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send a JoinRoom action") {
+            it("then the dispatcher will send a JoinRoom action") {
                 verify(exactly = 1) { dispatcher(JoinedRoom(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms[0]),
                         unreadCount = 1
                 )) }
             }
 
-            it("then the dispatcher should send a LeftRoom action") {
+            it("then the dispatcher will send a LeftRoom action") {
                 verify(exactly = 1) { dispatcher(LeftRoom(roomId = "id2")) }
             }
         }
@@ -183,7 +183,7 @@ class UserSubscriptionDispatcherTest : Spek({
             )
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher should send an UpdatedRoom action") {
+            it("then the dispatcher will send an UpdatedRoom action") {
                 verify(exactly = 1) { dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms.first())
                 )) }
