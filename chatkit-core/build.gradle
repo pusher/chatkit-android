@@ -26,9 +26,6 @@ dependencies {
     testImplementation('com.willowtreeapps.assertk:assertk:0.21'){
         because("we want to use assertk for all tests going forward")
     }
-    testImplementation("io.mockk:mockk:1.9.3") {
-        because("mockk is a pure kotlin mocking framework we want to use going forward")
-    }
     testImplementation('com.google.truth:truth:0.40'){
         because("google truth is used for existing v1 tests")
     }
@@ -75,7 +72,7 @@ bintray {
     pkg {
         repo = 'maven'
         name = "$POM_ARTIFACT_ID"
-        userOrg = "$POM_DEVELOPER_ID"
+        userOrg = "$POM_DEVELOPER_NAME"
         licenses = ["$POM_LICENCE_NAME"]
         vcsUrl = "$POM_SCM_URL"
         version {
@@ -118,9 +115,8 @@ def pomConfig = {
     }
     developers {
         developer {
-            id 'hamchapman'
-            name 'Hamilton Chapman'
-            email 'hamilton@pusher.com'
+            name 'Pusher Limited'
+            email 'support@pusher.com'
         }
     }
 

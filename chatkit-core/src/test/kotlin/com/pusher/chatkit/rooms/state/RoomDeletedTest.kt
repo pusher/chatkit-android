@@ -9,28 +9,29 @@ import org.spekframework.spek2.style.specification.describe
 
 class RoomDeletedTest : Spek({
 
-    describe("given a joined rooms state of two rooms") {
+    describe("given two rooms") {
         val givenState = ChatkitState(
-                joinedRoomsState = JoinedRoomsState(
-                        rooms = mapOf(
-                                roomOneId to roomOne,
-                                roomTwoId to roomTwo
-                                ),
-                        unreadCounts = mapOf(
-                                roomOneId to 1,
-                                roomTwoId to 2
-                        )
+            joinedRoomsState = JoinedRoomsState(
+                rooms = mapOf(
+                    roomOneId to roomOne,
+                    roomTwoId to roomTwo
+                ),
+                unreadCounts = mapOf(
+                    roomOneId to 1,
+                    roomTwoId to 2
                 )
+            )
         )
 
         describe("when a room is deleted") {
-            val newState = roomDeletedReducer(givenState,
-                    RoomDeleted(roomOneId))
+            val newState = roomDeletedReducer(
+                givenState,
+                RoomDeleted(roomOneId)
+            )
 
-            it("then the state no longer contains the room") {
+            it("then the state contains only the non-deleted room") {
                 assertThat(newState.joinedRoomsState).isNotNull()
-                        .containsOnly(roomTwoId
-                                to roomTwo)
+                    .containsOnly(roomTwoId to roomTwo)
             }
         }
     }
