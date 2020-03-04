@@ -37,7 +37,7 @@ class JoinedRoomsReceivedTest : Spek({
             )
             val newState = joinedRoomsReceivedReducer(initialState, joinedRoomsReceived)
 
-            it("then the state contais the expected rooms") {
+            it("then the state contains the expected rooms") {
                 assertThat(newState.joinedRoomsState).isNotNull().containsOnly(
                         roomOneId to roomOne,
                         roomTwoId to roomTwo
