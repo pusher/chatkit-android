@@ -20,7 +20,7 @@ internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
             leftRoomActions(newRooms)
     }
 
-    private val currentRooms = stateGetter().joinedRoomsState!!.rooms
+    private val currentRooms get() = stateGetter().joinedRoomsState!!.rooms
 
     private fun joinedRoomActions(
         newRooms: List<JoinedRoomInternalType>,
@@ -29,7 +29,7 @@ internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
         val actions = mutableListOf<Action>()
 
         val addedRoomKeys =
-            newRooms.map { it.id }.toSet() - stateGetter().joinedRoomsState!!.rooms.keys.toSet()
+            newRooms.map { it.id }.toSet() - currentRooms.keys.toSet()
 
         for (addedKey in addedRoomKeys) {
             val room = newRooms.find { it.id == addedKey }
@@ -54,7 +54,7 @@ internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
     ): List<Action> {
         val actions = mutableListOf<Action>()
 
-        val changedRooms = stateGetter().joinedRoomsState!!.rooms.values.mapNotNull { existing ->
+        val changedRooms = currentRooms.values.mapNotNull { existing ->
             newRooms.find { it.id == existing.id }?.let { new ->
                 existing to new
             }
@@ -75,7 +75,7 @@ internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
         val actions = mutableListOf<Action>()
 
         val removedRoomKeys =
-            stateGetter().joinedRoomsState!!.rooms.keys.toSet() - newRooms.map { it.id }.toSet()
+            currentRooms.keys.toSet() - newRooms.map { it.id }.toSet()
 
         for (removedKey in removedRoomKeys) {
             actions.add(LeftRoom(roomId = removedKey))

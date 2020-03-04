@@ -12,20 +12,20 @@ import org.spekframework.spek2.style.specification.describe
 
 class JoinedRoomsStateDifferTest : Spek({
 
-    describe("given a current state of one room") {
+    describe("given one room") {
         val state = mockk<GetState<State>>(relaxed = true)
         val differ = JoinedRoomsStateDiffer(state)
 
         every { state().joinedRoomsState } returns JoinedRoomsState(
             rooms = mapOf(roomOneId to roomOne),
             unreadCounts =  mapOf(roomOneId to 1))
-        
-        describe("when one new room is added"){
-            val actions = differ.toActions(
-                newRooms = listOf(roomTwo),
-                newUnreadCounts = mapOf(roomTwoId to 2))
 
-            it("then the actions list will contain JoinedRoom"){
+        describe("when room is joined"){
+            val actions = differ.toActions(
+                newRooms = listOf(roomOne, roomTwo),
+                newUnreadCounts = mapOf(roomOneId to 1, roomTwoId to 2))
+
+            it("then the result contains JoinedRoom action"){
                 assertThat(actions).containsExactly(JoinedRoom(room = roomTwo, unreadCount = 2))
             }
         }
