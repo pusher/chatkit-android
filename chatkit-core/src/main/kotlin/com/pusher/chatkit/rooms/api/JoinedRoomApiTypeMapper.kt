@@ -6,9 +6,8 @@ import com.pusher.chatkit.util.DateApiTypeMapper
 internal class JoinedRoomApiTypeMapper(val dateApiTypeMapper: DateApiTypeMapper) {
     fun toRoomInternalType(room: JoinedRoomApiType): JoinedRoomInternalType {
 
-        var lastMessageAt: Long? = null
-        if (room.lastMessageAt != null) {
-            lastMessageAt = dateApiTypeMapper.mapToEpochTime(room.lastMessageAt)
+        val lastMessageAt = room.lastMessageAt?.let {
+            dateApiTypeMapper.mapToEpochTime(room.lastMessageAt)
         }
 
         return JoinedRoomInternalType(
