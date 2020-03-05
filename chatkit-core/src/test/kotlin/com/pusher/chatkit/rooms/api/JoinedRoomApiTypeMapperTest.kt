@@ -3,6 +3,7 @@ package com.pusher.chatkit.rooms.api
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import com.pusher.chatkit.util.DateApiTypeMapper
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -15,7 +16,9 @@ class JoinedRoomApiTypeMapperTest : Spek({
                 "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", null)
 
         describe("when parsed as a JoinedRoomInternalType object") {
-            val joinedRoomInternalType = JoinedRoomApiTypeMapper().toRoomInternalType(joinedRoomApiType)
+            val dateApiTypeMapper = DateApiTypeMapper()
+            val joinedRoomInternalType = JoinedRoomApiTypeMapper(dateApiTypeMapper)
+                .toRoomInternalType(joinedRoomApiType)
 
             it("then the id will match") {
                 assertThat(joinedRoomInternalType.id).isEqualTo(joinedRoomApiType.id)
@@ -59,7 +62,9 @@ class JoinedRoomApiTypeMapperTest : Spek({
                 "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", null)
 
         describe("when parsed as a JoinedRoomInternalType object") {
-            val joinedRoomInternalType = JoinedRoomApiTypeMapper().toRoomInternalType(joinedRoomApiType)
+            val dateApiTypeMapper = DateApiTypeMapper()
+            val joinedRoomInternalType = JoinedRoomApiTypeMapper(dateApiTypeMapper)
+                .toRoomInternalType(joinedRoomApiType)
 
             it("then the last message at will be null") {
                 assertThat(joinedRoomInternalType.lastMessageAt).isNull()

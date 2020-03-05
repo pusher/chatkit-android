@@ -13,6 +13,7 @@ import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
+import com.pusher.chatkit.util.DateApiTypeMapper
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -48,7 +49,8 @@ class UserSubscriptionDispatcherTest : Spek({
 
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper()
+        val dateApiTypeMapper = DateApiTypeMapper()
+        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
             joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
             joinedRoomsStateDiffer = differ,
@@ -126,7 +128,8 @@ class UserSubscriptionDispatcherTest : Spek({
 
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper()
+        val dateApiTypeMapper = DateApiTypeMapper()
+        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
             joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
             joinedRoomsStateDiffer = differ,
