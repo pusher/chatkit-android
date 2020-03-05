@@ -11,8 +11,22 @@ import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
+/**
+ * The entry point for JVM apps to connect with the backend service
+ * and retrieve [ChatkitCore] instance for further interaction with the SDK.
+ */
 class ChatkitCoreConnector {
 
+    /**
+     * Creates instance of this class for your Chatkit instance
+     * using passed [TokenProvider][com.pusher.platform.tokenProvider.TokenProvider]
+     * (for authentication and user identification) and additional optional dependencies.
+     *
+     * @param instanceLocator available in the [dashboard](https://dash.pusher.com/chatkit/)
+     * (under the Credentials tab of a selected instance)
+     * @param dependencies used for passing your [TokenProvider][com.pusher.platform.tokenProvider.TokenProvider]
+     * alongside optional dependencies like your [Logger][com.pusher.platform.logger.Logger]
+     */
     constructor(
         instanceLocator: String,
         dependencies: ChatkitDependencies
@@ -42,10 +56,22 @@ class ChatkitCoreConnector {
     private val dependencies: ChatkitDependencies
     private val chatkitKoinApplication: KoinApplication
 
+    /**
+     * Asynchronously connects with the backend and provide [ChatkitCore] as the entry point
+     * to interact with the SDK.
+     *
+     * @param resultHandler callback for handling successful connection, or errors while
+     * trying to connect
+     */
     fun connect(resultHandler: (Result<ChatkitCore, Error>) -> Unit) {
         // ...
         resultHandler(ChatkitCore().asSuccess())
     }
 }
 
+/**
+ * The entry point to interact with the SDK after connecting.
+ *
+ * Use [ChatkitCoreConnector] to retrieve an instance of this class.
+ */
 class ChatkitCore
