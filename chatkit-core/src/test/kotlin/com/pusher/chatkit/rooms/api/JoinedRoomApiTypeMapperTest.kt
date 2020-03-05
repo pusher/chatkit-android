@@ -57,16 +57,23 @@ class JoinedRoomApiTypeMapperTest : Spek({
 
             it("then the push notification override matches") {
                 assertThat(joinedRoomInternalType.pushNotificationTitleOverride)
-                        .isEqualTo(joinedRoomApiType.pushNotificationTitleOverride)
+                    .isEqualTo(joinedRoomApiType.pushNotificationTitleOverride)
             }
         }
     }
 
     describe("given a partially complete JoinedRoomApiType object") {
-        val joinedRoomApiType = JoinedRoomApiType("1", "ham",
-                "mycoolroom", null, false,
-                null, null,
-                "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", null)
+        val joinedRoomApiType = JoinedRoomApiType(
+            id = "1",
+            createdById = "ham",
+            name = "mycoolroom",
+            pushNotificationTitleOverride = null,
+            private = false,
+            customData = null,
+            updatedAt = "2017-04-14T14:00:42Z",
+            lastMessageAt = null,
+            createdAt = "2017-04-13T14:10:38Z",
+            deletedAt = null)
 
         describe("when parsed as a JoinedRoomInternalType object") {
             val dateApiTypeMapper = DateApiTypeMapper()
