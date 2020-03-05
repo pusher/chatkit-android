@@ -17,9 +17,9 @@ class JoinedRoomApiTypeMapperTest : Spek({
             pushNotificationTitleOverride = "pushNotificationOverride",
             private = false,
             customData = mapOf("background-colour" to "red"),
-            updatedAt = "2017-04-14T14:00:42Z",
-            lastMessageAt = "2017-04-13T14:10:38Z",
+            lastMessageAt = "2017-04-14T14:00:42Z",
             createdAt = "2017-04-13T14:10:38Z",
+            updatedAt = "2017-04-13T14:10:38Z",
             deletedAt = null)
 
         describe("when mapped to a JoinedRoomInternalType object") {
