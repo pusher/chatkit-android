@@ -10,8 +10,8 @@ import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
-import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserApiType
+import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
 import com.pusher.chatkit.util.DateApiTypeMapper

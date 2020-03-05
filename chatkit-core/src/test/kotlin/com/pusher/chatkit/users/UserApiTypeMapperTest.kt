@@ -3,8 +3,8 @@ package com.pusher.chatkit.users
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserApiType
+import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.util.DateApiTypeMapper
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
