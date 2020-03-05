@@ -3,7 +3,7 @@ package com.pusher.chatkit.users.api
 import com.pusher.chatkit.users.state.UserInternalType
 import com.pusher.chatkit.util.DateApiTypeMapper
 
-internal class UserApiTyepMapper(val dateApiTypeMapper: DateApiTypeMapper) {
+internal class UserApiTypeMapper(val dateApiTypeMapper: DateApiTypeMapper) {
     fun toUserInternalType(user: UserApiType): UserInternalType {
         return UserInternalType(
             id = user.id,

@@ -3,7 +3,7 @@ package com.pusher.chatkit.users
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import com.pusher.chatkit.users.api.UserApiTyepMapper
+import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.util.DateApiTypeMapper
 import org.spekframework.spek2.Spek
@@ -22,7 +22,7 @@ class UserApiTypeMapperTest : Spek({
         )
         describe("when mapped to a UserInternalType object") {
             val dateApiTypeMapper = DateApiTypeMapper()
-            val userInternalType = UserApiTyepMapper(dateApiTypeMapper)
+            val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
 
             it("then the id matches") {
@@ -66,7 +66,7 @@ class UserApiTypeMapperTest : Spek({
         )
         describe("when mapped to a UserInternalType object") {
             val dateApiTypeMapper = DateApiTypeMapper()
-            val userInternalType = UserApiTyepMapper(dateApiTypeMapper)
+            val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
 
             it("then the custom data will be null") {
