@@ -10,6 +10,7 @@ import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
+import com.pusher.chatkit.users.api.UserApiTyepMapper
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
@@ -38,8 +39,8 @@ class UserSubscriptionDispatcherTest : Spek({
 
     val simpleUser = UserApiType(
         id = "user1",
-        createdAt = "",
-        updatedAt = "",
+        createdAt = "2020-02-27T17:12:10Z",
+        updatedAt = "2020-02-27T17:12:10Z",
         name = "name",
         avatarUrl = null,
         customData = null,
@@ -51,7 +52,9 @@ class UserSubscriptionDispatcherTest : Spek({
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
         val dateApiTypeMapper = DateApiTypeMapper()
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
+        val userApiTyepMapper = UserApiTyepMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
+            userApiTyepMapper = userApiTyepMapper,
             joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
             joinedRoomsStateDiffer = differ,
             dispatcher = dispatcher
@@ -129,8 +132,10 @@ class UserSubscriptionDispatcherTest : Spek({
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
         val dateApiTypeMapper = DateApiTypeMapper()
+        val userApiTyepMapper = UserApiTyepMapper(dateApiTypeMapper)
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
+            userApiTyepMapper = userApiTyepMapper,
             joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
             joinedRoomsStateDiffer = differ,
             dispatcher = dispatcher

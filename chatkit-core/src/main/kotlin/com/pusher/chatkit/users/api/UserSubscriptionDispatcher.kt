@@ -2,6 +2,7 @@ package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
+import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
@@ -10,6 +11,7 @@ import com.pusher.chatkit.state.RoomUpdated
 import org.reduxkotlin.Dispatcher
 
 internal class UserSubscriptionDispatcher(
+    private val userApiTyepMapper: UserApiTyepMapper,
     private val joinedRoomsStateDiffer: JoinedRoomsStateDiffer,
     private val joinedRoomApiTypeMapper: JoinedRoomApiTypeMapper,
     private val dispatcher: Dispatcher
@@ -18,6 +20,9 @@ internal class UserSubscriptionDispatcher(
     internal fun onEvent(event: UserSubscriptionEvent) {
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
+
+                dispatcher(CurrentUserReceived(
+                    userApiTyepMapper.toUserInternalType(event.currentUser)))
 
                 if (joinedRoomsStateDiffer.stateExists()) {
                     joinedRoomsStateDiffer.toActions(
