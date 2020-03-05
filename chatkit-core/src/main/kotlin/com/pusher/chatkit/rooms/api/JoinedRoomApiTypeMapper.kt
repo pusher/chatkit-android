@@ -23,19 +23,10 @@ internal class JoinedRoomApiTypeMapper(val dateApiTypeMapper: DateApiTypeMapper)
     }
 
     fun toRoomInternalTypes(rooms: List<JoinedRoomApiType>): List<JoinedRoomInternalType> {
-        val result = arrayListOf<JoinedRoomInternalType>()
-        for (room in rooms) {
-            result.add(toRoomInternalType(room))
-        }
-        return result
+        return rooms.map { toRoomInternalType(it) }.toList()
     }
 
     fun toUnreadCounts(readStates: List<RoomReadStateApiType>): Map<String, Int> {
-        val unreadCounts = hashMapOf<String, Int>()
-        for (readState in readStates) {
-            unreadCounts[readState.roomId] = readState.unreadCount
-        }
-
-        return unreadCounts
+        return readStates.map { it.roomId to it.unreadCount }.toMap()
     }
 }
