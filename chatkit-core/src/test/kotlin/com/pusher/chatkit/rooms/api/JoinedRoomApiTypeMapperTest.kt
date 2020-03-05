@@ -10,45 +10,52 @@ import org.spekframework.spek2.style.specification.describe
 class JoinedRoomApiTypeMapperTest : Spek({
 
     describe("given a complete JoinedRoomApiType object") {
-        val joinedRoomApiType = JoinedRoomApiType("1", "ham",
-                "mycoolroom", "pushNotificationOverride", false,
-                mapOf("background-colour" to "red"), "2017-04-14T14:00:42Z",
-                "2017-04-13T14:10:38Z", "2017-04-13T14:10:38Z", null)
+        val joinedRoomApiType = JoinedRoomApiType(
+            id = "1",
+            createdById = "ham",
+            name = "mycoolroom",
+            pushNotificationTitleOverride = "pushNotificationOverride",
+            private = false,
+            customData = mapOf("background-colour" to "red"),
+            updatedAt = "2017-04-14T14:00:42Z",
+            lastMessageAt = "2017-04-13T14:10:38Z",
+            createdAt = "2017-04-13T14:10:38Z",
+            deletedAt = null)
 
-        describe("when parsed as a JoinedRoomInternalType object") {
+        describe("when mapped to a JoinedRoomInternalType object") {
             val dateApiTypeMapper = DateApiTypeMapper()
             val joinedRoomInternalType = JoinedRoomApiTypeMapper(dateApiTypeMapper)
                 .toRoomInternalType(joinedRoomApiType)
 
-            it("then the id will match") {
+            it("then the id matches") {
                 assertThat(joinedRoomInternalType.id).isEqualTo(joinedRoomApiType.id)
             }
 
-            it("then the name will match") {
+            it("then the name matches") {
                 assertThat(joinedRoomInternalType.name).isEqualTo(joinedRoomApiType.name)
             }
 
-            it("then the privacy will match") {
+            it("then the privacy matches") {
                 assertThat(joinedRoomInternalType.isPrivate).isEqualTo(joinedRoomApiType.private)
             }
 
-            it("then the custom data will match") {
+            it("then the custom data matches") {
                 assertThat(joinedRoomInternalType.customData).isEqualTo(joinedRoomApiType.customData)
             }
 
-            it("then the created at date will be in millis") {
+            it("then the created at date will be in epochTime") {
                 assertThat(joinedRoomInternalType.createdAt).isEqualTo(1492092638000L)
             }
 
-            it("then the updated at date will be in millis") {
+            it("then the updated at date will be in epochTime") {
                 assertThat(joinedRoomInternalType.updatedAt).isEqualTo(1492092638000L)
             }
 
-            it("then the last message at date will be in millis") {
+            it("then the last message at date will be in epochTime") {
                 assertThat(joinedRoomInternalType.lastMessageAt).isEqualTo(1492178442000L)
             }
 
-            it("then the push notification override will match") {
+            it("then the push notification override matches") {
                 assertThat(joinedRoomInternalType.pushNotificationTitleOverride)
                         .isEqualTo(joinedRoomApiType.pushNotificationTitleOverride)
             }
