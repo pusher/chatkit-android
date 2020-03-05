@@ -41,7 +41,7 @@ class UserSubscriptionDispatcherTest : Spek({
         createdAt = "",
         updatedAt = "",
         name = "name",
-        avatarURL = null,
+        avatarUrl = null,
         customData = null,
         online = false)
 

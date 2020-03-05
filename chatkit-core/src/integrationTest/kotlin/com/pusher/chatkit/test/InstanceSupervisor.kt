@@ -15,6 +15,7 @@ import com.pusher.chatkit.test.InstanceActions.createSuperUser
 import com.pusher.chatkit.test.InstanceActions.setInstanceBusy
 import com.pusher.chatkit.test.InstanceActions.tearDown
 import com.pusher.chatkit.users.api.UserApiType
+import com.pusher.chatkit.util.DateApiTypeMapper
 import com.pusher.chatkit.util.parseAs
 import com.pusher.platform.Instance
 import com.pusher.platform.RequestOptions
@@ -75,8 +76,10 @@ private fun isInstanceIdle():
     users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
 }
 
-private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long) =
-        Date().time - created.time > millisecondsAgo
+private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long) : Boolean {
+    return Date().time - DateApiTypeMapper().mapToEpochTime(createdAt) > millisecondsAgo
+}
+
 
 private val sudoTokenProvider by lazy {
     TestTokenProvider(
