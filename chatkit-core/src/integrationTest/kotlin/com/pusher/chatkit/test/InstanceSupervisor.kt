@@ -76,10 +76,9 @@ private fun isInstanceIdle():
     users.firstOrNull { it.name == "lock" }?.takeUnless { it.wasCreatedLongerThan(5_000) } == null
 }
 
-private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long) : Boolean {
+private fun UserApiType.wasCreatedLongerThan(millisecondsAgo: Long): Boolean {
     return Date().time - DateApiTypeMapper().mapToEpochTime(createdAt) > millisecondsAgo
 }
-
 
 private val sudoTokenProvider by lazy {
     TestTokenProvider(
