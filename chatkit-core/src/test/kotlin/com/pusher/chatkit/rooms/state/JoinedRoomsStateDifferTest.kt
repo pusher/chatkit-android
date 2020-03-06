@@ -50,15 +50,6 @@ class JoinedRoomsStateDifferTest : Spek({
                 assertThat(actions).containsExactly(LeftRoom(roomId = roomTwoId))
             }
         }
-    }
-
-    describe("given two rooms") {
-        val state = mockk<GetState<State>>(relaxed = true)
-        val differ = JoinedRoomsStateDiffer(state)
-
-        every { state().joinedRoomsState } returns JoinedRoomsState(
-            rooms = mapOf(roomOneId to roomOne, roomTwoId to roomTwo),
-            unreadCounts = mapOf(roomOneId to 1, roomTwoId to 2))
 
         describe("when a room is changed") {
             val actions = differ.toActions(
@@ -69,5 +60,6 @@ class JoinedRoomsStateDifferTest : Spek({
                 assertThat(actions).containsExactly(RoomUpdated(room = roomOneUpdated))
             }
         }
+
     }
 })
