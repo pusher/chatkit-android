@@ -46,9 +46,10 @@ object UserSubscriptionDispatcherTest : Spek({
         online = false)
 
     describe("given no existing state") {
-
         val dispatcher = mockk<Dispatcher>(relaxed = true)
-        val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
+        val differ = mockk<JoinedRoomsStateDiffer> {
+            every { stateExists() } returns false
+        }
         val dateApiTypeMapper = DateApiTypeMapper()
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
@@ -56,8 +57,6 @@ object UserSubscriptionDispatcherTest : Spek({
             joinedRoomsStateDiffer = differ,
             dispatcher = dispatcher
         )
-
-        every { differ.stateGetter().joinedRoomsState } returns null
 
         describe("when I receive an InitialState event") {
             val event = UserSubscriptionEvent.InitialState(
@@ -125,7 +124,6 @@ object UserSubscriptionDispatcherTest : Spek({
     }
 
     describe("given existing state") {
-
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
         val dateApiTypeMapper = DateApiTypeMapper()

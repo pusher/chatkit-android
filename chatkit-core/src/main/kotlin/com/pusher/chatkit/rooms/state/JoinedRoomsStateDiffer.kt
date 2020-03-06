@@ -7,18 +7,17 @@ import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.state.State
 import org.reduxkotlin.GetState
 
-internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
+internal class JoinedRoomsStateDiffer(private val stateGetter: GetState<State>) {
 
     fun stateExists() = stateGetter().joinedRoomsState != null
 
     fun toActions(
         newRooms: List<JoinedRoomInternalType>,
         newUnreadCounts: Map<String, Int>
-    ): List<Action> {
-        return joinedRoomActions(newRooms, newUnreadCounts) +
+    ): List<Action> =
+        joinedRoomActions(newRooms, newUnreadCounts) +
             roomUpdatedActions(newRooms) +
             leftRoomActions(newRooms)
-    }
 
     private val currentRooms get() = stateGetter().joinedRoomsState!!.rooms
 
