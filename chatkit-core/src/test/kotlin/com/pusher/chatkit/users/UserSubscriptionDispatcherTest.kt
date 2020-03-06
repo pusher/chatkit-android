@@ -22,7 +22,6 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 class UserSubscriptionDispatcherTest : Spek({
-
     val simpleJoinedRoomApiType = JoinedRoomApiType(
         id = "id1",
         name = "room1",
@@ -46,9 +45,10 @@ class UserSubscriptionDispatcherTest : Spek({
         online = false)
 
     describe("given no existing state") {
-
         val dispatcher = mockk<Dispatcher>(relaxed = true)
-        val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
+        val differ = mockk<JoinedRoomsStateDiffer> {
+            every { stateExists() } returns false
+        }
         val dateApiTypeMapper = DateApiTypeMapper()
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
@@ -56,8 +56,6 @@ class UserSubscriptionDispatcherTest : Spek({
             joinedRoomsStateDiffer = differ,
             dispatcher = dispatcher
         )
-
-        every { differ.stateGetter().joinedRoomsState } returns null
 
         describe("when I receive an InitialState event") {
             val event = UserSubscriptionEvent.InitialState(
@@ -125,7 +123,6 @@ class UserSubscriptionDispatcherTest : Spek({
     }
 
     describe("given existing state") {
-
         val dispatcher = mockk<Dispatcher>(relaxed = true)
         val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
         val dateApiTypeMapper = DateApiTypeMapper()
