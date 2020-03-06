@@ -24,7 +24,8 @@ internal class UserSubscriptionDispatcher(
                         joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                         joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
                     ).forEach {
-                        action -> dispatcher(action) }
+                        action -> dispatcher(action)
+                    }
                 } else {
                     dispatcher(
                         JoinedRoomsReceived(
