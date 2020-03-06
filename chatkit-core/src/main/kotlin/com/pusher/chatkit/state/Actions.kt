@@ -14,6 +14,11 @@ internal data class JoinedRoom(
     val unreadCount: Int
 ) : Action()
 
+internal data class ReconnectJoinedRoom(
+    val room: JoinedRoomInternalType,
+    val unreadCount: Int?
+) : Action()
+
 internal data class LeftRoom(
     val roomId: String
 ) : Action()
