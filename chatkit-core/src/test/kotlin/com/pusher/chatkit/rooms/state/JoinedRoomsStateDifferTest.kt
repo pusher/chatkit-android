@@ -2,8 +2,8 @@ package com.pusher.chatkit.rooms.state
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
-import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.LeftRoom
+import com.pusher.chatkit.state.ReconnectJoinedRoom
 import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.state.State
 import io.mockk.every
@@ -28,7 +28,7 @@ class JoinedRoomsStateDifferTest : Spek({
                 newUnreadCounts = mapOf(roomOneId to 1, roomTwoId to 2))
 
             it("then the result contains JoinedRoom action") {
-                assertThat(actions).containsExactly(JoinedRoom(room = roomTwo, unreadCount = 2))
+                assertThat(actions).containsExactly(ReconnectJoinedRoom(room = roomTwo, unreadCount = 2))
             }
         }
     }
@@ -61,6 +61,5 @@ class JoinedRoomsStateDifferTest : Spek({
                 assertThat(actions).containsExactly(RoomUpdated(room = roomOneUpdated))
             }
         }
-
     }
 })
