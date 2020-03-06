@@ -21,7 +21,7 @@ import org.reduxkotlin.Dispatcher
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class UserSubscriptionDispatcherTest : Spek({
+object UserSubscriptionDispatcherTest : Spek({
 
     val simpleJoinedRoomApiType = JoinedRoomApiType(
         id = "id1",
