@@ -9,9 +9,9 @@ import org.reduxkotlin.GetState
 
 internal class JoinedRoomsStateDiffer(val stateGetter: GetState<State>) {
 
-    internal fun stateExists() = stateGetter().joinedRoomsState != null
+    fun stateExists() = stateGetter().joinedRoomsState != null
 
-    internal fun toActions(
+    fun toActions(
         newRooms: List<JoinedRoomInternalType>,
         newUnreadCounts: Map<String, Int>
     ): List<Action> {
