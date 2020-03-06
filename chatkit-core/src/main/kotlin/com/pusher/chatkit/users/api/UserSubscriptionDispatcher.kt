@@ -18,13 +18,13 @@ internal class UserSubscriptionDispatcher(
     internal fun onEvent(event: UserSubscriptionEvent) {
         when (event) {
             is UserSubscriptionEvent.InitialState -> {
-
                 if (joinedRoomsStateDiffer.stateExists()) {
                     joinedRoomsStateDiffer.toActions(
                         joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                         joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
-                    ).forEach {
-                        action -> dispatcher(action) }
+                    ).forEach { action ->
+                        dispatcher(action)
+                    }
                 } else {
                     dispatcher(
                         JoinedRoomsReceived(
