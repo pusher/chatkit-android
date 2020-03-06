@@ -51,10 +51,11 @@ class JoinedRoomsStateDifferTest : Spek({
             }
         }
 
-        describe("when a room is changed") {
+        describe("when a room is updated") {
             val actions = differ.toActions(
                 newRooms = listOf(roomOneUpdated, roomTwo),
-                newUnreadCounts = mapOf(roomOneId to 1, roomTwoId to 2))
+                newUnreadCounts = mapOf(roomOneId to 1, roomTwoId to 2)
+            )
 
             it("then the result contains RoomUpdated action") {
                 assertThat(actions).containsExactly(RoomUpdated(room = roomOneUpdated))
