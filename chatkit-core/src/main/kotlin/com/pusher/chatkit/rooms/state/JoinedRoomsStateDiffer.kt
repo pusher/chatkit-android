@@ -1,8 +1,8 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.Action
-import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.LeftRoom
+import com.pusher.chatkit.state.ReconnectJoinedRoom
 import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.state.State
 import org.reduxkotlin.GetState
@@ -24,29 +24,9 @@ internal class JoinedRoomsStateDiffer(private val stateGetter: GetState<State>) 
     private fun joinedRoomActions(
         newRooms: List<JoinedRoomInternalType>,
         newUnreadCounts: Map<String, Int>
-    ): List<Action> {
-        val actions = mutableListOf<Action>()
-
-        val addedRoomKeys =
-            newRooms.map { it.id }.toSet() - currentRooms.keys.toSet()
-
-        for (addedKey in addedRoomKeys) {
-            val room = newRooms.find { it.id == addedKey }
-            val unreadCount = newUnreadCounts[addedKey]
-
-            if (room != null &&
-                unreadCount != null
-            ) {
-                actions.add(
-                    JoinedRoom(
-                        room = room,
-                        unreadCount = unreadCount
-                    )
-                )
-            }
-        }
-        return actions
-    }
+    ): List<Action> =
+        newRooms.filter { !currentRooms.contains(it.id) }
+            .map { ReconnectJoinedRoom(it, newUnreadCounts[it.id]) }.toList()
 
     private fun roomUpdatedActions(
         newRooms: List<JoinedRoomInternalType>

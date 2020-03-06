@@ -15,15 +15,16 @@ internal class UserSubscriptionDispatcher(
     private val dispatcher: Dispatcher
 ) {
 
-    fun onEvent(event: UserSubscriptionEvent) {
+    internal fun onEvent(event: UserSubscriptionEvent) {
         when (event) {
-            is UserSubscriptionEvent.InitialState ->
+            is UserSubscriptionEvent.InitialState -> {
+
                 if (joinedRoomsStateDiffer.stateExists()) {
                     joinedRoomsStateDiffer.toActions(
                         joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                         joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
-                    ).forEach { action ->
-                        dispatcher(action)
+                    ).forEach {
+                        action -> dispatcher(action)
                     }
                 } else {
                     dispatcher(
@@ -33,19 +34,24 @@ internal class UserSubscriptionDispatcher(
                         )
                     )
                 }
-            is UserSubscriptionEvent.AddedToRoomEvent ->
+            }
+            is UserSubscriptionEvent.AddedToRoomEvent -> {
                 dispatcher(
                     JoinedRoom(
                         joinedRoomApiTypeMapper.toRoomInternalType(event.room),
                         event.readState.unreadCount
                     )
                 )
-            is UserSubscriptionEvent.RemovedFromRoomEvent ->
+            }
+            is UserSubscriptionEvent.RemovedFromRoomEvent -> {
                 dispatcher(LeftRoom(event.roomId))
-            is UserSubscriptionEvent.RoomUpdatedEvent ->
+            }
+            is UserSubscriptionEvent.RoomUpdatedEvent -> {
                 dispatcher(RoomUpdated(joinedRoomApiTypeMapper.toRoomInternalType(event.room)))
-            is UserSubscriptionEvent.RoomDeletedEvent ->
+            }
+            is UserSubscriptionEvent.RoomDeletedEvent -> {
                 dispatcher(RoomDeleted(event.roomId))
+            }
         }
     }
 }
