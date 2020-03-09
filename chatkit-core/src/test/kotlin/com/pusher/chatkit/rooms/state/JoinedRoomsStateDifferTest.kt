@@ -6,6 +6,7 @@ import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.ReconnectJoinedRoom
 import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.state.State
+import com.pusher.chatkit.state.UnreadCountReceived
 import io.mockk.every
 import io.mockk.mockk
 import org.reduxkotlin.GetState
@@ -58,6 +59,31 @@ class JoinedRoomsStateDifferTest : Spek({
 
             it("then the result contains RoomUpdated action") {
                 assertThat(actions).containsExactly(RoomUpdated(room = roomOneUpdated))
+            }
+        }
+
+        describe("when an unread count is updated") {
+            val actions = differ.toActions(
+                newRooms = listOf(roomOne, roomTwo),
+                newUnreadCounts = mapOf(roomOneId to 4)
+            )
+
+            it("then the result contains UnreadCountReceived action") {
+                assertThat(actions).containsExactly(
+                    UnreadCountReceived(roomId = roomOneId, unreadCount = 4))
+            }
+        }
+
+        describe("when an room and unread count is updated") {
+            val actions = differ.toActions(
+                newRooms = listOf(roomOneUpdated, roomTwo),
+                newUnreadCounts = mapOf(roomOneId to 4)
+            )
+
+            it("then the result contains UnreadCountReceived action") {
+                assertThat(actions).containsExactly(
+                    RoomUpdated(room = roomOneUpdated),
+                    UnreadCountReceived(roomId = roomOneId, unreadCount = 4))
             }
         }
     }
