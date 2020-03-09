@@ -10,7 +10,8 @@ internal data class AuxiliaryState(
     val leftRoom: LastChange<LeftRoom>?,
     val roomUpdated: LastChange<RoomUpdated>?,
     val roomDeleted: LastChange<RoomDeleted>?,
-    val reconnectJoinedRoom: LastChange<ReconnectJoinedRoom>?
+    val reconnectJoinedRoom: LastChange<ReconnectJoinedRoom>?,
+    val unreadCountReceived: LastChange<UnreadCountReceived>?
 ) {
 
     companion object {
@@ -21,7 +22,8 @@ internal data class AuxiliaryState(
             leftRoom = null,
             roomUpdated = null,
             roomDeleted = null,
-            reconnectJoinedRoom = null
+            reconnectJoinedRoom = null,
+            unreadCountReceived = null
         )
     }
 
@@ -39,6 +41,8 @@ internal data class AuxiliaryState(
                 copy(nextVersion, roomUpdated = LastChange(nextVersion, action))
             is ReconnectJoinedRoom ->
                 copy(nextVersion, reconnectJoinedRoom = LastChange(nextVersion, action))
+            is UnreadCountReceived ->
+                copy(nextVersion, unreadCountReceived = LastChange(nextVersion, action))
         }
 
     private val nextVersion = version + 1

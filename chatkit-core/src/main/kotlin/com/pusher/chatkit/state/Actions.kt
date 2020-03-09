@@ -30,3 +30,8 @@ internal data class ReconnectJoinedRoom(
     val room: JoinedRoomInternalType,
     val unreadCount: Int?
 ) : Action()
+
+internal data class UnreadCountReceived(
+    val roomId: String,
+    val unreadCount: Int
+) : Action()
