@@ -19,6 +19,7 @@ internal class DefaultPlatformClientFactory : PlatformClientFactory {
         PlatformClient(instance, tokenProvider)
 }
 
+// TODO: make internal, there are problems with Beams code that exposes it that need to be addressed
 class PlatformClient(
     private val platformInstance: Instance,
     private val tokenProvider: TokenProvider
