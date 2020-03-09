@@ -30,23 +30,14 @@ internal class JoinedRoomsStateDiffer(private val stateGetter: GetState<State>) 
 
     private fun roomUpdatedActions(
         newRooms: List<JoinedRoomInternalType>
-    ): List<RoomUpdated> {
-        val actions = mutableListOf<RoomUpdated >()
-
-        val changedRooms = currentRooms.values.mapNotNull { existing ->
+    ): List<RoomUpdated> =
+        currentRooms.values.mapNotNull { existing ->
             newRooms.find { it.id == existing.id }?.let { new ->
                 existing to new
             }
         }.filter { (existing, new) ->
             new != existing
-        }
-
-        for (room in changedRooms) {
-            actions.add(RoomUpdated(room = room.second))
-        }
-
-        return actions
-    }
+        }.map { RoomUpdated(room = it.second) }
 
     private fun leftRoomActions(
         newRooms: List<JoinedRoomInternalType>
