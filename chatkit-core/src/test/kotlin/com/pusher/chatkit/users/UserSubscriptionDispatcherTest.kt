@@ -43,7 +43,8 @@ object UserSubscriptionDispatcherTest : Spek({
         name = "name",
         avatarURL = null,
         customData = null,
-        online = false)
+        online = false
+    )
 
     describe("given no existing state") {
         val dispatcher = mockk<Dispatcher>(relaxed = true)
