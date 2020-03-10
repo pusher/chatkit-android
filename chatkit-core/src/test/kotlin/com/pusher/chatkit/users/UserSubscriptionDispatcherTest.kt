@@ -59,7 +59,7 @@ object UserSubscriptionDispatcherTest : Spek({
             dispatcher = dispatcher
         )
 
-        describe("when I receive an InitialState event") {
+        describe("when an InitialState is received") {
             val event = UserSubscriptionEvent.InitialState(
                 currentUser = simpleUser,
                 rooms = listOf(simpleJoinedRoomApiType),
@@ -76,7 +76,7 @@ object UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive an AddedToRoomEvent") {
+        describe("when an AddedToRoomEvent is received") {
             val event = UserSubscriptionEvent.AddedToRoomEvent(
                 room = simpleJoinedRoomApiType,
                 readState = RoomReadStateApiType("id1", 1, null),
@@ -92,7 +92,7 @@ object UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive a RemovedFromRoomEvent") {
+        describe("when a RemovedFromRoomEvent is received") {
             val event = UserSubscriptionEvent.RemovedFromRoomEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
@@ -101,7 +101,7 @@ object UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive a RoomDeletedEvent") {
+        describe("when a RoomDeletedEvent is received") {
             val event = UserSubscriptionEvent.RoomDeletedEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
@@ -110,7 +110,7 @@ object UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive a RoomUpdatedEvent") {
+        describe("when a RoomUpdatedEvent is received") {
             val event = UserSubscriptionEvent.RoomUpdatedEvent(
                 room = simpleJoinedRoomApiType
             )
