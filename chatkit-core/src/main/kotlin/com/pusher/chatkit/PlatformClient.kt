@@ -92,12 +92,12 @@ class PlatformClient(
                     responseParser = responseParser
             ).get()
 
-    internal fun <A> subscribeResuming(
+    internal fun <A> subscribe(
         path: String,
         listeners: SubscriptionListeners<A>,
         messageParser: DataParser<A>
     ): Subscription =
-            platformInstance.subscribeResuming(
+            platformInstance.subscribeNonResuming(
                     path = path,
                     tokenProvider = tokenProvider,
                     listeners = listeners,
