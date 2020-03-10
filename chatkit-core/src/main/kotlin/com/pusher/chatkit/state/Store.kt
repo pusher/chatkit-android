@@ -31,7 +31,6 @@ internal class StoreSubscriber(private val store: Store) : (StoreObserver) -> St
                 observer(store.state)
             }
         )
-
 }
 
 internal class StoreSubscription(unsubscribe: () -> Unit) {
