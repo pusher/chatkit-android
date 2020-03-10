@@ -18,7 +18,8 @@ class JoinedRoomsStateDifferTest : Spek({
         val state = mockk<GetState<State>>(relaxed = true)
         every { state().joinedRoomsState } returns JoinedRoomsState(
             rooms = mapOf(roomOneId to roomOne),
-            unreadCounts = mapOf(roomOneId to 1))
+            unreadCounts = mapOf(roomOneId to 1)
+        )
         val differ = JoinedRoomsStateDiffer(state)
 
         describe("when room is joined") {
