@@ -14,7 +14,7 @@ import com.pusher.platform.tokenProvider.TokenProvider
  * device settings and for push notifications (usually [android.app.Application] but if you use
  * the SDK just in a shorter-lived scope like [android.app.Activity] you can pass it as well)
  * @param tokenProvider for providing your JWT auth tokens, depending on your backend you may
- * consider using the exiting [ChatkitTokenProvider] implementation
+ * consider using the existing [ChatkitTokenProvider] implementation
  * @param logger pass if you want the SDK to log messages
  * @param mediaTypeResolver pass if you upload files for message attachments so that
  * HTTP Content-Type is set
