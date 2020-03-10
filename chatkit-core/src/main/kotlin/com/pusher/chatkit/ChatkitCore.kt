@@ -18,7 +18,7 @@ import org.koin.dsl.module
 class ChatkitCoreConnector {
 
     /**
-     * Creates instance of this class for your Chatkit instance
+     * Creates an object of this class for your Chatkit instance
      * using passed [TokenProvider][com.pusher.platform.tokenProvider.TokenProvider]
      * (for authentication and user identification) and additional optional dependencies.
      *
