@@ -16,15 +16,13 @@ import com.pusher.platform.tokenProvider.TokenProvider
  * @param tokenProvider for providing your JWT auth tokens, depending on your backend you may
  * consider using the existing [ChatkitTokenProvider] implementation
  * @param logger pass if you want the SDK to log messages
- * @param mediaTypeResolver pass if you upload files for message attachments so that
- * HTTP Content-Type is set
  */
 class AndroidChatkitDependencies @JvmOverloads constructor(
     val context: Context,
     tokenProvider: TokenProvider,
-    override val logger: Logger = EmptyLogger(),
-    override val mediaTypeResolver: MediaTypeResolver = AndroidMediaTypeResolver()
+    override val logger: Logger = EmptyLogger()
 ) : ChatkitDependencies(tokenProvider) {
 
+    override val mediaTypeResolver: MediaTypeResolver = AndroidMediaTypeResolver()
     override val sdkInfo = super.sdkInfo.copy(platform = "Android")
 }
