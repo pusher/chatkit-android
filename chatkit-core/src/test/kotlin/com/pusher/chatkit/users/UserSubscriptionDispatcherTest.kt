@@ -96,7 +96,7 @@ object UserSubscriptionDispatcherTest : Spek({
             val event = UserSubscriptionEvent.RemovedFromRoomEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher will send a LeftRoom action") {
+            it("then LeftRoom is dispatched") {
                 verify(exactly = 1) { dispatcher(LeftRoom(roomId = event.roomId)) }
             }
         }
