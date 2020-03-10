@@ -27,7 +27,7 @@ class JoinedRoomsStateDifferTest : Spek({
                 newRooms = listOf(roomOne, roomTwo),
                 newUnreadCounts = mapOf(roomOneId to 1, roomTwoId to 2))
 
-            it("then the result contains JoinedRoom action") {
+            it("then the result contains ReconnectJoinedRoom action") {
                 assertThat(actions).containsExactly(ReconnectJoinedRoom(roomTwo, unreadCount = 2))
             }
         }
