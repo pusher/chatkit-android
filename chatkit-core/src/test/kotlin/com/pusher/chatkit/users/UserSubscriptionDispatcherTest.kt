@@ -123,36 +123,4 @@ object UserSubscriptionDispatcherTest : Spek({
             }
         }
     }
-
-    describe("given existing state") {
-        val dispatcher = mockk<Dispatcher>(relaxed = true)
-        val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
-        val dateApiTypeMapper = DateApiTypeMapper()
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
-        val userSubscriptionDispatcher = UserSubscriptionDispatcher(
-            joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
-            joinedRoomsStateDiffer = differ,
-            dispatcher = dispatcher
-        )
-
-        every { differ.stateExists() } returns true
-
-        describe("when a new InitialState event is received") {
-            val event = UserSubscriptionEvent.InitialState(
-                currentUser = simpleUser,
-                rooms = listOf(simpleJoinedRoomApiType),
-                readStates = listOf(RoomReadStateApiType("id1", 1, null)),
-                memberships = listOf(RoomMembershipApiType("id1", listOf()))
-            )
-            userSubscriptionDispatcher.onEvent(event)
-
-            it("then the differ toActions will be called") {
-                verify(exactly = 1) {
-                    differ.toActions(
-                        joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
-                        joinedRoomApiTypeMapper.toUnreadCounts(event.readStates))
-                }
-            }
-        }
-    }
 })
