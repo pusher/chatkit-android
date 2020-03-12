@@ -15,7 +15,7 @@ import org.mockito.ArgumentMatchers.startsWith
 internal fun justConnectingRoomSubscription():
         KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
-        client.subscribeResuming(
+        client.subscribe(
                 path = startsWith("/rooms/"),
                 listeners = any(),
                 messageParser = any<DataParser<RoomSubscriptionEvent>>()

@@ -20,7 +20,7 @@ internal fun mockPlatformClientForUserSubscription(
 internal fun userSubscription(vararg events: UserSubscriptionEvent, error: Error? = null):
         KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
-        client.subscribeResuming(
+        client.subscribe(
                 path = eq("users"),
                 listeners = any(),
                 messageParser = any<UserSubscriptionEventParser>()
