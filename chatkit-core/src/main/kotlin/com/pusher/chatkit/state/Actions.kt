@@ -30,3 +30,8 @@ internal data class RoomDeleted(
 internal data class RoomUpdated(
     val room: JoinedRoomInternalType
 ) : Action()
+
+internal data class ReconnectJoinedRoom(
+    val room: JoinedRoomInternalType,
+    val unreadCount: Int?
+) : Action()

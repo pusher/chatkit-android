@@ -22,7 +22,7 @@ import org.reduxkotlin.Dispatcher
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class UserSubscriptionDispatcherTest : Spek({
+object UserSubscriptionDispatcherTest : Spek({
 
     val simpleJoinedRoomApiType = JoinedRoomApiType(
         id = "id1",
@@ -44,12 +44,14 @@ class UserSubscriptionDispatcherTest : Spek({
         name = "name",
         avatarUrl = null,
         customData = null,
-        online = false)
+        online = false
+    )
 
     describe("given no existing state") {
-
         val dispatcher = mockk<Dispatcher>(relaxed = true)
-        val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
+        val differ = mockk<JoinedRoomsStateDiffer> {
+            every { stateExists() } returns false
+        }
         val dateApiTypeMapper = DateApiTypeMapper()
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
@@ -60,9 +62,7 @@ class UserSubscriptionDispatcherTest : Spek({
             dispatcher = dispatcher
         )
 
-        every { differ.stateGetter().joinedRoomsState } returns null
-
-        describe("when I receive an InitialState event") {
+        describe("when an InitialState is received") {
             val event = UserSubscriptionEvent.InitialState(
                 currentUser = simpleUser,
                 rooms = listOf(simpleJoinedRoomApiType),
@@ -79,7 +79,7 @@ class UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive an AddedToRoomEvent") {
+        describe("when an AddedToRoomEvent is received") {
             val event = UserSubscriptionEvent.AddedToRoomEvent(
                 room = simpleJoinedRoomApiType,
                 readState = RoomReadStateApiType("id1", 1, null),
@@ -95,16 +95,16 @@ class UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive a RemovedFromRoomEvent") {
+        describe("when a RemovedFromRoomEvent is received") {
             val event = UserSubscriptionEvent.RemovedFromRoomEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
-            it("then the dispatcher will send a LeftRoom action") {
+            it("then LeftRoom is dispatched") {
                 verify(exactly = 1) { dispatcher(LeftRoom(roomId = event.roomId)) }
             }
         }
 
-        describe("when I receive a RoomDeletedEvent") {
+        describe("when a RoomDeletedEvent is received") {
             val event = UserSubscriptionEvent.RoomDeletedEvent("room1")
             userSubscriptionDispatcher.onEvent(event)
 
@@ -113,7 +113,7 @@ class UserSubscriptionDispatcherTest : Spek({
             }
         }
 
-        describe("when I receive a RoomUpdatedEvent") {
+        describe("when a RoomUpdatedEvent is received") {
             val event = UserSubscriptionEvent.RoomUpdatedEvent(
                 room = simpleJoinedRoomApiType
             )
@@ -123,41 +123,6 @@ class UserSubscriptionDispatcherTest : Spek({
                 verify(exactly = 1) { dispatcher(RoomUpdated(
                     room = joinedRoomApiTypeMapper.toRoomInternalType(event.room)
                 )) }
-            }
-        }
-    }
-
-    describe("given existing state") {
-
-        val dispatcher = mockk<Dispatcher>(relaxed = true)
-        val differ = mockk<JoinedRoomsStateDiffer>(relaxed = true)
-        val dateApiTypeMapper = DateApiTypeMapper()
-        val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
-        val userSubscriptionDispatcher = UserSubscriptionDispatcher(
-            userApiTypeMapper = userApiTypeMapper,
-            joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
-            joinedRoomsStateDiffer = differ,
-            dispatcher = dispatcher
-        )
-
-        every { differ.stateExists() } returns true
-
-        describe("when a new InitialState event is received") {
-            val event = UserSubscriptionEvent.InitialState(
-                currentUser = simpleUser,
-                rooms = listOf(simpleJoinedRoomApiType),
-                readStates = listOf(RoomReadStateApiType("id1", 1, null)),
-                memberships = listOf(RoomMembershipApiType("id1", listOf()))
-            )
-            userSubscriptionDispatcher.onEvent(event)
-
-            it("then the differ toActions will be called") {
-                verify(exactly = 1) {
-                    differ.toActions(
-                        joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
-                        joinedRoomApiTypeMapper.toUnreadCounts(event.readStates))
-                }
             }
         }
     }

@@ -7,9 +7,9 @@ import com.pusher.chatkit.util.DateApiTypeMapper
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class JoinedRoomApiTypeMapperTest : Spek({
+object JoinedRoomApiTypeMapperTest : Spek({
 
-    describe("given a complete JoinedRoomApiType object") {
+    describe("given a complete JoinedRoomApiType") {
         val joinedRoomApiType = JoinedRoomApiType(
             id = "1",
             createdById = "ham",
@@ -20,49 +20,50 @@ class JoinedRoomApiTypeMapperTest : Spek({
             lastMessageAt = "2017-04-14T14:00:42Z",
             createdAt = "2017-04-13T14:10:38Z",
             updatedAt = "2017-04-13T14:10:38Z",
-            deletedAt = null)
+            deletedAt = null
+        )
 
-        describe("when mapped to a JoinedRoomInternalType object") {
+        describe("when mapped to a JoinedRoomInternalType") {
             val dateApiTypeMapper = DateApiTypeMapper()
             val joinedRoomInternalType = JoinedRoomApiTypeMapper(dateApiTypeMapper)
                 .toRoomInternalType(joinedRoomApiType)
 
-            it("then the id matches") {
+            it("then id matches") {
                 assertThat(joinedRoomInternalType.id).isEqualTo(joinedRoomApiType.id)
             }
 
-            it("then the name matches") {
+            it("then name matches") {
                 assertThat(joinedRoomInternalType.name).isEqualTo(joinedRoomApiType.name)
             }
 
-            it("then the privacy matches") {
+            it("then isPrivate matches") {
                 assertThat(joinedRoomInternalType.isPrivate).isEqualTo(joinedRoomApiType.private)
             }
 
-            it("then the custom data matches") {
+            it("then customData matches") {
                 assertThat(joinedRoomInternalType.customData).isEqualTo(joinedRoomApiType.customData)
             }
 
-            it("then the created at date will be in epochTime") {
+            it("then createdAt is correct") {
                 assertThat(joinedRoomInternalType.createdAt).isEqualTo(1492092638000L)
             }
 
-            it("then the updated at date will be in epochTime") {
+            it("then updatedAt is correct") {
                 assertThat(joinedRoomInternalType.updatedAt).isEqualTo(1492092638000L)
             }
 
-            it("then the last message at date will be in epochTime") {
+            it("then lastMessageAt is correct") {
                 assertThat(joinedRoomInternalType.lastMessageAt).isEqualTo(1492178442000L)
             }
 
-            it("then the push notification override matches") {
+            it("then pushNotificationTitleOverride matches") {
                 assertThat(joinedRoomInternalType.pushNotificationTitleOverride)
                     .isEqualTo(joinedRoomApiType.pushNotificationTitleOverride)
             }
         }
     }
 
-    describe("given a partially complete JoinedRoomApiType object") {
+    describe("given a JoinedRoomApiType with absent optionals") {
         val joinedRoomApiType = JoinedRoomApiType(
             id = "1",
             createdById = "ham",
@@ -73,22 +74,23 @@ class JoinedRoomApiTypeMapperTest : Spek({
             updatedAt = "2017-04-14T14:00:42Z",
             lastMessageAt = null,
             createdAt = "2017-04-13T14:10:38Z",
-            deletedAt = null)
+            deletedAt = null
+        )
 
-        describe("when parsed as a JoinedRoomInternalType object") {
+        describe("when mapped to JoinedRoomInternalType") {
             val dateApiTypeMapper = DateApiTypeMapper()
             val joinedRoomInternalType = JoinedRoomApiTypeMapper(dateApiTypeMapper)
                 .toRoomInternalType(joinedRoomApiType)
 
-            it("then the last message at will be null") {
+            it("then lastMessageAt is null") {
                 assertThat(joinedRoomInternalType.lastMessageAt).isNull()
             }
 
-            it("then the custom data will be null") {
+            it("then customData is null") {
                 assertThat(joinedRoomInternalType.customData).isNull()
             }
 
-            it("then the push notification override will be null") {
+            it("then pushNotificationTitleOverride is null") {
                 assertThat(joinedRoomInternalType.pushNotificationTitleOverride).isNull()
             }
         }

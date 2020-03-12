@@ -14,7 +14,7 @@ class DateApiTypeMapperTest : Spek({
         describe("when parsed") {
             val epochTime = DateApiTypeMapper().mapToEpochTime(dateApiTypeString)
 
-            it("then it will be a valid epoch time") {
+            it("then the epochTime will be correct") {
                 assertThat(epochTime).isEqualTo(1492092638000L)
             }
         }
