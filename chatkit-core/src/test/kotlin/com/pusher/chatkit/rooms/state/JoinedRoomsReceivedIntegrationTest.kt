@@ -4,11 +4,9 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.state.LeftRoom
-import com.pusher.chatkit.state.ReconnectJoinedRoom
-import com.pusher.chatkit.state.RoomUpdated
-import com.pusher.chatkit.state.State
+import com.pusher.chatkit.state.*
 import com.pusher.chatkit.users.api.UserApiType
+import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
 import com.pusher.chatkit.util.DateApiTypeMapper
@@ -40,10 +38,10 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
     val simpleUser = UserApiType(
         id = "user1",
-        createdAt = "",
-        updatedAt = "",
+        createdAt = "2020-03-12T14:33:20Z",
+        updatedAt = "2020-03-12T14:33:20Z",
         name = "name",
-        avatarURL = null,
+        avatarUrl = null,
         customData = null,
         online = false
     )
@@ -51,6 +49,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
     describe("given existing state with one room") {
         val dateApiTypeMapper = DateApiTypeMapper()
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
+        val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
         val testState = State(joinedRoomsState = JoinedRoomsState(
             rooms = mapOf(
@@ -64,7 +63,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             UserSubscriptionDispatcher(
                 joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 joinedRoomsStateDiffer = differ,
-                dispatcher = dispatcher
+                dispatcher = dispatcher,
+                userApiTypeMapper = userApiTypeMapper
             )
         }
 
@@ -85,8 +85,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             }
 
             it("then no actions are dispatched") {
-                verify(exactly = 0) {
-                    dispatcher(any())
+                verify(exactly = 1) {
+                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                 }
                 confirmVerified(dispatcher)
             }
@@ -115,6 +115,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then ReconnectJoinedRoom is dispatched") {
                 verify(exactly = 1) {
+                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(
                         ReconnectJoinedRoom(
                             room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms.last()),
@@ -139,6 +140,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the LeftRoom action is dispatched") {
                 verify(exactly = 1) {
+                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(LeftRoom(roomId = "id1"))
                 }
                 confirmVerified(dispatcher)
@@ -163,6 +165,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the RoomUpdated action is dispatched") {
                 verify(exactly = 1) {
+                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
                     ))
@@ -175,6 +178,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
     describe("given existing state with two rooms") {
         val dateApiTypeMapper = DateApiTypeMapper()
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
+        val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
         val testState = State(joinedRoomsState = JoinedRoomsState(
             rooms = mapOf(
@@ -190,7 +194,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             UserSubscriptionDispatcher(
                 joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 joinedRoomsStateDiffer = differ,
-                dispatcher = dispatcher
+                dispatcher = dispatcher,
+                userApiTypeMapper = userApiTypeMapper
             )
         }
 
@@ -217,6 +222,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the correct actions will be dispatched") {
                 verify(exactly = 1) {
+                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
+                    dispatcher(CurrentUserReceived(currentUser = userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
                     ))
