@@ -53,8 +53,12 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
         val testState = State(joinedRoomsState = JoinedRoomsState(
-            rooms = mapOf("id1" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOne)),
-            unreadCounts = mapOf("id1" to 1)))
+            rooms = mapOf(
+                "id1" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOne)
+            ),
+            unreadCounts = mapOf(
+                "id1" to 1))
+        )
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
@@ -91,7 +95,10 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         describe("when a new InitialState event is received with a new room") {
             val event = UserSubscriptionEvent.InitialState(
                 currentUser = simpleUser,
-                rooms = listOf(roomApiTypeOne, roomApiTypeTwo),
+                rooms = listOf(
+                    roomApiTypeOne,
+                    roomApiTypeTwo
+                ),
                 readStates = listOf(
                     RoomReadStateApiType("id1", 1, null),
                     RoomReadStateApiType("id2", 2, null)
@@ -187,10 +194,13 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             )
         }
 
-        describe("when a second InitialState event is received with many changes") {
+        describe("when a second InitialState event is received with several changes") {
             val event = UserSubscriptionEvent.InitialState(
                 currentUser = simpleUser,
-                rooms = listOf(roomApiTypeOneUpdated, roomApiTypeThree),
+                rooms = listOf(
+                    roomApiTypeOneUpdated,
+                    roomApiTypeThree
+                ),
                 readStates = listOf(
                     RoomReadStateApiType("id1", 4, null),
                     RoomReadStateApiType("id3", 3, null)
@@ -205,7 +215,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
                 userSubscriptionDispatcher.onEvent(event)
             }
 
-            it("then the correct actions should be dispatched") {
+            it("then the correct actions will be dispatched") {
                 verify(exactly = 1) {
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
