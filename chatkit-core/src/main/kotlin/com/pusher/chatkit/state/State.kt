@@ -14,7 +14,7 @@ internal data class State(
         fun initial() = State(
             joinedRoomsState = null,
             currentUser = null
-            )
+        )
     }
 
     fun with(joinedRoomsState: JoinedRoomsState, auxiliaryState: AuxiliaryState) = copy(
