@@ -1,5 +1,6 @@
 package com.pusher.chatkit
 
+import com.pusher.CoreBuildConfig
 import com.pusher.SdkInfo
 import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.PlatformDependencies
@@ -48,4 +49,4 @@ class NullMediaTypeResolver : MediaTypeResolver {
     override fun fileMediaType(file: File): String? = null
 }
 
-internal const val SDK_VERSION = "2.0.0-alpha1" // should match VERSION_NAME in parent's gradle.properties
+internal const val SDK_VERSION = CoreBuildConfig.VERSION
