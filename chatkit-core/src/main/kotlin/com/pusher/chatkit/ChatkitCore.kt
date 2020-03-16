@@ -12,7 +12,7 @@ import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
 /**
- * The entry point for JVM apps to connect with the backend service
+ * The entry point for JVM (non-Android) apps to connect with the backend service
  * and retrieve [ChatkitCore] instance for further interaction with the SDK.
  */
 class ChatkitCoreConnector {
