@@ -121,8 +121,8 @@ object ChatkitTokenProviderTest : Spek({
             }
             val provider = createTestProvider(client = mockOkHttpClient)
 
-            val firstResult = provider.fetchToken(null).wait().assumeSuccess()
-            val secondResult = provider.fetchToken(null).wait().assumeSuccess()
+            provider.fetchToken(null).wait().assumeSuccess()
+            provider.fetchToken(null).wait().assumeSuccess()
 
             verify(mockOkHttpClient, times(1)).newCall(notNull())
         }
