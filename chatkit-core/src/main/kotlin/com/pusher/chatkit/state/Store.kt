@@ -19,9 +19,9 @@ internal val createStoreModule: () -> Module = {
     }
 }
 
-internal typealias Store = org.reduxkotlin.Store<ChatkitState>
+private typealias Store = org.reduxkotlin.Store<State>
 
-internal typealias StoreObserver = (ChatkitState) -> Unit
+internal typealias StoreObserver = (State) -> Unit
 
 internal class StoreSubscriber(private val store: Store) : (StoreObserver) -> StoreSubscription {
 
@@ -57,5 +57,5 @@ private val store = createStore(
         leftRoomReducer,
         roomDeletedReducer
     ),
-    ChatkitState.initial()
+    State.initial()
 )
