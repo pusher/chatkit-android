@@ -2,20 +2,17 @@ package com.pusher.chatkit.state
 
 import com.pusher.chatkit.rooms.state.JoinedRoomsState
 
-@Suppress("CopyWithoutNamedArguments") // auxiliaryState (legible) passes as first param many times
 internal data class State(
-    val auxiliaryState: AuxiliaryState = AuxiliaryState.initial(),
     val joinedRoomsState: JoinedRoomsState?
 ) {
 
     companion object {
         fun initial() = State(
-                joinedRoomsState = null
+            joinedRoomsState = null
         )
     }
 
-    fun with(joinedRoomsState: JoinedRoomsState, auxiliaryState: AuxiliaryState) = copy(
-        auxiliaryState = auxiliaryState,
+    fun with(joinedRoomsState: JoinedRoomsState) = copy(
         joinedRoomsState = joinedRoomsState
     )
 }

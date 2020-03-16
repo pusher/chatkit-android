@@ -12,7 +12,6 @@ internal val roomDeletedReducer =
             JoinedRoomsState(
                 state.joinedRoomsState.rooms - action.roomId,
                 state.joinedRoomsState.unreadCounts - action.roomId
-            ),
-            state.auxiliaryState.with(action)
+            )
         )
     }
