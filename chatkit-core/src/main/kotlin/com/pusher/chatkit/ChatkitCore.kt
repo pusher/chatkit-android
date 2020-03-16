@@ -22,7 +22,8 @@ class ChatkitCoreConnector {
      * using passed [TokenProvider][com.pusher.platform.tokenProvider.TokenProvider]
      * (for authentication and user identification) and additional optional dependencies.
      *
-     * @param instanceLocator available in the [dashboard](https://dash.pusher.com/chatkit/)
+     * @param instanceLocator value that can be found in
+     * the [dashboard](https://dash.pusher.com/chatkit/)
      * (under the Credentials tab of a selected instance)
      * @param dependencies used for passing your [TokenProvider][com.pusher.platform.tokenProvider.TokenProvider]
      * alongside optional dependencies like your [Logger][com.pusher.platform.logger.Logger]
