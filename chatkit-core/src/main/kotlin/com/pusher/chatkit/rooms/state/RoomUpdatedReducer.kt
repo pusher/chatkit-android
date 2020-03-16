@@ -8,9 +8,11 @@ internal val roomUpdatedReducer =
     reducerForActionType<State, RoomUpdated> { state, action ->
         checkNotNull(state.joinedRoomsState)
 
+        val joinedRoom = action.room.id to action.room
+
         state.with(
-            joinedRoomsState = JoinedRoomsState(
-                state.joinedRoomsState.rooms.plus(action.room.id to action.room),
+            JoinedRoomsState(
+                state.joinedRoomsState.rooms + joinedRoom,
                 state.joinedRoomsState.unreadCounts
             )
         )
