@@ -112,7 +112,7 @@ private data class TokenResponse(
 )
 
 /**
- * Default token expiry tolerance — 10 minutes.
+ * Default token expiry tolerance of 10 minutes.
  */
 const val CACHE_EXPIRY_TOLERANCE = 10 * 60
 
