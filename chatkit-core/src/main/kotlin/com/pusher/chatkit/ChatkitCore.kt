@@ -64,7 +64,7 @@ class ChatkitCoreConnector {
      * trying to connect
      */
     fun connect(resultHandler: (Result<ChatkitCore, Error>) -> Unit) {
-        // ...
+        // TODO: implement
         resultHandler(ChatkitCore().asSuccess())
     }
 }

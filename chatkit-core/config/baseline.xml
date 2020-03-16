@@ -2,6 +2,7 @@
 <SmellBaseline>
   <Blacklist></Blacklist>
   <Whitelist>
+    <ID>ForbiddenComment:ChatkitCore.kt$ChatkitCoreConnector$// TODO: implement</ID>
     <ID>ForbiddenComment:ChatkitTokenProvider.kt$// TODO: needs more refinements, essentially userId, authData -&gt; queryParameters, headers</ID>
     <ID>ForbiddenComment:PlatformClient.kt$PlatformClient$// TODO: make internal, there are problems with Beams code that exposes it that need to be addressed</ID>
     <ID>ForbiddenComment:UserSubscriber.kt$UserSubscriber$// TODO: handle onEnd, e.g. when tackling connection status (terminal/non-terminal errs)</ID>
