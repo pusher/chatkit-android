@@ -112,11 +112,6 @@ private data class TokenResponse(
 )
 
 /**
- * Default token expiry tolerance of 10 minutes.
- */
-const val CACHE_EXPIRY_TOLERANCE = 10 * 60
-
-/**
  * Interface for token cached used by [ChatkitTokenProvider].
  */
 interface TokenCache {
@@ -152,7 +147,8 @@ internal class InMemoryTokenCache(private val clock: Clock) : TokenCache {
 
     override fun cache(token: String, expiresIn: Long) {
         this.token = token
-        this.expiration = clock.currentTimestampInSeconds() + expiresIn - CACHE_EXPIRY_TOLERANCE
+        this.expiration = clock.currentTimestampInSeconds() + expiresIn -
+            CACHE_EXPIRY_TOLERANCE_IN_SECONDS
     }
 
     override fun getTokenFromCache(): String? {
@@ -166,6 +162,13 @@ internal class InMemoryTokenCache(private val clock: Clock) : TokenCache {
     override fun clearCache() {
         token = null
         expiration = -1
+    }
+
+    private companion object {
+        /**
+         * Token expiry tolerance of 10 minutes.
+         */
+        const val CACHE_EXPIRY_TOLERANCE_IN_SECONDS = 10 * 60
     }
 }
 
