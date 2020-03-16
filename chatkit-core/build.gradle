@@ -31,6 +31,9 @@ dependencies {
     testImplementation('com.willowtreeapps.assertk:assertk:0.21'){
         because("we want to use assertk for all tests going forward")
     }
+    testImplementation("io.mockk:mockk:1.9.3") {
+        because("mockk is a pure kotlin mocking framework we want to use going forward")
+    }
     testImplementation('com.google.truth:truth:0.40'){
         because("google truth is used for existing v1 tests")
     }
@@ -177,4 +180,10 @@ jacocoTestReport {
     reports.xml.enabled = true
     reports.html.enabled = false
     reports.csv.enabled = false
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
 }
