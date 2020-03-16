@@ -9,5 +9,7 @@ internal val joinedRoomsReceivedReducer =
 
         val joinedRooms = action.rooms.map { it.id to it }.toMap()
         val joinedRoomsState = JoinedRoomsState(joinedRooms, action.unreadCounts)
-        state.with(joinedRoomsState, state.auxiliaryState.with(action))
-}
+        state.with(
+            joinedRoomsState = joinedRoomsState
+        )
+    }
