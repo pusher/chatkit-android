@@ -2,15 +2,15 @@ package com.pusher.chatkit.rooms.state
 
 import assertk.assertThat
 import assertk.assertions.isNotNull
-import com.pusher.chatkit.state.ChatkitState
 import com.pusher.chatkit.state.JoinedRoom
+import com.pusher.chatkit.state.State
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 class JoinedRoomTest : Spek({
 
     describe("given no rooms") {
-        val givenState = ChatkitState(joinedRoomsState = JoinedRoomsState(
+        val givenState = State(joinedRoomsState = JoinedRoomsState(
             rooms = emptyMap(),
             unreadCounts = emptyMap()
         ))
@@ -34,7 +34,7 @@ class JoinedRoomTest : Spek({
     }
 
     describe("given one room") {
-        val givenState = ChatkitState(joinedRoomsState = JoinedRoomsState(
+        val givenState = State(joinedRoomsState = JoinedRoomsState(
             rooms = mapOf(
                 roomOneId to roomOne
             ),
