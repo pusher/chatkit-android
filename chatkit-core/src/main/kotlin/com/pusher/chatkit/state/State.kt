@@ -1,18 +1,16 @@
 package com.pusher.chatkit.state
 
-import com.pusher.chatkit.rooms.state.JoinedRoomsState
-
 internal data class State(
-    val joinedRoomsState: JoinedRoomsState?
+    val chatState: ChatState
 ) {
 
     companion object {
         fun initial() = State(
-            joinedRoomsState = null
+            chatState = ChatState.initial()
         )
     }
 
-    fun with(joinedRoomsState: JoinedRoomsState) = copy(
-        joinedRoomsState = joinedRoomsState
+    fun with(chatState: ChatState) = copy(
+        chatState = chatState
     )
 }

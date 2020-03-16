@@ -6,12 +6,15 @@ import org.reduxkotlin.reducerForActionType
 
 internal val leftRoomReducer =
     reducerForActionType<State, LeftRoom> { state, action ->
-        checkNotNull(state.joinedRoomsState)
+        val chatState = state.chatState
+        checkNotNull(chatState.joinedRoomsState)
 
         state.with(
-            JoinedRoomsState(
-                state.joinedRoomsState.rooms - action.roomId,
-                state.joinedRoomsState.unreadCounts - action.roomId
+            chatState.with(
+                JoinedRoomsState(
+                    chatState.joinedRoomsState.rooms - action.roomId,
+                    chatState.joinedRoomsState.unreadCounts - action.roomId
+                )
             )
         )
     }

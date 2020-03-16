@@ -6,9 +6,12 @@ import org.reduxkotlin.reducerForActionType
 
 internal val joinedRoomsReceivedReducer =
     reducerForActionType<State, JoinedRoomsReceived> { state, action ->
+        val chatState = state.chatState
 
         val joinedRooms = action.rooms.map { it.id to it }.toMap()
         val joinedRoomsState = JoinedRoomsState(joinedRooms, action.unreadCounts)
 
-        state.with(joinedRoomsState)
+        state.with(
+            chatState.with(joinedRoomsState)
+        )
     }
