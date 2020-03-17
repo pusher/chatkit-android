@@ -42,12 +42,8 @@ class JoinedRoomTest : Spek({
         val givenState = State.initial().with(
             ChatState.initial().with(
                 joinedRoomsState = JoinedRoomsState(
-                    rooms = mapOf(
-                        roomOneId to roomOne
-                    ),
-                    unreadCounts = mapOf(
-                        roomOneId to 1
-                    )
+                    rooms = mapOf(roomOneId to roomOne),
+                    unreadCounts = mapOf(roomOneId to 1)
                 )
             )
         )
@@ -57,17 +53,21 @@ class JoinedRoomTest : Spek({
             val newState = joinedRoomReducer(givenState, joinedRoom)
 
             it("then the state contains the expected room") {
-                assertThat(newState.chatState.joinedRoomsState).isNotNull().containsOnly(
-                    roomOneId to roomOne,
-                    roomTwoId to roomTwo
-                )
+                assertThat(newState.chatState.joinedRoomsState)
+                    .isNotNull()
+                    .containsOnly(
+                        roomOneId to roomOne,
+                        roomTwoId to roomTwo
+                    )
             }
 
             it("then the state contains the expected unread count") {
-                assertThat(newState.chatState.joinedRoomsState).isNotNull().containsOnlyUnreadCounts(
-                    roomOneId to 1,
-                    roomTwoId to 2
-                )
+                assertThat(newState.chatState.joinedRoomsState)
+                    .isNotNull()
+                    .containsOnlyUnreadCounts(
+                        roomOneId to 1,
+                        roomTwoId to 2
+                    )
             }
         }
     }
