@@ -41,10 +41,6 @@ class UserApiTypeMapperTest : Spek({
                 assertThat(userInternalType.avatarUrl).isEqualTo(userApiType.avatarUrl)
             }
 
-            it("then the online matches") {
-                assertThat(userInternalType.online).isEqualTo(userApiType.online)
-            }
-
             it("then the created at matches") {
                 assertThat(userInternalType.createdAt).isEqualTo(1583422281000L)
             }
@@ -75,10 +71,6 @@ class UserApiTypeMapperTest : Spek({
 
             it("then the avat url will be null") {
                 assertThat(userInternalType.avatarUrl).isNull()
-            }
-
-            it("then the online status will be offline") {
-                assertThat(userInternalType.online).isEqualTo(false)
             }
         }
     }

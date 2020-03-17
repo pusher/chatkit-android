@@ -3,7 +3,7 @@ package com.pusher.chatkit.users.api
 import com.pusher.chatkit.users.state.UserInternalType
 import com.pusher.chatkit.util.DateApiTypeMapper
 
-internal class UserApiTypeMapper(val dateApiTypeMapper: DateApiTypeMapper) {
+internal class UserApiTypeMapper(private val dateApiTypeMapper: DateApiTypeMapper) {
     fun toUserInternalType(user: UserApiType): UserInternalType {
         return UserInternalType(
             id = user.id,
@@ -11,8 +11,7 @@ internal class UserApiTypeMapper(val dateApiTypeMapper: DateApiTypeMapper) {
             name = user.name,
             avatarUrl = user.avatarUrl,
             updatedAt = dateApiTypeMapper.mapToEpochTime(user.updatedAt),
-            customData = user.customData,
-            online = user.online
+            customData = user.customData
         )
     }
 }

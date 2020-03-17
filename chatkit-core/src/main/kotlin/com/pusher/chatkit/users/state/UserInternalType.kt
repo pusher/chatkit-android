@@ -8,6 +8,5 @@ internal data class UserInternalType(
     val updatedAt: Long,
     val name: String?,
     val avatarUrl: String?,
-    val customData: CustomData?,
-    var online: Boolean = false
+    val customData: CustomData?
 )
