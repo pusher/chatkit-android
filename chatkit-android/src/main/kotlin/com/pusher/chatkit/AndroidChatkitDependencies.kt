@@ -1,33 +1,28 @@
 package com.pusher.chatkit
 
 import android.content.Context
-import com.pusher.SdkInfo
-import com.pusher.platform.AndroidDependencies
-import com.pusher.platform.PlatformDependencies
+import com.pusher.platform.AndroidMediaTypeResolver
+import com.pusher.platform.MediaTypeResolver
 import com.pusher.platform.logger.Logger
 import com.pusher.platform.tokenProvider.TokenProvider
-import okhttp3.OkHttpClient
 
 /**
- * [ChatkitDependencies] implementation for Android using [AndroidDependencies] to fulfil [PlatformDependencies].
+ * Dependencies used to configure the Chatkit SDK, primarily to set your Android [Context] and
+ * [TokenProvider], as well as optionally other dependencies like your [Logger].
+ *
+ * @param context Android context used for string formatting in ViewModels respecting
+ * device settings and for push notifications (usually [android.app.Application] but if you use
+ * the SDK just in a shorter-lived scope like [android.app.Activity] you can pass it as well)
+ * @param tokenProvider for providing your JWT auth tokens, depending on your backend you may
+ * consider using the existing [ChatkitTokenProvider] implementation
+ * @param logger pass if you want the SDK to log messages
  */
-data class AndroidChatkitDependencies @JvmOverloads constructor(
-    override val tokenProvider: TokenProvider,
-    override val okHttpClient: OkHttpClient? = null,
-    private val platformDependencies: PlatformDependencies = AndroidDependencies(),
-    override val logger: Logger = platformDependencies.logger,
-    private val context: Context? = null
-) : ChatkitDependencies {
+class AndroidChatkitDependencies @JvmOverloads constructor(
+    val context: Context,
+    tokenProvider: TokenProvider,
+    override val logger: Logger = EmptyLogger()
+) : ChatkitDependencies(tokenProvider) {
 
-    override val mediaTypeResolver = platformDependencies.mediaTypeResolver
-    override val appHooks = AndroidAppHookEmitter()
-    override val pushNotifications =
-            if (context != null) BeamsPushNotificationsFactory(context) else null
-
-    override val sdkInfo = SdkInfo(
-            product = "Chatkit",
-            sdkVersion = BuildConfig.VERSION_NAME,
-            platform = "Android",
-            language = "Kotlin/Java"
-    )
+    override val mediaTypeResolver: MediaTypeResolver = AndroidMediaTypeResolver()
+    override val sdkInfo = super.sdkInfo.copy(platform = "Android")
 }

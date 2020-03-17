@@ -6,9 +6,6 @@ import com.pusher.platform.logger.Logger
 import com.pusher.platform.loggingListeners
 import com.pusher.platform.network.DataParser
 
-// Implements a subscription that can be used to resolve subscriptions
-// either on opening a subscription (default behaviour) or
-// on receiving the first event on the subscription
 internal fun <A> loggingSubscription(
     path: String,
     client: PlatformClient,
@@ -16,7 +13,7 @@ internal fun <A> loggingSubscription(
     messageParser: DataParser<A>,
     logger: Logger,
     description: String
-) = client.subscribeResuming(
+) = client.subscribe(
         path = path,
         listeners = SubscriptionListeners.compose(
                 loggingListeners(description, logger),
