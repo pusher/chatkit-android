@@ -238,7 +238,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             it("then the correct actions will be dispatched") {
                 verify(exactly = 1) {
                     dispatcher(CurrentUserReceived(
-                        currentUser =  userApiTypeMapper.toUserInternalType(simpleUser)
+                        currentUser = userApiTypeMapper.toUserInternalType(simpleUser)
                     ))
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
