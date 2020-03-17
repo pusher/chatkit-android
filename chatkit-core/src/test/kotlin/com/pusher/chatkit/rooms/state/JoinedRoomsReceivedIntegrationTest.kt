@@ -72,9 +72,9 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
                 joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
+                userApiTypeMapper = userApiTypeMapper,
                 joinedRoomsStateDiffer = differ,
-                dispatcher = dispatcher,
-                userApiTypeMapper = userApiTypeMapper
+                dispatcher = dispatcher
             )
         }
 
@@ -94,7 +94,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
                 userSubscriptionDispatcher.onEvent(event)
             }
 
-            it("then no actions are dispatched") {
+            it("then only CurrentUserReceived is dispatched") {
                 verify(exactly = 1) {
                     dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                 }
@@ -208,9 +208,9 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
                 joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
+                userApiTypeMapper = userApiTypeMapper,
                 joinedRoomsStateDiffer = differ,
-                dispatcher = dispatcher,
-                userApiTypeMapper = userApiTypeMapper
+                dispatcher = dispatcher
             )
         }
 
@@ -237,8 +237,9 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the correct actions will be dispatched") {
                 verify(exactly = 1) {
-                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
-                    dispatcher(CurrentUserReceived(currentUser = userApiTypeMapper.toUserInternalType(simpleUser)))
+                    dispatcher(CurrentUserReceived(
+                        currentUser =  userApiTypeMapper.toUserInternalType(simpleUser)
+                    ))
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
                     ))

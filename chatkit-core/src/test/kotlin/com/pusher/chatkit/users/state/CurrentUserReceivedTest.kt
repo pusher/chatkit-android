@@ -34,10 +34,9 @@ class CurrentUserReceivedTest : Spek({
 
     describe("given a current user") {
 
-        val initialState = State(
-            ChatState(
-                currentUser = simpleUser,
-                joinedRoomsState = null
+        val initialState = State.initial().with(
+            ChatState.initial().with(
+                currentUser = simpleUser
             )
         )
 
