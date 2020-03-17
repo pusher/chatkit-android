@@ -1,17 +1,16 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.LeftRoom
-import com.pusher.chatkit.state.State
-import org.reduxkotlin.reducerForActionType
+import com.pusher.chatkit.state.chatStateReducer
 
 internal val leftRoomReducer =
-    reducerForActionType<State, LeftRoom> { state, action ->
-        checkNotNull(state.joinedRoomsState)
+    chatStateReducer<LeftRoom> { chatState, action ->
+        checkNotNull(chatState.joinedRoomsState)
 
-        state.with(
+        chatState.with(
             JoinedRoomsState(
-                state.joinedRoomsState.rooms - action.roomId,
-                state.joinedRoomsState.unreadCounts - action.roomId
+                chatState.joinedRoomsState.rooms - action.roomId,
+                chatState.joinedRoomsState.unreadCounts - action.roomId
             )
         )
     }
