@@ -6,7 +6,7 @@ import org.reduxkotlin.reducerForActionType
 /**
  * Create a reducer for the whole State
  */
-internal inline fun <reified TAction> stateReducer(
+private inline fun <reified TAction> stateReducer(
     crossinline reducer: ReducerForActionType<State, TAction>
 ) = reducerForActionType<State, TAction> { state, action ->
     reducer(state, action)
