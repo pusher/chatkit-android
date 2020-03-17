@@ -55,33 +55,17 @@ object ChatkitTokenProviderTest : Spek({
             assertThat(token).isEqualTo("goodToken")
         }
 
-        it("provides ChatkitTokenParams as part of request") {
+        it("encodes passed authData within the request body") {
+            val testAuthData = mapOf("key" to "value")
+            val okHttpClientMockExpectingTestAuthData = mock<OkHttpClient> {
+                newCall(argThat {
+                    it.url().toString() == "https://localhost/?user_id=pusherino" &&
+                        it.body().toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
+                }) returnsStub withSuccess()
+            }
             val provider = createTestProvider(
-                authData = { mapOf("key" to "value") },
-                client = mock {
-                    newCall(argThat {
-                        it.url().toString() == "https://localhost/?user_id=pusherino" &&
-                            it.body()
-                                .toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
-                    }) returnsStub withSuccess()
-                }
-            )
-
-            val token = provider.fetchToken(null).wait().assumeSuccess()
-
-            assertThat(token).isEqualTo("goodToken")
-        }
-
-        it("provides CustomData as part of request") {
-            val provider = createTestProvider(
-                authData = { mapOf("key" to "value") },
-                client = mock {
-                    newCall(argThat {
-                        it.url().toString() == "https://localhost/?user_id=pusherino" &&
-                            it.body()
-                                .toBuffer() == "grant_type=client_credentials&key=value".toBuffer()
-                    }) returnsStub withSuccess()
-                }
+                authData = { testAuthData },
+                client = okHttpClientMockExpectingTestAuthData
             )
 
             val token = provider.fetchToken(null).wait().assumeSuccess()
