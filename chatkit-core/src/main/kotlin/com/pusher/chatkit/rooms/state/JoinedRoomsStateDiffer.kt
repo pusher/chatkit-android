@@ -9,7 +9,7 @@ import org.reduxkotlin.GetState
 
 internal class JoinedRoomsStateDiffer(private val stateGetter: GetState<State>) {
 
-    fun stateExists() = stateGetter().joinedRoomsState != null
+    fun stateExists() = stateGetter().chatState.joinedRoomsState != null
 
     fun toActions(
         newRooms: List<JoinedRoomInternalType>,
@@ -19,7 +19,7 @@ internal class JoinedRoomsStateDiffer(private val stateGetter: GetState<State>) 
             roomUpdatedActions(newRooms) +
             leftRoomActions(newRooms)
 
-    private val currentRooms get() = stateGetter().joinedRoomsState!!.rooms
+    private val currentRooms get() = stateGetter().chatState.joinedRoomsState!!.rooms
 
     private fun joinedRoomActions(
         newRooms: List<JoinedRoomInternalType>,

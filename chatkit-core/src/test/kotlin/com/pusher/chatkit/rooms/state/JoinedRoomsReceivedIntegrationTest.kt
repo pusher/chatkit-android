@@ -5,6 +5,7 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.state.CurrentUserReceived
+import com.pusher.chatkit.state.ChatState
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.ReconnectJoinedRoom
 import com.pusher.chatkit.state.RoomUpdated
@@ -55,12 +56,17 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
-        val testState = State(joinedRoomsState = JoinedRoomsState(
-            rooms = mapOf(
-                "id1" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOne)
-            ),
-            unreadCounts = mapOf(
-                "id1" to 1))
+        val testState = State.initial().with(
+            ChatState.initial().with(
+                JoinedRoomsState(
+                    rooms = mapOf(
+                        "id1" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOne)
+                    ),
+                    unreadCounts = mapOf(
+                        "id1" to 1
+                    )
+                )
+            )
         )
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
@@ -184,15 +190,20 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
-        val testState = State(joinedRoomsState = JoinedRoomsState(
-            rooms = mapOf(
-                "id1" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOne),
-                "id2" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeTwo)
-            ),
-            unreadCounts = mapOf(
-                "id1" to 1,
-                "id2" to 2
-            )))
+        val testState = State.initial().with(
+            ChatState.initial().with(
+                JoinedRoomsState(
+                    rooms = mapOf(
+                        "id1" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOne),
+                        "id2" to joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeTwo)
+                    ),
+                    unreadCounts = mapOf(
+                        "id1" to 1,
+                        "id2" to 2
+                    )
+                )
+            )
+        )
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(

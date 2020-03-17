@@ -16,7 +16,7 @@ class JoinedRoomsStateDifferTest : Spek({
 
     describe("given one room") {
         val state = mockk<GetState<State>>(relaxed = true)
-        every { state().joinedRoomsState } returns JoinedRoomsState(
+        every { state().chatState.joinedRoomsState } returns JoinedRoomsState(
             rooms = mapOf(roomOneId to roomOne),
             unreadCounts = mapOf(roomOneId to 1)
         )
@@ -35,7 +35,7 @@ class JoinedRoomsStateDifferTest : Spek({
 
     describe("given two rooms") {
         val state = mockk<GetState<State>>()
-        every { state().joinedRoomsState } returns JoinedRoomsState(
+        every { state().chatState.joinedRoomsState } returns JoinedRoomsState(
             rooms = mapOf(roomOneId to roomOne, roomTwoId to roomTwo),
             unreadCounts = mapOf(roomOneId to 1, roomTwoId to 2)
         )
