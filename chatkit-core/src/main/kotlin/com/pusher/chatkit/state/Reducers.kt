@@ -4,10 +4,9 @@ import org.reduxkotlin.ReducerForActionType
 import org.reduxkotlin.reducerForActionType
 
 /**
- * Convenience method to create a reducer with operates only on the ChatState section of the State
- * hierarchy.
+ * Create a slice reducer for ChatState branch
  */
-internal inline fun <reified TAction> chatReducerForActionType(
+internal inline fun <reified TAction> chatStateReducer(
     crossinline reducer: ReducerForActionType<ChatState, TAction>
 ) = reducerForActionType<State, TAction> { state, action ->
     state.with(

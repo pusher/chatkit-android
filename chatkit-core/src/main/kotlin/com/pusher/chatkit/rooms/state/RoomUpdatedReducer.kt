@@ -1,10 +1,10 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.RoomUpdated
-import com.pusher.chatkit.state.chatReducerForActionType
+import com.pusher.chatkit.state.chatStateReducer
 
 internal val roomUpdatedReducer =
-    chatReducerForActionType<RoomUpdated> { chatState, action ->
+    chatStateReducer<RoomUpdated> { chatState, action ->
         checkNotNull(chatState.joinedRoomsState)
 
         val joinedRoom = action.room.id to action.room

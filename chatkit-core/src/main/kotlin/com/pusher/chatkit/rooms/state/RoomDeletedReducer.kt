@@ -1,10 +1,10 @@
 package com.pusher.chatkit.rooms.state
 
 import com.pusher.chatkit.state.RoomDeleted
-import com.pusher.chatkit.state.chatReducerForActionType
+import com.pusher.chatkit.state.chatStateReducer
 
 internal val roomDeletedReducer =
-    chatReducerForActionType<RoomDeleted> { chatState, action ->
+    chatStateReducer<RoomDeleted> { chatState, action ->
         checkNotNull(chatState.joinedRoomsState)
 
         chatState.with(
