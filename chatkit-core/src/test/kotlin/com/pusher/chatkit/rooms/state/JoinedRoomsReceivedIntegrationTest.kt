@@ -4,8 +4,8 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.ChatState
+import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.ReconnectJoinedRoom
 import com.pusher.chatkit.state.RoomUpdated

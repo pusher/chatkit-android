@@ -2,6 +2,7 @@ package com.pusher.chatkit.users.state
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.pusher.chatkit.state.ChatState
 import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.State
 import org.spekframework.spek2.Spek
@@ -26,13 +27,19 @@ class CurrentUserReceivedTest : Spek({
             val newState = currentUserReceivedReducer(initialState, currentUserReceived)
 
             it("then the state contains the current user") {
-                assertThat(newState.currentUser).isEqualTo(simpleUser)
+                assertThat(newState.chatState.currentUser).isEqualTo(simpleUser)
             }
         }
     }
 
     describe("given a current user") {
-        val initialState = State(currentUser = simpleUser)
+
+        val initialState = State(
+            ChatState(
+                currentUser = simpleUser,
+                joinedRoomsState = null
+            )
+        )
 
         describe("when a current user is received") {
             val currentUserInternalType = UserInternalType(
@@ -47,7 +54,7 @@ class CurrentUserReceivedTest : Spek({
             val newState = currentUserReceivedReducer(initialState, currentUserReceived)
 
             it("then the state contains the current user") {
-                assertThat(newState.currentUser).isEqualTo(currentUserInternalType)
+                assertThat(newState.chatState.currentUser).isEqualTo(currentUserInternalType)
             }
         }
     }
