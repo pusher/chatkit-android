@@ -14,10 +14,10 @@ class UserApiTypeMapperTest : Spek({
         val userApiType = UserApiType(
             id = "alice",
             createdAt = "2020-03-05T15:31:21Z",
+            updatedAt = "2020-03-05T15:31:42Z",
             name = "alice",
             customData = mapOf("item" to "data"),
-            avatarUrl = "http://placekitten.com/200/200",
-            updatedAt = "2020-03-05T15:31:42Z"
+            avatarUrl = "http://placekitten.com/200/200"
         )
         describe("when mapped to a UserInternalType") {
             val dateApiTypeMapper = DateApiTypeMapper()
@@ -54,10 +54,10 @@ class UserApiTypeMapperTest : Spek({
         val userApiType = UserApiType(
             id = "alice",
             createdAt = "2020-03-05T15:31:21Z",
+            updatedAt = "2020-03-05T15:31:42Z",
             name = "alice",
             customData = null,
-            avatarUrl = null,
-            updatedAt = "2020-03-05T15:31:42Z"
+            avatarUrl = null
         )
         describe("when mapped to a UserInternalType") {
             val dateApiTypeMapper = DateApiTypeMapper()
