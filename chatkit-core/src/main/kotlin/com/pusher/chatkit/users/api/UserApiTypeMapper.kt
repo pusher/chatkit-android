@@ -8,9 +8,9 @@ internal class UserApiTypeMapper(private val dateApiTypeMapper: DateApiTypeMappe
         return UserInternalType(
             id = user.id,
             createdAt = dateApiTypeMapper.mapToEpochTime(user.createdAt),
+            updatedAt = dateApiTypeMapper.mapToEpochTime(user.updatedAt),
             name = user.name,
             avatarUrl = user.avatarUrl,
-            updatedAt = dateApiTypeMapper.mapToEpochTime(user.updatedAt),
             customData = user.customData
         )
     }
