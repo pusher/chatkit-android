@@ -94,7 +94,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
                 userSubscriptionDispatcher.onEvent(event.asElementsEvent())
             }
 
-            it("then no joined rooms differ actions are dispatched") {
+            it("then no joined rooms actions are dispatched") {
                 verify(exactly = 0) {
                     dispatcher(mockk<JoinedRoomsReceived>())
                     dispatcher(mockk<JoinedRoom>())
