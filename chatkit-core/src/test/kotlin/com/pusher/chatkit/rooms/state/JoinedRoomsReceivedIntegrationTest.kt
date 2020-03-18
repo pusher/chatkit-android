@@ -4,18 +4,12 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
-import com.pusher.chatkit.state.ChatState
-import com.pusher.chatkit.state.CurrentUserReceived
-import com.pusher.chatkit.state.LeftRoom
-import com.pusher.chatkit.state.ReconnectJoinedRoom
-import com.pusher.chatkit.state.RoomUpdated
-import com.pusher.chatkit.state.State
+import com.pusher.chatkit.state.*
 import com.pusher.chatkit.users.api.UserApiType
 import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
 import com.pusher.chatkit.util.DateApiTypeMapper
-import io.mockk.confirmVerified
 import io.mockk.mockk
 import io.mockk.verify
 import org.reduxkotlin.Dispatcher
@@ -76,31 +70,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
                 dispatcher
             )
         }
-
-        describe("when the same InitialState event is received") {
-            val event = UserSubscriptionEvent.InitialState(
-                currentUser = simpleUser,
-                rooms = listOf(roomApiTypeOne),
-                readStates = listOf(
-                    RoomReadStateApiType("id1", 1, null)
-                ),
-                memberships = listOf(
-                    RoomMembershipApiType("id1", listOf())
-                )
-            )
-
-            beforeEachTest {
-                userSubscriptionDispatcher.onEvent(event)
-            }
-
-            it("then only CurrentUserReceived is dispatched") {
-                verify(exactly = 1) {
-                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
-                }
-                confirmVerified(dispatcher)
-            }
-        }
-
+        
         describe("when a new InitialState event is received with a new room") {
             val event = UserSubscriptionEvent.InitialState(
                 currentUser = simpleUser,
@@ -124,14 +94,12 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then ReconnectJoinedRoom is dispatched") {
                 verify(exactly = 1) {
-                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(
                         ReconnectJoinedRoom(
                             room = joinedRoomApiTypeMapper.toRoomInternalType(event.rooms.last()),
                             unreadCount = 2
                         ))
                 }
-                confirmVerified(dispatcher)
             }
         }
 
@@ -149,10 +117,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the LeftRoom action is dispatched") {
                 verify(exactly = 1) {
-                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(LeftRoom(roomId = "id1"))
                 }
-                confirmVerified(dispatcher)
             }
         }
 
@@ -174,12 +140,10 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the RoomUpdated action is dispatched") {
                 verify(exactly = 1) {
-                    dispatcher(CurrentUserReceived(userApiTypeMapper.toUserInternalType(simpleUser)))
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
                     ))
                 }
-                confirmVerified(dispatcher)
             }
         }
     }
@@ -236,9 +200,6 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
             it("then the correct actions will be dispatched") {
                 verify(exactly = 1) {
-                    dispatcher(CurrentUserReceived(
-                        currentUser = userApiTypeMapper.toUserInternalType(simpleUser)
-                    ))
                     dispatcher(RoomUpdated(
                         room = joinedRoomApiTypeMapper.toRoomInternalType(roomApiTypeOneUpdated)
                     ))
@@ -248,8 +209,6 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
                         unreadCount = 3
                     ))
                 }
-
-                confirmVerified(dispatcher)
             }
         }
     }
