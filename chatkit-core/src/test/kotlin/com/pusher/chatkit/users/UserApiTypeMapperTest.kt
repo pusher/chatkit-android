@@ -50,7 +50,7 @@ class UserApiTypeMapperTest : Spek({
         }
     }
 
-    describe("given a partially complete UserApiType object") {
+    describe("given a UserApiType with absent optionals") {
         val userApiType = UserApiType(
             id = "alice",
             createdAt = "2020-03-05T15:31:21Z",
