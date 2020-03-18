@@ -16,7 +16,6 @@ class UserApiTypeMapperTest : Spek({
             name = "daniellevass",
             customData = mapOf("item" to "data"),
             avatarUrl = "http://placekitten.com/200/200",
-            online = true,
             createdAt = "2020-03-05T15:31:21Z",
             updatedAt = "2020-03-05T15:31:42Z"
         )
