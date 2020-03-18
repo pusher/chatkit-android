@@ -43,8 +43,7 @@ object UserSubscriptionDispatcherTest : Spek({
         updatedAt = "2020-02-27T17:12:10Z",
         name = "name",
         avatarUrl = null,
-        customData = null,
-        online = false
+        customData = null
     )
 
     describe("given no existing state") {
@@ -53,8 +52,8 @@ object UserSubscriptionDispatcherTest : Spek({
             every { stateExists() } returns false
         }
         val dateApiTypeMapper = DateApiTypeMapper()
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
+        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
             userApiTypeMapper = userApiTypeMapper,
             joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
