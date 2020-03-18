@@ -24,27 +24,27 @@ class UserApiTypeMapperTest : Spek({
             val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
 
-            it("then id matches") {
+            it("then id is correct") {
                 assertThat(userInternalType.id).isEqualTo(userApiType.id)
             }
 
-            it("then name matches") {
+            it("then name is correct") {
                 assertThat(userInternalType.name).isEqualTo(userApiType.name)
             }
 
-            it("then customData matches") {
+            it("then customData is correct") {
                 assertThat(userInternalType.customData).isEqualTo(userApiType.customData)
             }
 
-            it("then avatarUrl matches") {
+            it("then avatarUrl is correct") {
                 assertThat(userInternalType.avatarUrl).isEqualTo(userApiType.avatarUrl)
             }
 
-            it("then created at matches") {
+            it("then created at is correct") {
                 assertThat(userInternalType.createdAt).isEqualTo(1583422281000L)
             }
 
-            it("then updated at matches") {
+            it("then updated at is correct") {
                 assertThat(userInternalType.updatedAt).isEqualTo(1583422302000L)
             }
         }
