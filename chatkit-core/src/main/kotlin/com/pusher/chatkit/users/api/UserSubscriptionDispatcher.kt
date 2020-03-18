@@ -23,9 +23,6 @@ internal class UserSubscriptionDispatcher(
 
     override fun onEvent(elementsEvent: SubscriptionEvent<UserSubscriptionEvent>) {
         when (val event = elementsEvent.body) {
-            is UserSubscriptionEvent.InitialState ->
-    internal fun onEvent(event: UserSubscriptionEvent) {
-        when (event) {
             is UserSubscriptionEvent.InitialState -> {
 
                 dispatcher(CurrentUserReceived(
