@@ -47,14 +47,13 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         updatedAt = "2020-03-12T14:33:20Z",
         name = "name",
         avatarUrl = null,
-        customData = null,
-        online = false
+        customData = null
     )
 
     describe("given existing state with one room") {
         val dateApiTypeMapper = DateApiTypeMapper()
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
+        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
         val testState = State.initial().with(
             ChatState.initial().with(
@@ -71,8 +70,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
-                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 userApiTypeMapper = userApiTypeMapper,
+                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 joinedRoomsStateDiffer = differ,
                 dispatcher = dispatcher
             )
@@ -187,8 +186,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
 
     describe("given existing state with two rooms") {
         val dateApiTypeMapper = DateApiTypeMapper()
-        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
+        val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val dispatcher by memoized { mockk<Dispatcher>(relaxed = true) }
         val testState = State.initial().with(
             ChatState.initial().with(
@@ -207,8 +206,8 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
-                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 userApiTypeMapper = userApiTypeMapper,
+                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
                 joinedRoomsStateDiffer = differ,
                 dispatcher = dispatcher
             )
