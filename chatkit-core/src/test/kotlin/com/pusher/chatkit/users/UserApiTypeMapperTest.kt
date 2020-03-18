@@ -59,7 +59,7 @@ class UserApiTypeMapperTest : Spek({
             avatarUrl = null,
             updatedAt = "2020-03-05T15:31:42Z"
         )
-        describe("when mapped to a UserInternalType object") {
+        describe("when mapped to a UserInternalType") {
             val dateApiTypeMapper = DateApiTypeMapper()
             val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
