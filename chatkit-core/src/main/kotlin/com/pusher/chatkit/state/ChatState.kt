@@ -4,14 +4,14 @@ import com.pusher.chatkit.rooms.state.JoinedRoomsState
 import com.pusher.chatkit.users.state.UserInternalType
 
 internal data class ChatState(
-    val joinedRoomsState: JoinedRoomsState?,
-    val currentUser: UserInternalType?
+    val currentUser: UserInternalType?,
+    val joinedRoomsState: JoinedRoomsState?
 ) {
     companion object {
         fun initial() =
             ChatState(
-                joinedRoomsState = null,
-                currentUser = null
+                currentUser = null,
+                joinedRoomsState = null
             )
     }
 
