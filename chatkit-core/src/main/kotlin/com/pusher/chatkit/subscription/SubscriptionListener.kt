@@ -2,29 +2,27 @@ package com.pusher.chatkit.subscription
 
 import com.pusher.platform.SubscriptionListeners
 import elements.EosError
-import elements.Headers
 import elements.SubscriptionEvent
 
 /**
- * Platform SubscriptionListeners, but as an interface.
+ * Interface for consuming subscription events.
  *
- * In future, consider pushing this interface down in to platform as an alternative to the
- * SubscriptionListeners data-class-full-of-closures approach.
+ * This is a slight simplification of the interface exposed by the platform library.
  */
 internal interface SubscriptionListener<A> {
-    fun onEnd(error: EosError?)
-    fun onError(error: elements.Error)
-    fun onEvent(elementsEvent: SubscriptionEvent<A>)
-    fun onOpen()
-    fun onRetrying()
     fun onSubscribe()
+    fun onOpen()
+    fun onEvent(elementsEvent: SubscriptionEvent<A>)
+    fun onError(error: elements.Error)
+    fun onRetrying()
+    fun onEnd(error: EosError?)
 
     fun asPlatformListeners() = SubscriptionListeners(
-        onEnd = { eosEvent -> onEnd(eosEvent?.error) },
-        onError = ::onError,
-        onEvent = ::onEvent,
+        onSubscribe = ::onSubscribe,
         onOpen = { onOpen() },
+        onEvent = ::onEvent,
+        onError = ::onError,
         onRetrying = ::onRetrying,
-        onSubscribe = ::onSubscribe
+        onEnd = { eosEvent -> onEnd(eosEvent?.error) }
     )
 }
