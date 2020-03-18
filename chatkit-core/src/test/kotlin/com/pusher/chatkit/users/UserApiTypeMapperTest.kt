@@ -19,32 +19,32 @@ class UserApiTypeMapperTest : Spek({
             avatarUrl = "http://placekitten.com/200/200",
             updatedAt = "2020-03-05T15:31:42Z"
         )
-        describe("when mapped to a UserInternalType object") {
+        describe("when mapped to a UserInternalType") {
             val dateApiTypeMapper = DateApiTypeMapper()
             val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
 
-            it("then the id matches") {
+            it("then id matches") {
                 assertThat(userInternalType.id).isEqualTo(userApiType.id)
             }
 
-            it("then the name matches") {
+            it("then name matches") {
                 assertThat(userInternalType.name).isEqualTo(userApiType.name)
             }
 
-            it("then the customData matches") {
+            it("then customData matches") {
                 assertThat(userInternalType.customData).isEqualTo(userApiType.customData)
             }
 
-            it("then the avatarUrl matches") {
+            it("then avatarUrl matches") {
                 assertThat(userInternalType.avatarUrl).isEqualTo(userApiType.avatarUrl)
             }
 
-            it("then the created at matches") {
+            it("then created at matches") {
                 assertThat(userInternalType.createdAt).isEqualTo(1583422281000L)
             }
 
-            it("then the updated at matches") {
+            it("then updated at matches") {
                 assertThat(userInternalType.updatedAt).isEqualTo(1583422302000L)
             }
         }
@@ -64,11 +64,11 @@ class UserApiTypeMapperTest : Spek({
             val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
 
-            it("then the customData will be null") {
+            it("then customData will be null") {
                 assertThat(userInternalType.customData).isNull()
             }
 
-            it("then the avatarUrl will be null") {
+            it("then avatarUrl will be null") {
                 assertThat(userInternalType.avatarUrl).isNull()
             }
         }
