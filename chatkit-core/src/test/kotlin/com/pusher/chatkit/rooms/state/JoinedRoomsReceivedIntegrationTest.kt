@@ -70,10 +70,10 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
-                userApiTypeMapper = userApiTypeMapper,
-                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
-                joinedRoomsStateDiffer = differ,
-                dispatcher = dispatcher
+                userApiTypeMapper,
+                joinedRoomApiTypeMapper,
+                differ,
+                dispatcher
             )
         }
 
@@ -206,10 +206,10 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
         val differ = JoinedRoomsStateDiffer { testState }
         val userSubscriptionDispatcher by memoized {
             UserSubscriptionDispatcher(
-                userApiTypeMapper = userApiTypeMapper,
-                joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
-                joinedRoomsStateDiffer = differ,
-                dispatcher = dispatcher
+                userApiTypeMapper,
+                joinedRoomApiTypeMapper,
+                differ,
+                dispatcher
             )
         }
 
