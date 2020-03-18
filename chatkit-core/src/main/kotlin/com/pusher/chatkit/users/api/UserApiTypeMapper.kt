@@ -4,7 +4,7 @@ import com.pusher.chatkit.users.state.UserInternalType
 import com.pusher.chatkit.util.DateApiTypeMapper
 
 internal class UserApiTypeMapper(private val dateApiTypeMapper: DateApiTypeMapper) {
-    fun toUserInternalType(user: UserApiType): UserInternalType =
+    fun toUserInternalType(user: UserApiType) =
         UserInternalType(
             id = user.id,
             createdAt = dateApiTypeMapper.mapToEpochTime(user.createdAt),
