@@ -10,13 +10,13 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 class UserApiTypeMapperTest : Spek({
-    describe("given a complete UserApiType object") {
+    describe("given a complete UserApiType") {
         val userApiType = UserApiType(
-            id = "danielle",
-            name = "daniellevass",
+            id = "alice",
+            createdAt = "2020-03-05T15:31:21Z",
+            name = "alice",
             customData = mapOf("item" to "data"),
             avatarUrl = "http://placekitten.com/200/200",
-            createdAt = "2020-03-05T15:31:21Z",
             updatedAt = "2020-03-05T15:31:42Z"
         )
         describe("when mapped to a UserInternalType object") {
@@ -52,11 +52,11 @@ class UserApiTypeMapperTest : Spek({
 
     describe("given a partially complete UserApiType object") {
         val userApiType = UserApiType(
-            id = "danielle",
-            name = "daniellevass",
+            id = "alice",
+            createdAt = "2020-03-05T15:31:21Z",
+            name = "alice",
             customData = null,
             avatarUrl = null,
-            createdAt = "2020-03-05T15:31:21Z",
             updatedAt = "2020-03-05T15:31:42Z"
         )
         describe("when mapped to a UserInternalType object") {

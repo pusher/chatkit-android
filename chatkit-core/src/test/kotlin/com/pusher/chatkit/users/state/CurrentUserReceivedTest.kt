@@ -11,10 +11,10 @@ import org.spekframework.spek2.style.specification.describe
 class CurrentUserReceivedTest : Spek({
 
     val simpleUser = UserInternalType(
-        id = "danielle",
+        id = "alice",
         createdAt = 1583422281000L,
         updatedAt = 1583422302000L,
-        name = "daniellevass",
+        name = "alice",
         avatarUrl = null,
         customData = null
     )
@@ -40,20 +40,20 @@ class CurrentUserReceivedTest : Spek({
             )
         )
 
-        describe("when a current user is received") {
-            val currentUserInternalType = UserInternalType(
-                id = "danielle2",
+        describe("when an updated current user is received") {
+            val updatedCurrentUserInternalType = UserInternalType(
+                id = "alice",
                 createdAt = 1583422281000L,
-                updatedAt = 1583422302000L,
-                name = "daniellevass",
-                avatarUrl = null,
-                customData = null
+                updatedAt = 1583422308000L,
+                name = "alice-updated",
+                avatarUrl = "http://placekitten.com/200/200",
+                customData = mapOf("item" to "data")
             )
-            val currentUserReceived = CurrentUserReceived(currentUserInternalType)
+            val currentUserReceived = CurrentUserReceived(updatedCurrentUserInternalType)
             val newState = currentUserReceivedReducer(initialState, currentUserReceived)
 
-            it("then the state contains the current user") {
-                assertThat(newState.chatState.currentUser).isEqualTo(currentUserInternalType)
+            it("then the state contains the updated current user") {
+                assertThat(newState.chatState.currentUser).isEqualTo(updatedCurrentUserInternalType)
             }
         }
     }
