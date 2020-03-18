@@ -5,6 +5,10 @@ import com.pusher.chatkit.rooms.state.joinedRoomsReceivedReducer
 import com.pusher.chatkit.rooms.state.leftRoomReducer
 import com.pusher.chatkit.rooms.state.roomDeletedReducer
 import com.pusher.chatkit.rooms.state.roomUpdatedReducer
+import com.pusher.chatkit.subscription.state.subscriptionEndReducer
+import com.pusher.chatkit.subscription.state.subscriptionErrorReducer
+import com.pusher.chatkit.subscription.state.subscriptionInitializingReducer
+import com.pusher.chatkit.subscription.state.subscriptionOpenReducer
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.reduxkotlin.combineReducers
@@ -51,6 +55,10 @@ internal class Dispatcher(private val store: Store) : (Action) -> Unit {
 
 private val store = createStore(
     combineReducers(
+        subscriptionInitializingReducer,
+        subscriptionOpenReducer,
+        subscriptionErrorReducer,
+        subscriptionEndReducer,
         joinedRoomsReceivedReducer,
         joinedRoomReducer,
         roomUpdatedReducer,

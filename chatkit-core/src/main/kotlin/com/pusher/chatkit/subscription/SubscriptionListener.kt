@@ -2,7 +2,6 @@ package com.pusher.chatkit.subscription
 
 import com.pusher.platform.SubscriptionListeners
 import elements.EosError
-import elements.Headers
 import elements.SubscriptionEvent
 
 /**
