@@ -7,7 +7,9 @@ import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
+import com.pusher.chatkit.state.SubscriptionStateAction
 import com.pusher.chatkit.subscription.SubscriptionListener
+import com.pusher.chatkit.subscription.state.SubscriptionId
 import elements.EosError
 import elements.Error
 import elements.SubscriptionEvent
@@ -54,22 +56,22 @@ internal class UserSubscriptionDispatcher(
     }
 
     override fun onSubscribe() {
-        // Not yet implemented
+        dispatcher(SubscriptionStateAction.Initializing(SubscriptionId.UserSubscription))
     }
 
     override fun onOpen() {
-        // Not yet implemented
+        dispatcher(SubscriptionStateAction.Open(SubscriptionId.UserSubscription))
     }
 
     override fun onRetrying() {
-        // Not yet implemented
+        dispatcher(SubscriptionStateAction.Retrying(SubscriptionId.UserSubscription))
     }
 
     override fun onError(error: Error) {
-        // Not yet implemented
+        dispatcher(SubscriptionStateAction.Error(SubscriptionId.UserSubscription, error))
     }
 
     override fun onEnd(error: EosError?) {
-        // Not yet implemented
+        dispatcher(SubscriptionStateAction.End(SubscriptionId.UserSubscription, error))
     }
 }

@@ -15,6 +15,17 @@ internal inline fun <reified TAction> chatStateReducer(
 }
 
 /**
+ * Create a reducer for the SubscriptionState branch
+ */
+internal inline fun <reified TAction> subscriptionStateReducer(
+    crossinline reducer: ReducerForActionType<SubscriptionState, TAction>
+) = stateReducer<TAction> { state, action ->
+    state.with(
+        subscriptionState = reducer(state.subscriptionState, action)
+    )
+}
+
+/**
  * Create a reducer for the whole State
  */
 private inline fun <reified TAction> stateReducer(
