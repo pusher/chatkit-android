@@ -32,11 +32,11 @@ class UserApiTypeMapperTest : Spek({
                 assertThat(userInternalType.name).isEqualTo(userApiType.name)
             }
 
-            it("then the custom data matches") {
+            it("then the customData matches") {
                 assertThat(userInternalType.customData).isEqualTo(userApiType.customData)
             }
 
-            it("then the avatar url matches") {
+            it("then the avatarUrl matches") {
                 assertThat(userInternalType.avatarUrl).isEqualTo(userApiType.avatarUrl)
             }
 
@@ -64,11 +64,11 @@ class UserApiTypeMapperTest : Spek({
             val userInternalType = UserApiTypeMapper(dateApiTypeMapper)
                 .toUserInternalType(userApiType)
 
-            it("then the custom data will be null") {
+            it("then the customData will be null") {
                 assertThat(userInternalType.customData).isNull()
             }
 
-            it("then the avat url will be null") {
+            it("then the avatarUrl will be null") {
                 assertThat(userInternalType.avatarUrl).isNull()
             }
         }
