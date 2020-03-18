@@ -4,8 +4,6 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiType
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 
-internal typealias UserSubscriptionConsumer = (UserSubscriptionEvent) -> Unit
-
 internal sealed class UserSubscriptionEvent {
 
     internal data class InitialState(
