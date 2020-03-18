@@ -6,6 +6,7 @@ import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
 import com.pusher.chatkit.rooms.state.asElementsEvent
+import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
@@ -75,6 +76,12 @@ object UserSubscriptionDispatcherTest : Spek({
                 verify(exactly = 1) { dispatcher(JoinedRoomsReceived(
                     rooms = joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                     unreadCounts = joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
+                )) }
+            }
+
+            it("then CurrentUserReceived is dispatched") {
+                verify(exactly = 1) { dispatcher(CurrentUserReceived(
+                    currentUser = userApiTypeMapper.toUserInternalType(event.currentUser)
                 )) }
             }
         }
