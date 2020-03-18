@@ -19,6 +19,7 @@ internal class DefaultPlatformClientFactory : PlatformClientFactory {
         PlatformClient(instance, tokenProvider)
 }
 
+// TODO: make internal, there are problems with Beams code that exposes it that need to be addressed
 class PlatformClient(
     private val platformInstance: Instance,
     private val tokenProvider: TokenProvider
@@ -91,12 +92,12 @@ class PlatformClient(
                     responseParser = responseParser
             ).get()
 
-    internal fun <A> subscribeResuming(
+    internal fun <A> subscribe(
         path: String,
         listeners: SubscriptionListeners<A>,
         messageParser: DataParser<A>
     ): Subscription =
-            platformInstance.subscribeResuming(
+            platformInstance.subscribeNonResuming(
                     path = path,
                     tokenProvider = tokenProvider,
                     listeners = listeners,

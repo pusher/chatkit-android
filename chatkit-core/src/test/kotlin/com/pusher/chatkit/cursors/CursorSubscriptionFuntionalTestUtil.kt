@@ -14,7 +14,7 @@ import org.mockito.ArgumentMatchers.startsWith
 internal fun justConnectingCursorSubscription():
         KStubbing<PlatformClient>.(PlatformClient) -> Unit = { client ->
     on {
-        client.subscribeResuming(
+        client.subscribe(
                 path = startsWith("/cursors/0/rooms/"), // read type (0) cursors for any room
                 listeners = any(),
                 messageParser = any<CursorSubscriptionEventParser>()

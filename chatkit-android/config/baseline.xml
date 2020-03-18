@@ -2,14 +2,11 @@
 <SmellBaseline>
   <Blacklist></Blacklist>
   <Whitelist>
-    <ID>MatchingDeclarationName:AndroidAppHooks.kt$AndroidAppHookEmitter : AppHookEmitter</ID>
     <ID>MaxLineLength:BeamsPushNotifications.kt$BeamsPushNotifications$Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))</ID>
     <ID>MaxLineLength:BeamsPushNotifications.kt$BeamsPushNotifications$pushNotificationsInstance</ID>
     <ID>MaxLineLength:BeamsPushNotifications.kt$BeamsPushNotifications$return Result.failure(elements.OtherError("It seems like some dependencies that Push Notifications requires are missing. Check https://docs.pusher.com/chatkit for more information.", ex.cause))</ID>
-    <ID>NewLineAtEndOfFile:BeamsPushNotificationsFactory.kt$com.pusher.chatkit.BeamsPushNotificationsFactory.kt</ID>
     <ID>ReturnCount:BeamsPushNotifications.kt$BeamsPushNotifications$override fun setUserId(userId: String): Result&lt;Unit, Error&gt;</ID>
     <ID>ReturnCount:BeamsPushNotifications.kt$BeamsPushNotifications$override fun stop(): Result&lt;Unit, Error&gt;</ID>
     <ID>TooGenericExceptionCaught:BeamsPushNotifications.kt$BeamsPushNotifications$ex: Throwable</ID>
-    <ID>WildcardImport:AndroidAppHooks.kt$import androidx.lifecycle.*</ID>
   </Whitelist>
 </SmellBaseline>

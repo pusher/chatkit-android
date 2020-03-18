@@ -4,15 +4,6 @@ import org.reduxkotlin.ReducerForActionType
 import org.reduxkotlin.reducerForActionType
 
 /**
- * Create a reducer for the whole State
- */
-internal inline fun <reified TAction> stateReducer(
-    crossinline reducer: ReducerForActionType<State, TAction>
-) = reducerForActionType<State, TAction> { state, action ->
-    reducer(state, action)
-}
-
-/**
  * Create a slice reducer for ChatState branch
  */
 internal inline fun <reified TAction> chatStateReducer(
@@ -21,4 +12,13 @@ internal inline fun <reified TAction> chatStateReducer(
     state.with(
         chatState = reducer(state.chatState, action)
     )
+}
+
+/**
+ * Create a reducer for the whole State
+ */
+private inline fun <reified TAction> stateReducer(
+    crossinline reducer: ReducerForActionType<State, TAction>
+) = reducerForActionType<State, TAction> { state, action ->
+    reducer(state, action)
 }

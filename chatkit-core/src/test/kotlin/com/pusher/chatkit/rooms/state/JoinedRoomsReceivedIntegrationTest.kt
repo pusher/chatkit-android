@@ -91,7 +91,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             )
 
             beforeEachTest {
-                userSubscriptionDispatcher.onEvent(event)
+                userSubscriptionDispatcher.onEvent(event.asElementsEvent())
             }
 
             it("then no user subscription actions are dispatched") {
@@ -124,7 +124,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             )
 
             beforeEachTest {
-                userSubscriptionDispatcher.onEvent(event)
+                userSubscriptionDispatcher.onEvent(event.asElementsEvent())
             }
 
             it("then ReconnectJoinedRoom is dispatched") {
@@ -147,7 +147,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             )
 
             beforeEachTest {
-                userSubscriptionDispatcher.onEvent(event)
+                userSubscriptionDispatcher.onEvent(event.asElementsEvent())
             }
 
             it("then the LeftRoom action is dispatched") {
@@ -170,7 +170,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             )
 
             beforeEachTest {
-                userSubscriptionDispatcher.onEvent(event)
+                userSubscriptionDispatcher.onEvent(event.asElementsEvent())
             }
 
             it("then the RoomUpdated action is dispatched") {
@@ -230,7 +230,7 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
             )
 
             beforeEachTest {
-                userSubscriptionDispatcher.onEvent(event)
+                userSubscriptionDispatcher.onEvent(event.asElementsEvent())
             }
 
             it("then the correct actions will be dispatched") {

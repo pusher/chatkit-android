@@ -5,6 +5,9 @@ import assertk.assertions.contains
 import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.prop
+import com.pusher.chatkit.users.api.UserSubscriptionEvent
+import elements.SubscriptionEvent
+import elements.emptyHeaders
 
 private fun simpleRoom(id: String, name: String) = JoinedRoomInternalType(
     id,
@@ -26,6 +29,12 @@ internal val roomTwo = simpleRoom(roomTwoId, "roomTwo")
 
 internal val roomThreeId = "id3"
 internal val roomThree = simpleRoom(roomThreeId, "roomThree")
+
+internal fun UserSubscriptionEvent.asElementsEvent() = SubscriptionEvent(
+    headers = emptyHeaders(),
+    eventId = "fake",
+    body = this
+)
 
 internal fun Assert<JoinedRoomsState>.isEmpty() {
     prop(JoinedRoomsState::rooms).isEmpty()

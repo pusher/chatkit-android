@@ -1,0 +1,4 @@
+[*.{kt, kts}]
+# noinspection EditorConfigKeyCorrectness
+# As it's a custom property: https://github.com/pinterest/ktlint#custom-editorconfig-properties
+disabled_rules=import-ordering # IDE first: https://github.com/pinterest/ktlint/issues/527
