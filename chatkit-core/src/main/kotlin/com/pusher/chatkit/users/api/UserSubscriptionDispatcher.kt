@@ -7,16 +7,21 @@ import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
+import com.pusher.chatkit.subscription.SubscriptionListener
+import elements.EOSEvent
+import elements.Error
+import elements.Headers
+import elements.SubscriptionEvent
 import org.reduxkotlin.Dispatcher
 
 internal class UserSubscriptionDispatcher(
     private val joinedRoomsStateDiffer: JoinedRoomsStateDiffer,
     private val joinedRoomApiTypeMapper: JoinedRoomApiTypeMapper,
     private val dispatcher: Dispatcher
-) {
+) : SubscriptionListener<UserSubscriptionEvent> {
 
-    internal fun onEvent(event: UserSubscriptionEvent) {
-        when (event) {
+    override fun onEvent(elementsEvent: SubscriptionEvent<UserSubscriptionEvent>) {
+        when (val event = elementsEvent.body) {
             is UserSubscriptionEvent.InitialState ->
                 if (joinedRoomsStateDiffer.stateExists()) {
                     joinedRoomsStateDiffer.toActions(
@@ -47,5 +52,25 @@ internal class UserSubscriptionDispatcher(
             is UserSubscriptionEvent.RoomDeletedEvent ->
                 dispatcher(RoomDeleted(event.roomId))
         }
+    }
+
+    override fun onSubscribe() {
+        // Not yet implemented
+    }
+
+    override fun onOpen(headers: Headers) {
+        // Not yet implemented
+    }
+
+    override fun onRetrying() {
+        // Not yet implemented
+    }
+
+    override fun onError(error: Error) {
+        // Not yet implemented
+    }
+
+    override fun onEnd(error: EOSEvent?) {
+        // Not yet implemented
     }
 }

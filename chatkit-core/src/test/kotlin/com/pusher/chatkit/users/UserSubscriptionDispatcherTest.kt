@@ -5,6 +5,7 @@ import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
+import com.pusher.chatkit.rooms.state.asElementsEvent
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
@@ -66,7 +67,7 @@ object UserSubscriptionDispatcherTest : Spek({
                 readStates = listOf(RoomReadStateApiType("id1", 1, null)),
                 memberships = listOf(RoomMembershipApiType("id1", listOf()))
             )
-            userSubscriptionDispatcher.onEvent(event)
+            userSubscriptionDispatcher.onEvent(event.asElementsEvent())
 
             it("then JoinedRoomsReceived is dispatched") {
                 verify(exactly = 1) { dispatcher(JoinedRoomsReceived(
@@ -82,7 +83,7 @@ object UserSubscriptionDispatcherTest : Spek({
                 readState = RoomReadStateApiType("id1", 1, null),
                 membership = RoomMembershipApiType("id1", listOf())
             )
-            userSubscriptionDispatcher.onEvent(event)
+            userSubscriptionDispatcher.onEvent(event.asElementsEvent())
 
             it("then JoinedRoom is dispatched") {
                 verify(exactly = 1) { dispatcher(JoinedRoom(
@@ -94,7 +95,7 @@ object UserSubscriptionDispatcherTest : Spek({
 
         describe("when a RemovedFromRoomEvent is received") {
             val event = UserSubscriptionEvent.RemovedFromRoomEvent("room1")
-            userSubscriptionDispatcher.onEvent(event)
+            userSubscriptionDispatcher.onEvent(event.asElementsEvent())
 
             it("then LeftRoom is dispatched") {
                 verify(exactly = 1) { dispatcher(LeftRoom(roomId = event.roomId)) }
@@ -103,7 +104,7 @@ object UserSubscriptionDispatcherTest : Spek({
 
         describe("when a RoomDeletedEvent is received") {
             val event = UserSubscriptionEvent.RoomDeletedEvent("room1")
-            userSubscriptionDispatcher.onEvent(event)
+            userSubscriptionDispatcher.onEvent(event.asElementsEvent())
 
             it("then DeleteRoom is dispatched") {
                 verify(exactly = 1) { dispatcher(RoomDeleted(roomId = event.roomId)) }
@@ -114,7 +115,7 @@ object UserSubscriptionDispatcherTest : Spek({
             val event = UserSubscriptionEvent.RoomUpdatedEvent(
                 room = simpleJoinedRoomApiType
             )
-            userSubscriptionDispatcher.onEvent(event)
+            userSubscriptionDispatcher.onEvent(event.asElementsEvent())
 
             it("then UpdateRoom is dispatched") {
                 verify(exactly = 1) { dispatcher(RoomUpdated(

@@ -14,7 +14,7 @@ import elements.SubscriptionEvent
 internal interface SubscriptionListener<A> {
     fun onEnd(error: EOSEvent?)
     fun onError(error: elements.Error)
-    fun onEvent(event: SubscriptionEvent<A>)
+    fun onEvent(elementsEvent: SubscriptionEvent<A>)
     fun onOpen(headers: Headers)
     fun onRetrying()
     fun onSubscribe()
