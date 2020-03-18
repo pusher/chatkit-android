@@ -70,7 +70,35 @@ internal object JoinedRoomsReceivedIntegrationTest : Spek({
                 dispatcher
             )
         }
-        
+
+        describe("when the same InitialState event is received") {
+            val event = UserSubscriptionEvent.InitialState(
+                currentUser = simpleUser,
+                rooms = listOf(roomApiTypeOne),
+                readStates = listOf(
+                    RoomReadStateApiType("id1", 1, null)
+                ),
+                memberships = listOf(
+                    RoomMembershipApiType("id1", listOf())
+                )
+            )
+
+            beforeEachTest {
+                userSubscriptionDispatcher.onEvent(event)
+            }
+
+            it("then no user subscription actions are dispatched") {
+                verify(exactly = 0) {
+                    dispatcher(mockk<JoinedRoomsReceived>())
+                    dispatcher(mockk<JoinedRoom>())
+                    dispatcher(mockk<LeftRoom>())
+                    dispatcher(mockk<RoomDeleted>())
+                    dispatcher(mockk<RoomUpdated>())
+                    dispatcher(mockk<ReconnectJoinedRoom>())
+                }
+            }
+        }
+
         describe("when a new InitialState event is received with a new room") {
             val event = UserSubscriptionEvent.InitialState(
                 currentUser = simpleUser,
