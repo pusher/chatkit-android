@@ -8,9 +8,8 @@ import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.subscription.SubscriptionListener
-import elements.EOSEvent
+import elements.EosError
 import elements.Error
-import elements.Headers
 import elements.SubscriptionEvent
 import org.reduxkotlin.Dispatcher
 
@@ -58,7 +57,7 @@ internal class UserSubscriptionDispatcher(
         // Not yet implemented
     }
 
-    override fun onOpen(headers: Headers) {
+    override fun onOpen() {
         // Not yet implemented
     }
 
@@ -70,7 +69,7 @@ internal class UserSubscriptionDispatcher(
         // Not yet implemented
     }
 
-    override fun onEnd(error: EOSEvent?) {
+    override fun onEnd(error: EosError?) {
         // Not yet implemented
     }
 }

@@ -1,7 +1,7 @@
 package com.pusher.chatkit.subscription
 
 import com.pusher.platform.SubscriptionListeners
-import elements.EOSEvent
+import elements.EosError
 import elements.Headers
 import elements.SubscriptionEvent
 
@@ -12,19 +12,19 @@ import elements.SubscriptionEvent
  * SubscriptionListeners data-class-full-of-closures approach.
  */
 internal interface SubscriptionListener<A> {
-    fun onEnd(error: EOSEvent?)
+    fun onEnd(error: EosError?)
     fun onError(error: elements.Error)
     fun onEvent(elementsEvent: SubscriptionEvent<A>)
-    fun onOpen(headers: Headers)
+    fun onOpen()
     fun onRetrying()
     fun onSubscribe()
 
     fun asPlatformListeners() = SubscriptionListeners(
-        onEnd = this::onEnd,
-        onError = this::onError,
-        onEvent = this::onEvent,
-        onOpen = this::onOpen,
-        onRetrying = this::onRetrying,
-        onSubscribe = this::onSubscribe
+        onEnd = { eosEvent -> onEnd(eosEvent?.error) },
+        onError = ::onError,
+        onEvent = ::onEvent,
+        onOpen = { onOpen() },
+        onRetrying = ::onRetrying,
+        onSubscribe = ::onSubscribe
     )
 }
