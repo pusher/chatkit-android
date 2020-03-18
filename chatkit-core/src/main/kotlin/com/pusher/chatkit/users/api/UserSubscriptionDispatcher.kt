@@ -2,6 +2,7 @@ package com.pusher.chatkit.users.api
 
 import com.pusher.chatkit.rooms.api.JoinedRoomApiTypeMapper
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
+import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
@@ -14,20 +15,26 @@ import elements.SubscriptionEvent
 import org.reduxkotlin.Dispatcher
 
 internal class UserSubscriptionDispatcher(
-    private val joinedRoomsStateDiffer: JoinedRoomsStateDiffer,
+    private val userApiTypeMapper: UserApiTypeMapper,
     private val joinedRoomApiTypeMapper: JoinedRoomApiTypeMapper,
+    private val joinedRoomsStateDiffer: JoinedRoomsStateDiffer,
     private val dispatcher: Dispatcher
 ) : SubscriptionListener<UserSubscriptionEvent> {
 
     override fun onEvent(elementsEvent: SubscriptionEvent<UserSubscriptionEvent>) {
         when (val event = elementsEvent.body) {
-            is UserSubscriptionEvent.InitialState ->
+            is UserSubscriptionEvent.InitialState -> {
+
+                dispatcher(CurrentUserReceived(
+                    userApiTypeMapper.toUserInternalType(event.currentUser)
+                ))
+
                 if (joinedRoomsStateDiffer.stateExists()) {
                     joinedRoomsStateDiffer.toActions(
                         joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                         joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
-                    ).forEach {
-                        action -> dispatcher(action)
+                    ).forEach { action ->
+                        dispatcher(action)
                     }
                 } else {
                     dispatcher(
@@ -37,6 +44,7 @@ internal class UserSubscriptionDispatcher(
                         )
                     )
                 }
+            }
             is UserSubscriptionEvent.AddedToRoomEvent ->
                 dispatcher(
                     JoinedRoom(

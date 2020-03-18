@@ -1,8 +1,13 @@
 package com.pusher.chatkit.state
 
 import com.pusher.chatkit.rooms.state.JoinedRoomInternalType
+import com.pusher.chatkit.users.state.UserInternalType
 
 internal sealed class Action
+
+internal data class CurrentUserReceived(
+    val currentUser: UserInternalType
+) : Action()
 
 internal data class JoinedRoomsReceived(
     val rooms: List<JoinedRoomInternalType>,

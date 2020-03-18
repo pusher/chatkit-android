@@ -6,12 +6,14 @@ import com.pusher.chatkit.rooms.api.RoomMembershipApiType
 import com.pusher.chatkit.rooms.api.RoomReadStateApiType
 import com.pusher.chatkit.rooms.state.JoinedRoomsStateDiffer
 import com.pusher.chatkit.rooms.state.asElementsEvent
+import com.pusher.chatkit.state.CurrentUserReceived
 import com.pusher.chatkit.state.JoinedRoom
 import com.pusher.chatkit.state.JoinedRoomsReceived
 import com.pusher.chatkit.state.LeftRoom
 import com.pusher.chatkit.state.RoomDeleted
 import com.pusher.chatkit.state.RoomUpdated
 import com.pusher.chatkit.users.api.UserApiType
+import com.pusher.chatkit.users.api.UserApiTypeMapper
 import com.pusher.chatkit.users.api.UserSubscriptionDispatcher
 import com.pusher.chatkit.users.api.UserSubscriptionEvent
 import com.pusher.chatkit.util.DateApiTypeMapper
@@ -39,12 +41,11 @@ object UserSubscriptionDispatcherTest : Spek({
 
     val simpleUser = UserApiType(
         id = "user1",
-        createdAt = "",
-        updatedAt = "",
+        createdAt = "2020-02-27T17:12:10Z",
+        updatedAt = "2020-02-27T17:12:10Z",
         name = "name",
-        avatarURL = null,
-        customData = null,
-        online = false
+        avatarUrl = null,
+        customData = null
     )
 
     describe("given no existing state") {
@@ -53,8 +54,10 @@ object UserSubscriptionDispatcherTest : Spek({
             every { stateExists() } returns false
         }
         val dateApiTypeMapper = DateApiTypeMapper()
+        val userApiTypeMapper = UserApiTypeMapper(dateApiTypeMapper)
         val joinedRoomApiTypeMapper = JoinedRoomApiTypeMapper(dateApiTypeMapper)
         val userSubscriptionDispatcher = UserSubscriptionDispatcher(
+            userApiTypeMapper = userApiTypeMapper,
             joinedRoomApiTypeMapper = joinedRoomApiTypeMapper,
             joinedRoomsStateDiffer = differ,
             dispatcher = dispatcher
@@ -73,6 +76,12 @@ object UserSubscriptionDispatcherTest : Spek({
                 verify(exactly = 1) { dispatcher(JoinedRoomsReceived(
                     rooms = joinedRoomApiTypeMapper.toRoomInternalTypes(event.rooms),
                     unreadCounts = joinedRoomApiTypeMapper.toUnreadCounts(event.readStates)
+                )) }
+            }
+
+            it("then CurrentUserReceived is dispatched") {
+                verify(exactly = 1) { dispatcher(CurrentUserReceived(
+                    currentUser = userApiTypeMapper.toUserInternalType(event.currentUser)
                 )) }
             }
         }
