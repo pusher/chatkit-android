@@ -74,7 +74,7 @@ data class ChatkitTokenProvider
         if (tokenParams is ChatkitTokenParams) add(tokenParams.extras)
     }.build()
 
-    private fun FormBody.Builder.add(map: Map<String, String>) = {
+    private fun FormBody.Builder.add(map: Map<String, String>) = run {
         for ((k, v) in map) {
             add(k, v)
         }
